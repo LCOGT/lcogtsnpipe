@@ -1,0 +1,5 @@
+v1.0, 20130301 -- Initial release.
+------
+- lsc pipeline version 1 works for lsc 1m data
+
+

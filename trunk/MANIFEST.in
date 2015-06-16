@@ -1,0 +1,13 @@
+include *.txt
+recursive-include docs *.txt
+include src/lsc/standard/*
+include src/lsc/standard/stdlist/*
+include src/lsc/standard/sex/*
+include src/lsc/standard/cat/*
+include src/lsc/standard/astrometry/*
+include src/lsc/standard/cat/sloan/*
+include src/lsc/standard/cat/landolt/*
+include src/lsc/standard/cat/landoltnatural/*
+include src/lsc/standard/cat/sloannatural/*
+include src/lsc/standard/cat/sloanprime/*
+

@@ -304,7 +304,8 @@ def readkey3(hdr,keyword):
                   delta=0.5
                else:
                   delta=0.5
-            except:   delta=0.5
+            except:   
+               delta=0.5
             import datetime
             _date=readkey3(hdr,'DATE-OBS')
             a=(datetime.datetime.strptime(string.split(_date,'.')[0],"20%y-%m-%dT%H:%M:%S")-datetime.timedelta(delta)).isoformat()
@@ -756,7 +757,12 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    import numpy as np
 
    ar, hd = pyfits.getdata(img, header=True)
-   _tel=hd['TELID']
+
+   if 'TELID' in hd:
+      _tel=hd['TELID']
+   else:
+      _tel='other'
+
    if _tel in ['fts','ftn']:
       lsc.delete('new.fits')
       out_fits = pyfits.PrimaryHDU(header=hd,data=ar)
@@ -768,10 +774,21 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
       sat     = 35000
       rdnoise = hd['RDNOISE']
    else:
-      gain    = hd['GAIN']
-      sat     = hd['SATURATE']
-      rdnoise = hd['RDNOISE']
-
+      if 'gain' in hd:
+         gain    = hd['GAIN']
+      else:
+         print 'warning GAIN not found'
+         gain = 1
+      if 'saturate' in hd:
+         sat     = hd['SATURATE']
+      else:
+         print 'warning SATURATE not found'
+         sat = 60000
+      if 'RDNOISE' in hd:
+         rdnoise = hd['RDNOISE']
+      else:
+         print 'warning RDNOISE not found'
+         rdnoise = 1
    # need to trick LACosmic into using the right sigma for a sky-subtracted image
    med = np.median(ar)                           # median pixel of image (in ADU)
    noise = 1.4826*np.median(np.abs(ar - med))    # using median absolute deviation instead of sigma

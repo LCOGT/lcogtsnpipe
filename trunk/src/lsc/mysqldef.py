@@ -113,8 +113,7 @@ def getlistfromraw(conn, table, column, value1,value2,column2='*',telescope='all
             cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"'")
          else:
             cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"="+"'"+value1+"'")
-      elif telescope in lsc.util.site0+['1m0','fl','kb','2m0','fs']:
-         #['lsc','elp','cpt','coj','1m0','kb','fts','ftn','fl','2m0','ogg']:
+      elif telescope in lsc.util.site0+['1m0','fl','kb','2m0','fs','spectral','sbig','sinistro']:
          if value2:
             cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"' and filename like '%"+telescope+"%'")
          else:
@@ -490,8 +489,77 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
                               dictionary['groupidcode']=gruppo[0]['groupidcode']
                else: 
                   dictionary={}
-         else: 
-            dictionary={}
+         else:
+##########################################
+            print 'try forcing it'
+            print img
+            hdr=readhdr(img)
+            if 'ra' in hdr:
+               _ra = hdr.get('ra')
+            else:
+               _ra = None
+               print 'ra not defined, please add ra keyword'
+            if 'dec' in hdr:
+               _dec = hdr.get('dec')
+            else:
+               _dec = None
+               print 'dec not defined, please add dec keyword'
+            if 'MJD-OBS' in hdr:
+               _mjd = hdr.get('MJD-OBS')
+            else:
+               _mjd = None
+               print 'MJD not defined, please add MJD-OBS keyword '
+            if 'filter' in hdr:
+               _filter = hdr.get('filter')
+            else:
+               _filter = None
+               print 'filter not defined, please add filter keyword'
+            if 'date-obs' in hdr:
+               _dateobs = hdr.get('date-obs')
+            else:
+               _dataobs = None
+            _dayobs = hdr.get('DAYOBS')
+            _telescope = hdr.get('TELESCOP')
+            _instrume = hdr.get('instrume')
+            _fwhm = hdr.get('L1FWHM')
+            filepath = re.sub(string.split(img,'/')[-1],'',img)
+            
+            if _ra and _dec and _mjd and _filter and _dateobs:
+#               headers = {'L1FWHM': [5,'FHWM (arcsec) - computed with sectractor'],\
+#                             'WCSERR' : [0,'Error status of WCS fit. 0 for no error'],\
+#                             'TELESCOP': ['other','The Name of the Telescope'],\
+#                             'INSTRUME': ['other','Instrument used'],\
+#                             'PIXSCALE': [0.301,'arcsec/pixel] Nominal pixel scale on sky'],\
+#                             'DAYOBS': [_dayobs,''], 'FILTER': [_filter,'Filter used']}
+#               if 'airmass' not in hdr:
+#                  headers['airmass'] = 1
+#               print headers
+#               output = 'other_'+str(_dayobs)+'_'+str(_filter)+'.fits'
+#               os.system('cp '+img+' '+output)
+#               img =  output
+#               lsc.util.updateheader(img, 0, headers)
+#               print 'good to add'
+               _targetid=lsc.mysqldef.targimg(img)
+               dictionary={'telescope':_telescope,\
+                              'fwhm': _fwhm ,\
+                              'instrument': _instrume ,\
+                              'dec0': _dec,\
+                              'ra0':_ra,\
+                              'filter': _filter,\
+                              'exptime':readkey3(hdr,'exptime'),\
+                              'mjd': _mjd,\
+                              'airmass':readkey3(hdr,'airmass'),\
+                              'dateobs':_dateobs,\
+                              'dayobs': _dayobs,\
+                              'objname':readkey3(hdr,'object'),\
+                              'tracknumber': 0,\
+                              'targetid' : _targetid,\
+                              'filename' : string.split(img,'/')[-1],\
+                              'filepath' : filepath,\
+                              'propid': 'externaldata',\
+                              'userid': 'externaldata'}
+            else:
+               dictionary={}
          print dictionary
 ###################################################
          if dictionary:
@@ -536,7 +604,15 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
                         if voce!='id' and voce!='filename':
                            lsc.mysqldef.updatevalue(datarawtable,voce,dictionary[voce],string.split(img,'/')[-1])
          else:
-              raw_input('go on ? ')
+            if dictionary:
+               if not lsc.mysqldef.getfromdataraw(conn,datarawtable,'filename', string.split(img,'/')[-1],column2='filename'):
+                  lsc.mysqldef.insert_values(conn,datarawtable,dictionary)
+                  print 'insert '+img
+               elif _force:
+                  print 'reinsert '+img
+                  for voce in dictionary:
+                     if voce!='id' and voce!='filename':
+                        lsc.mysqldef.updatevalue(datarawtable,voce,dictionary[voce],string.split(img,'/')[-1])
       else:
          print img+' already ingested'
 ###############################################################################################################################################
@@ -554,7 +630,9 @@ def ingestredu(imglist,force='no',datatable='photlco'):
       if [i for i in ['a_e_','d_e_','d_s','m_e_','b_e_'] if i in img]: _type='2mold'
       elif [i for i in ['2m001','2m002'] if i in img]: _type='2m'
       elif [i for i in ['1m003','1m004','1m005','1m008','1m009','1m010','1m011','1m012','1m013'] if i in img]: _type='1m'
-      else:  sys.exit('error: problem with '+img)
+      else:
+         _type='other'
+#         sys.exit('error: problem with '+img)
 
       exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
       exist2=lsc.mysqldef.getfromdataraw(conn,'photlcoraw','filename', string.split(img,'/')[-1],column2='filename, groupidcode')
@@ -660,7 +738,8 @@ def ingestredu(imglist,force='no',datatable='photlco'):
             if _tel in ['Faulkes Telescope South','fts']:  _tel='2m0-02'
             elif _tel in ['Faulkes Telescope North','ftn']: _tel='2m0-01'
             _inst=hdr.get('instrume')
-            dictionary={'dateobs':readkey3(hdr,'date-obs'),'exptime':readkey3(hdr,'exptime'), 'filter':readkey3(hdr,'filter'),'mjd':readkey3(hdr,'mjd'), 'dayobs':readkey3(hdr,'DAY-OBS'),\
+            dictionary={'dateobs':readkey3(hdr,'date-obs'),'exptime':readkey3(hdr,'exptime'),\
+                           'filter':readkey3(hdr,'filter'),'mjd':readkey3(hdr,'mjd'), 'dayobs':readkey3(hdr,'DAY-OBS'),\
                            'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),'groupidcode':_groupidcode,\
                            'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
             dictionary['filename']=string.split(img,'/')[-1]
@@ -737,8 +816,6 @@ def ingestredu(imglist,force='no',datatable='photlco'):
             instid=_instid[0]['id']
             dictionary['instrumentid']=str(instid)
 
-            print img
-            print dictionary
             print 'insert reduced'
             print database
             ggg=lsc.mysqldef.getfromdataraw(conn, dataredutable, 'filename',str(img), '*')
@@ -755,8 +832,66 @@ def ingestredu(imglist,force='no',datatable='photlco'):
                os.system('cp '+_dir+img+' '+dictionary['filepath']+img)
                os.chmod(dictionary['filepath']+img,0664)
 
-         elif _type=='floyds': print 'floyds'
-         else: sys.exit('instrument not recognised')
+         elif _type=='other':
+            print _type
+            import lsc
+            from lsc.util import readkey3,readhdr
+            hdr=readhdr(_dir+img)
+            _targetid=lsc.mysqldef.targimg(_dir+img)
+            if hdr.get('TELESCOP'):  _tel=hdr.get('TELESCOP')
+            else: _tel=''
+
+            _inst=hdr.get('instrume')
+            _tracknum=readkey3(hdr,'TRACKNUM')
+            if not _tracknum.isdigit():
+               _tracknum=0
+
+            dictionary={'dateobs':readkey3(hdr,'date-obs'),'dayobs':readkey3(hdr,'DAYOBS'),'groupidcode':_groupidcode,\
+                           'exptime':readkey3(hdr,'exptime'), 'filter':readkey3(hdr,'filter'),'mjd':readkey3(hdr,'MJD-OBS'),'tracknumber':int(_tracknum),\
+                           'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),\
+                           'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
+
+            dictionary['filename']=string.split(img,'/')[-1]
+            dictionary['filepath']='/science/supernova/data/extdata/'+readkey3(hdr,'dayobs')+'/'
+            dictionary['filetype']=filetype
+            dictionary['targetid']=_targetid
+
+            _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
+            if not _telid:
+              print 'Telescope ',_tel,' not recognized.  Adding to telescopes table.'
+              lsc.mysqldef.insert_values(conn,'telescopes',{'name':_tel})
+              _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
+            telid=_telid[0]['id']
+            dictionary['telescopeid']=str(telid)
+
+            _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
+            if not _instid:
+              print 'Instrument ',_inst,' not recognized.  Adding to instruments table.'
+              lsc.mysqldef.insert_values(conn,'instruments',{'name':_inst})
+              _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
+            instid=_instid[0]['id']
+            dictionary['instrumentid']=str(instid)
+
+            print 'insert reduced'
+            print database
+            ggg=lsc.mysqldef.getfromdataraw(conn, dataredutable, 'filename',str(img), '*')
+            if not ggg:
+               lsc.mysqldef.insert_values(conn,dataredutable,dictionary)
+            else:
+               for voce in dictionary:
+                  lsc.mysqldef.updatevalue(dataredutable,voce,dictionary[voce],string.split(img,'/')[-1])
+         ######################################
+            if not os.path.isdir(dictionary['filepath']): 
+               os.mkdir(dictionary['filepath'])
+            if not os.path.isfile(dictionary['filepath']+img) or force=='yes': 
+               print 'cp '+_dir+img+' '+dictionary['filepath']+img
+               os.system('cp '+_dir+img+' '+dictionary['filepath']+img)
+               os.chmod(dictionary['filepath']+img,0664)
+#################################################
+         elif _type=='floyds': 
+            print 'floyds'
+         else: 
+            sys.exit('instrument not recognised')
       else:
          print 'already ingested'
 

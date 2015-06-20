@@ -224,21 +224,26 @@ if __name__ == "__main__":
                         ###########################################################
 
                         data_targ, head_targ = pyfits.getdata(imgtarg, header=True)
-                        gain_targ = head_targ['gain']
-                        exp_targ  = head_targ['exptime']
-                        rn_targ   = head_targ['rdnoise']
-                        if 'saturate' in head_targ: sat_targ = head_targ['saturate']
-                        else:                       sat_targ = 50000.
+                        exp_targ  = lsc.util.readkey3(head_targ, 'exptime')
+                        sat_targ = lsc.util.readkey3(head_targ, 'saturate')
+                        gain_targ = lsc.util.readkey3(head_targ, 'gain')
+                        rn_targ = lsc.readkey3(head_targ,'ron')
 
                         data_temp, head_temp = pyfits.getdata(imgtemp, header=True)
-                        gain_temp = head_temp['gain']
-                        exp_temp  = head_temp['exptime']
-                        rn_temp   = head_temp['rdnoise']
-                        if 'saturate' in head_temp: sat_temp = head_temp['saturate']
-                        else:                       sat_temp = 50000.
-                        if 'L1FWHM' in head_targ: max_fwhm = head_targ['L1FWHM']  # to be check
-                        else:                     max_fwhm = 3.0
-                        _tel = head_temp['telid']
+                        exp_temp = lsc.util.readkey3(head_temp, 'exptime')
+                        sat_temp = lsc.util.readkey3(head_temp, 'saturate')
+                        gain_temp = lsc.util.readkey3(head_temp, 'gain')
+
+                        if 'rdnoise' in head_temp:
+                            rn_temp   = head_temp['rdnoise']
+                        else:
+                            rn_temp   = 1
+
+                        if 'L1FWHM' in head_targ: 
+                            max_fwhm = head_targ['L1FWHM']  # to be check
+                        else:                     
+                            max_fwhm = 3.0
+
                         targmask_data = pyfits.getdata(targmask)
 
                         # round all values in template mask up to 1 (unless they are 0)
@@ -251,14 +256,16 @@ if __name__ == "__main__":
                         median = np.median(data_targ)
                         noise = 1.4826*np.median(np.abs(data_targ - median))
                         pssl_targ = gain_targ*noise**2 - rn_targ**2/gain_targ - median
-                        noiseimg = (data_targ - median)**2
+                        #noiseimg = (data_targ - median)**2
+                        noiseimg = data_targ + pssl_targ + rn_targ**2
                         noiseimg[targmask > 0] = sat_targ
                         pyfits.writeto('targnoise.fits', noiseimg, output_verify='fix', clobber=True)
 
                         median = np.median(data_temp)
                         noise = 1.4826*np.median(np.abs(data_temp - median))
                         pssl_temp = gain_temp*noise**2 - rn_temp**2/gain_temp - median
-                        noiseimg = (data_temp - median)**2
+                        #noiseimg = (data_temp - median)**2
+                        noiseimg = data_temp + pssl_temp + rn_temp**2
                         noiseimg[tempmask > 0] = sat_temp
                         pyfits.writeto('tempnoise.fits', noiseimg, output_verify='fix', clobber=True)
 
@@ -285,12 +292,12 @@ if __name__ == "__main__":
                             _afssc = ''
                         line = ('hotpants -inim ' + imgtarg + ' -tmplim ' + imgtemp + ' -outim ' + imgout +
                                 ' -tu ' + tuthresh + ' -tuk ' + tucthresh +
-                                ' -tl ' + str(-pssl_temp) + ' -tg ' + str(gain_temp) +
-                                ' -tr ' + str(rn_temp) + ' -tp ' + str(-pssl_temp) +
+                                ' -tl ' + str(min(-pssl_temp,0)) + ' -tg ' + str(gain_temp) +
+                                ' -tr ' + str(rn_temp) + ' -tp ' + str(min(-pssl_temp,0)) +
                                 ' -tni tempnoise.fits ' +
                                 ' -iu ' + str(iuthresh) + ' -iuk ' + str(iucthresh) + 
-                                ' -il ' + str(-pssl_targ) + ' -ig ' + str(gain_targ) +
-                                ' -ir ' + str(rn_targ) + ' -ip ' + str(-pssl_targ) +
+                                ' -il ' + str(min(-pssl_targ,0)) + ' -ig ' + str(gain_targ) +
+                                ' -ir ' + str(rn_targ) + ' -ip ' + str(min(-pssl_targ,0)) +
                                 ' -ini targnoise.fits ' +
                                 ' -r ' + str(rkernel) +
                                 ' -nrx ' + nrxy.split(',')[0] + ' -nry ' + nrxy.split(',')[1] +

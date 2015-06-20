@@ -21,7 +21,7 @@ if __name__ == "__main__":
                       help='epoch to reduce  \t [%default]')
     parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str",
                       help='-T telescope ' + ', '.join(lsc.telescope0['all']) + ', '.join(
-                          lsc.site0) + ', fts, ftn, 1m0, kb, fl \t [%default]')
+                          lsc.site0) + ', fts, ftn, 1m0, kb, fl, fs \t [%default]')
     parser.add_option("-R", "--RA", dest="ra", default='', type="str",
                       help='-R  ra    \t [%default]')
     parser.add_option("-D", "--DEC", dest="dec", default='', type="str",
@@ -331,7 +331,6 @@ if __name__ == "__main__":
                                str(ll['psf'][i]),
                                str(ll['psfmag'][i]), str(ll['zcat'][i]), str(ll['mag'][i]), str(ll['abscat'][i]))
                     print '\n###  total number = ' + str(len(ll['filename']))
-                # else: print '\n### no images for epoch '+str(epo)
                 if _stage and len(ll['filename']) > 0:
                     print '##' * 50
                     print _stage
@@ -358,16 +357,15 @@ if __name__ == "__main__":
                                 if data: _targetid = data[0]['targetid'] # pick the first result
                                 else:    sys.exit('Target not found in database. Try "SN YYYYaa" with a space.')
                                 data = lsc.mysqldef.query(['select name from targetnames where targetid="' + str(_targetid) + '"'],lsc.conn)
-                                names = [targ['name'].replace(' ','') for targ in data] # remove spaces
-                                names += [n.lower() for n in names]+[n.upper() for n in names] # make case insensitive
-                                for name in set(names): # remove duplicates
-                                    searchpath = lsc.__path__[0] + '/standard/cat/' + _field + '/' + name + '*'
-                                    print 'searching for',searchpath
-                                    catlist = glob.glob(searchpath)
-                                    if catlist:
-                                        _catalogue = catlist[0] # pick the first result
-                                        print 'found', _catalogue
-                                        break
+                                names = [targ['name'].replace(' ','').lower() for targ in data] # remove spaces & make lower case
+                                catlist = glob.glob(lsc.__path__[0] + '/standard/cat/' + _field + '/*')
+                                catnames = [os.path.basename(cat).split('_')[0].lower() for cat in catlist]
+                                name_match = set(names) & set(catnames)
+                                cat_match = [catlist[catnames.index(n)] for n in name_match]
+                                print 'found', len(cat_match), 'matching catalogues'
+                                if cat_match:
+                                    _catalogue = cat_match[0] # pick the first result
+                                    print 'using catalogue', _catalogue
                         if _field == 'apass':
                             ww0 = asarray([i for i in range(len(ll3['filter'])) if (ll['filter'][i] in ['V', 'B'])])
                             ww1 = asarray(
@@ -414,8 +412,6 @@ if __name__ == "__main__":
                         elif _field == 'sloan':
                             ww0 = asarray([i for i in range(len(ll3['filter'])) if
                                            (ll['filter'][i] in ['up', 'gp', 'rp', 'ip', 'zs', 'SDSS-G', 'SDSS-R', 'SDSS-I'])])
-#                            ww1 = asarray([i for i in range(len(ll3['filter'])) if
-#                                           (ll['filter'][i] in ['up', 'SDSS-G', 'SDSS-R', 'SDSS-I', 'zs'])])
                             _color = ''
                             if len(ww0) > 1:
                                 for jj in ['gp', 'up', 'rp', 'ip', 'zs']:
@@ -424,16 +420,6 @@ if __name__ == "__main__":
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww0], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib)
-#                            _color = ''
-#                            if len(ww1) > 1:
-#                                for jj in ['up', 'SDSS-G', 'SDSS-R', 'SDSS-I', 'zs']:
-#                                    if jj in list(set(ll3['filter'])):
-#                                        _color = _color + lsc.sites.filterst1(_telescope)[jj]
-#                                print _color, _calib, _field
-#                                lsc.myloopdef.run_zero(ll3['filename'][ww1], _fix, _type, _field, _catalogue, _color,
-#                                                       _interactive, _redo, _show, _cutmag, 'photlco', _calib)
-
-
                         else:
                             print 'warning: field not defined, zeropoint not computed'
                     elif _stage == 'abscat':  #    compute magnitudes for sequence stars > img.cat
@@ -474,6 +460,8 @@ if __name__ == "__main__":
                     elif _stage == 'diff':  #    difference images using hotpants
                         if not _name:
                             sys.exit('you need to select one object: use option -n/--name')
+                        if _telescope=='all':
+                            sys.exit('you need to select one type of instrument -T [fs, fl ,kb]')
                         if _tempdate:
                             startdate = _tempdate.split('-')[0]
                             enddate   = _tempdate.split('-')[-1]
@@ -481,6 +469,16 @@ if __name__ == "__main__":
                             startdate = '20120101'
                             enddate   = '20150101'
                         lista1 = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _telescope)
+                        if not lista1:
+                            print 'no template found, search template from sloan/other telescopes'
+                            if _telescope == 'kb':
+                                _temptel = 'sbig'
+                            elif _telescope == 'fs':
+                                _temptel = 'spectral'
+                            elif _telescope == 'fl':
+                                _temptel = 'sinistro'
+                            print _temptel
+                            lista1 = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _temptel)
                         if lista1:
                             ll00 = {}
                             for jj in lista1[0].keys():

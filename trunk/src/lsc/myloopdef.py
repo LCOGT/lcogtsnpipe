@@ -26,7 +26,6 @@ try:
 except:
     '\### warning: problem with the database'
 
-
 def run_getmag(imglist, _field, _output='', _interactive=False, _show=False, _bin=1e-10, magtype='mag',
                database='photlco'):
     import lsc
@@ -34,6 +33,10 @@ def run_getmag(imglist, _field, _output='', _interactive=False, _show=False, _bi
     import mysqldef
     from numpy import array, compress, abs, mean, asarray, std, take, argsort, sort, sqrt
     import os, string, glob, re, sys
+
+    if len(imglist)==0:
+        print 'error: no images selected'
+        return
 
     direc = lsc.__path__[0]
     if magtype == 'mag':
@@ -76,6 +79,7 @@ def run_getmag(imglist, _field, _output='', _interactive=False, _show=False, _bi
                 magtype.append(ggg[0]['magtype'])
                 if tel[-1] not in setup:  setup[tel[-1]] = {}
                 if filt[-1] not in setup[tel[-1]]:  setup[tel[-1]][filt[-1]] = {}
+
     for _tel in setup:
         for _fil in setup[_tel]:
             mjd0 = compress((array(filt) == _fil) & (array(tel) == _tel), array(mjd))
@@ -150,6 +154,7 @@ def run_getmag(imglist, _field, _output='', _interactive=False, _show=False, _bi
                     '1m0-09': '9', '1m0-10': '10', \
                     '1m0-11': '11', '1m0-12': '12', '1m0-13': '13', 'fts': '14', 'ftn': '15', 'other': '20',
                     'ogg': '15', '2m0-02': '15', '2m0-01': '14'}
+
     if _tel not in keytelescope.keys():
         _tel = 'other'
 

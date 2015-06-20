@@ -81,6 +81,14 @@ def runsex(img, fwhm, thresh, pix_scale):  ## run_sextractor  fwhm in pixel
 
 def psffit2(img, fwhm, psfstars, hdr, _datamax=45000, psffun='gauss'):
     import lsc
+    _ron = lsc.util.readkey3(hdr, 'ron')
+    _gain = lsc.util.readkey3(hdr, 'gain')
+    if not _ron:
+        _ron = 1
+        print 'warning ron not defined'
+    if not _gain:
+        _gain = 1
+        print 'warning ron not defined'
 
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
@@ -92,8 +100,8 @@ def psffit2(img, fwhm, psfstars, hdr, _datamax=45000, psffun='gauss'):
     iraf.photpars.apertures = '%d,%d,%d' % (a2, a3, a4)
     iraf.datapars.datamin = -100
     iraf.datapars.datamax = _datamax
-    iraf.datapars.readnoise = lsc.util.readkey3(hdr, 'ron')
-    iraf.datapars.epadu = lsc.util.readkey3(hdr, 'gain')
+    iraf.datapars.readnoise = _ron
+    iraf.datapars.epadu = _gain
     iraf.datapars.exposure = 'EXPTIME'  #lsc.util.readkey3(hdr,'exptime')
     iraf.datapars.airmass = ''
     iraf.datapars.filter = ''
@@ -122,6 +130,14 @@ def psffit2(img, fwhm, psfstars, hdr, _datamax=45000, psffun='gauss'):
 
 def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'):
     import lsc
+    _ron = lsc.util.readkey3(hdr, 'ron')
+    _gain = lsc.util.readkey3(hdr, 'gain')
+    if not _ron:
+        _ron = 1
+        print 'warning ron not defined'
+    if not _gain:
+        _gain = 1
+        print 'warning ron not defined'
 
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
@@ -134,8 +150,8 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'
     iraf.photpars.apertures = '%d,%d,%d' % (a2, a3, a4)
     iraf.datapars.datamin = -100
     iraf.datapars.datamax = _datamax
-    iraf.datapars.readnoise = lsc.util.readkey3(hdr, 'ron')
-    iraf.datapars.epadu = lsc.util.readkey3(hdr, 'gain')
+    iraf.datapars.readnoise = _ron
+    iraf.datapars.epadu = _gain
     iraf.datapars.exposure = 'EXPTIME'
     iraf.datapars.airmass = ''
     iraf.datapars.filter = ''
@@ -206,7 +222,9 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
         elif instrument in ['em01']:
             scale = pixelscale
             _datamax = 65000
-
+        elif instrument in ['other']:
+            scale = pixelscale
+            _datamax = 65000
         _wcserr = lsc.util.readkey3(hdr, 'wcserr')
         print _wcserr
         if float(_wcserr) == 0:

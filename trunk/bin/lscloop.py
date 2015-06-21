@@ -38,7 +38,7 @@ if __name__ == "__main__":
                            ' diff, template, cosmic] \t [%default]')
     parser.add_option("-s", "--stage", dest="stage", default='', type="str",
                       help='-s stage [wcs, psf, psfmag, zcat, abscat, mag, getmag, merge, diff, makestamp,'
-                           ' template, apmag, cosmic] \t [%default]')
+                           ' template, apmag, cosmic, ingestsloan] \t [%default]')
     parser.add_option("--RAS", dest="ras", default='', type="str",
                       help='-RAS  ra    \t [%default]')
     parser.add_option("--DECS", dest="decs", default='', type="str",
@@ -145,7 +145,7 @@ if __name__ == "__main__":
             os.system(newcommand) # redo this command with lsccheck.py instead of lscloop.py
             sys.exit()
         elif _stage not in ['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'local', 'getmag', 'merge', 'diff',
-                            'template', 'makestamp', 'apmag', 'cosmic']:
+                            'template', 'makestamp', 'apmag', 'cosmic', 'ingestsloan']:
             sys.argv.append('--help')
     if _bad:
         if _bad not in ['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'goodcat', 'quality', 'cosmic', 'diff']:
@@ -238,7 +238,7 @@ if __name__ == "__main__":
         listepoch = [re.sub('-', '', str(i)) for i in [start + datetime.timedelta(days=x)
                                                        for x in range(0, 1 + (stop - start).days)]]
 
-    if not _stage or _stage in ['local', 'getmag', 'wcs', 'psf', 'psfmag', 'makestamp', 'cosmic', 'apmag']:
+    if not _stage or _stage in ['local', 'getmag', 'wcs', 'psf', 'psfmag', 'makestamp', 'cosmic', 'apmag','ingestsloan']:
         if len(listepoch) == 1:
             lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', str(listepoch[0]), '', '*',
                                                 _telescope)
@@ -300,6 +300,9 @@ if __name__ == "__main__":
                 lsc.myloopdef.run_apmag(ll['filename'], 'photlco')
             elif _stage == 'cosmic':
                 lsc.myloopdef.run_cosmic(ll['filename'], 'photlco', 4.5, 0.2, 4, _redo)
+            elif _stage == 'ingestsloan':
+                listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
+                lsc.myloopdef.run_ingestsloan(listfile, 'sloan')
         else:
             print '\n### no data selected'
     # ################################################

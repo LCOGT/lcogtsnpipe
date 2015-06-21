@@ -229,7 +229,7 @@ def insert_values(conn,table,values):
 # delete from dataraw where filename='test';
 #######################################
 
-def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''):
+def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object='',lista=''):
    import glob,string,os,re,sys
    import lsc
    from mysqldef import dbConnect
@@ -313,9 +313,13 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
              imglist=imglist+glob.glob(directory+'*0.fits')
              print imglist
     elif telescope in ['tar']:
+       if lista:
+          imglist0 = lista
+       else:
+          imglist0=glob.glob('*fits')   
+
        import lsc
        from lsc.util import readkey3,readhdr
-       imglist0=glob.glob('*fits')
        imglist=[]
        instrumentlist=[]
        tellist=[]

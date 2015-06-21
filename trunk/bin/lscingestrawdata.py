@@ -16,7 +16,9 @@ usage = "%prog  instrument -e epoch"
 if __name__ == "__main__":
     parser = OptionParser(usage=usage, description=description, version="%prog 1.0")
     parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str",
-                      help='name -T telescope elp,fts, ftn, lsc, cpt, all, coj, ogg   \t [%default]')
+                      help='name -T telescope elp,fts, ftn, lsc, cpt, all, coj, ogg, tar   \t [%default]')
+    parser.add_option("--list", dest="lista", default='', type="str",
+                      help='list of files to ingest    \t [%default]')
     parser.add_option("-i", "--instrument", dest="instrument", default='', type="str",
                       help='name -i instrument ' + ', '.join(lsc.util.instrument0['all']) + ' \t [%default]')
     parser.add_option("-f", "--force", dest="force", action="store_true")
@@ -29,6 +31,7 @@ if __name__ == "__main__":
 
     option, args = parser.parse_args()
     _type = option.type
+    _list = option.lista 
     _instrument = option.instrument
     _telescope = option.telescope
     _object = option.object
@@ -41,6 +44,10 @@ if __name__ == "__main__":
 
     if _type not in ['oracproc','quicklook','pylcogt']:
         sys.argv.append('--help')
+    if _list:
+        lista = string.split(_list,',')
+    else:
+        lista=''
 
     option, args = parser.parse_args()
 
@@ -60,4 +67,4 @@ if __name__ == "__main__":
         _force = False
 
     print _instrument, listepoch, _force, _type, _telescope
-    lsc.mysqldef.ingestdata(_telescope, _instrument, listepoch, _force, _type,_object)
+    lsc.mysqldef.ingestdata(_telescope, _instrument, listepoch, _force, _type,_object,lista)

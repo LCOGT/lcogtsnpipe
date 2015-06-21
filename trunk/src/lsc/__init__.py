@@ -4,6 +4,7 @@ from lscabsphotdef import *
 from lscsnoopy import *
 from sqlcl import *
 from sites import *
+from externaldata import *
 from myloopdef import *
 from cosmics import *
 

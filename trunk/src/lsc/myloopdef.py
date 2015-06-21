@@ -1884,6 +1884,22 @@ def run_merge(imglist, _redu=False):
     print command
     os.system(command)
 
+########################################################################################
+
+def run_ingestsloan(imglist,imgtype = 'sloan'):
+    import lsc
+    from lsc import conn
+    from lsc import readkey3, readhdr
+    if imgtype =='sloan':
+        for img in imglist:
+            sloanimage0 = lsc.sloanimage(img)
+            lsc.mysqldef.ingestdata('tar', '', ['20121212'], False, 'oracproc', '', [sloanimage0])
+            lsc.mysqldef.ingestredu([sloanimage0], True, 'photlco')
+            dd = lsc.mysqldef.query(['select id from photlco where filename = "'+str(sloanimage0)+'"'],conn)
+            lsc.mysqldef.updatevalue('photlco','filetype',4,sloanimage0,'lcogt2','filename')
+    else:
+        print 'add here ingestion of different images (DES,PS1)'
+
 
 #####################################################################
 def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convolve=''):

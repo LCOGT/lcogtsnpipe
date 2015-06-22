@@ -760,8 +760,10 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
 
    if 'TELID' in hd:
       _tel=hd['TELID']
+   elif 'telescop' in hd:
+      _tel = hd['telescop']
    else:
-      _tel='other'
+      _tel='extdata'
 
    if _tel in ['fts','ftn']:
       lsc.delete('new.fits')

@@ -152,11 +152,11 @@ def run_getmag(imglist, _field, _output='', _interactive=False, _show=False, _bi
 
     keytelescope = {'1m0-03': '3', '1m0-04': '4', '1m0-05': '5', '1m0-06': '6', '1m0-07': '7', '1m0-08': '8',
                     '1m0-09': '9', '1m0-10': '10', \
-                    '1m0-11': '11', '1m0-12': '12', '1m0-13': '13', 'fts': '14', 'ftn': '15', 'other': '20',
+                    '1m0-11': '11', '1m0-12': '12', '1m0-13': '13', 'fts': '14', 'ftn': '15', 'SDSS': '20',
                     'ogg': '15', '2m0-02': '15', '2m0-01': '14'}
 
     if _tel not in keytelescope.keys():
-        _tel = 'other'
+        _tel = 'extdata'
 
     linetot = {}
     if _output:

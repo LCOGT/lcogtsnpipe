@@ -258,7 +258,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output=''):
             pixelscale = 0.387  # 1 meter
             _imagesize =  4020
     if not output:
-        output = _telescope+'_other_'+str(_dayobs)+'_'+str(_filter)+'.fits'
+        output = _telescope+'_SDSS_'+str(_dayobs)+'_'+str(_filter)+'.fits'
 
     line = 'swarp ' + ' '.join(imglist) + ' -IMAGEOUT_NAME ' + str(output) + ' -WEIGHTOUT_NAME ' + \
                    re.sub('.fits', '', output) + '.weight.fits -RESAMPLE_DIR ' + \
@@ -296,8 +296,8 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output=''):
     hd.update('RA',      _ra,    'RA')
     hd.update('DEC',     _dec,    'DEC')
     hd.update('RDNOISE',     _ron, 'read out noise')
-    hd.update('TELESCOP', 'other', 'The Name of the Telescope')
-    hd.update('INSTRUME', 'other', 'Instrument used')
+    hd.update('TELESCOP', 'SDSS', 'The Name of the Telescope')
+    hd.update('INSTRUME', 'SDSS', 'Instrument used')
     hd.update('PIXSCALE', pixelscale, '[arcsec/pixel] Nominal pixel scale on sky')
     hd.update('FILTER', _filter, 'Instrument used')
     hd.update('DAYOBS', _dayobs, 'day of observation')

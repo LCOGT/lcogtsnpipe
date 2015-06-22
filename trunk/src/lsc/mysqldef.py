@@ -529,20 +529,6 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
             filepath = re.sub(string.split(img,'/')[-1],'',img)
             
             if _ra and _dec and _mjd and _filter and _dateobs:
-#               headers = {'L1FWHM': [5,'FHWM (arcsec) - computed with sectractor'],\
-#                             'WCSERR' : [0,'Error status of WCS fit. 0 for no error'],\
-#                             'TELESCOP': ['other','The Name of the Telescope'],\
-#                             'INSTRUME': ['other','Instrument used'],\
-#                             'PIXSCALE': [0.301,'arcsec/pixel] Nominal pixel scale on sky'],\
-#                             'DAYOBS': [_dayobs,''], 'FILTER': [_filter,'Filter used']}
-#               if 'airmass' not in hdr:
-#                  headers['airmass'] = 1
-#               print headers
-#               output = 'other_'+str(_dayobs)+'_'+str(_filter)+'.fits'
-#               os.system('cp '+img+' '+output)
-#               img =  output
-#               lsc.util.updateheader(img, 0, headers)
-#               print 'good to add'
                _targetid=lsc.mysqldef.targimg(img)
                dictionary={'telescope':_telescope,\
                               'fwhm': _fwhm ,\
@@ -635,7 +621,7 @@ def ingestredu(imglist,force='no',datatable='photlco'):
       elif [i for i in ['2m001','2m002'] if i in img]: _type='2m'
       elif [i for i in ['1m003','1m004','1m005','1m008','1m009','1m010','1m011','1m012','1m013'] if i in img]: _type='1m'
       else:
-         _type='other'
+         _type='extdata'
 #         sys.exit('error: problem with '+img)
 
       exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
@@ -836,7 +822,7 @@ def ingestredu(imglist,force='no',datatable='photlco'):
                os.system('cp '+_dir+img+' '+dictionary['filepath']+img)
                os.chmod(dictionary['filepath']+img,0664)
 
-         elif _type=='other':
+         elif _type=='extdata':
             print _type
             import lsc
             from lsc.util import readkey3,readhdr

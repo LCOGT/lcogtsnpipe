@@ -175,7 +175,7 @@ def downloadsdss(_ra,_dec,_band,_radius=20):
        filevec=[]
        print len(pointing)
        for _run in pointing:
-          im = SDSS.get_images(run = _run[0], camcol = _run[1], field= _run[2], band='r', cache=False)
+          im = SDSS.get_images(run = _run[0], camcol = _run[1], field= _run[2], band='r', cache=True)
           output1 = _band+'_SDSS_'+str(_run[0])+'_'+str(_run[1])+'_'+str(_run[2])+'.fits'
           output2 = _band+'_SDSS_'+str(_run[0])+'_'+str(_run[1])+'_'+str(_run[2])+'c.fits'
           if os.path.isfile(output1):
@@ -223,6 +223,7 @@ def downloadsdss(_ra,_dec,_band,_radius=20):
 def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output=''):
     import re
     import datetime
+    import lsc
     hdr = pyfits.getheader(imglist[0])
     _filter = hdr.get('filter')
     filt={'U':'U','B':'B','V':'V','R':'R','I':'I','u':'up','g':'gp','r':'rp','i':'ip','z':'zs'}
@@ -316,12 +317,47 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output=''):
     out_fits.writeto(output, clobber=True, output_verify='fix')
     for img in imglist:
        os.system('rm '+img)
+#    answ='no'
+#    while answ in ['no','n','N','No']:
+#       answ = raw_input('flip, rotate the image ((n)o, rotate 180 (r), flip (x), flip (y)) [n] ')
+#       if answ in ['180','r']:
+#          output = rotateflipimage(output,rot180=True,flipx=False,flipy=False)
+#       elif answ in ['x']:
+#          output = rotateflipimage(output,rot180=False,flipx=True,flipy=False)
+#       elif answ in ['y']:
+#          output = rotateflipimage(output,rot180=False,flipx=False,flipy=True)
+#       _=lsc.display_image(output,2,True,'','')
+#       answ = raw_inpu('again  ? [y/n] [n] ')
+#       if not answ:
+#          answ = 'n'          
     return output
 
+def rotateflipimage(img,rot180=False,flipx=False,flipy=False):
+   import pyfits
+   import os
+   hd = pyfits.getheader(img)
+   ar = pyfits.getdata(img)
+   new_header = hd
+   CD1_1 = hd['CD1_1']
+   CD2_2 = hd['CD2_2']
+   if rot180:
+      new_header['CD1_1']  = CD1_1*(-1)
+      new_header['CD2_2']  = CD2_2*(-1)
+      ar = np.rot90(np.rot90(ar))
+   if flipy:
+      new_header['CD2_2']  = CD2_2*(-1)
+      ar = np.flipud(ar)
+   if flipx:
+      new_header['CD1_1']  = CD1_1*(-1)
+      ar = np.fliprl(ar)
+   os.system('rm '+img)
+   out_fits = pyfits.PrimaryHDU(header=new_header, data=ar)
+   out_fits.writeto(img, clobber=True, output_verify='fix')
 
 ##################################################################################
 def sloanimage(img):
-   from lsc import readhdr, readkey3,deg2HMS
+   from lsc import readhdr, readkey3,deg2HMS,display_image
+   _ = display_image(img,1,True,'','')
    hdr = readhdr(img)
    _ra = readkey3(hdr,'RA')
    _dec = readkey3(hdr,'DEC')
@@ -335,7 +371,7 @@ def sloanimage(img):
       _band = _filter
 
    _radius = 1000
-   #_ra,_dec = deg2HMS(_ra,_dec)
+   _ra,_dec = deg2HMS(_ra,_dec)
    print _ra,_dec,_band,_radius
    frames =  downloadsdss(_ra,_dec,_band, _radius)
 

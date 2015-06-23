@@ -55,7 +55,7 @@ if __name__ == "__main__":
                         help='Number of image region in x y directions \t [%default]')
     hotpants.add_option("--nsxy", dest="nsxy", default='8,8',
                         help="Number of region's stamps in x y directions\t [%default]")
-    hotpants.add_option("--ko", dest="ko", default='1',
+    hotpants.add_option("--ko", dest="ko", default='2',
                         help='spatial order of kernel variation within region\t [%default]')
     hotpants.add_option("--bgo", dest="bgo", default='1',
                         help='spatial order of background variation within region \t [%default]')
@@ -203,17 +203,34 @@ if __name__ == "__main__":
                         lsc.util.delete(imgout)
                         lsc.util.delete(tempmask)
                         lsc.util.delete(targmask)
-
                         iraf.imcopy(_dir + imgtarg0, imgtarg, verbose='yes')
                         iraf.imcopy(_dir + targmask0, targmask, verbose='yes')
+#                        try:
                         iraf.immatch.gregister(_dirtemp + imgtemp0, imgtemp, "tmp$db", "tmpcoo", geometr="geometric",
                                                interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
-                        iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
+                        print 'here' 
+                        try:
+                            iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
+                                               interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+                        except:
+                            print 'try again'
+                            # this is strange, sometime the registration of the msk fail the first time, but not the second time
+                            iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
                                                interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
-#                        if hdtar['INSTRUME'] in lsc.util.instrument0['sbig']:
-#                            iraf.imarith(imgtarg, '+', '200', imgtarg, verbose='yes')
-#                            iraf.imarith(imgtemp, '+', '200', imgtemp, verbose='yes')
+#                        print 'warning: registration failed '
+#                        hd = pyfits.getheader(_dirtemp + imgtemp0)
+#                        ar = pyfits.getdata(_dirtemp + imgtemp0)
+#                        ar = np.rot90(np.rot90(ar))
+#                        new_header = hd
+#                        CD1_1 = hd['CD1_1']
+#                        CD2_2 = hd['CD2_2']
+#                        new_header['CD1_1']  = CD1_1*(-1)
+#                        new_header['CD2_2']  = CD2_2*(-1)
+#                        out_fits = pyfits.PrimaryHDU(header=new_header, data=ar)
+#                        out_fits.writeto('flip.fits', clobber=True, output_verify='fix')
+#                        print "try flipping the template image\n cp flip.fits "+_dirtemp + imgtemp0+'\n and run again psf and cosmic'
+                        #sys.exit()
 
                         if _show:
                             iraf.display(imgtemp, frame=4, fill='yes')
@@ -271,11 +288,11 @@ if __name__ == "__main__":
 
                         # hotpants parameters
                         iuthresh = str(sat_targ)                        # upper valid data count, image
-                        iucthresh = str(0.9*sat_targ)                   # upper valid data count for kernel, image
+                        iucthresh = str(0.95*sat_targ)                   # upper valid data count for kernel, image
                         tuthresh = str(sat_temp)                        # upper valid data count, template
-                        tucthresh = str(0.9*sat_targ)                   # upper valid data count for kernel, template
-                        rkernel = str(np.median([7, 1.5*max_fwhm, 15])) # convolution kernel half width
-                        radius = str(np.median([10, 2.0*max_fwhm, 20])) # HW substamp to extract around each centroid
+                        tucthresh = str(0.95*sat_temp)                   # upper valid data count for kernel, template
+                        rkernel = str(np.median([10, 2.*max_fwhm, 20])) # convolution kernel half width
+                        radius = str(np.median([15, 3.0*max_fwhm, 25])) # HW substamp to extract around each centroid
                         sconv = '-sconv'                                # all regions convolved in same direction (0)
 
                         normalize = _normalize  #normalize to (t)emplate, (i)mage, or (u)nconvolved (t)
@@ -305,6 +322,7 @@ if __name__ == "__main__":
                                 _afssc + ' -rss ' + str(radius) +
                                 _convolve + ' -n ' + normalize + ' ' + sconv +
                                 ' -ko ' + ko + ' -bgo ' + bgo)
+
 
                         print line
                         os.system(line)

@@ -131,8 +131,10 @@ if __name__ == "__main__":
                     kk = lsc.sites.extintion('southafrica')
                 elif dicti[_filter][img]['telescope'] in ['ftn', '2m0-01']:
                     kk = lsc.sites.extintion('mauna')
-                elif dicti[_filter][img]['telescope'] in ['1m0-11', 'coj', 'fts', '2m0-02']:
+                elif dicti[_filter][img]['telescope'] in ['1m0-03','1m0-11', 'coj', 'fts', '2m0-02']:
                     kk = lsc.sites.extintion('siding')
+                elif dicti[_filter][img]['telescope'] in ['SDSS']:
+                    kk = lsc.sites.extintion('mcdonald')
                 else:
                     print dicti[_filter][img]['telescope']
                     sys.exit('problem with dicti 1')
@@ -155,8 +157,10 @@ if __name__ == "__main__":
                     kk = lsc.sites.extintion('southafrica')
                 elif dicti[_filter][img]['telescope'] in ['ftn', '2m0-01']:
                     kk = lsc.sites.extintion('mauna')
-                elif dicti[_filter][img]['telescope'] in ['1m0-11', 'coj', 'fts', '2m0-02']:
+                elif dicti[_filter][img]['telescope'] in ['1m0-03','1m0-11', 'coj', 'fts', '2m0-02']:
                     kk = lsc.sites.extintion('siding')
+                elif dicti[_filter][img]['telescope'] in ['SDSS']:
+                    kk = lsc.sites.extintion('mcdonald')
                 else:
                     print dicti[_filter2][img2]
                     sys.exit('problem with dicti 2')

@@ -3,11 +3,11 @@ import sys
 
 host = socket.gethostname()
 if host in ['wwwdevsba']:
-   workdirectory =  '/home/supernova/public_html/data/'
+   workdirectory =  '/home/supernova/'
    configfile = 'configure'
 elif host in ['svalenti-linux.lco.gtn','cc3.lco.gtn','griffin-linux.lco.gtn',\
                  'cmccully-linux.lco.gtn','iarcavi-linux.lco.gtn','campus-055-064.ucdavis.edu']:
-   workdirectory =  '/science/supernova/data/'
+   workdirectory =  '/science/supernova/'
    configfile = 'configure'
 elif 'valenti' in host:
    workdirectory =  '/science/supernova/data/'

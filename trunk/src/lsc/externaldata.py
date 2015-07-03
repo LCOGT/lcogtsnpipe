@@ -2,9 +2,14 @@ import pyfits
 import os
 import numpy as np
 import lsc
+import datetime
+
+def jd2date(inputjd):
+ jd0 = 2451544.5 # On Jan 1, 2000 00:00:00
+ return datetime.datetime(2000,01,01,00,00,00)+datetime.timedelta(days=inputjd-jd0)
+
 
 def MJDnow(datenow='',verbose=False):
-   import datetime
    import time
    _JD0=55927.
    if not datenow:
@@ -220,36 +225,13 @@ def downloadsdss(_ra,_dec,_band,_radius=20):
     else:
        return ''
 
-def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output=''):
+def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='',survey='sloan'):
     import re
     import datetime
     import lsc
     import time
-    hdr = pyfits.getheader(imglist[0])
-    _filter = hdr.get('filter')
-    filt={'U':'U','B':'B','V':'V','R':'R','I':'I','u':'up','g':'gp','r':'rp','i':'ip','z':'zs'}
-    if _filter in filt.keys():
-        _filter = filt[_filter]
+    import string
 
-    _camcol = hdr.get('CAMCOL')
-    _gain   = hdr.get('gain')
-    _ron   = hdr.get('rdnoise')
-    if 'day-obs' in hdr:
-        _dayobs = hdr.get('dayobs')
-    else:
-        _dayobs = re.sub('-','',hdr.get('date-obs'))
-    if 'airmass' in hdr:
-        _airmass = hdr.get('airmass')
-    else:
-        _airmass = 1
-    if 'MJD-OBS' in hdr:
-        _mjd = hdr.get('MJD-OBS')
-    else:
-        _mjd = MJDnow(datetime.datetime(int(str(_dayobs)[0:4]),int(str(_dayobs)[4:6]),int(str(_dayobs)[6:8])))
-    if not _ra:
-        _ra = hdr.get('CRVAL1')
-    if not _dec:
-        _dec = hdr.get('CRVAL2')
     if _telescope == 'spectral':
         pixelscale = 0.30104  # 2 meter
         _imagesize =  2020
@@ -259,8 +241,70 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output=''):
     elif _telescope == 'sinistro':
             pixelscale = 0.387  # 1 meter
             _imagesize =  4020
+
+    if survey =='sloan':
+       out1 = 'SDSS'
+       hdr = pyfits.getheader(imglist[0])
+       _filter = hdr.get('filter')
+       _gain   = hdr.get('gain')
+       _ron   = hdr.get('rdnoise')
+       if not _ra:
+          _ra = hdr.get('CRVAL1')
+       if not _dec:
+          _dec = hdr.get('CRVAL2')
+       _saturate = hdr.get('SATURATE')
+    elif survey =='ps1':
+       out1 = 'PS1'
+       imglist2=[]
+       for i,img in enumerate(imglist):
+           print i,img
+           hdr = pyfits.open(img)
+           if os.path.isfile(re.sub('.fits','_1.fits',img)):
+              os.system('rm '+re.sub('.fits','_1.fits',img))
+           pyfits.writeto(re.sub('.fits','_1.fits',img),hdr[1].data,hdr[1].header)
+           imglist2.append(re.sub('.fits','_1.fits',img))
+
+       imglist = imglist2
+       hdr = pyfits.getheader(imglist[0])
+       _saturate = hdr.get('HIERARCH CELL.SATURATION')
+       _filter = string.split(hdr.get('HIERARCH FPA.FILTER'),'.')[0]
+       _gain   = hdr.get('HIERARCH CELL.GAIN')
+       _ron   = hdr.get('HIERARCH CELL.READNOISE')
+       if not _ra:
+          _ra = hdr.get('RA_DEG')
+       if not _dec:
+          _dec = hdr.get('DEC_DEG')
+
+    #  airmass
+    if 'airmass' in hdr:
+        _airmass = hdr.get('airmass')
+    else:
+        _airmass = 1
+    #  mjd
+    if 'MJD-OBS' in hdr:
+        _mjd = hdr.get('MJD-OBS')
+    else:
+        _mjd = MJDnow(datetime.datetime(int(str(_dayobs)[0:4]),int(str(_dayobs)[4:6]),int(str(_dayobs)[6:8])))
+
+    #  filters
+    filt={'U':'U','B':'B','V':'V','R':'R','I':'I','u':'up','g':'gp','r':'rp','i':'ip','z':'zs'}
+    if _filter in filt.keys():
+        _filter = filt[_filter]
+
+    if 'date-obs' in hdr:
+       _dataobs = hdr.get('date-obs')
+    else:
+       _dateobs = jd2date(_mjd+2400000.5).strftime('%Y-%d-%m')
+
+    if 'day-obs' in hdr:
+       _dayobs = hdr.get('dayobs')
+    elif 'date-obs' in hdr:
+       _dayobs = re.sub('-','',hdr.get('date-obs'))
+    else:
+       _dayobs = jd2date(_mjd+2400000.5).strftime('%Y%d%m')
+
     if not output:
-        output = _telescope+'_SDSS_'+str(_dayobs)+'_'+str(_filter)+'.fits'
+       output = _telescope+'_'+str(out1)+'_'+str(_dayobs)+'_'+str(_filter)+'.fits'
 
     line = 'swarp ' + ' '.join(imglist) + ' -IMAGEOUT_NAME ' + str(output) + ' -WEIGHTOUT_NAME ' + \
                    re.sub('.fits', '', output) + '.weight.fits -RESAMPLE_DIR ' + \
@@ -271,40 +315,34 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output=''):
                    ' -RDNOISE_DEFAULT ' + str(_ron) + ' -GAIN_KEYWORD NONONO ' + '-GAIN_DEFAULT ' +\
                    str(_gain)
 
-#    line2 = 'swarp ' + ' '.join(imglist) + ' -IMAGEOUT_NAME  ' + re.sub('.fits', '', output) + '.noise.fits' +\
-#                    ' -WEIGHTOUT_NAME ' + re.sub('.fits', '', output) + '.mask.fits' +\
-#                    ' -SM_MKNOISE Y -BPMAXWEIGHTFRAC 0.2 ' + '-BPADDFRAC2NOISE 0.1 -RESAMPLE_DIR' +\
-#                    ' ./ -RESAMPLE_SUFFIX .swarptemp.fits -COMBINE Y -RESAMPLING_TYPE LANCZOS3 -VERBOSE_TYPE NORMAL '+\
-#                    '-SUBTRACT_BACK N  -INTERPOLATE Y -PIXELSCALE_TYPE MANUAL,MANUAL -PIXEL_SCALE ' + str(pixelscale)+\
-#                    ',' + str(pixelscale) + ' -IMAGE_SIZE ' + str(_imagesize) + ',' + str(_imagesize) + \
-#                    ' -CENTER_TYPE MANUAL,MANUAL -CENTER ' + str(_ra) + ',' + str(_dec) + \
-#                    ' -RDNOISE_DEFAULT ' + str(_ron) + ' -GAIN_KEYWORD NONONO -GAIN_DEFAULT ' + str(_gain)
     os.system(line)
     hd = pyfits.getheader(output)
     ar = pyfits.getdata(output)
     ar = np.where(ar <= 0, np.mean(ar[np.where(ar > 0)]), ar)
 
-    keyw = ['FILTER','TELESCOP','DATE-OBS','gain','ron','saturate']
-    for jj in keyw:
-        try:
-            hd.update(jj, hdr[jj], hdr.comments[jj])
-        except:
-            print 'problem',jj
-            pass
-
     hd.update('L1FWHM', 9999, 'FHWM (arcsec) - computed with sectractor')
     hd.update('WCSERR', 0,    'Error status of WCS fit. 0 for no error')
-    hd.update('MJD-OBS', _mjd,    'MJD')
-    hd.update('RA',      _ra,    'RA')
-    hd.update('DEC',     _dec,    'DEC')
-    hd.update('RDNOISE',     _ron, 'read out noise')
-    hd.update('TELESCOP', 'SDSS', 'The Name of the Telescope')
-    hd.update('INSTRUME', 'SDSS', 'Instrument used')
+    hd.update('MJD-OBS', _mjd,        'MJD')
+    hd.update('RA'     ,  _ra,        'RA')
+    hd.update('DEC'    ,  _dec,       'DEC')
+    hd.update('RDNOISE' , _ron,       'read out noise')
     hd.update('PIXSCALE', pixelscale, '[arcsec/pixel] Nominal pixel scale on sky')
-    hd.update('FILTER', _filter, 'Instrument used')
-    hd.update('DAYOBS', _dayobs, 'day of observation')
-    hd.update('AIRMASS', _airmass, 'day of observation')
+    hd.update('FILTER' , _filter,     'Instrument used')
+    hd.update('DAYOBS' , _dayobs,     'day of observation')
+    hd.update('AIRMASS', _airmass,    'day of observation')
+    hd.update('DATE-OBS', _dateobs,    'date of observation')
+    hd.update('GAIN'   ,    _gain,    ' gain ')
+    hd.update('saturate', _saturate,  ' saturatiopn level ')
+    if objname:
+       hd.update('OBJECT', objname, 'Title of the dataset')
 
+    if survey == 'sloan':
+       hd.update('TELESCOP', 'SDSS', 'The Name of the Telescope')
+       hd.update('INSTRUME', 'SDSS', 'Instrument used')
+    elif survey == 'ps1':
+       hd.update('TELESCOP', 'PS1', 'The Name of the Telescope')
+       hd.update('INSTRUME', 'PS1', 'Instrument used')
+       
     new_header = hd
     # sinistro images are rotated 180 degree
     if _telescope == 'sinistro':
@@ -360,25 +398,22 @@ def rotateflipimage(img,rot180=False,flipx=False,flipy=False):
    return img
 
 ##################################################################################
-def sloanimage(img):
+def sloanimage(img,survey='sloan',frames=[]):
    from lsc import readhdr, readkey3,deg2HMS,display_image
    _ = display_image(img,1,True,'','')
    hdr = readhdr(img)
    _ra = readkey3(hdr,'RA')
    _dec = readkey3(hdr,'DEC')
+   _object = readkey3(hdr,'object')
    _instrume = readkey3(hdr,'instrume')
    _filter = readkey3(hdr,'filter')
+   _radius = 1000
    filt={'up':'u','gp':'g','rp':'r','ip':'i','zs':'z'}
 
    if _filter in filt.keys():
       _band = filt[_filter]
    else:
       _band = _filter
-
-   _radius = 1000
-   #_ra,_dec = deg2HMS(_ra,_dec)
-   print _ra,_dec,_band,_radius
-   frames =  downloadsdss(_ra,_dec,_band, _radius)
 
    if _instrume in lsc.instrument0['spectral']:
       _telescope = 'spectral'
@@ -387,9 +422,17 @@ def sloanimage(img):
    elif _instrume in lsc.instrument0['sbig']:
       _telescope = 'sbig'
 
-   out = sdss_swarp(frames,_telescope,_ra,_dec,'')
-   return out
+   #_ra,_dec = deg2HMS(_ra,_dec)
+   print _ra,_dec,_band,_radius
+   if survey == 'sloan':
+      frames =  downloadsdss(_ra,_dec,_band, _radius)
+   elif survey == 'ps1':
+      if len(frames) == 0:
+         sys.exit('for PS1 you need to download the images manually and give a vector as input')
 
+   out = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey)
+   return out
+   
 ####################################################
 #img = 'tmp/elp1m008-kb74-20141224-0071-e90.fits'
 #img = 'tmp/lsc1m009-fl03-20150605-0170-e90.fits'

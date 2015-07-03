@@ -133,7 +133,7 @@ if __name__ == "__main__":
             except Exception, e:
                 print e
                 rmsx3, rmsy3, num3, fwhmgess, ellgess, ccc, rasys3, decsys3, mbkg3 = '', '', '', '', '', '', '', '', ''
-                print '\n### problem with astrometry, do you have network ? '
+                print '\n### problem with astrometry, lsc.lscastrodef.lscastroloop crashed  '
             print img
             if fwhmgess and fwhmgess < 99:
                 print '\n### check astrometry: fine \n### rmsx rmsy nstars: ' + astrostring

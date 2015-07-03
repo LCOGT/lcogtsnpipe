@@ -225,6 +225,9 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
         elif instrument in ['SDSS']:
             scale = pixelscale
             _datamax = 65000
+        elif instrument in ['PS1']:
+            scale = pixelscale
+            _datamax = 65000
         elif instrument in ['extdata']:
             scale = pixelscale
             _datamax = 65000

@@ -182,6 +182,9 @@ def querycatalogue(catalogue,img,method='iraf'):
         if catalogue not in ['usnoa2','usnob1','2mass','apass']:
             if os.path.isfile(lsc.__path__[0]+'/standard/cat/'+catalogue):
                 stdcoo=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/'+catalogue)
+                if len(stdcoo['ra']) == 0:
+                    sys.exit('\n####  ERROR catalog empty: '+catalogue)
+
                 for jj in ['V','R','I','r','g','i','z','U','B']:
                     if jj in stdcoo.keys():
                         colonne4={catalogue:jj}
@@ -238,7 +241,6 @@ def querycatalogue(catalogue,img,method='iraf'):
             ddd2=iraf.wcsctran('STDIN','STDOUT',img,Stdin=lll,Stdout=1,inwcs='world',units='hour degrees',outwcs='logical',columns=colonne3,formats='%10.1f %10.1f')
         else:
             ddd2=iraf.wcsctran('STDIN','STDOUT',img,Stdin=lll,Stdout=1,inwcs='world',units='degree degrees',outwcs='logical',columns=colonne3,formats='%10.1f %10.1f')
-
         xx,yy=[],[]
         for i in ddd2[ddd2.index('# END CATALOG HEADER')+2:]:
             xx.append(float(i.split()[column['ra']-1]))
@@ -287,14 +289,13 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
     import math
     import datetime
     import time
+    import sys
 #    from datetime import datetime
     _imex=False
     for img in imglist:
         hdr=readhdr(img)
         _instrume=readkey3(hdr,'instrume')
         if catalogue=='inst' and _instrume in lsc.instrument0['all']:
-            #['fs01','fs02','fs03','em03','em01','kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79',\
-            #'fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10']: 
             catalogue='2mass'
         if not sexvec:
             sexvec=lsc.lscastrodef.sextractor(img)
@@ -306,6 +307,9 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
 #        ss=datetime.datetime.now()
 #        time.sleep(1)
         catvec=lsc.lscastrodef.querycatalogue(catalogue,img,method)
+        if len(catvec['ra']) == 0:
+            print 'cazzo'
+            sys.exit('ERROR: catalog empty '+catalogue)
         rmsx1,rmsy1,num1,fwhm1,ell1,ccc,bkg1,rasys1,decsys1=lscastrometry2([img],catalogue,_interactive,number1,sexvec,catvec,guess=False,fitgeo=_fitgeo,\
                                                                                  tollerance1=_tollerance1, tollerance2=_tollerance2,_update='yes',imex=_imex,nummin=_numin)
         if rmsx1>1 or rmsy1>1:
@@ -1243,8 +1247,8 @@ def finewcs(img):
     import os,string
     catvec=lsc.lscastrodef.querycatalogue('2mass',img,'vizir')
     namesex=lsc.util.defsex('default.sex')
-    os.system('sex '+img+' -c '+namesex+' -CATALOG_NAME pippo  > _logsex')
-    aaa=np.genfromtxt('pippo',float)
+    os.system('sex '+img+' -c '+namesex+' -CATALOG_NAME _temp_catalog  > _logsex')
+    aaa=np.genfromtxt('_temp_catalog',float)
     bbb=zip(*aaa)
     vector2=[str(k)+' '+str(v) for k,v in  zip(bbb[1],bbb[2])]
     colonne3=' 1   2 '

@@ -57,7 +57,7 @@ if __name__ == "__main__":
                         help="Number of region's stamps in x y directions\t [%default]")
     hotpants.add_option("--ko", dest="ko", default='2',
                         help='spatial order of kernel variation within region\t [%default]')
-    hotpants.add_option("--bgo", dest="bgo", default='1',
+    hotpants.add_option("--bgo", dest="bgo", default='2',
                         help='spatial order of background variation within region \t [%default]')
     hotpants.add_option("--afssc", dest="afssc", default=False,
                         action="store_true", help='use selected stamps \t\t\t [%default]')
@@ -203,6 +203,7 @@ if __name__ == "__main__":
                         lsc.util.delete(imgout)
                         lsc.util.delete(tempmask)
                         lsc.util.delete(targmask)
+                        lsc.util.delete('tempmask.fits')
                         iraf.imcopy(_dir + imgtarg0, imgtarg, verbose='yes')
                         iraf.imcopy(_dir + targmask0, targmask, verbose='yes')
 #                        try:
@@ -286,6 +287,11 @@ if __name__ == "__main__":
                         noiseimg[tempmask > 0] = sat_temp
                         pyfits.writeto('tempnoise.fits', noiseimg, output_verify='fix', clobber=True)
 
+                        # create mask image for template
+                        data_temp, head_temp
+                        mask = data_temp  == 0
+                        pyfits.writeto('tempmask.fits',mask.astype('i'))
+
                         # hotpants parameters
                         iuthresh = str(sat_targ)                        # upper valid data count, image
                         iucthresh = str(0.95*sat_targ)                   # upper valid data count for kernel, image
@@ -321,7 +327,7 @@ if __name__ == "__main__":
                                 ' -nsx ' + nsxy.split(',')[0] + ' -nsy ' + nsxy.split(',')[1] +
                                 _afssc + ' -rss ' + str(radius) +
                                 _convolve + ' -n ' + normalize + ' ' + sconv +
-                                ' -ko ' + ko + ' -bgo ' + bgo)
+                                ' -ko ' + ko + ' -bgo ' + bgo+' -tmi tempmask.fits  -okn -ng 4 9 0.70 6 1.50 4 3.00 2 5 ')
 
 
                         print line

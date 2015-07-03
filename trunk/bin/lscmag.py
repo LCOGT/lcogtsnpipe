@@ -37,7 +37,12 @@ def makecatalogue(imglist):
         for jj in hdr1:
             if jj[0:2] == 'ZP':
                 dicti[_filter][img][jj] = lsc.util.readkey3(hdr1, jj)
-        dicti[_filter][img]['mjd'] = lsc.util.readkey3(hdr1, 'mjd')
+        if 'mjd' in hdr1:
+            print 'cazzo'
+            dicti[_filter][img]['mjd'] = lsc.util.readkey3(hdr1, 'mjd')
+        elif 'MJD-OBS' in hdr1:
+            dicti[_filter][img]['mjd'] = lsc.util.readkey3(hdr1, 'MJD-OBS')
+#        dicti[_filter][img]['mjd'] = lsc.util.readkey3(hdr1, 'mjd')
         dicti[_filter][img]['exptime'] = _exptime
         dicti[_filter][img]['airmass'] = _airmass
         dicti[_filter][img]['telescope'] = _telescope
@@ -173,6 +178,8 @@ if __name__ == "__main__":
                         kk = lsc.sites.extintion('mauna')
                     elif dicti[_filter][img]['telescope'] in ['1m0-03', '1m0-11', 'fts', 'coj', '2m0-02']:
                         kk = lsc.sites.extintion('siding')
+                    elif dicti[_filter][img]['telescope'] in ['SDSS']:
+                        kk = lsc.sites.extintion('mcdonald')
                     else:
                         print _filter, img, dicti[_filter][img]
                         sys.exit('problem with dicti')
@@ -198,6 +205,8 @@ if __name__ == "__main__":
                         kk = lsc.sites.extintion('mauna')
                     elif dicti[_filter2][img2]['telescope'] in ['1m0-03', '1m0-11', 'coj', 'fts', '2m0-02']:
                         kk = lsc.sites.extintion('siding')
+                    elif dicti[_filter][img]['telescope'] in ['SDSS']:
+                        kk = lsc.sites.extintion('mcdonald')
                     else:
                         print dicti[_filter2][img2]
                         sys.exit('problem with dicti')  # instrumental mag corrected for exp time and airmass

@@ -38,7 +38,7 @@ if __name__ == "__main__":
                            ' diff, template, cosmic] \t [%default]')
     parser.add_option("-s", "--stage", dest="stage", default='', type="str",
                       help='-s stage [wcs, psf, psfmag, zcat, abscat, mag, getmag, merge, diff, makestamp,'
-                           ' template, apmag, cosmic, ingestsloan] \t [%default]')
+                           ' template, apmag, cosmic, ingestsloan, ingestps1] \t [%default]')
     parser.add_option("--RAS", dest="ras", default='', type="str",
                       help='-RAS  ra    \t [%default]')
     parser.add_option("--DECS", dest="decs", default='', type="str",
@@ -109,6 +109,8 @@ if __name__ == "__main__":
                       help='z2 \t [%default]')
     parser.add_option("--groupidcode", dest="groupidcode", default=None, type="int",
                       help='groupidcode \t [%default]')
+    parser.add_option("--ps1frames", dest="ps1frames", default='', type="str",
+                      help='--ps1frames list of ps1 frames \t (download them manually) \t [%default]')
 
     option, args = parser.parse_args()
     # _instrument=option.instrument
@@ -119,6 +121,7 @@ if __name__ == "__main__":
     _mode = option.mode
     _groupid=option.groupidcode
     _filetype = option.filetype
+    _ps1frames = option.ps1frames
     if not _groupid:
         _groupid=''
     _normalize = option.normalize
@@ -145,7 +148,7 @@ if __name__ == "__main__":
             os.system(newcommand) # redo this command with lsccheck.py instead of lscloop.py
             sys.exit()
         elif _stage not in ['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'local', 'getmag', 'merge', 'diff',
-                            'template', 'makestamp', 'apmag', 'cosmic', 'ingestsloan']:
+                            'template', 'makestamp', 'apmag', 'cosmic', 'ingestsloan', 'ingestps1']:
             sys.argv.append('--help')
     if _bad:
         if _bad not in ['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'goodcat', 'quality', 'cosmic', 'diff']:
@@ -238,7 +241,7 @@ if __name__ == "__main__":
         listepoch = [re.sub('-', '', str(i)) for i in [start + datetime.timedelta(days=x)
                                                        for x in range(0, 1 + (stop - start).days)]]
 
-    if not _stage or _stage in ['local', 'getmag', 'wcs', 'psf', 'psfmag', 'makestamp', 'cosmic', 'apmag','ingestsloan']:
+    if not _stage or _stage in ['local', 'getmag', 'wcs', 'psf', 'psfmag', 'makestamp', 'cosmic', 'apmag','ingestsloan', 'ingestps1']:
         if len(listepoch) == 1:
             lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', str(listepoch[0]), '', '*',
                                                 _telescope)
@@ -303,6 +306,11 @@ if __name__ == "__main__":
             elif _stage == 'ingestsloan':
                 listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                 lsc.myloopdef.run_ingestsloan(listfile, 'sloan')
+            elif _stage == 'ingestps1':
+                if not _ps1frames:
+                    sys.exit('ERROR: list of PS1 frames not provided ')
+                listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
+                lsc.myloopdef.run_ingestsloan(listfile, 'ps1', _ps1frames)
         else:
             print '\n### no data selected'
     # ################################################
@@ -471,17 +479,16 @@ if __name__ == "__main__":
                         else:
                             startdate = '20120101'
                             enddate   = '20150101'
+
+                        if _telescope == 'kb':
+                            _temptel = 'sbig'
+                        elif _telescope == 'fs':
+                            _temptel = 'spectral'
+                        elif _telescope == 'fl':
+                            _temptel = 'sinistro'
+                        print _temptel
+
                         lista1 = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _telescope)
-                        if not lista1:
-                            print 'no template found, search template from sloan/other telescopes'
-                            if _telescope == 'kb':
-                                _temptel = 'sbig'
-                            elif _telescope == 'fs':
-                                _temptel = 'spectral'
-                            elif _telescope == 'fl':
-                                _temptel = 'sinistro'
-                            print _temptel
-                            lista1 = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _temptel)
                         if lista1:
                             ll00 = {}
                             for jj in lista1[0].keys():
@@ -492,7 +499,25 @@ if __name__ == "__main__":
                             inds = argsort(ll00['mjd'])  #  sort by mjd
                             for i in ll00.keys():
                                 ll00[i] = take(ll00[i], inds)
-                            lltemp = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid)
+                            lltemp1 = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid)
+
+                        lista2 = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _temptel)
+                        if lista2:
+                            ll00 = {}
+                            for jj in lista2[0].keys():
+                                ll00[jj] = []
+                            for i in range(0, len(lista2)):
+                                for jj in lista2[0].keys():
+                                    ll00[jj].append(lista2[i][jj])
+                            inds = argsort(ll00['mjd'])  #  sort by mjd
+                            for i in ll00.keys():
+                                ll00[i] = take(ll00[i], inds)
+                            lltemp2 = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid)
+
+                        if len(lltemp1['id']):
+                            lltemp = lltemp1
+                        elif len(lltemp2['id']):
+                            lltemp = lltemp2
                         else:
                             sys.exit('template not found')
 

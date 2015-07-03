@@ -152,7 +152,7 @@ def run_getmag(imglist, _field, _output='', _interactive=False, _show=False, _bi
 
     keytelescope = {'1m0-03': '3', '1m0-04': '4', '1m0-05': '5', '1m0-06': '6', '1m0-07': '7', '1m0-08': '8',
                     '1m0-09': '9', '1m0-10': '10', \
-                    '1m0-11': '11', '1m0-12': '12', '1m0-13': '13', 'fts': '14', 'ftn': '15', 'SDSS': '20',
+                    '1m0-11': '11', '1m0-12': '12', '1m0-13': '13', 'fts': '14', 'ftn': '15', 'SDSS': '20',  'PS1': '20', \
                     'ogg': '15', '2m0-02': '15', '2m0-01': '14'}
 
     if _tel not in keytelescope.keys():
@@ -1886,19 +1886,31 @@ def run_merge(imglist, _redu=False):
 
 ########################################################################################
 
-def run_ingestsloan(imglist,imgtype = 'sloan'):
+def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames=''):
     import lsc
     from lsc import conn
     from lsc import readkey3, readhdr
     if imgtype =='sloan':
         for img in imglist:
-            sloanimage0 = lsc.sloanimage(img)
-            lsc.mysqldef.ingestdata('tar', '', ['20121212'], False, 'oracproc', '', [sloanimage0])
-            lsc.mysqldef.ingestredu([sloanimage0], True, 'photlco')
-            dd = lsc.mysqldef.query(['select id from photlco where filename = "'+str(sloanimage0)+'"'],conn)
-            lsc.mysqldef.updatevalue('photlco','filetype',4,sloanimage0,'lcogt2','filename')
+            image0 = lsc.sloanimage(img,'sloan','')
+    elif imgtype =='ps1':
+        print "WARNING: PS1 ingestion works at the moment with single object and filter\n "
+        print "please, do not provide multiple objects and filter in the same query"
+        if not ps1frames:
+            sys.exit('ERROR: you need to provide the PS1 files')
+        else:
+            frames = np.genfromtxt(ps1frames,str)
+        for img in imglist:
+            image0 = lsc.sloanimage(img,'ps1',frames)
     else:
-        print 'add here ingestion of different images (DES,PS1)'
+        image0=''
+        print 'add here ingestion of different images (DES)'
+
+    if image0:
+        lsc.mysqldef.ingestdata('tar', '', ['20121212'], False, 'oracproc', '', [image0])
+        lsc.mysqldef.ingestredu([image0], True, 'photlco')
+        dd = lsc.mysqldef.query(['select id from photlco where filename = "'+str(image0)+'"'],conn)
+        lsc.mysqldef.updatevalue('photlco','filetype',4,image0,'lcogt2','filename')        
 
 
 #####################################################################

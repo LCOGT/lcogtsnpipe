@@ -235,7 +235,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
     elif _telescope in ['1m0-03','1m0-11','coj','fts','Faulkes Telescope South']:    kk=lsc.sites.extintion('siding')
     elif _telescope in ['2m0-01']:    kk=lsc.sites.extintion('mauna')
     elif _telescope in ['2m0-02']:    kk=lsc.sites.extintion('siding')
-
+    elif _telescope in ['SDSS']:      kk=lsc.sites.extintion('mcdonald')  # to be replaces
 
     if _calib=='apass': _field='apass'
     if _field=='apass': _calib='apass'

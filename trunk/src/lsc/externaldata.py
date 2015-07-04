@@ -220,7 +220,7 @@ def downloadsdss(_ra,_dec,_band,_radius=20):
           frame_image_err = dn_err_image * calib_image
           pyfits.writeto(output2, dn_image.transpose(), new_header)
           filevec.append(output2)
-          os.system('rm '+output1)
+#          os.system('rm '+output1)
        return filevec
     else:
        return ''
@@ -253,6 +253,12 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        if not _dec:
           _dec = hdr.get('CRVAL2')
        _saturate = hdr.get('SATURATE')
+       if 'day-obs' in hdr:
+          _dayobs = hdr.get('dayobs')
+       elif 'date-obs' in hdr:
+          _dayobs = re.sub('-','',hdr.get('date-obs'))
+       _mjd = MJDnow(datetime.datetime(int(str(_dayobs)[0:4]),int(str(_dayobs)[4:6]),int(str(_dayobs)[6:8])))
+
     elif survey =='ps1':
        out1 = 'PS1'
        imglist2=[]
@@ -270,6 +276,8 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        _filter = string.split(hdr.get('HIERARCH FPA.FILTER'),'.')[0]
        _gain   = hdr.get('HIERARCH CELL.GAIN')
        _ron   = hdr.get('HIERARCH CELL.READNOISE')
+       _mjd = hdr.get('MJD-OBS')
+       _dayobs = jd2date(_mjd+2400000.5).strftime('%Y%d%m')
        if not _ra:
           _ra = hdr.get('RA_DEG')
        if not _dec:
@@ -280,11 +288,6 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
         _airmass = hdr.get('airmass')
     else:
         _airmass = 1
-    #  mjd
-    if 'MJD-OBS' in hdr:
-        _mjd = hdr.get('MJD-OBS')
-    else:
-        _mjd = MJDnow(datetime.datetime(int(str(_dayobs)[0:4]),int(str(_dayobs)[4:6]),int(str(_dayobs)[6:8])))
 
     #  filters
     filt={'U':'U','B':'B','V':'V','R':'R','I':'I','u':'up','g':'gp','r':'rp','i':'ip','z':'zs'}
@@ -292,16 +295,12 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
         _filter = filt[_filter]
 
     if 'date-obs' in hdr:
-       _dataobs = hdr.get('date-obs')
+       _dateobs = hdr.get('date-obs')
     else:
        _dateobs = jd2date(_mjd+2400000.5).strftime('%Y-%d-%m')
 
-    if 'day-obs' in hdr:
-       _dayobs = hdr.get('dayobs')
-    elif 'date-obs' in hdr:
-       _dayobs = re.sub('-','',hdr.get('date-obs'))
-    else:
-       _dayobs = jd2date(_mjd+2400000.5).strftime('%Y%d%m')
+    print imglist[0]
+    print _dateobs, _dayobs, _mjd, _filter, 
 
     if not output:
        output = _telescope+'_'+str(out1)+'_'+str(_dayobs)+'_'+str(_filter)+'.fits'
@@ -399,6 +398,7 @@ def rotateflipimage(img,rot180=False,flipx=False,flipy=False):
 
 ##################################################################################
 def sloanimage(img,survey='sloan',frames=[]):
+   import sys
    from lsc import readhdr, readkey3,deg2HMS,display_image
    _ = display_image(img,1,True,'','')
    hdr = readhdr(img)
@@ -422,19 +422,104 @@ def sloanimage(img,survey='sloan',frames=[]):
    elif _instrume in lsc.instrument0['sbig']:
       _telescope = 'sbig'
 
-   #_ra,_dec = deg2HMS(_ra,_dec)
-   print _ra,_dec,_band,_radius
+   print _ra,_dec,_band,_radius,_band
    if survey == 'sloan':
       frames =  downloadsdss(_ra,_dec,_band, _radius)
    elif survey == 'ps1':
       if len(frames) == 0:
-         sys.exit('for PS1 you need to download the images manually and give a vector as input')
+         f=open(_object+'_'+_band+'_ps1request.txt','w')
+         f.write('%s   %s   %s' %(str(_ra),str(_dec),str(_band)))
+         f.close()
+         print '#'*20
+         print "Please submit file:"+_object+'_'+_band+'_ps1request  at this link (you need an account)\n'
+         print "   http://psps.ifa.hawaii.edu/PSI/postage_stamp.php    "
+         print "   select:\n       Survey ID:    3PI          3PI.PV3  \n  "
+         print "   Image Type:       Total Stacked Image, 1 pixel 0.250 "
+         print "   Method of Image Selection by:   Coordinate- Images are selected based on supplied Ra and DEC   "
+         print "   Size of the Postage Stamp:   (x) Arc-Second             Width:  2000         Height: 2000    pixel"
+         print "   Center Coordinate of Image  - Input coordinate From: "
+         print "                  (x)  Upload File           "
+         print "        Choose File:    "+_object+'_'+_band+'_ps1request.txt'
+         print '#'*20
+         answ = raw_input('Do you want to wait that the frames are downloded [y/n]  [y] ? ')
+         if not answ: 
+             answ= 'y'
+         if answ in ['Yes','yes','Y','y']:
+              print 'Which is the last req_name at this page: '
+              answ1 = raw_input('http://psps.ifa.hawaii.edu/PSI/postage_stamp_results.php ? ' )
+              if not answ1:  
+                  sys.exit('no name provided, no PS1 images have been downloaded')
+              else:
+                  print 'try download........'
+                  frames = downloadPS1('./',answ1)
+      else:
+          frames2 = []
+          for img in frames:
+               if '_'+_band+'_' in img:
+                    frames2.append(img)
 
-   out = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey)
-   return out
-   
+          frames = frames2
+
+   if len(frames):
+         out = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey)
+   else:
+       sys.exit('exit, no PS1 images have been downloaded')
+   return out   
 ####################################################
-#img = 'tmp/elp1m008-kb74-20141224-0071-e90.fits'
-#img = 'tmp/lsc1m009-fl03-20150605-0170-e90.fits'
-#img = 'tmp/ogg2m001-fs02-20140923-0060-e90.fits'
-#output = sloanimage(img)
+
+
+def downloadPS1(homedir,filename):
+    import sys
+    import string
+    import os
+    import re
+    import urllib
+    import urllib2
+    parent_dir = os.getcwd()+'/'
+    directory=filename+'/'
+    os.system('rm '+str(homedir)+'pssindex.txt')
+    dataStoreBase = 'http://datastore.ipp.ifa.hawaii.edu/pstampresults/'
+    dataStoreProduct = directory
+    urlOfFileToDownload = dataStoreBase + dataStoreProduct + 'index.txt'
+    print urlOfFileToDownload
+    localFilename = homedir+'pss' + os.path.basename(urlOfFileToDownload)
+    try:
+       urllib.urlretrieve(urlOfFileToDownload, localFilename)
+    except:
+        print 'req_name found on poststamp datastore'
+        sys.exit()
+    frames = []
+    try:
+        f=file(homedir+'pssindex.txt','r')
+        _index=f.readlines()
+        f.close()
+        for i in range(0,len(_index)):
+            print string.split(_index[i],'|')[0],string.count(string.split(_index[i],'|')[0],'results.fits')
+            if  string.count(string.split(_index[i],'|')[0],'.fits') and string.count(string.split(_index[i],'|')[0],'results.fits')==0:
+
+                urlOfFileToDownload3 = dataStoreBase + dataStoreProduct +string.split(_index[i],'|')[0]
+                urlOfFileToDownload3=re.sub('.txt','',urlOfFileToDownload3)
+                localFilename3 = parent_dir+ os.path.basename(urlOfFileToDownload3)
+                if not os.path.isfile(localFilename3):
+                    print 'downloading file: '+string.split(_index[i],'|')[0]
+                    try:
+                        urllib.urlretrieve(urlOfFileToDownload3, localFilename3)
+                    except:
+                        print 'problem '+str(urlOfFileToDownload3)
+                        pass
+                else:
+                    print 'file already downloaded '
+
+                if not os.path.isdir(homedir+filename):
+                    os.mkdir(homedir+filename)
+                os.system('mv '+string.split(localFilename3,'/')[-1]+' '+homedir+filename+'/')
+                if 'unconv.fits' in string.split(localFilename3,'/')[-1]:
+                           frames.append(homedir+filename++'/'+string.split(localFilename3,'/')[-1])
+    except:
+        print 'stamp_directory not found '
+        sys.exit()
+    os.system('rm '+str(homedir)+'pssindex.txt')
+    print 'download COMPLETE '
+    return frames
+
+################################################################################################################

@@ -307,8 +307,8 @@ if __name__ == "__main__":
                 listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                 lsc.myloopdef.run_ingestsloan(listfile, 'sloan')
             elif _stage == 'ingestps1':
-                if not _ps1frames:
-                    sys.exit('ERROR: list of PS1 frames not provided ')
+                #if not _ps1frames:
+                #    sys.exit('ERROR: list of PS1 frames not provided ')
                 listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                 lsc.myloopdef.run_ingestsloan(listfile, 'ps1', _ps1frames)
         else:

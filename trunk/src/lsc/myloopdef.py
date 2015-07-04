@@ -1896,10 +1896,13 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames=''):
     elif imgtype =='ps1':
         print "WARNING: PS1 ingestion works at the moment with single object and filter\n "
         print "please, do not provide multiple objects and filter in the same query"
-        if not ps1frames:
-            sys.exit('ERROR: you need to provide the PS1 files')
-        else:
+#        if not ps1frames:
+#            sys.exit('ERROR: you need to provide the PS1 files')
+#        else:
+        if ps1frames:
             frames = np.genfromtxt(ps1frames,str)
+        else:
+            frames=''
         for img in imglist:
             image0 = lsc.sloanimage(img,'ps1',frames)
     else:

@@ -89,6 +89,8 @@ if __name__ == "__main__":
                       help='range to combine (in days)  \t [%default]')
     parser.add_option("--datamax", dest="dmax", default=51000, type="float",
                       help='data max for saturation (counts)  \t [%default]')
+    parser.add_option("--datamin", dest="dmin", default=-500, type="float",
+                      help='data min for saturation (counts)  \t [%default]')
     parser.add_option("--yshift", dest="yshift", default=0, type="int",
                       help='y shift in the guess astrometry \t [%default]')
     parser.add_option("--filetype", dest="filetype", default=1, type="int",
@@ -111,6 +113,10 @@ if __name__ == "__main__":
                       help='groupidcode \t [%default]')
     parser.add_option("--ps1frames", dest="ps1frames", default='', type="str",
                       help='--ps1frames list of ps1 frames \t (download them manually) \t [%default]')
+    parser.add_option('--zcatnew', action='store_true', help='use fitcol3 for the zero point and color term')
+    parser.add_option("--bgo", dest="bgo", default=3, type=float,
+                      help=' bgo parameter for hotpants  \t [%default]')
+
 
     option, args = parser.parse_args()
     # _instrument=option.instrument
@@ -122,6 +128,8 @@ if __name__ == "__main__":
     _groupid=option.groupidcode
     _filetype = option.filetype
     _ps1frames = option.ps1frames
+    _bgo = option.bgo
+
     if not _groupid:
         _groupid=''
     _normalize = option.normalize
@@ -187,9 +195,11 @@ if __name__ == "__main__":
     _yshift = option.yshift
     _bin = option.combine
     _dmax = option.dmax
+    _dmin = option.dmin
     _tempdate = option.tempdate
     _z1 = option.z1
     _z2 = option.z2
+    zcatnew = option.zcatnew
 
     if _xwindow:
         from stsci.tools import capable
@@ -294,7 +304,7 @@ if __name__ == "__main__":
                 lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, XX)
             elif _stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], _ras, _decs, _xord, _yord, _bkg, _size, _recenter, _ref,
-                                      _interactive, _show, _redo, _dmax,'photlco',_ra0,_dec0)
+                                      _interactive, _show, _redo, _dmax,_dmin,'photlco',_ra0,_dec0)
             elif _stage == 'wcs':
                 lsc.myloopdef.run_wcs(ll['filename'], _interactive, _redo, _xshift, _yshift, _catalogue,'photlco',_mode)
             elif _stage == 'makestamp':
@@ -391,7 +401,7 @@ if __name__ == "__main__":
                                         _color = _color + lsc.sites.filterst1(_telescope)[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww0], _fix, _type, _field, _catalogue, _color,
-                                                       _interactive, _redo, _show, _cutmag, 'photlco', _calib)
+                                                       _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
                             _color = ''
                             if len(ww1) > 1:
                                 for jj in ['gp', 'rp', 'ip']:
@@ -399,7 +409,7 @@ if __name__ == "__main__":
                                         _color = _color + lsc.sites.filterst1(_telescope)[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww1], _fix, _type, _field, _catalogue, _color,
-                                                       _interactive, _redo, _show, _cutmag, 'photlco', _calib)
+                                                       _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
                             _color = ''
                             if len(ww2) > 1:
                                 for jj in ['SDSS-G', 'SDSS-R', 'SDSS-I']:
@@ -407,7 +417,7 @@ if __name__ == "__main__":
                                         _color = _color + lsc.sites.filterst1(_telescope)[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww2], _fix, _type, _field, _catalogue, _color,
-                                                       _interactive, _redo, _show, _cutmag, 'photlco', _calib)
+                                                       _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
 
                         elif _field == 'landolt':
                             ww0 = asarray([i for i in range(len(ll3['filter'])) if
@@ -419,7 +429,7 @@ if __name__ == "__main__":
                                         _color = _color + lsc.sites.filterst1(_telescope)[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww0], _fix, _type, _field, _catalogue, _color,
-                                                       _interactive, _redo, _show, _cutmag, 'photlco', _calib)
+                                                       _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
                         elif _field == 'sloan':
                             ww0 = asarray([i for i in range(len(ll3['filter'])) if
                                            (ll['filter'][i] in ['up', 'gp', 'rp', 'ip', 'zs', 'SDSS-G', 'SDSS-R', 'SDSS-I'])])
@@ -430,7 +440,7 @@ if __name__ == "__main__":
                                         _color = _color + lsc.sites.filterst1(_telescope)[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww0], _fix, _type, _field, _catalogue, _color,
-                                                       _interactive, _redo, _show, _cutmag, 'photlco', _calib)
+                                                       _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
                         else:
                             print 'warning: field not defined, zeropoint not computed'
                     elif _stage == 'abscat':  #    compute magnitudes for sequence stars > img.cat
@@ -500,6 +510,8 @@ if __name__ == "__main__":
                             for i in ll00.keys():
                                 ll00[i] = take(ll00[i], inds)
                             lltemp1 = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid)
+                        else:
+                            lltemp1=()
 
                         lista2 = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _temptel)
                         if lista2:
@@ -513,17 +525,19 @@ if __name__ == "__main__":
                             for i in ll00.keys():
                                 ll00[i] = take(ll00[i], inds)
                             lltemp2 = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid)
+                        else:
+                            lltemp2=()
 
-                        if len(lltemp1['id']):
+                        if lltemp1:
                             lltemp = lltemp1
-                        elif len(lltemp2['id']):
+                        elif lltemp2:
                             lltemp = lltemp2
                         else:
                             sys.exit('template not found')
 
                         listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                         listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
-                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize,_convolve)
+                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo)
                         if len(listtemp) == 0 or len(listtar) == 0:
                             sys.exit('no data selected ')
                     elif _stage == 'template':  #    merge images using lacos and swarp

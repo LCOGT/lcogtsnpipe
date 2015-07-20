@@ -36,6 +36,8 @@ if __name__ == "__main__":
                       help=' half size of the stamp \t\t %default')
     parser.add_option("-m", "--datamax", dest="datamax", default=51000, type='float',
                       help=' data max for saturation \t\t %default')
+    parser.add_option("--datamin", dest="datamin", default=-500, type='float',
+                      help=' data min for saturation \t\t %default')
     parser.add_option("-i", "--interactive", action="store_true", dest='interactive', default=False,
                       help='Interactive \t\t\t [%default]')
     parser.add_option("-s", "--show", action="store_true", dest='show', default=False,
@@ -62,6 +64,7 @@ if __name__ == "__main__":
     _yord = option.yorder
     _numiter = option.niter
     _dmax = option.datamax
+    _dmin = option.datamin
     _interactive = option.interactive
     arterr = ''
 
@@ -137,7 +140,7 @@ if __name__ == "__main__":
                     _tempexp = lsc.util.readkey3(hdr, 'exptemp')
                     print _difexp, _targexp, _tempexp
                     DM = 2.5*log10(_targexp)-2.5*log10(_difexp)
-            print DM
+            print '#### ',str(DM)
             ######################################################################
             if not psflist:
                 psfimage = img + '.psf'
@@ -608,7 +611,7 @@ if __name__ == "__main__":
                 print img, psfimage, 'xxxxx'
                 apori1, apori2, apori3, apmag1, apmag2, apmag3, fitmag, truemag, magerr, centx, centy = \
                     lsc.lscsnoopy.fitsn(img, psfimage, img + '.sn.coo', _recenter, fwhm0, 'original', 'sn',
-                                        'residual', _show, _interactive, z11, z22, midpt, _size, apco0, _dmax)
+                                        'residual', _show, _interactive, z11, z22, midpt, _size, apco0, _dmax, _dmin)
                 #################       Iterate Beckground    ###################################
                 if _interactive:
                     if not _numiter:
@@ -664,7 +667,7 @@ if __name__ == "__main__":
                     lsc.util.delete("skyfit.fits")
                     apori1, apori2, apori3, apmag1, apmag2, apmag3, fitmag, truemag, magerr, centx, centy = \
                         lsc.lscsnoopy.fitsn( img, psfimage, img + '.sn.coo', _recenter, fwhm0, 'original', 'sn',
-                                             'residual', _show, _interactive, z11, z22, midpt, _size, apco0, _dmax)
+                                             'residual', _show, _interactive, z11, z22, midpt, _size, apco0, _dmax, _dmin)
                     print _numiter, _count
                     if _interactive:
                         if not _numiter:
@@ -739,7 +742,7 @@ if __name__ == "__main__":
                     try:
                         _arterr2, _arterr = lsc.lscsnoopy.errore(img, 'artlist.coo', size, truemag, fwhm0, leng0, False,
                                                                  False, _numiter, z11, z22, midpt, nax, nay, xbgord0,
-                                                                 ybgord0, _recenter, apco0, _dmax)
+                                                                 ybgord0, _recenter, apco0, _dmax, _dmin)
                     except:
                         print '\n### warningstamp size too small: artificail error = 0 '
                         _arterr2, _arterr = 0.0, 0.0

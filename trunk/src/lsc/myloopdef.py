@@ -323,7 +323,7 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
 
 
 def run_zero(imglist, _fix, _type, _field, _catalogue, _color='', interactive=False, redo=False, show=False, _cutmag=99,
-             database='photlco', _calib=''):
+             database='photlco', _calib='', zcatnew=False):
     import lsc
     import os, string, glob  # MySQLdb,
 
@@ -386,7 +386,9 @@ def run_zero(imglist, _fix, _type, _field, _catalogue, _color='', interactive=Fa
                 cc = ' -c ' + _catalogue + ' '
             else:
                 cc = ''
-            command = ' '.join(['lscabsphot.py', _dir+re.sub('fits', 'sn2.fits',img), ii, rr, ff, cc, '-t', _type, ss, dd, hh, ll, '--cutmag', str(_cutmag)])
+            if zcatnew: zcn = '--zcatnew'
+            else: zcn = ''
+            command = ' '.join(['lscabsphot.py', _dir+re.sub('fits', 'sn2.fits',img), ii, rr, ff, cc, '-t', _type, ss, dd, hh, ll, '--cutmag', str(_cutmag), zcn])
             print '_'*100
             print command
             os.system(command)
@@ -501,7 +503,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
 
 
 def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _recenter=False, _ref='', interactive=False,
-            show=False, redo=False, dmax=51000, database='photlco', _ra0='', _dec0=''):
+            show=False, redo=False, dmax=51000, dmin=-500, database='photlco', _ra0='', _dec0=''):
     import lsc
     import os, string, pyfits  # MySQLdb,
 
@@ -546,8 +548,7 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
 
             command = 'lscsn.py ' + _dir + img + ' ' + ii + ' ' + ss + ' ' + rr + ' -x ' + str(_xord) + ' -y ' +\
                       str(_yord) + ' ' + _ras + ' ' + _decs + ' ' + cc + ' -b ' + str(_bkg) + '  -z ' + str(_size) +\
-                      ' --datamax ' + str(dmax) + ' '+_ra0+' '+_dec0
-
+                      ' --datamax ' + str(dmax) + ' '+' --datamin='+str(dmin) + ' '+_ra0+' '+_dec0
             #if str(ggg[0]['filetype']) == '3':
             #    try:
             #        img2 = pyfits.getheader(_dir + img)['PSF']
@@ -1917,7 +1918,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames=''):
 
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convolve=''):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convolve='',_bgo=3):
     import lsc
 
     direc = lsc.__path__[0]
@@ -1953,8 +1954,12 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convo
         _convolve = ' --convolve '+_convolve+' '
     else:
         _convolve=''
+    if _bgo:
+        _bgo=' --bgo '+str(_bgo)
+    else:
+        _bgo=''
 
-    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo
     print command
     os.system(command)
 

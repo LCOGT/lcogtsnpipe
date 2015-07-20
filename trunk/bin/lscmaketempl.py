@@ -219,7 +219,6 @@ if __name__ == "__main__":
                             answ = 'y'
                     else:
                         answ = 'y'
-                    raw_input('ddd')
                     lsc.util.delete('_tmp.fits,_tmp2.fits,_tmp2.fits.art,ddd')
                     if answ == 'n':
                         lsc.util.delete(imgout)

@@ -1,6 +1,8 @@
 from scipy.optimize import fsolve # root
 import pyfits
 import numpy as np
+from scipy import stats, odr
+import matplotlib.pyplot as plt
 
 def limmag(img, zeropoint=0, Nsigma_limit=3, _fwhm = 5):
     image = pyfits.open(img)
@@ -196,7 +198,7 @@ def onclick(event):
                      (aa,sss,bb,sigmaa,sigmab))
 
 
-def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit',redo=False,show=False,cutmag=-1,database='photlco',_calib='sloan'):
+def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit',redo=False,show=False,cutmag=-1,database='photlco',_calib='sloan',zcatnew=False):
     import pyfits
     import lsc
     import math
@@ -236,6 +238,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
     elif _telescope in ['2m0-01']:    kk=lsc.sites.extintion('mauna')
     elif _telescope in ['2m0-02']:    kk=lsc.sites.extintion('siding')
     elif _telescope in ['SDSS']:      kk=lsc.sites.extintion('mcdonald')  # to be replaces
+    elif _telescope in ['PS1']:        kk=lsc.sites.extintion('mauna')  # to be replaces
 
     if _calib=='apass': _field='apass'
     if _field=='apass': _calib='apass'
@@ -461,6 +464,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 
      if len(xstd0)>1:  ########   go only if standard stars are in the field  ##########
         magstd0={}
+        errstd0={}
         airmass0={}
         result={}
         fileph={}
@@ -475,7 +479,8 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                                  &(array(ystd,float)<readkey3(hdr,'YDIM')),idstd)
         stdcoo0={}
         for key in stdcoo.keys():
-              if key in 'ugrizUBVRI':
+#              if key in 'ugrizUBVRI':
+              if 'pos' not in key:
                     stdcoo0[key]=compress((array(xstd,float)<readkey3(hdr,'XDIM'))&(array(xstd,float)>0)&(array(ystd,float)>0)\
                                                 &(array(ystd,float)<readkey3(hdr,'YDIM')),stdcoo[key])
         ###############################################################
@@ -489,6 +494,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         decsex=decsex[pos1]
         # after change in may 2013 mag in sn2.fits file are already at 1s
         magsex=magsex[pos1]-kk[filters[_filter]]*float(_airmass)  #   - K x airmass
+        magerrsex = magerrsex[pos1]
 #        magsex=magsex[pos1]+2.5*math.log10(float(_exptime))-kk[filters[_filter]]*float(_airmass)  #  mag    exptime      - K x airmass
 #################################################################################
         if _field=='landolt':
@@ -497,6 +503,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                 if _filtlandolt==filters[_filter]:  airmass0[_filtlandolt]=  0 #_airmass
                 else: airmass0[_filtlandolt]= 0
                 magstd0[_filtlandolt]=stdcoo0[_filtlandolt]
+                errstd0[_filtlandolt]=stdcoo0[_filtlandolt+'err']
             fileph['mU']=zeros(len(rastd0))+999
             fileph['mB']=zeros(len(rastd0))+999
             fileph['mV']=zeros(len(rastd0))+999
@@ -512,6 +519,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                 if _filtsloan==filters[_filter]:  airmass0[_filtsloan]= 0   # _airmass
                 else: airmass0[_filtsloan]=0
                 magstd0[_filtsloan]=stdcoo0[_filtsloan]
+                errstd0[_filtsloan]=stdcoo0[_filtsloan+'err']
             fileph['mu']=zeros(len(rastd0))+999
             fileph['mg']=zeros(len(rastd0))+999
             fileph['mr']=zeros(len(rastd0))+999
@@ -527,6 +535,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                 if _filtsloan==filters[_filter]:  airmass0[_filtsloan]= 0   # _airmass
                 else: airmass0[_filtsloan]=0
                 magstd0[_filtsloan]=stdcoo0[_filtsloan]
+                errstd0[_filtsloan]=stdcoo0[_filtsloan+'err']
             fileph['mB']=zeros(len(rastd0))+999
             fileph['mV']=zeros(len(rastd0))+999
             fileph['mg']=zeros(len(rastd0))+999
@@ -539,6 +548,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
             fileph['Vg']=array(array(magstd0['V'],float)-array(magstd0['g'],float),str)
 ########################################################################################
         zero=[]
+        zeroerr = []
         magcor=[]
         fil = open(re.sub('.fits','.ph',img),'w')
         fil.write(str(_instrume)+' '+str(_date)+'\n')
@@ -570,13 +580,14 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                 fil.write('%7.7s\t%7.7s\t%7.7s\t%7.7s\t%7.7s\t%60.60s\n' \
                               % (str(fileph['mB'][i]),str(fileph['mV'][i]),str(fileph['mg'][i]),str(fileph['mr'][i]),str(fileph['mi'][i]),str(stringastandard)))
             zero.append(float(float(magstd0[filters[_filter]][i]))-float(magsex[i]))
+            zeroerr.append((float(errstd0[filters[_filter]][i])**2 + magerrsex[i]**2)**0.5)
             magcor.append(magsex[i])
         fil.close()
-        magstd0=lsc.lscabsphotdef.transform2natural(_instrume,magstd0,_field)
+        magstdn=lsc.lscabsphotdef.transform2natural(_instrume,magstd0,_field)
 
         magsex1=magsex+kk[filters[_filter]]*float(_airmass)  #   add again extinction for natural zero point comparison
 
-        media,mediaerr,mag2,data2=lsc.lscabsphotdef.zeropoint2(array(magstd0[filters[_filter]],float),array(magsex1,float),10,2,show)
+        media,mediaerr,mag2,data2=lsc.lscabsphotdef.zeropoint2(array(magstdn[filters[_filter]],float),array(magsex1,float),10,2,show)
 
         if media!=9999: 
               _limmag = limmag(re.sub('.sn2.fits','.fits',img), media, 3, _fwhm)     #   compute limiting magnitude at 3 sigma
@@ -588,31 +599,46 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 
 
         colorvec=colors[filters[_filter]]
+        zero = array(zero)
+        zeroerr = array(zeroerr)
         print 'attempting these colors:', colorvec
         for col in colorvec:
             col0=magstd0[col[0]] 
             col1=magstd0[col[1]]
             colstd0=array(col0,float)-array(col1,float)
-            ################## sex  ######################
-            colore=[]
-            for i in range(0,len(pos1)):   colore.append(colstd0[i])
+            colerr0 = errstd0[col[0]]
+            colerr1 = errstd0[col[1]]
+            colerrstd0 = (array(colerr0, float)**2 + array(colerr1, float)**2)**0.5
 
-            colore1=compress(abs(array(zero))<50,array(colore))
-            zero1=compress(abs(array(zero))<50,array(zero))
+#            colore=[]
+#            for i in range(0,len(pos1)):   colore.append(colstd0[i])
+            # cut stars with crazy magnitude and color
+#            colore1=compress(abs(array(zero))<50,array(colore))
+#            zero1=compress(abs(array(zero))<50,array(zero))
             if _filter != 'up': maxcolor = 2
             else:               maxcolor = 10
-            zero2=compress(abs(array(colore1)) < maxcolor,array(zero1))
-            colore2=compress(abs(array(colore1)) < maxcolor,array(colore1))
+#            zero2=compress(abs(array(colore1)) < maxcolor,array(zero1))
+#            colore2=compress(abs(array(colore1)) < maxcolor,array(colore1))
+
+            good = (abs(zero) < 50) & (abs(colstd0) < maxcolor)
+            zero2 = zero[good]
+            colore2 = colstd0[good]
+            zeroerr2 = zeroerr[good]
+            coloreerr2 = colerrstd0[good]
+
             if _fix: fisso=colorefisso[filters[_filter]+col]
-            else: fisso=''
+            else: fisso = None
 
             if len(colore2)==0:
                 print 'no calibration:', filters[_filter], col, _field
                 continue
 #                b,a,sa,sb=9999,9999,0,0
             else:
-                if _interactive:    a,sa,b,sb=fitcol(colore2,zero2,_filter,col,fisso)
-                else:               a,sa,b,sb=fitcol2(colore2,zero2,_filter,col,fisso,show,rejection)
+                if zcatnew:
+                    a, b, sa, sb = fitcol3(colore2, zero2, coloreerr2, zeroerr2, fisso, _filter, ' - '.join(col), show, _interactive, rejection)
+                else:
+                    if _interactive:    a,sa,b,sb=fitcol(colore2,zero2,_filter,col,fisso)
+                    else:               a,sa,b,sb=fitcol2(colore2,zero2,_filter,col,fisso,show,rejection)
             result[filters[_filter]+col]=[a,sa,b,sb]
         if result:
             print '### zeropoint ..... done at airmass 0'
@@ -652,7 +678,85 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                 except: print 'module mysqldef not found'
                 
 #################################################################
+#################### new zero point calculation #################
+def fitcol3(colors, deltas, dcolors=None, ddeltas=None, fixedC=None, filt='', col='Color', show=False, interactive=False, clipsig=2, extra=False):
+    if interactive: global keep, Z, dZ, C, dC
+    if fixedC is None:
+        # fit Theil-Sen line and find outliers
+        C, Z, _, _ = stats.theilslopes(deltas, colors) # delta = calibrated mag - instrumental mag
+        zeros = deltas - C*colors # zeros are the "zero points" for individual stars
+        dzeros = (ddeltas**2 + (C*dcolors)**2)**0.5
+        resids = zeros - Z
+        keep = abs(resids) <= clipsig*dzeros
+        if sum(keep) <= 5: # if there aren't very many points, use fixed color term
+            if filt=='g': fixedC = 0.1
+            else:         fixedC = 0
+            print 'Not enough points (after rejection). Defaulting to C = {:.2f}.'.format(fixedC)
+    if fixedC is not None:
+        C = fixedC
+        zeros = deltas - C*colors
+        dzeros = (ddeltas**2 + (C*dcolors)**2)**0.5
+        Z = np.median(zeros)
+        resids = zeros - Z
+        keep = abs(resids) <= clipsig*dzeros
+    Z, dZ, C, dC = calcZC(colors, deltas, dcolors, ddeltas, fixedC, filt, col, (show or interactive), guess=[Z, C])
+    if interactive:
+        def onpick(event):
+            global keep, Z, dZ, C, dC
+            i = event.ind[0] # find closest point
+            keep[i] = not keep[i] # toggle rejection
+            print
+            plt.cla()
+            Z, dZ, C, dC = calcZC(colors, deltas, dcolors, ddeltas, fixedC, filt, col, show=True, guess=[Z, C])
+        cid = plt.gcf().canvas.mpl_connect('pick_event', onpick)
+    elif fixedC is None and C > 0.3: # if the color term is too crazy, use fixed color term
+        if filt=='g': fixedC = 0.1
+        else:         fixedC = 0
+        print 'C = {:.2f} is too crazy. Redoing with C = {:.2f}.'.format(C, fixedC)
+        C = fixedC
+        zeros = deltas - C*colors
+        dzeros = (ddeltas**2 + (C*dcolors)**2)**0.5
+        Z = np.median(zeros)
+        resids = zeros - Z
+        keep = abs(resids) <= clipsig*dzeros
+        if show: plt.cla()
+        Z, dZ, C, dC = calcZC(colors, deltas, dcolors, ddeltas, fixedC, filt, col, show, guess=[Z, C])
+    if extra: return Z, dZ, C, dC, keep
+    else: return Z, dZ, C, dC
 
+def calcZC(colors, deltas, dcolors=None, ddeltas=None, #keep=None,
+           fixedC=None, filt='', col='Color', show=False, guess=[23., 0.03], extra=False):
+    if fixedC is None:
+        def f(B, x): return B[0] + B[1]*x
+        linear = odr.Model(f)
+        mydata = odr.Data(colors[keep], deltas[keep], wd=dcolors[keep]**-2, we=ddeltas[keep]**-2)
+        myodr = odr.ODR(mydata, linear, beta0=guess) # start from typical values
+        myoutput = myodr.run()
+        Z, C = myoutput.beta
+        dZ, dC = myoutput.sd_beta
+        x_reg = myoutput.xplus
+        y_reg = myoutput.y
+    else:
+        Z, sum_of_weights = np.average(deltas[keep], weights=ddeltas[keep]**-2, returned=True)
+        dZ = sum_of_weights**-0.5
+        C, dC = fixedC, 0
+    print 'zero point = {:5.2f} +/- {:4.2f}'.format(Z, dZ)
+    print 'color term = {:5.2f} +/- {:4.2f}'.format(C, dC)
+    if show:
+        plt.scatter(colors, deltas, marker='.', picker=5)
+        plt.errorbar(colors[keep], deltas[keep], xerr=dcolors[keep], yerr=ddeltas[keep], color='g', marker='o', linestyle='none')
+        plt.errorbar(colors[~keep], deltas[~keep], xerr=dcolors[~keep], yerr=ddeltas[~keep], color='r', marker='o', linestyle='none')
+        plt.autoscale(False)
+        xx = np.array(plt.axis()[0:2])
+        yy = Z + C*xx
+        plt.plot(xx, yy, '--')
+        plt.xlabel(col)
+        plt.ylabel('Calibrated Mag - Instrumental Mag')
+        plt.title(filt)
+    if fixedC is None and extra: return Z, dZ, C, dC, x_reg, y_reg
+    else: return Z, dZ, C, dC
+#################################################################
+#################################################################
 def fitcol(col,dmag,band,color,fissa=''):
     import matplotlib.pyplot as plt 
     from numpy import polyfit,polyval,argmin,sqrt,mean,array,std,median

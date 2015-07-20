@@ -558,19 +558,26 @@ if __name__ == "__main__":
                 time.sleep(2)
                 ds9 = 0
 
-            result, fwhm = ecpsf(img, option.fwhm, option.threshold, option.psfstars,
-                                 option.distance, option.interactive, ds9, psffun)
-            print '\n### ' + str(result)
-            if option.show:
-                lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')
-                iraf.delete('tmp.psf.fit?', verify=False)
-                iraf.seepsf(img + '.psf', '_psf.psf')
-                iraf.surface('_psf.psf')
-                aa = raw_input('>>>good psf [[y]/n] ? ')
-                if not aa: 
-                    aa = 'y'
-                if aa in ['n', 'N', 'No', 'NO']: 
-                    result = 0
+            fwhm0 = option.fwhm
+            while True:
+                result, fwhm = ecpsf(img, fwhm0, option.threshold, option.psfstars,
+                                     option.distance, option.interactive, ds9, psffun)
+                print '\n### ' + str(result)
+                if option.show:
+                    lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')
+                    iraf.delete('tmp.psf.fit?', verify=False)
+                    iraf.seepsf(img + '.psf', '_psf.psf')
+                    iraf.surface('_psf.psf')
+                    aa = raw_input('>>>good psf [[y]/n] ? ')
+                    if not aa: 
+                        aa = 'y'
+                        break
+                    if aa in ['n', 'N', 'No', 'NO']: 
+                        result = 0
+                        bb = raw_input('If you want to try again, type the new FWHM to try here. Otherwise press enter to continue. ')
+                        if bb: fwhm0 = float(bb)
+                        else: break
+                else: break
 
             iraf.delete("tmp.*", verify="no")
             iraf.delete("_psf.*", verify="no")

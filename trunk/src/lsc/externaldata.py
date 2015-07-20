@@ -225,7 +225,7 @@ def downloadsdss(_ra,_dec,_band,_radius=20):
     else:
        return ''
 
-def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='',survey='sloan'):
+def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='',survey='sloan',combine_type='MEDIAN'):
     import re
     import datetime
     import lsc
@@ -253,6 +253,8 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        if not _dec:
           _dec = hdr.get('CRVAL2')
        _saturate = hdr.get('SATURATE')
+       if not _saturate:
+          _saturate = 61000
        if 'day-obs' in hdr:
           _dayobs = hdr.get('dayobs')
        elif 'date-obs' in hdr:
@@ -300,7 +302,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        _dateobs = jd2date(_mjd+2400000.5).strftime('%Y-%d-%m')
 
     print imglist[0]
-    print _dateobs, _dayobs, _mjd, _filter, 
+    print _dateobs, _dayobs, _mjd, _filter
 
     if not output:
        output = _telescope+'_'+str(out1)+'_'+str(_dayobs)+'_'+str(_filter)+'.fits'
@@ -308,16 +310,21 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     line = 'swarp ' + ' '.join(imglist) + ' -IMAGEOUT_NAME ' + str(output) + ' -WEIGHTOUT_NAME ' + \
                    re.sub('.fits', '', output) + '.weight.fits -RESAMPLE_DIR ' + \
                    './ -RESAMPLE_SUFFIX .swarptemp.fits -COMBINE Y -RESAMPLING_TYPE LANCZOS3 -VERBOSE_TYPE NORMAL ' +\
-                   '-SUBTRACT_BACK Y  -INTERPOLATE Y -PIXELSCALE_TYPE MANUAL,MANUAL -COMBINE_TYPE MEDIAN -PIXEL_SCALE ' +\
+                   '-SUBTRACT_BACK N  -INTERPOLATE Y -PIXELSCALE_TYPE MANUAL,MANUAL -COMBINE_TYPE '+str(combine_type)+\
+                   ' -PIXEL_SCALE ' +\
                    str(pixelscale) + ',' + str(pixelscale) + ' -IMAGE_SIZE ' + str(_imagesize) + ',' +\
                    str(_imagesize) + ' -CENTER_TYPE MANUAL,MANUAL -CENTER ' + str(_ra) + ',' + str(_dec) +\
                    ' -RDNOISE_DEFAULT ' + str(_ron) + ' -GAIN_KEYWORD NONONO ' + '-GAIN_DEFAULT ' +\
                    str(_gain)
 
+    print line
     os.system(line)
     hd = pyfits.getheader(output)
     ar = pyfits.getdata(output)
-    ar = np.where(ar <= 0, np.mean(ar[np.where(ar > 0)]), ar)
+    hd2 = pyfits.getheader(re.sub('.fits', '', output) + '.weight.fits')
+    ar2 = pyfits.getdata(re.sub('.fits', '', output) + '.weight.fits')
+#    ar = np.where(ar <= 0, np.mean(ar[np.where(ar > 0)]), ar)
+    ar = np.where(ar2 == 0, _saturate, ar)
 
     hd.update('L1FWHM', 9999, 'FHWM (arcsec) - computed with sectractor')
     hd.update('WCSERR', 0,    'Error status of WCS fit. 0 for no error')
@@ -368,9 +375,8 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        answ = raw_input('ok  ? [y/n] [n] ')
        if not answ:
           answ = 'n'          
-
-    for img in imglist:
-       os.system('rm '+img)
+#    for img in imglist:
+#       os.system('rm '+img)
     return output
 
 def rotateflipimage(img,rot180=False,flipx=False,flipy=False):
@@ -407,7 +413,7 @@ def sloanimage(img,survey='sloan',frames=[]):
    _object = readkey3(hdr,'object')
    _instrume = readkey3(hdr,'instrume')
    _filter = readkey3(hdr,'filter')
-   _radius = 1000
+   _radius = 1100
    filt={'up':'u','gp':'g','rp':'r','ip':'i','zs':'z'}
 
    if _filter in filt.keys():

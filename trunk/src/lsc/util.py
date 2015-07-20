@@ -140,10 +140,14 @@ def readhdr(img):
 def readkey3(hdr,keyword):
     import re,string,sys
     import pyfits
-    if int(re.sub('\.','',str(pyfits.__version__))[:2])<=30:  aa='HIERARCH '
-    else: aa=''
-    try:    _instrume=hdr.get('INSTRUME').lower()
-    except: _instrume='none'
+    if int(re.sub('\.','',str(pyfits.__version__))[:2]) <= 30:  
+       aa = 'HIERARCH '
+    else: 
+       aa = ''
+    try:    
+       _instrume=hdr.get('INSTRUME').lower()
+    except: 
+       _instrume='none'
     if _instrume in ['kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79']:    # SBIG
         useful_keys = {'object'    : 'OBJECT',\
                            'date-obs'  : 'DATE-OBS',\
@@ -161,8 +165,6 @@ def readkey3(hdr,keyword):
                            'filter'    : 'FILTER',\
                            'gain'      : 'GAIN',\
                            'ron'       : 'RDNOISE',\
-#                           'gain'      : 10.,\
-#                           'ron'       : 100.,\
                            'airmass'   : 'AIRMASS',\
                            'type'      : 'OBSTYPE',\
                            'propid'      : 'PROPID',\
@@ -233,8 +235,6 @@ def readkey3(hdr,keyword):
                             'filter'    : 'FILTER',\
                             'gain'      : 'GAIN',\
                             'ron'       : 'RDNOISE',\
- #                           'gain'      : 10.,\
- #                           'ron'       : 100.,\
                             'airmass'   : 'AIRMASS',\
                            'type'      : 'OBSTYPE',\
                            'propid'      : 'PROPID',\
@@ -242,7 +242,8 @@ def readkey3(hdr,keyword):
                            'telescop'  : 'TELESCOP'}
     else: 
        useful_keys = {'object'    : 'OBJECT',\
-                           'date-obs'  : 'DATE-OBS'}
+                         'ron'       : 'RDNOISE',\
+                         'date-obs'  : 'DATE-OBS'}
     if keyword in useful_keys:
        if type(useful_keys[keyword])==float:
           value=useful_keys[keyword]

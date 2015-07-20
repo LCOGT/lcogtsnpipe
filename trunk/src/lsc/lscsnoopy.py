@@ -1,5 +1,5 @@
 ##########################        DEFINE FITSN  #########################################
-def fitsn(img,imgpsf,coordlist,_recenter,fwhm0,original,sn,residual,_show,_interactive,z11='',z22='',midpt='',size=7,apco0=0,dmax=51000):
+def fitsn(img,imgpsf,coordlist,_recenter,fwhm0,original,sn,residual,_show,_interactive,z11='',z22='',midpt='',size=7,apco0=0,dmax=51000,dmin=-500):
     import lsc
     lsc.util.delete("apori")
     lsc.util.delete(img+".sn.mag")
@@ -25,21 +25,21 @@ def fitsn(img,imgpsf,coordlist,_recenter,fwhm0,original,sn,residual,_show,_inter
     _gain=lsc.util.readkey3(hdr,'gain')
     _ron=lsc.util.readkey3(hdr,'ron')
     _exptime=lsc.util.readkey3(hdr,'exptime')
-    _datamin=-100
+    _datamin=dmin
     _datamax=dmax
     iraf.noao.digiphot.daophot.photpars.zmag = 0
     iraf.noao.digiphot.daophot.datapars.readnoi = _gain  #1.4   #_ron
     iraf.noao.digiphot.daophot.datapars.epadu = _ron  #  13      #_gain
     iraf.noao.digiphot.daophot.datapars.datamin = _datamin  # -100  #_datamin
     iraf.noao.digiphot.daophot.datapars.datamax = _datamax
-
     iraf.noao.daophot.fitskypars.annulus=a3
     iraf.noao.daophot.photpars.apertures = ap
     iraf.noao.digiphot.daophot.datapars.exposure = 'exptime'
     iraf.noao.digiphot.daophot.datapars.airmass = 'airmass'
     iraf.noao.digiphot.daophot.datapars.filter = 'filter2'
     iraf.noao.digiphot.daophot.daopars.psfrad = a4
-    iraf.noao.digiphot.daophot.daopars.fitrad = fwhm0  
+    #  modify fitrad to 3 fwhm to see if works better     
+    iraf.noao.digiphot.daophot.daopars.fitrad = fwhm0 #* 3
     iraf.noao.digiphot.daophot.daopars.sannulus = int(a4)
     iraf.noao.digiphot.daophot.daopars.recenter = answ
     iraf.noao.digiphot.daophot.daopars.fitsky = 'yes'
@@ -239,7 +239,7 @@ def manusn(img,imgpsf,dmag0,apori1,apori2,apori3,apmag1,apmag2,apmag3,fitmag,tru
    return apori1,apori2,apori3,apmag1,apmag2,apmag3,fitmag,truemag,magerr,centx,centy,newmag
 
 ###################   DEFINE ERROR     ######################################
-def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_numiter,z11,z22,midpt,nax,nay,xbgord0,ybgord0,_recenter,apco0,dmax=51000):
+def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_numiter,z11,z22,midpt,nax,nay,xbgord0,ybgord0,_recenter,apco0,dmax=51000,dmin=-500):
     import lsc
     import os,sys,re,string
     from numpy import array,mean,std,compress,average
@@ -325,7 +325,7 @@ def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_num
         iraf.imarith("artsn","+",midpt,"artsn",verb='no')
 
         artap1, artap2, artap3, artmag1, artmag2, artmag3, artfitmag, arttruemag, artmagerr, artcentx, artcenty = \
-            fitsn(img,imgpsf,coordlist,_recenter,fwhm0,'reserr','artsn','artres',_show,_interactive,z11,z22,midpt,size,apco0,dmax)
+            fitsn(img,imgpsf,coordlist,_recenter,fwhm0,'reserr','artsn','artres',_show,_interactive,z11,z22,midpt,size,apco0,dmax,dmin)
 
         for ii in range(0,_numiter):
             lsc.util.delete("reserr.ar?")
@@ -346,7 +346,7 @@ def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_num
             iraf.imarith("reserr","-","artsky","artsn",calctype="r",pixtype="r",verb='no') 
             iraf.imarith("artsn.fits","+",midpt,"artsn.fits",verb='no') 
             artap1, artap2, artap3, artmag1, artmag2, artmag3, artfitmag, arttruemag, artmagerr, artcentx, artcenty = \
-                fitsn(img,imgpsf,coordlist,_recenter,fwhm0,'reserr','artsn','artres',_show,_interactive,z11,z22,midpt,size,0,dmax)
+                fitsn(img,imgpsf,coordlist,_recenter,fwhm0,'reserr','artsn','artres',_show,_interactive,z11,z22,midpt,size,0,dmax,dmin)
 ####### 
         if i==0: era='yes'
         else:    era='no'

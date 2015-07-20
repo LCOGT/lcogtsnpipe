@@ -1250,3 +1250,45 @@ def gettargetid(_name,_ra,_dec,conn,_radius=.01,verbose=False):
    return _targetid
 
 ###############################################################
+def get_snex_uid(interactive=True, return_fullname=False):
+    from socket import gethostname
+    from lsc import conn
+    snex_uids = {'griffin':52, 'svalenti':23, 'iarcavi':43, 'cmccully':78}
+    fullnames = {'griffin':'Griffin Hosseinzadeh','svalenti':'Stefano Valenti','iarcavi':'Iair Arcavi','cmccully':'Curtis McCully'}
+    unix_user = gethostname().split('-')[0]
+    if unix_user in snex_uids:
+        snex_uid = snex_uids[unix_user]
+        fullname = fullnames[unix_user]
+    else:
+        print 'Your computer is not associated with a SNEx account.'
+        snex_uid = None
+        fullname = None
+        if interactive:
+            snex_user = raw_input('If you have a SNEx username, input it here. Otherwise, press enter. ')
+            if snex_user:
+                usersdict = query(['select id, firstname, lastname from users where name="' + snex_user + '"'], conn)
+                if usersdict:
+                  snex_uid = usersdict[0]['id']
+                  fullname = usersdict[0]['firstname'] + ' ' + usersdict[0]['lastname']
+                else:
+                  print 'SNEx username not found.'
+    if return_fullname: return snex_uid, fullname
+    else: return snex_uid
+
+#def update_useractionlog(filename, snex_uid=None, mode='add'):
+#    from lsc import conn
+#    from sys import exit
+#    row_id = query(["select id from spec where filename='"+filename+"'"], conn)
+#    if row_id: rowid = [0]['id']
+#    else: exit('No entry found for filename '+filename+'. User action not logged.')
+#    if mode=='add':   vals = {'columnmodified':'New Row', 'prevvalue':'None', 'newvalue':'Multiple'}
+#    elif mode=='del': vals = {'columnmodified':'All', 'prevvalue':'Multiple', 'newvalue':'None'}
+#    elif mode=='upd': vals = {'columnmodified':'Multiple', 'prevvalue':'Multiple', 'newvalue':'Multiple'}
+#    else: exit('Mode not recognized. User action not logged.')
+#    if snex_uid is None: snex_uid = get_snex_uid()
+#    if snex_uid is None: exit('SNEx User not found. User action not logged.')
+#    vals['userid'] = snex_uid
+#    vals['tablemodified'] = 'spec'
+#    vals['idmodified'] = row_id
+#    insert_values(conn, 'useractionlog', vals)
+#    print 'useractionlog updated:', vals

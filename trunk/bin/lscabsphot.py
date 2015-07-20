@@ -37,6 +37,7 @@ if __name__ == "__main__":
                       help='--cutmag  [magnitude instrumental cut for zeropoint ]  \t [%default]')
     parser.add_option("--calib", dest="calibration", default='sloan',
                       type='str', help='calibration to  (sloan,sloanprime,natural) \t\t %default')
+    parser.add_option('--zcatnew', action='store_true', help='use fitcol3 for the zero point and color term')
 
     option, args = parser.parse_args()
     if len(args) < 1: sys.argv.append('--help')
@@ -54,6 +55,7 @@ if __name__ == "__main__":
     _show = option.show
     _cutmag = option.cutmag
     _calib = option.calibration
+    zcatnew = option.zcatnew
     for img in imglist:
         lsc.absphot(img, _field, _catalogue, _fix, _color, _rejection, _interactive, _type, _redo, _show, _cutmag,
-                    'photlco', _calib)
+                    'photlco', _calib, zcatnew)

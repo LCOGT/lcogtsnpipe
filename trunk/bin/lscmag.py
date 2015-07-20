@@ -180,6 +180,8 @@ if __name__ == "__main__":
                         kk = lsc.sites.extintion('siding')
                     elif dicti[_filter][img]['telescope'] in ['SDSS']:
                         kk = lsc.sites.extintion('mcdonald')
+                    elif dicti[_filter][img]['telescope'] in ['PS1']:
+                        kk = lsc.sites.extintion('mauna')
                     else:
                         print _filter, img, dicti[_filter][img]
                         sys.exit('problem with dicti')
@@ -207,6 +209,8 @@ if __name__ == "__main__":
                         kk = lsc.sites.extintion('siding')
                     elif dicti[_filter][img]['telescope'] in ['SDSS']:
                         kk = lsc.sites.extintion('mcdonald')
+                    elif dicti[_filter][img]['telescope'] in ['PS1']:
+                        kk = lsc.sites.extintion('mauna')
                     else:
                         print dicti[_filter2][img2]
                         sys.exit('problem with dicti')  # instrumental mag corrected for exp time and airmass

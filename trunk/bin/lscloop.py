@@ -12,10 +12,9 @@ from numpy import take, argsort, asarray, array
 from optparse import OptionParser
 import datetime
 import lsc
+# ###########################################################################
 
-# ####################################################################################
-
-if __name__ == "__main__":
+if __name__ == "__main__":   # main program
     parser = OptionParser(usage=usage, description=description, version="%prog 1.0")
     parser.add_option("-e", "--epoch", dest="epoch", default='20121212', type="str",
                       help='epoch to reduce  \t [%default]')

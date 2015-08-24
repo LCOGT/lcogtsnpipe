@@ -1209,17 +1209,22 @@ def getstatus(username,passwd,tracking_id):
 def getcatalog(_name,_field):
     import lsc
     import glob
+    import string
     _catalog=''
     data = lsc.mysqldef.query(['select targetid from targetnames where name="' + str(_name) + '"'], lsc.conn)
     if len(data) == 1:
         _targetid = data[0]['targetid']
         data = lsc.mysqldef.query(['select name from targetnames where targetid="' + str(_targetid) + '"'],lsc.conn)
         for targ in data:
-            print lsc.__path__[0] + '/standard/cat/' + _field + '/' + targ['name'] + '*'
-            catlist = glob.glob(lsc.__path__[0] + '/standard/cat/' + _field + '/' + targ['name'] + '*')
-            if len(catlist) >= 1:
-                _catalog = catlist[0]
-                break
+            #print lsc.__path__[0] + '/standard/cat/' + _field + '/' + targ['name'].replace(' ','') + '*'
+            catlist = glob.glob(lsc.__path__[0] + '/standard/cat/' + _field + '/*')
+            catlist2 = [string.split(string.split(i,'/')[-1],'_'+_field)[0].lower() for i in catlist ]
+            if targ['name'].replace(' ','').lower() in catlist2:
+               _catalog = catlist[catlist2.index(targ['name'].replace(' ','').lower())]            
+            #catlist = glob.glob(lsc.__path__[0] + '/standard/cat/' + _field + '/' + targ['name'].replace(' ','')+ '*')
+            #if len(catlist) >= 1:
+            #    _catalog = catlist[0]
+            #    break
     return _catalog
 
 ######################################################################################################

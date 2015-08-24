@@ -394,7 +394,7 @@ if __name__ == "__main__":   # main program
                                            (ll['filter'][i] in ['SDSS-G', 'SDSS-R', 'SDSS-I'])])
 
                             _color = ''
-                            if len(ww0) > 1:
+                            if len(ww0) >= 1:
                                 for jj in ['B', 'V']:
                                     if jj in list(set(ll3['filter'])):
                                         _color = _color + lsc.sites.filterst1(_telescope)[jj]
@@ -402,7 +402,7 @@ if __name__ == "__main__":   # main program
                                 lsc.myloopdef.run_zero(ll3['filename'][ww0], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
                             _color = ''
-                            if len(ww1) > 1:
+                            if len(ww1) >= 1:
                                 for jj in ['gp', 'rp', 'ip']:
                                     if jj in list(set(ll3['filter'])):
                                         _color = _color + lsc.sites.filterst1(_telescope)[jj]
@@ -410,7 +410,7 @@ if __name__ == "__main__":   # main program
                                 lsc.myloopdef.run_zero(ll3['filename'][ww1], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
                             _color = ''
-                            if len(ww2) > 1:
+                            if len(ww2) >= 1:
                                 for jj in ['SDSS-G', 'SDSS-R', 'SDSS-I']:
                                     if jj in list(set(ll3['filter'])):
                                         _color = _color + lsc.sites.filterst1(_telescope)[jj]
@@ -422,7 +422,7 @@ if __name__ == "__main__":   # main program
                             ww0 = asarray([i for i in range(len(ll3['filter'])) if
                                            (ll['filter'][i] in ['U', 'I', 'R', 'V', 'B'])])
                             _color = ''
-                            if len(ww0) > 1:
+                            if len(ww0) >= 1:
                                 for jj in ['U', 'I', 'R', 'V', 'B']:
                                     if jj in list(set(ll3['filter'])):
                                         _color = _color + lsc.sites.filterst1(_telescope)[jj]
@@ -433,7 +433,7 @@ if __name__ == "__main__":   # main program
                             ww0 = asarray([i for i in range(len(ll3['filter'])) if
                                            (ll['filter'][i] in ['up', 'gp', 'rp', 'ip', 'zs', 'SDSS-G', 'SDSS-R', 'SDSS-I'])])
                             _color = ''
-                            if len(ww0) > 1:
+                            if len(ww0) >= 1:
                                 for jj in ['gp', 'up', 'rp', 'ip', 'zs']:
                                     if jj in list(set(ll3['filter'])):
                                         _color = _color + lsc.sites.filterst1(_telescope)[jj]

@@ -210,7 +210,8 @@ if __name__ == "__main__":
     #############################################################################
     import glob
 
-    ll = lsc.myloopdef.get_list(epoch, 'all', '', '', '', '', '', '', 'photlco', _filetype)
+#    ll = lsc.myloopdef.get_list(epoch, 'all', '', '', '', '', '', '', 'photlco', _filetype)
+    ll = lsc.myloopdef.get_list(epoch, _telescope, '', '', '', '', '', '', 'photlco', _filetype)
     lista = list(set(ll['objname']))
     sloancal = []
     landoltcal = []
@@ -243,9 +244,7 @@ if __name__ == "__main__":
             _catlandolt = lsc.util.getcatalog(_temp,'landolt')
             _catsloan = lsc.util.getcatalog(_temp,'sloan')
             _catapass = lsc.util.getcatalog(_temp,'apass')
-#            _catlandolt = glob.glob(lsc.__path__[0] + '/standard/cat/landolt/' + _temp + '*')
-#            _catsloan = glob.glob(lsc.__path__[0] + '/standard/cat/sloan/' + _temp + '*')
-#            _catapass = glob.glob(lsc.__path__[0] + '/standard/cat/apass/' + _temp + '*')
+
             if len(_catlandolt) >= 1:
                 _catlandolt = _catlandolt
                 print '\n### landolt catalogue available ' + _catlandolt
@@ -299,16 +298,16 @@ if __name__ == "__main__":
                     if _telescope == 'all':
                         for _tel in ['elp', 'lsc', 'cpt', 'coj','ogg']:
                             zerostandard(_name, epoch, 'apass', _tel)
-                        else:
-                            zerostandard(_name, epoch, 'apass', _telescope)
+                    else:
+                        zerostandard(_name, epoch, 'apass', _telescope)
         if field == 'sloan':
             for _name in apasscal:
                 if _name not in sloancal:
                     if _telescope == 'all':
                         for _tel in ['elp', 'lsc', 'cpt', 'coj','ogg']:
                             zerostandard(_name, epoch, 'apass', _tel)
-                        else:
-                            zerostandard(_name, epoch, 'apass', _telescope)
+                    else:
+                        zerostandard(_name, epoch, 'apass', _telescope)
 
     #               compute catalogues for SN fields
     for field in fil:
@@ -318,16 +317,24 @@ if __name__ == "__main__":
                 #                if obj not in landoltcal:
                 print obj + ': object not calibrated in landolt'
                 for _std in standard:
-                    for _tel in ['elp', 'lsc', 'cpt']:
-                        os.system('lscloop.py --type ph  -F -e ' + epoch + ' -n ' + obj + ' -f ' + field + \
-                                  ' -b abscat -s abscat --standard ' + _std + ' -T ' + _tel + XX)
+                    if _telescope == 'all':
+                        for _tel in ['elp', 'lsc', 'cpt']:
+                            os.system('lscloop.py --type ph  -F -e ' + epoch + ' -n ' + obj + ' -f ' + field + \
+                                          ' -b abscat -s abscat --standard ' + _std + ' -T ' + _tel + XX)
+                    else:
+                            os.system('lscloop.py --type ph  -F -e ' + epoch + ' -n ' + obj + ' -f ' + field + \
+                                          ' -b abscat -s abscat --standard ' + _std + ' -T ' + _telescope + XX)
             if field == 'sloan':
                 #               if obj not in sloancal:
                 print obj + ': object not calibrated in sloan'
                 for _std in standard:
-                    for _tel in ['elp', 'lsc', 'cpt']:
+                    if _telescope == 'all':
+                        for _tel in ['elp', 'lsc', 'cpt']:
+                            os.system('lscloop.py --type ph  -F -e ' + epoch + ' -n ' + obj + ' -f ' + field + \
+                                          ' -b abscat -s abscat --standard ' + _std + ' -T ' + _tel + XX)
+                    else:
                         os.system('lscloop.py --type ph  -F -e ' + epoch + ' -n ' + obj + ' -f ' + field + \
-                                  ' -b abscat -s abscat --standard ' + _std + ' -T ' + _tel + XX)
+                                      ' -b abscat -s abscat --standard ' + _std + ' -T ' + _telescope + XX)
     # run psffit on all objects
     for field in fil:
         for obj in lista:
@@ -381,7 +388,10 @@ if __name__ == "__main__":
 
     # make stamps for all new images
     try:
-        os.system('lscloop.py -e ' + str(epoch) + ' -s makestamp' + ' ' + XX)
+        if _telescope == 'all':
+            os.system('lscloop.py -e ' + str(epoch) + ' -s makestamp' + ' ' + XX)
+        else:
+            os.system('lscloop.py -e ' + str(epoch) + ' -s makestamp' + ' ' + XX+' -T '+_telescope)
     except:
         print 'warning makestap did not work'
 

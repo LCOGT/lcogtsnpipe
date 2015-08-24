@@ -842,7 +842,7 @@ def ingestredu(imglist,force='no',datatable='photlco'):
                            'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
 
             dictionary['filename']=string.split(img,'/')[-1]
-            dictionary['filepath']='/science/supernova/data/extdata/'+readkey3(hdr,'dayobs')+'/'
+            dictionary['filepath']='/science/supernova/data/extdata/'+str(readkey3(hdr,'dayobs'))+'/'
             dictionary['filetype']=filetype
             dictionary['targetid']=_targetid
 

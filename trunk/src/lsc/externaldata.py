@@ -175,18 +175,32 @@ def downloadsdss(_ra,_dec,_band,_radius=20):
     if xid:
        pointing=[]
        for i in xid:
-          if (i['run'],i['camcol'],i['field']) not in pointing:
-             pointing.append((i['run'],i['camcol'],i['field']))
+          if i['run'] > 300:
+             if (i['run'],i['camcol'],i['field']) not in pointing:
+                pointing.append((i['run'],i['camcol'],i['field']))
+       # if too many pointing, take only first 40
+       if len(pointing) > 50:
+          nn=50
+       else: 
+          nn=len(pointing)
        filevec=[]
        print len(pointing)
-       for _run in pointing:
+       for _run in pointing[0:nn]:
           im = SDSS.get_images(run = _run[0], camcol = _run[1], field= _run[2], band= _band, cache=True)
+          #  naomaggie image
           output1 = _band+'_SDSS_'+str(_run[0])+'_'+str(_run[1])+'_'+str(_run[2])+'.fits'
+          #  image in count
           output2 = _band+'_SDSS_'+str(_run[0])+'_'+str(_run[1])+'_'+str(_run[2])+'c.fits'
+          #  weight image
+          output3 = _band+'_SDSS_'+str(_run[0])+'_'+str(_run[1])+'_'+str(_run[2])+'.weight.fits'
+          #  sky image
+          output4 = _band+'_SDSS_'+str(_run[0])+'_'+str(_run[1])+'_'+str(_run[2])+'.sky.fits'
           if os.path.isfile(output1):
              os.system('rm '+output1)
           if os.path.isfile(output2):
              os.system('rm '+output2)
+          if os.path.isfile(output3):
+             os.system('rm '+output3)
           im[0].writeto(output1)
 #         im[0][0].writeto(output2)
 
@@ -215,12 +229,20 @@ def downloadsdss(_ra,_dec,_band,_radius=20):
           for i in np.arange(calib_image.shape[1]):
              calib_image[:,i] = calib
           # Calculate the error in the frame image for use fitting algorithms later.
-          dn_image        = frame_image / calib_image + sky_image # counts
-          dn_err_image    = np.sqrt(dn_image / gain + dark_var)
-          frame_image_err = dn_err_image * calib_image
-          pyfits.writeto(output2, dn_image.transpose(), new_header)
+          dn_image        = frame_image / calib_image  # + sky_image # counts
+          dn_err_image    = np.sqrt((dn_image + sky_image)/ gain + dark_var)
+          # frame_image_err = dn_err_image * calib_image  converts to nanomaggies
+          
+          frame_weight = 1 / ((dn_err_image)**2)
+          new_header['SKYLEVEL']  = np.mean(sky_image)
+          #  save image in count
+          pyfits.writeto(output2, dn_image.transpose(), new_header,clobber=True)
+          #  save weight image
+          pyfits.writeto(output3, frame_weight.transpose(), new_header,clobber=True)
+          #  save sky image 
+          pyfits.writeto(output4, sky_image.transpose(), new_header,clobber=True)
           filevec.append(output2)
-#          os.system('rm '+output1)
+          filevec.append(output3)
        return filevec
     else:
        return ''
@@ -259,7 +281,16 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
           _dayobs = hdr.get('dayobs')
        elif 'date-obs' in hdr:
           _dayobs = re.sub('-','',hdr.get('date-obs'))
-       _mjd = MJDnow(datetime.datetime(int(str(_dayobs)[0:4]),int(str(_dayobs)[4:6]),int(str(_dayobs)[6:8])))
+
+       if '/' in _dayobs:
+          _dayobs = '19'+''.join(string.split(_dayobs,'/')[::-1])
+
+       try:
+          _mjd = MJDnow(datetime.datetime(int(str(_dayobs)[0:4]),int(str(_dayobs)[4:6]),int(str(_dayobs)[6:8])))
+       except:
+          print 'warning, no mjd'
+          _mjd = 0
+          _dayobs = '19991231'
 
     elif survey =='ps1':
        out1 = 'PS1'
@@ -307,24 +338,83 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     if not output:
        output = _telescope+'_'+str(out1)+'_'+str(_dayobs)+'_'+str(_filter)+'.fits'
 
-    line = 'swarp ' + ' '.join(imglist) + ' -IMAGEOUT_NAME ' + str(output) + ' -WEIGHTOUT_NAME ' + \
+    imgmask = [] 
+    skylevel = []
+    # if the template is from sloan, use mask and weight image
+    if survey =='sloan':
+       welist = [i for i in imglist if '.weight.' in i]
+       if len(welist):
+          # if weight images provided, use them in swarp
+          # and take out them from input list image
+          imglist = [j for j in imglist if j not in welist]
+          imgmask = welist
+          for jj in imglist:
+             img_data,img_header=pyfits.getdata(jj, header=True)
+             if 'SKYLEVEL' in img_header:
+                skylevel.append(img_header['SKYLEVEL'])
+    elif survey=='ps1':
+       wtlist = [i for i in imglist if '.wt_' in i]
+       mklist = [i for i in imglist if '.mk_' in i]
+       if len(wtlist):
+          for i,name in enumerate(wtlist):
+             weightimg = re.sub('.wt_','.weight.',name)
+             imgmask.append(weightimg)
+             if re.sub('.wt_','.mk_',name) in mklist:
+                weight_data, weight_header = pyfits.getdata(name, header=True)
+                mask_data, mask_header = pyfits.getdata(re.sub('.wt_','.mk_',name), header=True)
+                weight_data = 1/weight_data 
+                weight_fits = pyfits.PrimaryHDU(header=weight_header, data=weight_data)
+                weight_fits.writeto(weightimg, output_verify='fix', clobber=True)             
+             else:
+                os.system('cp '+name+' '+weightimg)
+       imglist = [j for j in imglist if (j not in wtlist) and (j not in mklist)]
+       # measure skylevel in all ps1 images
+       for jj in imglist:
+          img_data,img_header=pyfits.getdata(jj, header=True)
+          skylevel.append(np.mean(img_data))
+
+#    elif len(welist):
+#       imglist = [j for j in imglist if j not in welist]
+#       imgmask = welist
+
+
+    print imgmask
+    print skylevel
+    sampling = 'BILINEAR' # LANCZOS3
+    line = 'swarp ' + ','.join(imglist) + ' -IMAGEOUT_NAME ' + str(output) + ' -WEIGHTOUT_NAME ' + \
                    re.sub('.fits', '', output) + '.weight.fits -RESAMPLE_DIR ' + \
-                   './ -RESAMPLE_SUFFIX .swarptemp.fits -COMBINE Y -RESAMPLING_TYPE LANCZOS3 -VERBOSE_TYPE NORMAL ' +\
-                   '-SUBTRACT_BACK N  -INTERPOLATE Y -PIXELSCALE_TYPE MANUAL,MANUAL -COMBINE_TYPE '+str(combine_type)+\
+                   './ -RESAMPLE_SUFFIX .swarptemp.fits -COMBINE Y -RESAMPLING_TYPE '+sampling+' -VERBOSE_TYPE NORMAL ' +\
+                   '-SUBTRACT_BACK Y  -INTERPOLATE Y -PIXELSCALE_TYPE MANUAL,MANUAL -COMBINE_TYPE '+str(combine_type)+\
                    ' -PIXEL_SCALE ' +\
                    str(pixelscale) + ',' + str(pixelscale) + ' -IMAGE_SIZE ' + str(_imagesize) + ',' +\
                    str(_imagesize) + ' -CENTER_TYPE MANUAL,MANUAL -CENTER ' + str(_ra) + ',' + str(_dec) +\
                    ' -RDNOISE_DEFAULT ' + str(_ron) + ' -GAIN_KEYWORD NONONO ' + '-GAIN_DEFAULT ' +\
                    str(_gain)
 
+    if imgmask:
+       line = line+' -WEIGHT_TYPE MAP_WEIGHT -WEIGHT_THRESH 0.5 -WEIGHT_IMAGE ' +  ','.join(imgmask)
     print line
     os.system(line)
+
+    # the output of swarp give the normalized weight 
+    # we want to store the variance image
+    # we invert the normalized weight and we "de-normalized" this image
     hd = pyfits.getheader(output)
     ar = pyfits.getdata(output)
     hd2 = pyfits.getheader(re.sub('.fits', '', output) + '.weight.fits')
     ar2 = pyfits.getdata(re.sub('.fits', '', output) + '.weight.fits')
-#    ar = np.where(ar <= 0, np.mean(ar[np.where(ar > 0)]), ar)
+    variance = 1 / ar2
+    #  this is to take in account that the weight is normalized
+    variance *= (np.median(np.abs(ar - np.median(ar)))*1.48)**2/np.median(variance)
+    varimg = re.sub('.fits', '', output) + '.var.fits'
+    pyfits.writeto(varimg, variance, hd2, clobber=True)
+
+    # put the saturation all values where the weight is zero 
     ar = np.where(ar2 == 0, _saturate, ar)
+
+    if len(skylevel):
+       hd.update('skylevel', np.mean(skylevel), 'avarage skylevel')
+       
 
     hd.update('L1FWHM', 9999, 'FHWM (arcsec) - computed with sectractor')
     hd.update('WCSERR', 0,    'Error status of WCS fit. 0 for no error')
@@ -360,16 +450,21 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
 
     out_fits = pyfits.PrimaryHDU(header=new_header, data=ar)
     out_fits.writeto(output, clobber=True, output_verify='fix')
+    
+
     _=lsc.display_image(output,2,True,'','')
     answ='no'
     while answ in ['no','n','N','No']:
        answ = raw_input('flip, rotate the image ((n)o, rotate 180 (r), flip (x), flip (y)) [n] ')
        if answ in ['180','r']:
           output = rotateflipimage(output,rot180=True,flipx=False,flipy=False)
+          varimg = rotateflipimage(varimg,rot180=True,flipx=False,flipy=False)
        elif answ in ['x']:
           output = rotateflipimage(output,rot180=False,flipx=True,flipy=False)
+          varimg = rotateflipimage(varimg,rot180=False,flipx=True,flipy=False)
        elif answ in ['y']:
           output = rotateflipimage(output,rot180=False,flipx=False,flipy=True)
+          varimg = rotateflipimage(varimg,rot180=False,flipx=False,flipy=True)
        time.sleep(1)
        __ = lsc.display_image(output,2,True,'','')
        answ = raw_input('ok  ? [y/n] [n] ')
@@ -377,7 +472,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
           answ = 'n'          
 #    for img in imglist:
 #       os.system('rm '+img)
-    return output
+    return output,varimg
 
 def rotateflipimage(img,rot180=False,flipx=False,flipy=False):
    import pyfits
@@ -433,8 +528,15 @@ def sloanimage(img,survey='sloan',frames=[]):
       frames =  downloadsdss(_ra,_dec,_band, _radius)
    elif survey == 'ps1':
       if len(frames) == 0:
+         delta= 0.22
+         DR = delta/np.cos(_dec*np.pi/180)
+         DD = delta
          f=open(_object+'_'+_band+'_ps1request.txt','w')
-         f.write('%s   %s   %s' %(str(_ra),str(_dec),str(_band)))
+         f.write('%s   %s   %s\n' %(str(_ra),str(_dec),str(_band)))
+         f.write('%s   %s   %s\n' %(str(_ra+DR),str(_dec+DD),str(_band)))
+         f.write('%s   %s   %s\n' %(str(_ra-DR),str(_dec-DD),str(_band)))
+         f.write('%s   %s   %s\n' %(str(_ra+DR),str(_dec-DD),str(_band)))
+         f.write('%s   %s   %s\n' %(str(_ra-DR),str(_dec+DD),str(_band)))
          f.close()
          print '#'*20
          print "Please submit file:"+_object+'_'+_band+'_ps1request  at this link (you need an account)\n'
@@ -466,11 +568,12 @@ def sloanimage(img,survey='sloan',frames=[]):
 
           frames = frames2
 
+   raw_input('go on ')
    if len(frames):
-         out = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey)
+         out, varimg = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey)
    else:
        sys.exit('exit, no PS1 images have been downloaded')
-   return out   
+   return out, varimg
 ####################################################
 
 

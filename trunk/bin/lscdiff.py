@@ -219,6 +219,11 @@ if __name__ == "__main__":
                             iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
                                                interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
+                        if os.path.isfile(_dirtemp +re.sub('.fits','.var.fits',imgtemp0)):
+                            print 'variance image already there, do not create noise image'
+                            iraf.immatch.gregister(_dirtemp + re.sub('.fits','.var.fits',imgtemp0), 'tempnoise.fits', "tmp$db", "tmpcoo", geometr="geometric",
+                                               interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+
 #                        print 'warning: registration failed '
 #                        hd = pyfits.getheader(_dirtemp + imgtemp0)
 #                        ar = pyfits.getdata(_dirtemp + imgtemp0)
@@ -279,13 +284,22 @@ if __name__ == "__main__":
                         noiseimg[targmask > 0] = sat_targ
                         pyfits.writeto('targnoise.fits', noiseimg, output_verify='fix', clobber=True)
 
-                        median = np.median(data_temp)
-                        noise = 1.4826*np.median(np.abs(data_temp - median))
-                        pssl_temp = gain_temp*noise**2 - rn_temp**2/gain_temp - median
-                        #noiseimg = (data_temp - median)**2
-                        noiseimg = data_temp + pssl_temp + rn_temp**2
-                        noiseimg[tempmask > 0] = sat_temp
-                        pyfits.writeto('tempnoise.fits', noiseimg, output_verify='fix', clobber=True)
+#                        print 'variance image already there, do not create noise image'
+                        if not os.path.isfile(_dirtemp +re.sub('.fits','.var.fits',imgtemp0)):                            
+                            median = np.median(data_temp)
+                            noise = 1.4826*np.median(np.abs(data_temp - median))
+                            pssl_temp = gain_temp*noise**2 - rn_temp**2/gain_temp - median
+                            #noiseimg = (data_temp - median)**2
+                            noiseimg = data_temp + pssl_temp + rn_temp**2
+                            noiseimg[tempmask > 0] = sat_temp
+                            pyfits.writeto('tempnoise.fits', noiseimg, output_verify='fix', clobber=True)
+                        else:
+                            pssl_temp = 0
+                            print 'variance image already there, do not create noise image'
+
+                        #  if skylevel is in the header, swarp with bkg subtraction has been applyed
+                        if 'SKYLEVEL' in head_temp:
+                            pssl_temp = head_temp['SKYLEVEL']
 
                         # create mask image for template
                         data_temp, head_temp

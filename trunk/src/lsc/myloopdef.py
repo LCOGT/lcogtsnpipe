@@ -7,7 +7,7 @@ import string
 import lsc
 import numpy as np
 import math
-
+import pyfits
 
 def weighted_avg_and_std(values, weights):
     """
@@ -458,7 +458,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                         print '\n ### copy '+re.sub('.fits', '.psf.fits', imgpsf)+' in '+re.sub('.fits', '.psf.fits', img)
 
                     else:
-                        sys.exit('\n### ERROR: PSF file not found \n please run psf file on image: '+imgpsf)
+                        print '\n### ERROR: PSF file not found \n please run psf file on image: '+imgpsf
                 #####################################################################################
                 if 'PHOTNORM' not in hdrdiff:
                     sys.exit('\n ### warning PHOTNORM file not defined')
@@ -1893,7 +1893,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames=''):
     from lsc import readkey3, readhdr
     if imgtype =='sloan':
         for img in imglist:
-            image0 = lsc.sloanimage(img,'sloan','')
+            image0, varimg = lsc.sloanimage(img,'sloan','')
     elif imgtype =='ps1':
         print "WARNING: PS1 ingestion works at the moment with single object and filter\n "
         print "please, do not provide multiple objects and filter in the same query"
@@ -1905,7 +1905,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames=''):
         else:
             frames=''
         for img in imglist:
-            image0 = lsc.sloanimage(img,'ps1',frames)
+            image0, varimg = lsc.sloanimage(img,'ps1',frames)
     else:
         image0=''
         print 'add here ingestion of different images (DES)'
@@ -1913,7 +1913,12 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames=''):
     if image0:
         lsc.mysqldef.ingestdata('tar', '', ['20121212'], False, 'oracproc', '', [image0])
         lsc.mysqldef.ingestredu([image0], True, 'photlco')
-        dd = lsc.mysqldef.query(['select id from photlco where filename = "'+str(image0)+'"'],conn)
+        _path = lsc.mysqldef.query(['select filepath from photlco where filename = "'+str(image0)+'"'],conn)
+        if _path and varimg:
+            print _path[0]['filepath']
+            print varimg
+            os.system('cp '+varimg+ ' '+_path[0]['filepath'])
+            print 'cp '+varimg+ ' '+_path[0]['filepath']
         lsc.mysqldef.updatevalue('photlco','filetype',4,image0,'lcogt2','filename')        
 
 
@@ -2061,16 +2066,24 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
             _dir = ggg[0]['filepath']
             print _dir + img
             if os.path.isfile(_dir + img):
-                if not os.path.isfile(re.sub('.fits', '.clean.fits', _dir + img)) or _force:
-                    output, mask, satu = lsc.util.Docosmic(_dir + img, _sigclip, _sigfrac, _objlim)
-                    lsc.util.updateheader(output, 0, {'DOCOSMIC': [True, 'Cosmic rejection using LACosmic']})
-                    print 'mv ' + output + ' ' + _dir
-                    os.system('mv ' + output + ' ' + _dir)
-                    os.system('mv ' + mask + ' ' + _dir)
-                    os.system('mv ' + satu + ' ' + _dir)
-                    print output, mask, satu
+                if os.path.isfile(_dir + re.sub('.fits', '.var.fits', img)):
+                    print 'variance image found'
+                    os.system('cp '+_dir + img+' '+_dir + re.sub('.fits', '.clean.fits',img))
+                    ar, hd = pyfits.getdata(img, header=True)
+                    out_fits = pyfits.PrimaryHDU(header=hd,data=(ar-ar).astype('uint8'))
+                    out_fits.writeto(re.sub('.fits', '.mask.fits',img), clobber=True, output_verify='fix')
+                    os.system('cp ' + re.sub('.fits', '.mask.fits', img) + ' ' + _dir)
                 else:
-                    print 'cosmic rejection already done'
+                    if not os.path.isfile(re.sub('.fits', '.clean.fits', _dir + img)) or _force:
+                        output, mask, satu = lsc.util.Docosmic(_dir + img, _sigclip, _sigfrac, _objlim)
+                        lsc.util.updateheader(output, 0, {'DOCOSMIC': [True, 'Cosmic rejection using LACosmic']})
+                        print 'mv ' + output + ' ' + _dir
+                        os.system('mv ' + output + ' ' + _dir)
+                        os.system('mv ' + mask + ' ' + _dir)
+                        os.system('mv ' + satu + ' ' + _dir)
+                        print output, mask, satu
+                    else:
+                        print 'cosmic rejection already done'
             else:
                 print img, ' not found'
 

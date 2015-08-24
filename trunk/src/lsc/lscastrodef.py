@@ -1047,25 +1047,38 @@ def sloan2file(ra1, dec1, radius, magsel0, magsel1,_output):     #  ra in degree
 #######################################################################
 
 def transformsloanlandolt(stdcoo):
-    from numpy import array
+    from numpy import array, zeros
      ###  lupton 2005  ###### BVRI
      ### Jester et al. (2005) ### U
     if 'u' and 'g' and 'r' in stdcoo:
-         stdcoo['B']=array(stdcoo['g'],float)+0.3130*(array(stdcoo['g'],float)-array(stdcoo['r'],float))+0.2271
-         stdcoo['U']=array(stdcoo['B'],float)+0.78*(array(stdcoo['u'],float)-array(stdcoo['g'],float))-0.88
+        stdcoo['B'] = array(stdcoo['g'], float) + 0.3130 * (array(stdcoo['g'], float) - array(stdcoo['r'], float)) + 0.2271
+        stdcoo['Berr'] = (array(stdcoo['gerr'], float)**2 + 0.3130**2 * (array(stdcoo['gerr'], float)**2 + array(stdcoo['rerr'], float)**2))**0.5
+        stdcoo['U'] = array(stdcoo['B'], float) + 0.78 * (array(stdcoo['u'], float) - array(stdcoo['g'], float)) - 0.88
+        stdcoo['Berr'] = (array(stdcoo['Berr'], float)**2 + 0.78**2 * (array(stdcoo['uerr'], float)**2 + array(stdcoo['gerr'], float)**2))**0.5
     if 'g' and 'r' in stdcoo:
-        if 'B' not in stdcoo:  stdcoo['B']=array(stdcoo['g'],float)+0.3130*(array(stdcoo['g'],float)-array(stdcoo['r'],float))+0.2271
+        if 'B' not in stdcoo:
+            stdcoo['B'] = array(stdcoo['g'], float) + 0.3130 * (array(stdcoo['g'], float) - array(stdcoo['r'], float)) + 0.2271
+            stdcoo['Berr'] = (array(stdcoo['gerr'], float)**2 + 0.3130**2 * (array(stdcoo['gerr'], float)**2 + array(stdcoo['rerr'], float)**2))**0.5
         if 'V' not in stdcoo:
-            stdcoo['V']=array(stdcoo['g'],float)-0.5784*(array(stdcoo['g'],float)-array(stdcoo['r'],float))-0.0038
+            stdcoo['V'] = array(stdcoo['g'], float) - 0.5784 * (array(stdcoo['g'], float) - array(stdcoo['r'], float)) - 0.0038
+            stdcoo['Verr'] = (array(stdcoo['gerr'], float)**2 + 0.5784**2 * (array(stdcoo['gerr'], float)**2 + array(stdcoo['rerr'], float)**2))**0.5
     if 'r' and 'i' in stdcoo:
-        if 'R' not in stdcoo:  stdcoo['R']=array(stdcoo['r'],float)-0.2936*(array(stdcoo['r'],float)-array(stdcoo['i'],float))-0.1439
-        if 'I' not in stdcoo:  stdcoo['I']=array(stdcoo['r'],float)-1.2444*(array(stdcoo['r'],float)-array(stdcoo['i'],float))-0.3820
+        if 'R' not in stdcoo:
+            stdcoo['R'] = array(stdcoo['r'], float) - 0.2936 * (array(stdcoo['r'], float) - array(stdcoo['i'], float)) - 0.1439
+            stdcoo['Rerr'] = (array(stdcoo['rerr'], float)**2 + 0.2936**2 * (array(stdcoo['rerr'], float)**2 + array(stdcoo['ierr'], float)**2))**0.5
+        if 'I' not in stdcoo:
+            stdcoo['I'] = array(stdcoo['r'], float) - 1.2444 * (array(stdcoo['r'], float) - array(stdcoo['i'], float)) - 0.3820
+            stdcoo['Ierr'] = (array(stdcoo['rerr'], float)**2 + 1.2444**2 * (array(stdcoo['rerr'], float)**2 + array(stdcoo['ierr'], float)**2))**0.5
     if 'g' and 'r' in stdcoo:
-        if 'R' not in stdcoo:  stdcoo['R']=array(stdcoo['r'],float)-0.1837*(array(stdcoo['g'],float)-array(stdcoo['r'],float))-0.0971
+        if 'R' not in stdcoo:
+            stdcoo['R'] = array(stdcoo['r'], float) - 0.1837 * (array(stdcoo['g'], float) - array(stdcoo['r'], float)) - 0.0971
+            stdcoo['Rerr'] = (array(stdcoo['rerr'], float)**2 + 0.1837**2 * (array(stdcoo['gerr'], float)**2 + array(stdcoo['rerr'], float)**2))**0.5
     if 'i' and 'z' in stdcoo:
-        if 'I' not in stdcoo:  stdcoo['I']=array(stdcoo['i'],float)-0.3780*(array(stdcoo['i'],float)-array(stdcoo['z'],float))-0.3974
+        if 'I' not in stdcoo:
+            stdcoo['I'] = array(stdcoo['i'], float) - 0.3780 * (array(stdcoo['i'], float) - array(stdcoo['z'], float)) - 0.3974
+            stdcoo['Ierr'] = (array(stdcoo['ierr'], float)**2 + 0.1837**2 * (array(stdcoo['ierr'], float)**2 + array(stdcoo['zerr'], float)**2))**0.5
     for fil in 'UBVRI':
-        if fil not in stdcoo: stdcoo[fil]=array(stdcoo['r'],float)-array(stdcoo['r'],float)
+        if fil not in stdcoo: stdcoo[fil] = zeros(len(stdcoo['r']))
     return stdcoo
 
 #####################################################

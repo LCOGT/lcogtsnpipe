@@ -79,7 +79,10 @@ def runsex(img, fwhm, thresh, pix_scale):  ## run_sextractor  fwhm in pixel
            np.array(classstar), np.array(fluxrad), np.array(bkg)
 
 
-def psffit2(img, fwhm, psfstars, hdr, _datamax=45000, psffun='gauss'):
+def psffit2(img, fwhm, psfstars, hdr, _datamax=45000, psffun='gauss',  fixaperture=False):
+    ''' 
+    giving an image, a psffile,  calculate the magnitudes of strs in the file _psf.coo
+    '''
     import lsc
     _ron = lsc.util.readkey3(hdr, 'ron')
     _gain = lsc.util.readkey3(hdr, 'gain')
@@ -94,7 +97,16 @@ def psffit2(img, fwhm, psfstars, hdr, _datamax=45000, psffun='gauss'):
     iraf.daophot(_doprint=0)
     zmag = 0.
     varord = 0  # -1 analitic 0 - numeric
-    a1, a2, a3, a4, = int(fwhm + 0.5), int(fwhm * 2 + 0.5), int(fwhm * 3 + 0.5), int(fwhm * 4 + 0.5)
+
+    if fixaperture:
+        print 'use fix aperture 5 8 10'
+        hdr = lsc.util.readhdr(img+'.fits')
+        _pixelscale = lsc.util.readkey3(hdr, 'PIXSCALE')
+        a1, a2, a3, a4, = float(5. / _pixelscale), float(5. / _pixelscale), float(8. / _pixelscale), float(
+                    10. / _pixelscale)
+    else:
+        a1, a2, a3, a4, = int(fwhm + 0.5), int(fwhm * 2 + 0.5), int(fwhm * 3 + 0.5), int(fwhm * 4 + 0.5)
+
     iraf.fitskypars.annulus = a4
     iraf.fitskypars.salgori = 'mean'  #mode,mean,gaussian
     iraf.photpars.apertures = '%d,%d,%d' % (a2, a3, a4)
@@ -102,7 +114,7 @@ def psffit2(img, fwhm, psfstars, hdr, _datamax=45000, psffun='gauss'):
     iraf.datapars.datamax = _datamax
     iraf.datapars.readnoise = _ron
     iraf.datapars.epadu = _gain
-    iraf.datapars.exposure = 'EXPTIME'  #lsc.util.readkey3(hdr,'exptime')
+    iraf.datapars.exposure = 'EXPTIME'  
     iraf.datapars.airmass = ''
     iraf.datapars.filter = ''
     iraf.photpars.zmag = zmag
@@ -120,15 +132,18 @@ def psffit2(img, fwhm, psfstars, hdr, _datamax=45000, psffun='gauss'):
     iraf.daopars.sannulus = a4
     iraf.daopars.recenter = 'yes'
     iraf.daopars.varorder = varord
-    iraf.delete("_als,_psf.grp,_psf.nrj", verify=False)
+    iraf.delete("_als2,_psf.grp,_psf.nrj", verify=False)
     iraf.group(img, '_psf2.mag', img + '.psf', '_psf.grp', verify=False, verbose=False)
-    iraf.nstar(img, '_psf.grp', img + '.psf', '_als', '_psf.nrj', verify=False, verbose=False)
+    iraf.nstar(img, '_psf.grp', img + '.psf', '_als2', '_psf.nrj', verify=False, verbose=False)
     photmag = iraf.txdump("_psf2.mag", 'xcenter,ycenter,id,mag,merr', expr='yes', Stdout=1)
-    fitmag = iraf.txdump("_als", 'xcenter,ycenter,id,mag,merr', expr='yes', Stdout=1)
+    fitmag = iraf.txdump("_als2", 'xcenter,ycenter,id,mag,merr', expr='yes', Stdout=1)
     return photmag, fitmag
 
 
-def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'):
+def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss', fixaperture=False):
+    ''' 
+    giving an image, a psffile compute the psf using the file _psf.coo
+    '''
     import lsc
     _ron = lsc.util.readkey3(hdr, 'ron')
     _gain = lsc.util.readkey3(hdr, 'gain')
@@ -144,7 +159,15 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'
     zmag = 0.
     varord = 0  # -1 analitic 0 - numeric
 
-    a1, a2, a3, a4, = int(fwhm + 0.5), int(fwhm * 2 + 0.5), int(fwhm * 3 + 0.5), int(fwhm * 4 + 0.5)
+    if fixaperture:
+        print 'use fix aperture 5 8 10'
+        hdr = lsc.util.readhdr(img+'.fits')
+        _pixelscale = lsc.util.readkey3(hdr, 'PIXSCALE')
+        a1, a2, a3, a4, = float(5. / _pixelscale), float(5. / _pixelscale), float(8. / _pixelscale), float(
+                    10. / _pixelscale)
+    else:
+        a1, a2, a3, a4, = int(fwhm + 0.5), int(fwhm * 2 + 0.5), int(fwhm * 3 + 0.5), int(fwhm * 4 + 0.5)
+
     iraf.fitskypars.annulus = a4
     iraf.fitskypars.salgori = 'mean'  #mode,mean,gaussian
     iraf.photpars.apertures = '%d,%d,%d' % (a2, a3, a4)
@@ -191,7 +214,7 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'
     return photmag, pst, fitmag
 
 
-def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='gauss'):
+def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='gauss', fixaperture=False, _catalog=''):
     try:
         import lsc, string
 
@@ -257,6 +280,12 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
         if ofwhm: fwhm = float(ofwhm)
         print '    FWHM[input]  ', fwhm, ' in pixel'
 
+        xdim, ydim = iraf.hselect(img, 'i_naxis1,i_naxis2', 'yes', Stdout=1)[0].split()
+        print img, fwhm, threshold, scale,xdim
+
+        #################################################################################
+        ###################        write file to compute psf     _psf.coo    ############
+        #################################################################################
         if interactive:
             iraf.display(img, 1, fill=True)
             iraf.delete('tmp.lo?', verify=False)
@@ -266,6 +295,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
             iraf.imexamine(img, 1, wcs='logical', logfile='tmp.log', keeplog=True)
             xyrefer = iraf.fields('tmp.log', '1,2,6,15', Stdout=1)
             xns, yns, _fws = [], [], []
+            #############      write    file for PSF                           #########################
             ff = open('_psf.coo', 'w')
             for i in range(len(xyrefer)):
                 xns.append(float(xyrefer[i].split()[0]))
@@ -274,58 +304,28 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                 ff.write('%10.3f %10.3f %7.2f \n' % (xns[i], yns[i], float(_fws[i])))
             ff.close()
             fwhm = np.median(_fws)
-
-            ###################
-            xdim, ydim = iraf.hselect(img, 'i_naxis1,i_naxis2', 'yes', Stdout=1)[0].split()
-            print img, fwhm, threshold, scale
-            xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
-            dflux = fluxrad - np.median(fluxrad)
-            fstar = np.compress(dflux < np.std(fluxrad), fluxrad)
-
-            tot = np.compress(abs(np.array(fluxrad) * 1.6 - fwhm) / fwhm < .5, fluxrad)
-            print len(tot)
-
-            ff = open('tmp.cursor', 'w')
-            for i in range(len(xs)):
-                _xs = np.delete(xs, i)
-                _ys = np.delete(ys, i)
-                dist2 = np.sqrt((_xs - xs[i]) ** 2 + (_ys - ys[i]) ** 2)
-                # star, not near other object
-                if abs(fluxrad[i] * 1.6 - fwhm) / fwhm < .5 and min(dist2) > distance * fwhm:
-                    x1, x2 = int(xs[i] - fwhm * 3), int(xs[i] + fwhm * 3)
-                    y1, y2 = int(ys[i] - fwhm * 3), int(ys[i] + fwhm * 3)
-                    if x1 < 1: x1 = 1
-                    if y1 < 1: y1 = 1
-                    if x2 > int(xdim): x2 = int(xdim)
-                    if y2 > int(ydim): y2 = int(ydim)
-                    sect = '[' + str(x1) + ':' + str(x2) + ',' + str(y1) + ':' + str(y2) + ']'
-                    fmax = iraf.imstat(img + sect, fields='max', Stdout=1)[1]
-                    if float(fmax) < 45000:  # not saturated
-                        ff.write('%10.3f %10.3f 1 m \n' % (xs[i], ys[i]))
-            ff.close()
-
-            iraf.delete('tmp.lo?,tmp.sta?,tmp.gk?', verify=False)
-            iraf.psfmeasure(img, imagecur='tmp.cursor', logfile='tmp.log', radius=int(fwhm), iter=3, display=False,
-                            StdoutG='tmp.gki')
-            ff = open('tmp.log')
-            righe = ff.readlines()
-            xn = [float(righe[3].split()[1])]
-            yn = [float(righe[3].split()[2])]
-            _fw = [float(righe[3].split()[4])]
-            for r in righe[4:-2]:
-                if len(r) > 0:
-                    xn.append(float(r.split()[0]))
-                    yn.append(float(r.split()[1]))
-                    _fw.append(float(r.split()[3]))
-
+        elif _catalog:
+            print '\n#### use catalog to measure the psf'
+            ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img,inwcs='world',outwcs='logical',
+                              units='degrees degrees',columns='1 2',formats='%10.1f %10.1f',verbose='no')
+            ddd=[i for i in ddd if i[0]!='#']
+            ddd=['  '.join(i.split()[0:3]) for i in ddd]
+            line=''
+            for i in ddd:
+                a,b,c = string.split(i)
+                if float(a) < float(xdim) and  float(b) < float(ydim) and float(b) > 0:
+                    print a,b,c
+                    line = line + '%10s %10s %10s \n' % (a, b, c)
+            if line:
+                ff = open('_psf.coo', 'w')
+                ff.write(line)
+                ff.close()
+            else:
+                sys.exit('error: no catalog objects are in the field')
         else:
-            xdim, ydim = iraf.hselect(img, 'i_naxis1,i_naxis2', 'yes', Stdout=1)[0].split()
-            print img, fwhm, threshold, scale
+            ############              run  sextractor                #####################################
             xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
-            dflux = fluxrad - np.median(fluxrad)
-            fstar = np.compress(dflux < np.std(fluxrad), fluxrad)
-            tot = np.compress(np.abs(np.array(fluxrad) * 1.6 - fwhm) / fwhm < .5, fluxrad)
-            print len(tot)
+            tot = np.compress(abs(np.array(fluxrad) * 1.6 - fwhm) / fwhm < .5, fluxrad)
             if len(tot) < 5:
                 print 'warning: fwhm from sexractor different from fwhm computed during pre-reduction'
                 print 'try using option --fwhm xxx'
@@ -335,16 +335,19 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                 _xs = np.delete(xs, i)
                 _ys = np.delete(ys, i)
                 dist2 = np.sqrt((_xs - xs[i]) ** 2 + (_ys - ys[i]) ** 2)
-                # star, not near other object
-                if np.abs(fluxrad[i] * 1.6 - fwhm) / fwhm < .5 and min(dist2) > distance * fwhm:
+                ###########           cut  star, not near other object    ##########################
+                if abs(fluxrad[i] * 1.6 - fwhm) / fwhm < .5 and min(dist2) > distance * fwhm:
                     x1, x2 = int(xs[i] - fwhm * 3), int(xs[i] + fwhm * 3)
                     y1, y2 = int(ys[i] - fwhm * 3), int(ys[i] + fwhm * 3)
                     if x1 < 1: x1 = 1
                     if y1 < 1: y1 = 1
-                    if x2 > int(xdim): x2 = int(xdim)
-                    if y2 > int(ydim): y2 = int(ydim)
+                    if x2 > int(xdim):
+                        x2 = int(xdim)
+                    if y2 > int(ydim):
+                        y2 = int(ydim)
                     sect = '[' + str(x1) + ':' + str(x2) + ',' + str(y1) + ':' + str(y2) + ']'
                     fmax = iraf.imstat(img + sect, fields='max', Stdout=1)[1]
+                ##########       cut saturated object               ########################
                     if float(fmax) < _datamax:  # not saturated
                         ff.write('%10.3f %10.3f 1 m \n' % (xs[i], ys[i]))
             ff.close()
@@ -366,13 +369,14 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
             print 'FWHM: ', righe[-1].split()[-1]
             print 80 * "#"
             ######
+            ##############            eliminate double object identification         ###########################
             xns, yns, _fws = [xn[0]], [yn[0]], [_fw[0]]
-            for i in range(1, len(xn)):  # eliminate double object identification
+            for i in range(1, len(xn)):
                 if abs(xn[i] - xn[i - 1]) > .2 and abs(yn[i] - yn[i - 1]) > .2:
                     xns.append(xn[i])
                     yns.append(yn[i])
                     _fws.append(_fw[i])
-
+            #########      write clean   file for PSF                           #########################
             fw = []
             ff = open('_psf.coo', 'w')
             for i in range(len(xns)):
@@ -380,20 +384,37 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                     ff.write('%10.3f %10.3f %7.2f \n' % (xns[i], yns[i], float(_fws[i])))
                     fw.append(_fws[i])
             ff.close()  ## End automatic selection
-            ###
+        ######################################################################################
+        ###################        write file of object to store in  fits table  #############
+        ######################################################################################
+        if interactive:
+            xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
             ff = open('_psf2.coo', 'w')
-            for i in range(len(xn)):
-                ff.write('%10.3f %10.3f %7.2f \n' % (xn[i], yn[i], float(_fw[i])))
-            ff.close()  ## End automatic selection
-            fwhm = np.median(fw)
-
-            print "Median FWHM %5.2f +/-%5.2f  nsource=%d  " \
-                  % (np.median(fw), np.std(fw), len(fw))
+            for i in range(len(xs)):
+                ff.write('%10s %10s %10s \n' % (xs[i], ys[i], fluxrad[i]))
+            ff.close()
+        elif _catalog:
+            print '\n#### use catalog '
+            ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img,inwcs='world',outwcs='logical',
+                              units='degrees degrees',columns='1 2',formats='%10.1f %10.1f',verbose='no')
+            ddd=[i for i in ddd if i[0]!='#']
+            ddd=['  '.join(i.split()[0:3]) for i in ddd]
+            ff = open('_psf2.coo', 'w')
+            for i in ddd:
+                a,b,c = string.split(i)
+                ff.write('%10s %10s %10s \n' % (a, b, c))
+            ff.close()
+            print 'use catalog'
+        else:
+            os.system('cp _psf.coo _psf2.coo')
+#            dflux = fluxrad - np.median(fluxrad)
+#            fstar = np.compress(dflux < np.std(fluxrad), fluxrad)
+#################################################################################################################
 
         print 80 * "#"
-        photmag, pst, fitmag = psffit(img, fwhm, psfstars, hdr, interactive, _datamax, psffun)
+        photmag, pst, fitmag = psffit(img, fwhm, psfstars, hdr, interactive, _datamax, psffun, fixaperture)
 
-        photmag2, fitmag2 = psffit2(img, fwhm, psfstars, hdr, _datamax, psffun)
+        photmag2, fitmag2 = psffit2(img, fwhm, psfstars, hdr, _datamax, psffun, fixaperture)
 
         radec = iraf.wcsctran(input='STDIN', output='STDOUT', Stdin=photmag,
                               Stdout=1, image=img, inwcs='logical', outwcs='world', columns="1 2",
@@ -531,12 +552,19 @@ if __name__ == "__main__":
                       default=False, help='Show PSF output \t\t [%default]')
     parser.add_option("-X", "--xwindow", action="store_true", dest='xwindow', default=False,
                       help='xwindow \t\t\t [%default]')
+    parser.add_option("-c", "--catalog", dest="catalog", default='', type='str',
+                      help='use input catalog  \t\t %default')
+    parser.add_option("--fix", action="store_true", dest='fixaperture', default=False,
+                      help='fixaperture \t\t\t [%default]')
 
     option, args = parser.parse_args()
-    if len(args) < 1: sys.argv.append('--help')
+    if len(args) < 1: 
+        sys.argv.append('--help')
     option, args = parser.parse_args()
     imglist = lsc.util.readlist(args[0])
     _xwindow = option.xwindow
+    _catalog = option.catalog
+    fixaperture = option.fixaperture
     psffun = option.psffun
     if psffun not in ['gauss', 'auto', 'lorentz', 'moffat15', 'moffat25', 'penny1', 'penny2']:
         sys.argv.append('--help')
@@ -561,7 +589,7 @@ if __name__ == "__main__":
             fwhm0 = option.fwhm
             while True:
                 result, fwhm = ecpsf(img, fwhm0, option.threshold, option.psfstars,
-                                     option.distance, option.interactive, ds9, psffun)
+                                     option.distance, option.interactive, ds9, psffun, fixaperture, _catalog)
                 print '\n### ' + str(result)
                 if option.show:
                     lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')
@@ -577,7 +605,8 @@ if __name__ == "__main__":
                         bb = raw_input('If you want to try again, type the new FWHM to try here. Otherwise press enter to continue. ')
                         if bb: fwhm0 = float(bb)
                         else: break
-                else: break
+                else: 
+                    break
 
             iraf.delete("tmp.*", verify="no")
             iraf.delete("_psf.*", verify="no")

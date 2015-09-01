@@ -404,7 +404,8 @@ def run_zero(imglist, _fix, _type, _field, _catalogue, _color='', interactive=Fa
             print 'status ' + str(status) + ': unknown status'
 
 
-def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, xwindow='', database='photlco'):
+def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, xwindow='',\
+            fix=True, catalog='', database='photlco'):
     import lsc
     import os
     import  string
@@ -428,6 +429,16 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
             ff = '-f ' + str(_fwhm) + ' '
         else:
             ff = ''
+        if fix:
+            gg = ' '
+        else:
+            gg = ' --fix '
+        if catalog:
+            cc=' --catalog '+catalog+' '
+        else:
+            cc=' '
+
+
         status = checkstage(img, 'psf')
         print status
         if status == 1:
@@ -486,7 +497,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                 _dir = ggg[0]['filepath']
                 img0 = img
                 command = 'lscpsf.py ' + _dir + img0 + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
-                    treshold) + xwindow
+                    treshold) + xwindow + gg + cc
                 print command
                 os.system(command)
         elif status == 0:

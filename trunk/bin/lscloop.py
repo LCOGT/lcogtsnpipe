@@ -300,7 +300,7 @@ if __name__ == "__main__":   # main program
                 for ff in fields:
                     lsc.myloopdef.run_getmag(ll['filename'], _field, _output, _interactive, _show, _bin, _type)
             elif _stage == 'psf':
-                lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, XX)
+                lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, XX, _fix, _catalogue, 'photlco')
             elif _stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], _ras, _decs, _xord, _yord, _bkg, _size, _recenter, _ref,
                                       _interactive, _show, _redo, _dmax,_dmin,'photlco',_ra0,_dec0)

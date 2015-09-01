@@ -281,7 +281,7 @@ if __name__ == "__main__":
                         pssl_targ = gain_targ*noise**2 - rn_targ**2/gain_targ - median
                         #noiseimg = (data_targ - median)**2
                         noiseimg = data_targ + pssl_targ + rn_targ**2
-                        noiseimg[targmask > 0] = sat_targ
+                        noiseimg[targmask_data > 0] = sat_targ
                         pyfits.writeto('targnoise.fits', noiseimg, output_verify='fix', clobber=True)
 
 #                        print 'variance image already there, do not create noise image'
@@ -291,7 +291,7 @@ if __name__ == "__main__":
                             pssl_temp = gain_temp*noise**2 - rn_temp**2/gain_temp - median
                             #noiseimg = (data_temp - median)**2
                             noiseimg = data_temp + pssl_temp + rn_temp**2
-                            noiseimg[tempmask > 0] = sat_temp
+                            noiseimg[tempmask_data > 0] = sat_temp
                             pyfits.writeto('tempnoise.fits', noiseimg, output_verify='fix', clobber=True)
                         else:
                             pssl_temp = 0
@@ -303,7 +303,7 @@ if __name__ == "__main__":
 
                         # create mask image for template
                         data_temp, head_temp
-                        mask = data_temp  == 0
+                        mask = np.abs(data_temp) < 1e-6
                         pyfits.writeto('tempmask.fits',mask.astype('i'))
 
                         # hotpants parameters

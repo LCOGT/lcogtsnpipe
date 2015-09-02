@@ -313,8 +313,8 @@ if __name__ == "__main__":
 
                         if _fixpix:
                             iraf.unlearn(iraf.fixpix)
-                            iraf.fixpix(imgtarg, targmask, verbose=True)
-                            iraf.fixpix(imgtemp, tempmask, verbose=True)
+                            iraf.fixpix(imgtarg, targmask, verbose='yes')
+                            iraf.fixpix(imgtemp, tempmask, verbose='yes')
                         # hotpants parameters
                         iuthresh = str(sat_targ)                        # upper valid data count, image
                         iucthresh = str(0.95*sat_targ)                   # upper valid data count for kernel, image

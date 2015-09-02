@@ -50,7 +50,7 @@ if __name__ == "__main__":
                       default=False, help=' force archiving \t\t\t [%default]')
     parser.add_option("--show", dest="show", action="store_true",
                       default=False, help=' show result  \t\t\t [%default]')
-    parser.add_option("--fixpix", dest="fixpix", action="store_true",
+    parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing the subtraction')
 
     hotpants = OptionGroup(parser, "hotpants parameters")
@@ -313,8 +313,8 @@ if __name__ == "__main__":
 
                         if _fixpix:
                             iraf.unlearn(iraf.fixpix)
-                            iraf.fixpix(imgtarg, targmask)
-                            iraf.fixpix(imgtemp, tempmask)
+                            iraf.fixpix(imgtarg, targmask, verbose=True)
+                            iraf.fixpix(imgtemp, tempmask, verbose=True)
                         # hotpants parameters
                         iuthresh = str(sat_targ)                        # upper valid data count, image
                         iucthresh = str(0.95*sat_targ)                   # upper valid data count for kernel, image

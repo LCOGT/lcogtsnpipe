@@ -312,9 +312,14 @@ if __name__ == "__main__":
                         pyfits.writeto('tempmask.fits',mask.astype('i'))
 
                         if _fixpix:
+                            iraf.flpr(); iraf.flpr()
                             iraf.unlearn(iraf.fixpix)
-                            iraf.fixpix(imgtarg, targmask, verbose='yes')
-                            iraf.fixpix(imgtemp, tempmask, verbose='yes')
+                            iraf.fixpix('./'+imgtarg, './'+targmask, verbose='yes')
+                            iraf.flpr(); iraf.flpr()
+                            iraf.unlearn(iraf.fixpix)
+                            iraf.fixpix('./'+imgtemp, './'+tempmask, verbose='yes')
+                            iraf.flpr(); iraf.flpr()
+                            iraf.unlearn(iraf.fixpix)
                         # hotpants parameters
                         iuthresh = str(sat_targ)                        # upper valid data count, image
                         iucthresh = str(0.95*sat_targ)                   # upper valid data count for kernel, image

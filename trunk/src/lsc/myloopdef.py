@@ -1975,7 +1975,7 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convo
     else:
         _bgo=''
     if _fixpix:
-        fixpix = '--fixpix '
+        fixpix = ' --fixpix '
     else:
         fixpix = ''
     command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo + fixpix

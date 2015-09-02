@@ -1934,7 +1934,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames=''):
 
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convolve='',_bgo=3):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convolve='',_bgo=3,_fixpix=False):
     import lsc
 
     direc = lsc.__path__[0]
@@ -1974,8 +1974,11 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convo
         _bgo=' --bgo '+str(_bgo)
     else:
         _bgo=''
-
-    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo
+    if _fixpix:
+        fixpix = '--fixpix '
+    else:
+        fixpix = ''
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo + fixpix
     print command
     os.system(command)
 

@@ -50,6 +50,9 @@ if __name__ == "__main__":
                       default=False, help=' force archiving \t\t\t [%default]')
     parser.add_option("--show", dest="show", action="store_true",
                       default=False, help=' show result  \t\t\t [%default]')
+    parser.add_option("--fixpix", dest="fixpix", action="store_true",
+                      help='Run fixpix on the images before doing the subtraction')
+
     hotpants = OptionGroup(parser, "hotpants parameters")
     hotpants.add_option("--nrxy", dest="nrxy", default='1,1',
                         help='Number of image region in x y directions \t [%default]')
@@ -89,6 +92,8 @@ if __name__ == "__main__":
     _checkast = option.check
     _force = option.force
     _show = option.show
+    _fixpix = option.fixpix
+
     #     saturation=40000
     nrxy = option.nrxy
     nsxy = option.nsxy
@@ -306,6 +311,10 @@ if __name__ == "__main__":
                         mask = np.abs(data_temp) < 1e-6
                         pyfits.writeto('tempmask.fits',mask.astype('i'))
 
+                        if _fixpix:
+                            iraf.unlearn(iraf.fixpix)
+                            iraf.fixpix(imgtarg, targmask)
+                            iraf.fixpix(imgtemp, tempmask)
                         # hotpants parameters
                         iuthresh = str(sat_targ)                        # upper valid data count, image
                         iucthresh = str(0.95*sat_targ)                   # upper valid data count for kernel, image

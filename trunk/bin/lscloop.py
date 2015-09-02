@@ -116,7 +116,8 @@ if __name__ == "__main__":   # main program
     parser.add_option("--bgo", dest="bgo", default=3, type=float,
                       help=' bgo parameter for hotpants  \t [%default]')
 
-
+    parser.add_option("--fixpix", dest="fixpix", action="store_true",
+                      help='Run fixpix on the images before doing image subtraction')
     option, args = parser.parse_args()
     # _instrument=option.instrument
     _telescope = option.telescope
@@ -199,6 +200,7 @@ if __name__ == "__main__":   # main program
     _z1 = option.z1
     _z2 = option.z2
     zcatnew = option.zcatnew
+    _fixpix = option.fixpix
 
     if _xwindow:
         from stsci.tools import capable
@@ -536,7 +538,7 @@ if __name__ == "__main__":   # main program
 
                         listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                         listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
-                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo)
+                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix)
                         if len(listtemp) == 0 or len(listtar) == 0:
                             sys.exit('no data selected ')
                     elif _stage == 'template':  #    merge images using lacos and swarp

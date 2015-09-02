@@ -116,7 +116,7 @@ if __name__ == "__main__":   # main program
     parser.add_option("--bgo", dest="bgo", default=3, type=float,
                       help=' bgo parameter for hotpants  \t [%default]')
 
-    parser.add_option("--fixpix", dest="fixpix", action="store_true",
+    parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing image subtraction')
     option, args = parser.parse_args()
     # _instrument=option.instrument

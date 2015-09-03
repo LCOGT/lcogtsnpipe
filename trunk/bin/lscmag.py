@@ -331,11 +331,11 @@ if __name__ == "__main__":
                 else:
                     if dicti[_filter][img]['telescope'] in ['lsc', '1m0-04', '1m0-05', '1m0-06', '1m0-09']:
                         kk = lsc.sites.extintion('ctio')
-                    elif dicti[_filter][img]['telescope'] in ['elp', '1m0-08']:
+                    elif dicti[_filter][img]['telescope'] in ['elp', '1m0-08', 'SDSS']:
                         kk = lsc.sites.extintion('mcdonald')
                     elif dicti[_filter][img]['telescope'] in ['cpt', '1m0-12', '1m0-10', '1m0-13']:
                         kk = lsc.sites.extintion('southafrica')
-                    elif dicti[_filter][img]['telescope'] in ['ftn', '2m0-01']:
+                    elif dicti[_filter][img]['telescope'] in ['ftn', '2m0-01', 'PS1']:
                         kk = lsc.sites.extintion('mauna')
                     elif dicti[_filter][img]['telescope'] in ['1m0-03', '1m0-11', 'coj', 'fts', '2m0-02']:
                         kk = lsc.sites.extintion('siding')

@@ -6,7 +6,7 @@ if host in ['wwwdevsba']:
    workdirectory =  '/home/supernova/'
    configfile = 'configure'
 elif host in ['svalenti-linux.lco.gtn','cc3.lco.gtn','griffin-linux.lco.gtn',\
-                 'cmccully-linux.lco.gtn','iarcavi-linux.lco.gtn','campus-055-064.ucdavis.edu','iairs-mbp.lco.gtn']:
+                 'cmccully-linux.lco.gtn','iarcavi-linux.lco.gtn','campus-055-064.ucdavis.edu','iairs-mbp']:
    workdirectory =  '/science/supernova/'
    configfile = 'configure'
 elif 'valenti' in host:

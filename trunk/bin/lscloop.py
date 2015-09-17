@@ -20,7 +20,7 @@ if __name__ == "__main__":   # main program
                       help='epoch to reduce  \t [%default]')
     parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str",
                       help='-T telescope ' + ', '.join(lsc.telescope0['all']) + ', '.join(
-                          lsc.site0) + ', fts, ftn, 1m0, kb, fl, fs \t [%default]')
+                          lsc.site0) + ', fts, ftn, 1m0, kb, fl, fs, sinistro, sbig \t [%default]')
     parser.add_option("-R", "--RA", dest="ra", default='', type="str",
                       help='-R  ra    \t [%default]')
     parser.add_option("-D", "--DEC", dest="dec", default='', type="str",
@@ -134,7 +134,7 @@ if __name__ == "__main__":   # main program
         _groupid=''
     _normalize = option.normalize
     _convolve = option.convolve
-    if _telescope not in lsc.telescope0['all'] + lsc.site0 + ['all', 'ftn', 'fts', '1m0', '2m0', 'kb', 'fl', 'fs']:
+    if _telescope not in lsc.telescope0['all'] + lsc.site0 + ['all', 'ftn', 'fts', '1m0', '2m0', 'kb', 'fl', 'fs','sinistro','sbig']:
         sys.argv.append('--help')
     if option.force == None:
         _redo = False

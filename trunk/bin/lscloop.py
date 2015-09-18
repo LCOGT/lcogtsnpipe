@@ -21,6 +21,8 @@ if __name__ == "__main__":   # main program
     parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str",
                       help='-T telescope ' + ', '.join(lsc.telescope0['all']) + ', '.join(
                           lsc.site0) + ', fts, ftn, 1m0, kb, fl, fs, sinistro, sbig \t [%default]')
+    parser.add_option("--instrument", dest="instrument", default='', type="str",
+                      help='--instrument ' + ' kb, fl, fs, sinistro, sbig \t [%default]')
     parser.add_option("-R", "--RA", dest="ra", default='', type="str",
                       help='-R  ra    \t [%default]')
     parser.add_option("-D", "--DEC", dest="dec", default='', type="str",
@@ -119,7 +121,7 @@ if __name__ == "__main__":   # main program
     parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing image subtraction')
     option, args = parser.parse_args()
-    # _instrument=option.instrument
+    _instrument=option.instrument
     _telescope = option.telescope
     _type = option.type
     _stage = option.stage
@@ -273,7 +275,7 @@ if __name__ == "__main__":   # main program
             ll0['ra'] = ll0['ra0'][:]
             ll0['dec'] = ll0['dec0'][:]
 
-            ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype,_groupid)
+            ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype,_groupid, _instrument)
             print '##' * 50
             print '# IMAGE                                    OBJECT           FILTER           WCS            ' \
                   ' PSF           PSFMAG    APMAG       ZCAT          MAG      ABSCAT'
@@ -343,7 +345,7 @@ if __name__ == "__main__":   # main program
                 ll0['ra'] = ll0['ra0'][:]
                 ll0['dec'] = ll0['dec0'][:]
                 print _filter, _id, _name, _ra, _dec
-                ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype,_groupid)
+                ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype,_groupid, _instrument)
                 if len(ll['filename']) > 0:
                     # print '##'*50
                     #                 print '# IMAGE                                    OBJECT           FILTER           WCS             PSF           PSFMAG          ZCAT          MAG      ABSCAT'
@@ -446,7 +448,7 @@ if __name__ == "__main__":   # main program
                             print 'warning: field not defined, zeropoint not computed'
                     elif _stage == 'abscat':  #    compute magnitudes for sequence stars > img.cat
                         if _standard:
-                            mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid)
+                            mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument)
                             if len(mm['filename']) > 0:
                                 for i in range(0, len(mm['filename'])):
                                     print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
@@ -462,7 +464,7 @@ if __name__ == "__main__":   # main program
                             lsc.myloopdef.run_cat(ll3['filename'], '', _interactive, 1, _type, _fix, 'photlco', _field)
                     elif _stage == 'mag':  #    compute final magnitude using:   mag1  mag2  Z1  Z2  C1  C2
                         if _standard:
-                            mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype)
+                            mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument)
                             if len(mm['filename']) > 0:
                                 for i in range(0, len(mm['filename'])):
                                     print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
@@ -510,7 +512,7 @@ if __name__ == "__main__":   # main program
                             inds = argsort(ll00['mjd'])  #  sort by mjd
                             for i in ll00.keys():
                                 ll00[i] = take(ll00[i], inds)
-                            lltemp1 = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid)
+                            lltemp1 = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid, '')
                         else:
                             lltemp1=()
 
@@ -525,7 +527,7 @@ if __name__ == "__main__":   # main program
                             inds = argsort(ll00['mjd'])  #  sort by mjd
                             for i in ll00.keys():
                                 ll00[i] = take(ll00[i], inds)
-                            lltemp2 = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid)
+                            lltemp2 = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid, '')
                         else:
                             lltemp2=()
 

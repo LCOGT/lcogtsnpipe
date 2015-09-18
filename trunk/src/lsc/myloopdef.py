@@ -23,8 +23,13 @@ try:
     import mysqldef
     hostname, username, passwd, database = mysqldef.getconnection('lcogt2')
     conn = mysqldef.dbConnect(hostname, username, passwd, database)
+except ImportError as e:
+    print e
+    print 'try running one of these:'
+    print 'pip install mysql-python'
+    print 'conda install mysql-python'
 except:
-    '\### warning: problem with the database'
+    print '### warning: problem connecting to the database'
 
 def run_getmag(imglist, _field, _output='', _interactive=False, _show=False, _bin=1e-10, magtype='mag',
                database='photlco'):
@@ -747,7 +752,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
     return rasn2c, decsn2c
 
 
-def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1,_groupid=''):
+def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1,_groupid='', _instrument=''):
     from numpy import array, asarray
     import string, re, os, sys
     import lsc
@@ -857,7 +862,18 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1,_groupid='
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
-
+####################
+    #    add filter using instrument
+    if _instrument:
+        print _instrument
+        ww = asarray([i for i in range(len(ll1['instrument'])) if (ll1['instrument'][i] == _instrument)])
+        if len(ww) > 0:
+            for jj in ll1.keys():
+                ll1[jj] = array(ll1[jj])[ww]
+        else:
+            for jj in ll1.keys():
+                ll1[jj] = []
+######################
     if _bad:
         if _bad == 'wcs':
             ww = asarray([i for i in range(len(ll1[_bad])) if (ll1[_bad][i] != 0)])

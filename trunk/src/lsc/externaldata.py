@@ -413,31 +413,58 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     ar = np.where(ar2 == 0, _saturate, ar)
 
     if len(skylevel):
-       hd.update('skylevel', np.mean(skylevel), 'avarage skylevel')
-       
-
-    hd.update('L1FWHM', 9999, 'FHWM (arcsec) - computed with sectractor')
-    hd.update('WCSERR', 0,    'Error status of WCS fit. 0 for no error')
-    hd.update('MJD-OBS', _mjd,        'MJD')
-    hd.update('RA'     ,  _ra,        'RA')
-    hd.update('DEC'    ,  _dec,       'DEC')
-    hd.update('RDNOISE' , _ron,       'read out noise')
-    hd.update('PIXSCALE', pixelscale, '[arcsec/pixel] Nominal pixel scale on sky')
-    hd.update('FILTER' , _filter,     'Instrument used')
-    hd.update('DAYOBS' , _dayobs,     'day of observation')
-    hd.update('AIRMASS', _airmass,    'day of observation')
-    hd.update('DATE-OBS', _dateobs,    'date of observation')
-    hd.update('GAIN'   ,    _gain,    ' gain ')
-    hd.update('saturate', _saturate,  ' saturatiopn level ')
+        hd['SKYLEVEL'] = (np.mean(skylevel), 'average sky level')
+    hd['L1FWHM']   = (9999,       'FHWM (arcsec) - computed with sextractor')
+    hd['WCSERR']   = (0,          'error status of WCS fit. 0 for no error')
+    hd['MJD-OBS']  = (_mjd,       'MJD')
+    hd['RA']       = (_ra,        'RA')
+    hd['DEC']      = (_dec,       'DEC')
+    hd['RDNOISE']  = (_ron,       'read out noise')
+    hd['PIXSCALE'] = (pixelscale, '[arcsec/pixel] Nominal pixel scale on sky')
+    hd['FILTER']   = (_filter,    'filter used')
+    hd['DAYOBS']   = (_dayobs,    'day of observation')
+    hd['AIRMASS']  = (_airmass,   'airmass')
+    hd['DATE-OBS'] = (_dateobs,   'date of observation')
+    hd['GAIN']     = (_gain,      'gain')
+    hd['SATURATE'] = (_saturate,  'saturation level ')
     if objname:
-       hd.update('OBJECT', objname, 'Title of the dataset')
-
+        hd['OBJECT'] = (objname, 'title of the data set')
     if survey == 'sloan':
-       hd.update('TELESCOP', 'SDSS', 'The Name of the Telescope')
-       hd.update('INSTRUME', 'SDSS', 'Instrument used')
+        hd['TELESCOP'] = ('SDSS', 'name of the telescope')
+        hd['INSTRUME'] = ('SDSS', 'instrument used')
     elif survey == 'ps1':
-       hd.update('TELESCOP', 'PS1', 'The Name of the Telescope')
-       hd.update('INSTRUME', 'PS1', 'Instrument used')
+        hd['TELESCOP'] = ('PS1', 'name of the telescope')
+        hd['INSTRUME'] = ('PS1', 'instrument used')
+
+# this syntax for updating headers is deprecated and
+# causes a lot of warning messages when running the pipeline
+
+#    if len(skylevel):
+#       hd.update('skylevel', np.mean(skylevel), 'avarage skylevel')
+#       
+
+#    hd.update('L1FWHM', 9999, 'FHWM (arcsec) - computed with sectractor')
+#    hd.update('WCSERR', 0,    'Error status of WCS fit. 0 for no error')
+#    hd.update('MJD-OBS', _mjd,        'MJD')
+#    hd.update('RA'     ,  _ra,        'RA')
+#    hd.update('DEC'    ,  _dec,       'DEC')
+#    hd.update('RDNOISE' , _ron,       'read out noise')
+#    hd.update('PIXSCALE', pixelscale, '[arcsec/pixel] Nominal pixel scale on sky')
+#    hd.update('FILTER' , _filter,     'Instrument used')
+#    hd.update('DAYOBS' , _dayobs,     'day of observation')
+#    hd.update('AIRMASS', _airmass,    'day of observation')
+#    hd.update('DATE-OBS', _dateobs,    'date of observation')
+#    hd.update('GAIN'   ,    _gain,    ' gain ')
+#    hd.update('saturate', _saturate,  ' saturatiopn level ')
+#    if objname:
+#       hd.update('OBJECT', objname, 'Title of the dataset')
+
+#    if survey == 'sloan':
+#       hd.update('TELESCOP', 'SDSS', 'The Name of the Telescope')
+#       hd.update('INSTRUME', 'SDSS', 'Instrument used')
+#    elif survey == 'ps1':
+#       hd.update('TELESCOP', 'PS1', 'The Name of the Telescope')
+#       hd.update('INSTRUME', 'PS1', 'Instrument used')
        
     new_header = hd
     # sinistro images are rotated 180 degree

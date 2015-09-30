@@ -348,11 +348,11 @@ def correctcard(img):
         for i in ww:
             if headername[i]:
                 try:
-                    _header[headername[i]] = newheader[i]
-#                    _header.update(headername[i],newheader[i]) # deprecated
+#                    _header[headername[i]] = newheader[i]
+                    _header.update(headername[i],newheader[i]) # deprecated in PyFITS 3.3
                 except:
-                    _header[headername[i]] = 'xxxx'
-#                    _header.update(headername[i],'xxxx') # deprecated
+#                    _header[headername[i]] = 'xxxx'
+                    _header.update(headername[i],'xxxx') # deprecated in PyFITS 3.3
         imm.flush()
         imm.close()
 ######################################################################################################
@@ -366,11 +366,9 @@ def updateheader(image,dimension,headerdict):
 #   now get dictionary   08 12  2012
 ################################
         for i in headerdict.keys():
-           _header[i] = tuple(headerdict[i])
-#           _header.update(i,headerdict[i][0],headerdict[i][1]) # deprecated
+#           _header[i] = tuple(headerdict[i])
+           _header.update(i,headerdict[i][0],headerdict[i][1]) # deprecated in PyFITS 3.3
 ###################################################
-#        _header[_headername] = (_value, commento)
-#        _header.update(_headername,_value,commento) # deprecated
         imm.flush()
         imm.close()
     except:
@@ -383,11 +381,9 @@ def updateheader(image,dimension,headerdict):
             _header=imm[dimension].header
 ###################################################
             for i in headerdict.keys():
-               _header[i] = tuple(headerdict[i])
-#               _header.update(i,headerdict[i][0],headerdict[i][1]) # deprecated
+#               _header[i] = tuple(headerdict[i])
+               _header.update(i,headerdict[i][0],headerdict[i][1]) # deprecated in PyFITS 3.3
 ###################################################
-            _header[_headername] = (_value, commento)
-#            _header.update(_headername,_value,commento) # deprecated
             imm.flush()
             imm.close()
         except:

@@ -1218,8 +1218,8 @@ def gettargetid(_name,_ra,_dec,conn,_radius=.01,verbose=False):
    import lsc
    from numpy import argmin
    if _name:
-        command=['select distinct(r.name),r.targetid,t.id, t.ra0,t.dec0 from targetnames as r join targets as t where r.name ="'+\
-                 str(_name)+'" and t.id=r.targetid']
+        command=['select distinct(r.name), r.targetid, t.id, t.ra0, t.dec0 from targetnames as r join targets as t where r.name like "'+\
+                 str(_name).replace(' ', '%') +'" and t.id=r.targetid']
         lista=lsc.mysqldef.query(command,conn)
    elif _ra and _dec:
       if ':' in  str(_ra):

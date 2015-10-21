@@ -23,16 +23,12 @@ if __name__ == "__main__":
                       type='str', help='DEC coordinate \t\t\t %default')
     parser.add_option("-p", "--psf", dest="psf", default='',
                       type='str', help='psf image \t\t\t %default')
-    parser.add_option("-s", "--show", dest="show", action='store_true',
-                      default=False, help='Show output \t\t [%default]')
-    parser.add_option("-f", "--force", dest="force", action='store_true',
-                      default=False, help='force archiving \t\t [%default]')
-    parser.add_option("--mag", dest="mag", action='store_true',
-                      default=False, help='chose mag interactively \t\t [%default]')
-    parser.add_option("--clean", dest="clean", action='store_true',
-                      default=False, help='clean from cosmic \t\t [%default]')
-    parser.add_option("--pos", dest="pos", action='store_true',
-                      default=False, help='chose mag interactively \t\t [%default]')
+    parser.add_option("--mag", dest="mag", type=float, default=0, help='mag to subtract \t\t [%default]')
+    parser.add_option("-s", "--show", action='store_true', help='Show output \t\t [%default]')
+    parser.add_option("-f", "--force", action='store_true', help='force archiving \t\t [%default]')
+    parser.add_option("--uncleaned", dest="clean", action='store_false', help='do not use cosmic ray cleaned image \t\t [%default]')
+    parser.add_option("-i", action='store_true', help='choose mag and position interactively \t\t [%default]')
+    parser.add_option("--subtract-mag-from-header", action='store_true', help='automatically subtract mag from header of file \t\t [%default]')
     option, args = parser.parse_args()
     if len(args) < 1: sys.argv.append('--help')
     option, args = parser.parse_args()
@@ -60,9 +56,11 @@ if __name__ == "__main__":
     _dec = option.DEC
     _show = option.show
     _force = option.force
-    chosemag = option.mag
-    chosepos = option.pos
+    chosemag = option.i
+    chosepos = option.i
+    _mag = option.mag
     _clean = option.clean
+    _subtract_mag_from_header = option.subtract_mag_from_header
     # #################################
     from pyraf import iraf
     from iraf import digiphot
@@ -81,7 +79,7 @@ if __name__ == "__main__":
                 psfimg = ''
                 print 'psf not found'
             else:
-                print '\### found psffile'
+                print '### found psffile'
                 goon = True
 
             if goon:
@@ -91,78 +89,56 @@ if __name__ == "__main__":
                     hdr1 = lsc.util.readhdr(re.sub('.fits', '.sn2.fits', img0))
                     _xpos = lsc.util.readkey3(hdr1, 'PSFX1')
                     _ypos = lsc.util.readkey3(hdr1, 'PSFY1')
-                    _mag = lsc.util.readkey3(hdr1, 'PSFMAG1')
+                    if _subtract_mag_from_header:
+                        print 'use mag from header'
+                        _exptime = lsc.util.readkey3(hdr1, 'exptime')
+                        _mag = float(lsc.util.readkey3(hdr1, 'PSFMAG1')) + 2.5 * math.log10(float(_exptime))
                     if 'ZPN' in hdr1.keys():
                         _ZPN = lsc.util.readkey3(hdr1, 'ZPN')
                     else:
                         _ZPN = ''
-                    _exptime = lsc.util.readkey3(hdr1, 'exptime')
                     print 'found fits table'
-                    print _ZPN
+                    print 'ZPN:', _ZPN
+
                 #######################  chose mag  ##############
-                if not chosemag:
-                    if _mag:
-                        print 'use mag from fits table'
-                        try:
-                            _mag = float(_mag) + 2.5 * math.log10(float(_exptime))
-                        except:
-                            _mag = 0.0
-                    else:
-                        print 'mag not found, mag not input, no modification to the template '
-                        _mag = 0
-                else:
+                if chosemag:
                     if _ZPN:
                         print '2 magnitude difference'
                         _magobj = raw_input('which is the mag of the object  ? ')
                         if float(_magobj) == 0.0:
                             _mag = 0.0
                         else:
-                            _mag = float(_magobj) - (float(_ZPN))  #+2.5*math.log10(float(_exptime)))
+                            _mag = float(_magobj) - float(_ZPN)  #+2.5*math.log10(float(_exptime)))
                     else:
                         _mag0 = raw_input('which mag do you want to subtract  ' + str(_mag) + ' ? ')
-                        if not _mag0:
-                            _mag = float(_mag)
-                        elif _mag0 == 0.0:
-                            _mag = 0.0
-                        else:
+                        if _mag0:
                             _mag = float(_mag0)
-                    print _mag
+                print 'magnitude to be subtracted:', _mag
+
                 #######################  Chose Ra   and    Dec  ##############
-                if not chosepos:
-                    if not _ra and not _dec:
-                        _ra, _dec, _SN0, _type = lsc.util.checksndb(img0, 'targets')
-                    if _ra and _dec:
-                        print 'use ra and dec from input database !!! '
-                        hdr0 = lsc.util.readhdr(img0)
-                        wcs = pywcs.WCS(hdr0)
-                        pix1 = wcs.wcs_sky2pix(array(zip([_ra], [_dec]), float), 1)
-                        _xpos, _ypos = pix1[0][0], pix1[0][1]
-                else:
-                    _xpos, _ypos = '', ''
-                if _xpos and _ypos:
-                    print 'use xpos and ypos from fits table'
-                    print _xpos, _ypos
-                else:
-                    print 'no xpos and ypos define, do that interactively'
-                    jj = 0
-                    while not _xpos or not _ypos:
-                        print "  MARK SN REGION WITH - x -, EXIT  - q -"
-                        try:
-                            lsc.util.delete('tmp.log')
-                            zz1, zz2, goon = lsc.util.display_image(img, 1, '', '', True)
-                            iraf.imexamine(img, 1, wcs='logical', logfile='tmp.log', keeplog=True)
-                            xytargets = iraf.fields('tmp.log', '1,2', Stdout=1)
-                            _xpos, _ypos = string.split(xytargets[0])[0], string.split(xytargets[0])[1]
-                        except:
-                            _xpos, _ypos = '', ''
-                        jj = jj + 1
-                        if jj > 10:
-                            goon = False
-                            break
+                if chosepos:
+                    print 'choose xpos, ypos interactively'
+                    lsc.util.delete('tmp.log')
+                    zz1, zz2, goon = lsc.util.display_image(img, 1, '', '', True)
+                    iraf.imexamine(img, 1, wcs='logical', logfile='tmp.log', keeplog=True)
+                    xytargets = iraf.fields('tmp.log', '1,2', Stdout=1)
+                    _xpos, _ypos = string.split(xytargets[0])[0], string.split(xytargets[0])[1]
+                elif not _ra or not _dec:
+                    print 'use ra and dec from input database !!! '
+                    _ra, _dec, _SN0, _type = lsc.util.checksndb(img0, 'targets')
+
+                if _ra and _dec:
+                    print 'convert RA, dec to xpos, ypos using header'
+                    hdr0 = lsc.util.readhdr(img0)
+                    wcs = pywcs.WCS(hdr0)
+                    pix1 = wcs.wcs_sky2pix([(_ra, _dec)], 1)
+                    _xpos, _ypos = pix1[0][0], pix1[0][1]
+                elif _mag != 0:
+                    sys.exit('need to define coordinates for subtraction')
 
             if goon:
-                print _xpos, _ypos, _mag
-                print img0, psfimg, _xpos, _ypos, _mag
+                print 'pixel coordinates to subtract:', _xpos, _ypos
+                print img0, psfimg
                 imgout = re.sub('.fits', '.temp.fits', string.split(img0, '/')[-1])
                 lsc.util.delete('_tmp.fits,_tmp2.fits,_tmp2.fits.art,' + imgout)
                 _targetid = lsc.mysqldef.targimg(img0)

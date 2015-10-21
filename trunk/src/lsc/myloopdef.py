@@ -2001,13 +2001,13 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convo
 
 ######################################################################3
 
-def run_template(listtemp, show=False, _force=False):
+def run_template(listtemp, show=False, _force=False, _interactive=False, _ra=None, _dec=None, _psf=None, _mag=0, _clean=True, _subtract_mag_from_header=False):
     import lsc
 
     direc = lsc.__path__[0]
     from numpy import where, array
     import mysqldef
-    import os, string, glob  #MySQLdb,
+    import os, string, glob
 
     status = []
     stat = 'psf'
@@ -2019,15 +2019,25 @@ def run_template(listtemp, show=False, _force=False):
     for jj in range(0, len(listtemp)):
         f.write(listtemp[jj] + '\n')
     f.close()
+    command = 'lscmaketempl.py _temp.list'
     if show:
-        ii = ' --show '
-    else:
-        ii = ''
+        command += ' --show'
     if _force:
-        ff = ' -f '
-    else:
-        ff = ' '
-    command = 'lscmaketempl.py _temp.list --clean --pos --mag' + ii + ff # --pos --mag added by griffin temporarily
+        command += ' -f'
+    if _interactive:
+        command += ' -i'
+    if _ra:
+        command += ' -R ' + str(_ra)
+    if _dec:
+        command += ' -D ' + str(_dec)
+    if _psf:
+        command += ' -p ' + _psf
+    if _mag:
+        command += ' --mag ' + str(_mag)
+    if not _clean:
+        command += ' --uncleaned'
+    if _subtract_mag_from_header:
+        command += ' --subtract-mag-from-header'
     print command
     os.system(command)
 

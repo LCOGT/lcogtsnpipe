@@ -117,9 +117,13 @@ if __name__ == "__main__":   # main program
     parser.add_option('--zcatnew', action='store_true', help='use fitcol3 for the zero point and color term')
     parser.add_option("--bgo", dest="bgo", default=3, type=float,
                       help=' bgo parameter for hotpants  \t [%default]')
-
+    parser.add_option("-p", "--psf", dest="psf", default='', type=str, help='psf image for template \t\t\t %default')
+    parser.add_option("--mag", dest="mag", type=float, default=0, help='mag to subtract from template image \t\t [%default]')
+    parser.add_option("--uncleaned", dest="clean", action='store_false', default=True, help='do not use cosmic ray cleaned image as template \t\t [%default]')
+    parser.add_option("--subtract-mag-from-header", action='store_true', help='automatically subtract mag from header of template image \t\t [%default]')
     parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing image subtraction')
+
     option, args = parser.parse_args()
     _instrument=option.instrument
     _telescope = option.telescope
@@ -203,6 +207,10 @@ if __name__ == "__main__":   # main program
     _z2 = option.z2
     zcatnew = option.zcatnew
     _fixpix = option.fixpix
+    _mag = option.mag
+    _clean = option.clean
+    _subtract_mag_from_header = option.subtract_mag_from_header
+    _psf = option.psf
 
     if _xwindow:
         from stsci.tools import capable
@@ -546,7 +554,7 @@ if __name__ == "__main__":   # main program
                             sys.exit('no data selected ')
                     elif _stage == 'template':  #    merge images using lacos and swarp
                         listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
-                        lsc.myloopdef.run_template(array(listfile), _show, _redo)
+                        lsc.myloopdef.run_template(array(listfile), _show, _redo, _interactive, _ra, _dec, _psf, _mag, _clean, _subtract_mag_from_header)
                     else:
                         print _stage + ' not defined'
                 else:

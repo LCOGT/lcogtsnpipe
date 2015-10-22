@@ -215,6 +215,9 @@ if __name__ == "__main__":
                 dictionary['filepath'] = '/science/supernova/data/lsc/' + lsc.util.readkey3(hd, 'date-night') + '/'
                 dictionary['filetype'] = 4
 
+                dictionary['telescopeid'] = lsc.mysqldef.getfromdataraw(conn, 'telescopes', 'name', dictionary['telescope'], column2='id')[0]['id']
+                dictionary['instrumentid'] = lsc.mysqldef.getfromdataraw(conn, 'instruments', 'name', dictionary['instrument'], column2='id')[0]['id']
+
                 ###################    insert in photlco
                 ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', string.split(imgout, '/')[-1], '*')
                 if ggg and _force:

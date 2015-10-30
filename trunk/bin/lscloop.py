@@ -326,12 +326,12 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.run_cosmic(ll['filename'], 'photlco', 4.5, 0.2, 4, _redo)
             elif _stage == 'ingestsloan':
                 listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
-                lsc.myloopdef.run_ingestsloan(listfile, 'sloan')
+                lsc.myloopdef.run_ingestsloan(listfile, 'sloan', show=_show, force=_redo)
             elif _stage == 'ingestps1':
                 #if not _ps1frames:
                 #    sys.exit('ERROR: list of PS1 frames not provided ')
                 listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
-                lsc.myloopdef.run_ingestsloan(listfile, 'ps1', _ps1frames)
+                lsc.myloopdef.run_ingestsloan(listfile, 'ps1', _ps1frames, show=_show, force=_redo)
         else:
             print '\n### no data selected'
     # ################################################

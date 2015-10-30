@@ -46,7 +46,7 @@ setup(
     author_email='svalenti@lcogt.net',
     scripts=['bin/lscingestrawdata.py','bin/lscingestredudata.py','bin/lscabsphot.py','bin/runlsc.py','bin/lscdiff.py',\
                  'bin/lscastro.py','bin/lsccatalogue.py','bin/lsccheck.py','bin/lscloop.py','bin/lscmerge.py',\
-                 'bin/lscmaketempl.py','bin/runingestion.py', 'bin/lscmaglocal.py',\
+                 'bin/lscmaketempl.py','bin/runingestion.py', 'bin/lscmaglocal.py', 'bin/lscingestsloan.py',\
                  'bin/lscmag.py','bin/lscpsf.py','bin/lscsn.py','bin/lsctestheader.py','bin/lscnewcalib.py'],
     url='lcogt.net',
     license='LICENSE.txt', 

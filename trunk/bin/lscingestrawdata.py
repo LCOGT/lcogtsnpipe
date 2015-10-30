@@ -23,7 +23,7 @@ if __name__ == "__main__":
                       help='name -i instrument ' + ', '.join(lsc.util.instrument0['all']) + ' \t [%default]')
     parser.add_option("-f", "--force", dest="force", action="store_true")
     parser.add_option("-t", "--type", dest="type", default='oracproc', type="str",
-                      help='type -t type \t [oracproc/quicklook/pylcogt] \n')
+                      help='type -t type \t [oracproc/quicklook/pylcogt/preproc] \n')
     parser.add_option("-e", "--epoch", dest="epoch", default='20121212', type="str",
                       help='-e epoch \t [%default]')
     parser.add_option("--object", dest="object", default='', type="str",
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         sys.argv.append('--help')
 
-    if _type not in ['oracproc','quicklook','pylcogt']:
+    if _type not in ['oracproc','quicklook','pylcogt', 'preproc']:
         sys.argv.append('--help')
     if _list:
         lista = string.split(_list,',')

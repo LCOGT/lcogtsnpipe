@@ -158,7 +158,7 @@ def SDSS_gain_dark(camcol, ugriz, run):
         print 'ERROR in SDSS_dark_gain: CAMCOL is not set!'
     return gain, dark
 
-def downloadsdss(_ra,_dec,_band,_radius=20):
+def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
     from astroquery.sdss import SDSS
     from astropy import coordinates as coords
     import astropy.units as u
@@ -169,7 +169,7 @@ def downloadsdss(_ra,_dec,_band,_radius=20):
     import numpy as np
     from scipy import interpolate
     pos = coords.SkyCoord(ra=float(_ra)*u.deg,dec=float(_dec)*u.deg)
-    print 'pos=  ',pos
+    print 'pos =', pos
     xid = SDSS.query_region(pos, spectro=False, radius=_radius*u.arcsec)
     print xid
     if xid:
@@ -185,22 +185,29 @@ def downloadsdss(_ra,_dec,_band,_radius=20):
           nn=len(pointing)
        filevec=[]
        print len(pointing)
-       for _run in pointing[0:nn]:
-          im = SDSS.get_images(run = _run[0], camcol = _run[1], field= _run[2], band= _band, cache=True)
+       for run, camcol, field in pointing[:nn]:
           #  naomaggie image
-          output1 = _band+'_SDSS_'+str(_run[0])+'_'+str(_run[1])+'_'+str(_run[2])+'.fits'
+          output1 = _band+'_SDSS_'+str(run)+'_'+str(camcol)+'_'+str(field)+'.fits'
           #  image in count
-          output2 = _band+'_SDSS_'+str(_run[0])+'_'+str(_run[1])+'_'+str(_run[2])+'c.fits'
+          output2 = _band+'_SDSS_'+str(run)+'_'+str(camcol)+'_'+str(field)+'c.fits'
           #  weight image
-          output3 = _band+'_SDSS_'+str(_run[0])+'_'+str(_run[1])+'_'+str(_run[2])+'.weight.fits'
+          output3 = _band+'_SDSS_'+str(run)+'_'+str(camcol)+'_'+str(field)+'.weight.fits'
           #  sky image
-          output4 = _band+'_SDSS_'+str(_run[0])+'_'+str(_run[1])+'_'+str(_run[2])+'.sky.fits'
+          output4 = _band+'_SDSS_'+str(run)+'_'+str(camcol)+'_'+str(field)+'.sky.fits'
+          if os.path.isfile(output1) and not force:
+              print 'already downloaded', output1
+              filevec.append(output2)
+              filevec.append(output3)
+              continue
+          im = SDSS.get_images(run=run, camcol=camcol, field=field, band=_band, cache=True)
           if os.path.isfile(output1):
              os.system('rm '+output1)
           if os.path.isfile(output2):
              os.system('rm '+output2)
           if os.path.isfile(output3):
              os.system('rm '+output3)
+          if os.path.isfile(output4):
+             os.system('rm '+output4)
           im[0].writeto(output1)
 #         im[0][0].writeto(output2)
 
@@ -247,7 +254,7 @@ def downloadsdss(_ra,_dec,_band,_radius=20):
     else:
        return ''
 
-def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='',survey='sloan',combine_type='MEDIAN'):
+def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='',survey='sloan',combine_type='MEDIAN', show=False):
     import re
     import datetime
     import lsc
@@ -466,40 +473,58 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
 #       hd.update('TELESCOP', 'PS1', 'The Name of the Telescope')
 #       hd.update('INSTRUME', 'PS1', 'Instrument used')
        
-    new_header = hd
-    # sinistro images are rotated 180 degree
-    if _telescope == 'sinistro':
-       ar = np.rot90(np.rot90(ar))
-       CD1_1 = hd['CD1_1']
-       CD2_2 = hd['CD2_2']
-       new_header['CD1_1']  = CD1_1*(-1)
-       new_header['CD2_2']  = CD2_2*(-1)
+#    new_header = hd
+#    # sinistro images are rotated 180 degree
+#    if _telescope == 'sinistro':
+#       ar = np.rot90(np.rot90(ar))
+#       CD1_1 = hd['CD1_1']
+#       CD2_2 = hd['CD2_2']
+#       new_header['CD1_1']  = CD1_1*(-1)
+#       new_header['CD2_2']  = CD2_2*(-1)
 
-    out_fits = pyfits.PrimaryHDU(header=new_header, data=ar)
+    ar, hdr = northupeastleft(data=ar, header=hd)
+    out_fits = pyfits.PrimaryHDU(header=hd, data=ar)
     out_fits.writeto(output, clobber=True, output_verify='fix')
-    
+    northupeastleft(filename=varimg)
 
-    _=lsc.display_image(output,2,True,'','')
-    answ='no'
-    while answ in ['no','n','N','No']:
-       answ = raw_input('flip, rotate the image ((n)o, rotate 180 (r), flip (x), flip (y)) [n] ')
-       if answ in ['180','r']:
-          output = rotateflipimage(output,rot180=True,flipx=False,flipy=False)
-          varimg = rotateflipimage(varimg,rot180=True,flipx=False,flipy=False)
-       elif answ in ['x']:
-          output = rotateflipimage(output,rot180=False,flipx=True,flipy=False)
-          varimg = rotateflipimage(varimg,rot180=False,flipx=True,flipy=False)
-       elif answ in ['y']:
-          output = rotateflipimage(output,rot180=False,flipx=False,flipy=True)
-          varimg = rotateflipimage(varimg,rot180=False,flipx=False,flipy=True)
-       time.sleep(1)
-       __ = lsc.display_image(output,2,True,'','')
-       answ = raw_input('ok  ? [y/n] [n] ')
-       if not answ:
-          answ = 'n'          
-#    for img in imglist:
-#       os.system('rm '+img)
-    return output,varimg
+#    _=lsc.display_image(output,2,True,'','')
+#    answ='no'
+#    while answ in ['no','n','N','No']:
+#       answ = raw_input('flip, rotate the image ((n)o, rotate 180 (r), flip (x), flip (y)) [n] ')
+#       if answ in ['180','r']:
+#          output = rotateflipimage(output,rot180=True,flipx=False,flipy=False)
+#          varimg = rotateflipimage(varimg,rot180=True,flipx=False,flipy=False)
+#       elif answ in ['x']:
+#          output = rotateflipimage(output,rot180=False,flipx=True,flipy=False)
+#          varimg = rotateflipimage(varimg,rot180=False,flipx=True,flipy=False)
+#       elif answ in ['y']:
+#          output = rotateflipimage(output,rot180=False,flipx=False,flipy=True)
+#          varimg = rotateflipimage(varimg,rot180=False,flipx=False,flipy=True)
+#       time.sleep(1)
+
+    if show:
+       lsc.display_image(output,2,True,'','')
+    return output, varimg
+
+def northupeastleft(filename='', data=None, header=None):
+    from pyfits import getdata, PrimaryHDU
+    if filename:
+        data, header = getdata(filename, header=True)
+    if header['cd1_1'] > 0:
+        data = np.fliplr(data)
+        header['cd1_1'] *= -1
+        print 'flipping around x'
+    if header['cd2_2'] < 0:
+        data = np.flipud(data)
+        header['cd2_2'] *= -1
+        print 'flipping around y'
+    if filename:
+        from os import remove
+        remove(filename)
+        out_fits = PrimaryHDU(data=data, header=header)
+        out_fits.writeto(filename, clobber=True, output_verify='fix')
+    else:
+        return data, header
 
 def rotateflipimage(img,rot180=False,flipx=False,flipy=False):
    import pyfits
@@ -525,10 +550,11 @@ def rotateflipimage(img,rot180=False,flipx=False,flipy=False):
    return img
 
 ##################################################################################
-def sloanimage(img,survey='sloan',frames=[]):
+def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
    import sys
    from lsc import readhdr, readkey3,deg2HMS,display_image
-   _ = display_image(img,1,True,'','')
+   if show:
+      display_image(img,1,True,'','')
    hdr = readhdr(img)
    _ra = readkey3(hdr,'RA')
    _dec = readkey3(hdr,'DEC')
@@ -550,9 +576,9 @@ def sloanimage(img,survey='sloan',frames=[]):
    elif _instrume in lsc.instrument0['sbig']:
       _telescope = 'sbig'
 
-   print _ra,_dec,_band,_radius,_band
+   print _ra, _dec, _band, _radius
    if survey == 'sloan':
-      frames =  downloadsdss(_ra,_dec,_band, _radius)
+      frames =  downloadsdss(_ra, _dec, _band, _radius, force)
    elif survey == 'ps1':
       if len(frames) == 0:
          delta= 0.22
@@ -594,10 +620,8 @@ def sloanimage(img,survey='sloan',frames=[]):
                     frames2.append(img)
 
           frames = frames2
-
-   raw_input('go on ')
    if len(frames):
-         out, varimg = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey)
+         out, varimg = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey, show=show)
    else:
        sys.exit('exit, no PS1 images have been downloaded')
    return out, varimg

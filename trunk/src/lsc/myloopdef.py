@@ -1914,12 +1914,16 @@ def run_merge(imglist, _redu=False):
 
 ########################################################################################
 
-def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames=''):
+def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=False):
     command = 'lscingestsloan.py ' + ' '.join(imglist)
     if imgtype != 'sloan':
         command += ' --type ' + imgtype
     if ps1frames:
         command += ' --ps1frames ' + ps1frames
+    if show:
+        command += ' --show'
+    if force:
+        command += ' -F'
     print command
     os.system(command)
 

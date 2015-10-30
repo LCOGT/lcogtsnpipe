@@ -237,7 +237,7 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
    from mysqldef import getfromdataraw
    from mysqldef import updatevalue
    import numpy as np
-   if _type not in ['oracproc','quicklook','pylcogt']:
+   if _type not in ['oracproc','quicklook','pylcogt', 'preproc']:
         _type = 'oracproc/'
         roothdir = '/archive/engineering/'
    elif _type == 'pylcogt':
@@ -310,7 +310,7 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
           for instrument in tellist[tel]:
              directory=roothdir+tel+'/'+instrument+'/'+str(epoch)+'/'+_type
              print directory
-             imglist=imglist+glob.glob(directory+'*0.fits')
+             imglist=imglist+glob.glob(directory+'*.fits')
              print imglist
     elif telescope in ['tar']:
        if lista:

@@ -73,7 +73,10 @@ if __name__ == "__main__":
         if _filter not in ['landolt', 'sloan', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I']:
             sys.argv.append('--help')
         else:
-            _filter = lsc.sites.filterst(_telescope)[_filter]
+            try:
+                _filter = lsc.sites.filterst(_telescope)[_filter]
+            except:
+                pass
     option, args = parser.parse_args()
     epoch = option.epoch
     if '-' not in str(epoch):

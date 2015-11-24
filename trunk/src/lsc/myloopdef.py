@@ -2087,10 +2087,9 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
                 if os.path.isfile(_dir + re.sub('.fits', '.var.fits', img)):
                     print 'variance image found'
                     os.system('cp '+_dir + img+' '+_dir + re.sub('.fits', '.clean.fits',img))
-                    ar, hd = pyfits.getdata(img, header=True)
+                    ar, hd = pyfits.getdata(_dir + img, header=True)
                     out_fits = pyfits.PrimaryHDU(header=hd,data=(ar-ar).astype('uint8'))
-                    out_fits.writeto(re.sub('.fits', '.mask.fits',img), clobber=True, output_verify='fix')
-                    os.system('cp ' + re.sub('.fits', '.mask.fits', img) + ' ' + _dir)
+                    out_fits.writeto(re.sub('.fits', '.mask.fits', _dir + img), clobber=True, output_verify='fix')
                 else:
                     if not os.path.isfile(re.sub('.fits', '.clean.fits', _dir + img)) or _force:
                         output, mask, satu = lsc.util.Docosmic(_dir + img, _sigclip, _sigfrac, _objlim)

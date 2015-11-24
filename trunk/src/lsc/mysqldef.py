@@ -310,7 +310,7 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
           for instrument in tellist[tel]:
              directory=roothdir+tel+'/'+instrument+'/'+str(epoch)+'/'+_type
              print directory
-             imglist=imglist+glob.glob(directory+'*.fits')
+             imglist=imglist+glob.glob(directory+'*[0-9][0-9].fits')
              print imglist
     elif telescope in ['tar']:
        if lista:

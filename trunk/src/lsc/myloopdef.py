@@ -1432,6 +1432,7 @@ def checkmag(imglist, database='photlco'):
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                     print 'updatestatus bad'
                     lsc.mysqldef.updatevalue(database, 'psfmag', 9999, string.split(img, '/')[-1])
+                    lsc.mysqldef.updatevalue(database, 'mag', 9999, string.split(img, '/')[-1])
                     if os.path.isfile(_dir + re.sub('.fits', '.og.fits', img)):
                         print 'rm ' + _dir + re.sub('.fits', '.og.fits', img)
                         os.system('rm ' + _dir + re.sub('.fits', '.og.fits', img))

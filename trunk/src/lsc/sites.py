@@ -202,7 +202,7 @@ def cameraavailable(site=''):
     import os,string,re    
     if not site: site=['lsc','elp','coj','cpt','ogg']
     else: site=[site]
-    ascifile='http://pydevsba.lco.gtn/configdb/camera_mappings/'
+    ascifile='http://configdb.lco.gtn/camera_mappings/'
     line='wget '+ascifile+' -O configtel.txt'
     os.system(line)
     data=np.genfromtxt('configtel.txt',str)

@@ -385,10 +385,17 @@ if __name__ == "__main__":   # main program
                         else:
                             if not _catalogue:
                                 namesql = _name.replace(' ','%')
-                                data = lsc.mysqldef.query(['select targetid from targetnames where name like "%' + namesql + '%"'], lsc.conn)
-                                if data: _targetid = data[0]['targetid'] # pick the first result
-                                else:    sys.exit('Target not found in database. Try "SN YYYYaa" with a space.')
-                                data = lsc.mysqldef.query(['select name from targetnames where targetid="' + str(_targetid) + '"'],lsc.conn)
+                                data = lsc.mysqldef.query(['select targetid from targetnames where name like "{}"'.format(namesql)], lsc.conn)
+                                if data: # exact match to name given with -n
+                                    _targetid = data[0]['targetid']
+                                else: # partial match to name given with -n
+                                    data = lsc.mysqldef.query(['select targetid from targetnames where name like "{}"'.format(namesql)], lsc.conn)
+                                if data: # exact match to name given with -n
+                                    _targetid = data[0]['targetid'] # pick the first result
+                                else:
+                                    sys.exit('Target not found in database. Try "SN YYYYaa" with a space.')
+                                print 'target ID =', _targetid
+                                data = lsc.mysqldef.query(['select name from targetnames where targetid={:d}'.format(_targetid)],lsc.conn)
                                 names = [targ['name'].replace(' ','').lower() for targ in data] # remove spaces & make lower case
                                 catlist = glob.glob(lsc.__path__[0] + '/standard/cat/' + _field + '/*')
                                 catnames = [os.path.basename(cat).split('_')[0].lower() for cat in catlist]

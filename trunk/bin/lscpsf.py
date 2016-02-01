@@ -233,7 +233,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
         if instrument in ['kb05', 'kb70', 'kb71', 'kb73', 'kb74', 'kb75', 'kb76', 'kb77', 'kb78', 'kb79']:
             scale = pixelscale
             _datamax = 45000
-        elif instrument in ['fl02', 'fl03', 'fl04', 'fl07', 'fl06']:
+        elif instrument in ['fl02', 'fl03', 'fl04', 'fl05', 'fl07', 'fl06']:
             scale = pixelscale
             _datamax = 120000
         elif instrument in ['fs01', 'em03']:
@@ -259,7 +259,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
         if float(_wcserr) == 0:
             if instrument in ['kb05', 'kb70', 'kb71', 'kb73', 'kb74', 'kb75', 'kb76', 'kb77', 'kb78', 'kb79']:
                 seeing = float(lsc.util.readkey3(hdr, 'L1FWHM')) * .75
-            elif instrument in ['fl02', 'fl03', 'fl04', 'fl07', 'fl06']:
+            elif instrument in ['fl02', 'fl03', 'fl04', 'fl05', 'fl07', 'fl06']:
                 seeing = float(lsc.util.readkey3(hdr, 'L1FWHM')) * .75
             elif instrument in ['fs01', 'fs02', 'fs03', 'em03', 'em01']:
                 if 'L1FWHM' in hdr:

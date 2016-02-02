@@ -177,7 +177,7 @@ if __name__ == "__main__":
                 elif 'CCDSCALE' in hdr2:
                     pixelscale = lsc.util.readkey3(hdr2, 'CCDSCALE')
 
-                if _instrument in ['fs01', 'fs02', 'fs03', 'em03', 'em01']:
+                if 'fs' in _instrument or 'em' in _instrument:
                     if 'CCDXBIN' in hdr2:
                         fwhm0 = lsc.util.readkey3(hdr2, 'PSF_FWHM') / (pixelscale * lsc.util.readkey3(hdr2, 'CCDXBIN'))
                     elif 'CCDSUM' in hdr2:

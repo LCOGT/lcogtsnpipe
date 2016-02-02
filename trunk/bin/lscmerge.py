@@ -103,7 +103,7 @@ if __name__ == "__main__":
                 _ra = lsc.util.readkey3(hdr0, 'RA')
                 _dec = lsc.util.readkey3(hdr0, 'DEC')
 
-            if _instrume in ['em03', 'em01']:
+            if 'em' in _instrume:
                 _imagesize = 1050
             else:
                 _imagesize = 2100

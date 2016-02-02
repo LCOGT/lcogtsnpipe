@@ -102,7 +102,7 @@ if __name__ == "__main__":
             print '\n#####  astrometry already done'
         else:
             _instrume = lsc.readkey3(hdr, 'instrume')
-            if _instrume in ['fs01', 'fs02', 'fs03', 'em03', 'em01']:  # FT field are small, half number of star
+            if 'fs' in _instrume or 'em' in _instrume:  # FT field are small, half number of star
                 number1, number2, number3 = number1 / 2, number2 / 2, number3 / 2
 
             sexvec = lsc.lscastrodef.sextractor(img)
@@ -176,7 +176,7 @@ if __name__ == "__main__":
             print WCSERR
             if WCSERR == 0:
                 _instrume = lsc.readkey3(hdr, 'instrume')
-                if _instrume in ['fs01', 'fs02', 'fs03', 'em03', 'em01']:  # FT WCSERR keyword is WCS_ERR
+                if 'fs' in _instrume or 'em' in _instrume:  # FT WCSERR keyword is WCS_ERR
                     if 'WCS_ERR' in hdr:
                         lsc.util.updateheader(img, 0, {'WCS_ERR': [0, '']})
                     if 'WCSERR' in hdr:

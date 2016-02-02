@@ -569,11 +569,11 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
    else:
       _band = _filter
 
-   if _instrume in lsc.instrument0['spectral']:
+   if 'fs' in _instrume:
       _telescope = 'spectral'
-   elif _instrume in lsc.instrument0['sinistro']:
+   elif 'fl' in _instrume:
       _telescope = 'sinistro'
-   elif _instrume in lsc.instrument0['sbig']:
+   elif 'kb' in _instrume:
       _telescope = 'sbig'
 
    print _ra, _dec, _band, _radius

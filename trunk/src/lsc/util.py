@@ -45,7 +45,7 @@ proposalgroup['CON2014B-005'] = 5
 
 instrument0={'sbig':['kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79'],\
              'sinistro':['fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10'],\
-             'spectral':['fs01','fs02','fs03','fs01','em01','em02']}
+             'spectral':['fs01','fs02','fs03','em01','em02']}
 instrument0['all']=list(instrument0['sbig'])+list(instrument0['sinistro'])+list(instrument0['spectral'])
 
 telescope0={'lsc':['1m0-04','1m0-05','1m0-09'], 'elp':['1m0-08'], 'cpt': ['1m0-10','1m0-12','1m0-13'], 'coj':['1m0-11','1m0-03','2m0-02'],\
@@ -148,7 +148,7 @@ def readkey3(hdr,keyword):
        _instrume=hdr.get('INSTRUME').lower()
     except: 
        _instrume='none'
-    if _instrume in ['kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79']:    # SBIG
+    if 'kb' in _instrume: # SBIG
         useful_keys = {'object'    : 'OBJECT',\
                            'date-obs'  : 'DATE-OBS',\
                            'ut'        : 'DATE-OBS',\
@@ -170,7 +170,7 @@ def readkey3(hdr,keyword):
                            'propid'      : 'PROPID',\
                            'userid'      : 'USERID',\
                            'telescop'  : 'TELESCOP'} 
-    elif _instrume in ['fl02','fl03','fl04','fl05','fl06','fl07','fl08']:   # sinistro
+    elif 'fl' in _instrume: # sinistro
         useful_keys = {'object'    : 'OBJECT',\
                            'date-obs'  : 'DATE-OBS',\
                            'ut'        : 'DATE-OBS',\
@@ -192,7 +192,7 @@ def readkey3(hdr,keyword):
                            'propid'    : 'PROPID',\
                            'userid'    : 'USERID',\
                            'telescop'  : 'TELESCOP'}
-    elif _instrume in ['fs01','em03','fs02','em01','fs03']:
+    elif 'fs' in _instrume or 'em' in _instrume:
        if hdr.get('DATE-OBS') < '2014-04-01':
           if 'RDNOISE' in hdr: ron='RDNOISE'
           elif 'READNOIS' in hdr: ron='READNOIS'

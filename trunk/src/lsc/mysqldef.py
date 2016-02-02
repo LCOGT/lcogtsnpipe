@@ -349,7 +349,7 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
          instrument = readkey3(hdr,'instrume')
          
          if telescope in ['Faulkes Telescope South','Faulkes Telescope North']: 
-               if instrument in lsc.util.instrument0['spectral']:
+               if 'fs' in instrument:
                   hdr = readhdr(img)
                   if _object: 
                      if readkey3(hdr,'object') == _object:
@@ -400,7 +400,7 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
                else:
                   dictionary = {}
          elif  telescope in lsc.util.site0 + lsc.util.telescope0['all'] + ['all','tar']:
-               if instrument in lsc.util.instrument0['sbig'] + lsc.util.instrument0['sinistro']:
+               if 'kb' in instrument or 'fl' in instrument:
                   print '1m'
                   hdr = readhdr(img)
                   if _object: 
@@ -447,7 +447,7 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
                         else:
                            if readkey3(hdr,'propid')=='CON2014B-005':
                               dictionary['groupidcode']=5
-               elif instrument in lsc.util.instrument0['spectral']:
+               elif 'fs' in instrument:
                   print '2m'
                   #####  added new ingestion 2m    
                   hdr=readhdr(img)
@@ -575,7 +575,7 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
 
                   ###################################
          if telescope in ['fts','ftn']:
-               if instrument in lsc.util.instrument0['spectral']:
+               if 'fs' in instrument:
                   if not lsc.mysqldef.getfromdataraw(conn,datarawtable,'filename', string.split(img,'/')[-1],column2='filename'):
                      lsc.mysqldef.insert_values(conn,datarawtable,dictionary)
                   elif _force:
@@ -584,7 +584,7 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
                            lsc.mysqldef.updatevalue(datarawtable,voce,dictionary[voce],string.split(img,'/')[-1])
          elif  telescope in lsc.util.site0+lsc.util.telescope0['all']+['all','tar']:
             if dictionary:
-               if instrument in lsc.util.instrument0['sbig']+lsc.util.instrument0['sinistro']+lsc.util.instrument0['spectral']:
+               if 'kb' in instrument or 'fl' in instrument or 'fs' in instrument:
                   if not lsc.mysqldef.getfromdataraw(conn,datarawtable,'filename', string.split(img,'/')[-1],column2='filename'):
                      lsc.mysqldef.insert_values(conn,datarawtable,dictionary)
                      print 'insert '+img

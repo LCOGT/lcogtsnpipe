@@ -41,21 +41,7 @@ def wcsstart(img,CRPIX1='',CRPIX2=''):
     _xdimen=readkey3(hdr,'NAXIS1')
     _ydimen=readkey3(hdr,'NAXIS2')
     _CCDXBIN=readkey3(hdr,'CCDXBIN')
-    if _instrume in ['kb05','kb70','kb71','kb73','kb75','kb77','kb78','kb79']:
-        angle=readkey3(hdr,'ROLLERDR')#posang)
-        theta=(angle*pi/180.)
-        CDELT0=0.000129722   # 1.3042840792028E-4   8.43604528922325E-5  #6.6888889999999995e-05
-        CD1_1=(-1)*CDELT0*cos(theta)
-        CD2_2=(-1)*CDELT0*cos(theta)
-        CD1_2=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        CD2_1=(-1)*abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        if not CRPIX1:        CRPIX1= 1000.
-        else: CRPIX1= 1000.+CRPIX1
-        if not CRPIX2:        CRPIX2= 1000.
-        else: CRPIX2= 1000.+CRPIX2
-        CDELT1=2
-        CDELT2=2
-    elif _instrume in ['kb74','kb76']:
+    if _instrume in ['kb74','kb76']:
         angle=readkey3(hdr,'ROLLERDR')#posang)
         theta=(angle*pi/180.)
         CDELT0=0.000129722   # 1.3042840792028E-4   8.43604528922325E-5  #6.6888889999999995e-05
@@ -69,8 +55,21 @@ def wcsstart(img,CRPIX1='',CRPIX2=''):
         else: CRPIX2= 1000.+CRPIX2
         CDELT1=2
         CDELT2=2
-    elif _instrume in lsc.instrument0['sinistro']:
-        #['fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10']:
+    elif 'kb' in _instrume:
+        angle=readkey3(hdr,'ROLLERDR')#posang)
+        theta=(angle*pi/180.)
+        CDELT0=0.000129722   # 1.3042840792028E-4   8.43604528922325E-5  #6.6888889999999995e-05
+        CD1_1=(-1)*CDELT0*cos(theta)
+        CD2_2=(-1)*CDELT0*cos(theta)
+        CD1_2=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
+        CD2_1=(-1)*abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
+        if not CRPIX1:        CRPIX1= 1000.
+        else: CRPIX1= 1000.+CRPIX1
+        if not CRPIX2:        CRPIX2= 1000.
+        else: CRPIX2= 1000.+CRPIX2
+        CDELT1=2
+        CDELT2=2
+    elif 'fl' in _instrume:
         angle=readkey3(hdr,'ROLLERDR')#posang)
         theta=(angle*pi/180.)
         pixscale=float(readkey3(hdr,'PIXSCALE'))
@@ -91,22 +90,6 @@ def wcsstart(img,CRPIX1='',CRPIX2=''):
         else: CRPIX2= 2115.+CRPIX2
         CDELT1=2
         CDELT2=2
-    elif _instrume in ['fs01','fs02']:
-        angle=readkey3(hdr,'ROTSKYPA')#posang)
-        theta=(angle*pi/180.)
- #       pixscale=0.30*_CCDXBIN
- #       CDELT0=pixscale/3600.
-        CDELT0=0.000083568667  # 8.43604528922325E-5  #6.6888889999999995e-05
-        CD1_1=(-1)*CDELT0*cos(theta)
-        CD2_2=CDELT0*cos(theta)
-        CD1_2=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        CD2_1=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        if not CRPIX1:        CRPIX1= 1024.
-        else: CRPIX1= 1024.+CRPIX1
-        if not CRPIX2:        CRPIX2= 1024.
-        else: CRPIX2= 1024.+CRPIX2
-        CDELT1=0.000083568694*(-1)
-        CDELT2=0.000083568694
     elif _instrume in ['fs03']:
         angle=readkey3(hdr,'ROTSKYPA')#posang)
         theta=(angle*pi/180.)
@@ -123,7 +106,23 @@ def wcsstart(img,CRPIX1='',CRPIX2=''):
         else: CRPIX2= 1024.+CRPIX2
         CDELT1=0.000083705976*(-1)
         CDELT2=0.000083705976
-    elif _instrume.lower() in ['em03','em01']:
+    elif 'fs' in _instrume:
+        angle=readkey3(hdr,'ROTSKYPA')#posang)
+        theta=(angle*pi/180.)
+ #       pixscale=0.30*_CCDXBIN
+ #       CDELT0=pixscale/3600.
+        CDELT0=0.000083568667  # 8.43604528922325E-5  #6.6888889999999995e-05
+        CD1_1=(-1)*CDELT0*cos(theta)
+        CD2_2=CDELT0*cos(theta)
+        CD1_2=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
+        CD2_1=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
+        if not CRPIX1:        CRPIX1= 1024.
+        else: CRPIX1= 1024.+CRPIX1
+        if not CRPIX2:        CRPIX2= 1024.
+        else: CRPIX2= 1024.+CRPIX2
+        CDELT1=0.000083568694*(-1)
+        CDELT2=0.000083568694
+    elif 'em' in _instrume.lower():
         theta=(angle*pi/180.)
         CDELT0=7.63077724258886e-05 #7.7361111111111123e-05 
         CD1_1=(-1)*CDELT0*cos(theta)
@@ -167,8 +166,10 @@ def querycatalogue(catalogue,img,method='iraf'):
         _instrume=hdr.get('instrume')
         iraf.imcoords(_doprint=0)
         iraf.astcat(_doprint=0)
-        if _instrume in ['fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10']:   _size=40
-        else:          _size=20
+        if 'fl' in _instrume: # sinistro
+            _size=40
+        else:
+            _size=20
         toforget = ['imcoords','astcat','tv']
         iraf.noao.astcat.aregpars.rcrauni=''
         iraf.noao.astcat.aregpars.rcdecuni=''
@@ -324,21 +325,19 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
         else:  rmsx3,rmsy3,num3,fwhm3,ell3,ccc,bkg3,rasys3,decsys3=rmsx1,rmsy1,num1,fwhm1,ell1,ccc,bkg1,rasys1,decsys1
 ######################################## 
         if rmsx3 < 10 and rmsy3 < 10: 
-            if _instrume in lsc.instrument0['sbig']:
-                #['kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79']:
+            if 'kb' in _instrume:
                 fwhmgess3=median(array(fwhm3))*.68*2.35*0.467
                 if _imex:  fwhmgessime = median(array(ccc))*0.467
                 else:     fwhmgessime = 9999
-            elif _instrume in lsc.instrument0['sinistro']:
-            #['fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10']:
+            elif 'fl' in _instrume:
                 fwhmgess3=median(array(fwhm3))*.68*2.35*0.467          #  need to check
                 if _imex:  fwhmgessime = median(array(ccc))*0.467
                 else:     fwhmgessime = 9999
-            elif _instrume in ['fs01','fs02','fs03']:
+            elif 'fs' in _instrume:
                 fwhmgess3=median(array(fwhm3))*.68*2.35*0.30
                 if _imex:  fwhmgessime = median(array(ccc))*0.30
                 else:     fwhmgessime = 9999
-            elif _instrume in ['em03','em01']:
+            elif 'em' in _instrume:
                 fwhmgess3=median(array(fwhm3))*.68*2.35*0.278
                 if _imex:  fwhmgessime = median(array(ccc))*0.278  
                 else:     fwhmgessime = 9999
@@ -348,16 +347,12 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
             fwhmgessime=9999
             ellgess3=9999
         if _instrume in lsc.instrument0['all']:
-            #['kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79','fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10',\
-            #'fs01','fs02','fs03','em03','em01']:
             mbkg3=median(bkg3)
             lsc.util.updateheader(img,0,{'MBKG':[mbkg3,'background level']})
         else:
             mbkg3=readkey3(hdr,'MBKG')
         if fwhmgess3:
             if _instrume in lsc.instrument0['all']:
-            #['kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79','fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10',\
-            #'fs01','fs02','fs03','em03','em01']:  
                 V=(math.pi/(4*math.log(2)))*(45000-float(mbkg3))*(float(fwhmgess3)**2)
             else:                     
                 V=(math.pi/(4*math.log(2)))*(32000-float(mbkg3))*(float(fwhmgess3)**2)
@@ -396,14 +391,8 @@ def lscastrometry2(lista,catalogue,_interactive,number,sexvec,catvec,guess=False
     img=lista[0]
     hdr=readhdr(img)
     _instrume=readkey3(hdr,'instrume')
-    if _instrume in lsc.instrument0['all']:
-        #['kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79','fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10',\
-        #'fs01','fs02','fs03','em03','em01']:
-        magsel0 = 7.0
-        magsel1 = 21.
-    else:
-            magsel0 = 7.0
-            magsel1 = 21.
+    magsel0 = 7.
+    magsel1 = 21.
     _CRPIX1=readkey3(hdr,'CRPIX1')
     _CRPIX2=readkey3(hdr,'CRPIX2')
     if verbose:            display_image(img,1,'','',False)
@@ -1360,15 +1349,13 @@ def run_astrometry(im, clobber=True,redo=False):
             sexvec = lsc.lscastrodef.sextractor('tmpwcs.fits')
             xpix,ypix,fw,cl,cm,ell,bkg,fl = sexvec
             if len(fw)>1:
-                if _instrume in lsc.instrument0['sbig']:
-            #['kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79']:
+                if 'kb' in _instrume:
                     fwhm = np.median(np.array(fw))*.68*2.35*0.467
-                elif _instrume in lsc.instrument0['sinistro']:
-            #['fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10']:
+                elif 'fl' in _instrume:
                     fwhm = np.median(np.array(fw))*.68*2.35*0.467          #  need to check
-                elif _instrume in ['fs01','fs02','fs03']:
+                elif 'fs' in _instrume:
                     fwhm = median(np.array(fw))*.68*2.35*0.30
-                elif _instrume in ['em03','em01']:
+                elif 'em' in _instrume:
                     fwhm = np.median(np.array(fw))*.68*2.35*0.278
                 else:
                     fwhm = 5

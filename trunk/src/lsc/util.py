@@ -1213,7 +1213,7 @@ def getcatalog(_name,_field):
     import glob
     import string
     _catalog=''
-    data = lsc.mysqldef.query(['select targetid from targetnames where name="' + str(_name) + '"'], lsc.conn)
+    data = lsc.mysqldef.query(['select distinct(targetid) from targetnames where name="' + str(_name) + '"'], lsc.conn)
     if len(data) == 1:
         _targetid = data[0]['targetid']
         data = lsc.mysqldef.query(['select name from targetnames where targetid="' + str(_targetid) + '"'],lsc.conn)

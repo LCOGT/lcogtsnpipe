@@ -139,7 +139,7 @@ if __name__ == "__main__":
                     print dicti[_filter][img]['telescope']
                     sys.exit('problem with dicti 1')
                     # instrumental mag to exposure 1 second corrected for airmass
-                # mag0=dicti[_filter][img][namemag[_typemag][0]]+2.5*math.log10(dicti[_filter][img]['exptime'])-kk[filters1[_filter]]*dicti[_filter][img]['airmass']
+                # mag0=dicti[_filter][img][namemag[_typemag][0]]+2.5*np.log10(dicti[_filter][img]['exptime'])-kk[filters1[_filter]]*dicti[_filter][img]['airmass']
                 mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filters1[_filter]] * dicti[_filter][img][
                     'airmass']
                 dmag0 = dicti[_filter][img][namemag[_typemag][1]]
@@ -165,7 +165,7 @@ if __name__ == "__main__":
                     print dicti[_filter2][img2]
                     sys.exit('problem with dicti 2')
                     #                                                    instrumental mag to exposure 1 second corrected for airmass
-                #                mag1=dicti[_filter2][img2][namemag[_typemag][0]]+2.5*math.log10(dicti[_filter2][img2]['exptime'])-kk[filters1[_filter2]]*dicti[_filter2][img2]['airmass']
+                #                mag1=dicti[_filter2][img2][namemag[_typemag][0]]+2.5*np.log10(dicti[_filter2][img2]['exptime'])-kk[filters1[_filter2]]*dicti[_filter2][img2]['airmass']
                 mag1 = dicti[_filter2][img2][namemag[_typemag][0]] - kk[filters1[_filter2]] * dicti[_filter2][img2][
                     'airmass']
                 dmag1 = dicti[_filter2][img2][namemag[_typemag][1]]
@@ -173,7 +173,7 @@ if __name__ == "__main__":
                 if _interactive:
                     lsc.util.marksn2(re.sub('sn2.fits', 'fits', img), img, 1, img2)
                     lsc.util.marksn2(re.sub('sn2.fits', 'fits', img2), img2, 2, img)
-                    print img, img2, _filter, _filter2, 2.5 * math.log10(dicti[_filter2][img2]['exptime']), kk[filters1[
+                    print img, img2, _filter, _filter2, 2.5 * np.log10(dicti[_filter2][img2]['exptime']), kk[filters1[
                         _filter2]] * dicti[_filter2][img2]['airmass']
 
                 distvec, pos0, pos1 = lsc.lscastrodef.crossmatch(np.array(ra0), np.array(dec0), np.array(ra1),

@@ -1325,9 +1325,9 @@ def run_astrometry(im, clobber=True,redo=False):
         dec = lsc.readkey3(hdr,'DEC')
         #    ra = pyfits.getval(im, 'RA')
         #    dec = pyfits.getval(im, 'DEC')
-        cmd = 'solve-field --crpix-center --no-verify --no-fits2fits --no-tweak '
+        cmd = 'solve-field --crpix-center --no-verify --no-fits2fits --no-tweak -l 30 '
         cmd += '--backend-config /science/supernova/usr/backend.cfg '
-        cmd += ' --radius 1.0 --ra %s --dec %s --guess-scale ' % (ra, dec)
+        cmd += '--radius 1.0 --ra %s --dec %s --guess-scale ' % (ra, dec)
         cmd += '--scale-units arcsecperpix --scale-low 0.1 --scale-high .7 '
         cmd += '--no-plots -N tmpwcs.fits '
         if clobber: cmd += '--overwrite '

@@ -391,6 +391,10 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
                      dictionary['filepath'] = re.sub(dictionary['filename'],'',img)
                      _targetid = lsc.mysqldef.targimg(img)
                      dictionary['targetid'] = _targetid
+                     if 'CAT-RA' in hdr:
+                        dictionary['cat_ra'] = readkey3(hdr, 'CAT-RA')
+                     if 'CAT-DEC' in hdr:
+                        dictionary['cat_dec'] = readkey3(hdr, 'CAT-DEC')
                      if _tracknum:
                         gruppo = lsc.mysqldef.query(['select r.groupidcode from obslog as o join '+\
                                                    'obsrequests as r where o.`requestsid`=r.id and o.tracknumber='+\
@@ -439,6 +443,10 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
                      dictionary['filepath']=re.sub(dictionary['filename'],'',img) 
                      _targetid=lsc.mysqldef.targimg(img)
                      dictionary['targetid']=_targetid
+                     if 'CAT-RA' in hdr:
+                        dictionary['cat_ra'] = readkey3(hdr, 'CAT-RA')
+                     if 'CAT-DEC' in hdr:
+                        dictionary['cat_dec'] = readkey3(hdr, 'CAT-DEC')
                      if _tracknum:
                         gruppo=lsc.mysqldef.query(['select r.groupidcode from obslog as o join obsrequests '+\
                                                       'as r where o.`requestsid`=r.id and o.tracknumber='+str(int(_tracknum))],conn)
@@ -486,6 +494,10 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
                         dictionary['filepath']=re.sub(dictionary['filename'],'',img) 
                         _targetid=lsc.mysqldef.targimg(img)
                         dictionary['targetid']=_targetid
+                        if 'CAT-RA' in hdr:
+                           dictionary['cat_ra'] = readkey3(hdr, 'CAT-RA')
+                        if 'CAT-DEC' in hdr:
+                           dictionary['cat_dec'] = readkey3(hdr, 'CAT-DEC')
                         if _tracknum:
                            gruppo=lsc.mysqldef.query(['select r.groupidcode from obslog as o join obsrequests as '+\
                                                          'r where o.`requestsid`=r.id and o.tracknumber='+str(int(_tracknum))],conn)
@@ -548,6 +560,10 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
                               'filepath' : filepath,\
                               'propid': 'externaldata',\
                               'userid': 'externaldata'}
+               if 'CAT-RA' in hdr:
+                  dictionary['cat_ra'] = readkey3(hdr, 'CAT-RA')
+               if 'CAT-DEC' in hdr:
+                  dictionary['cat_dec'] = readkey3(hdr, 'CAT-DEC')
             else:
                dictionary={}
          print dictionary
@@ -1033,8 +1049,12 @@ def targimg(img):
     _targetid=''
     _group=''
     hdrt=lsc.util.readhdr(img)
-    _ra=lsc.util.readkey3(hdrt,'RA')
-    _dec=lsc.util.readkey3(hdrt,'DEC')
+    if 'CAT-RA' in hdrt and 'CAT-DEC' in hdrt:
+        _ra=lsc.util.readkey3(hdrt,'CAT-RA')
+        _dec=lsc.util.readkey3(hdrt,'CAT-DEC')
+    else:
+        _ra=lsc.util.readkey3(hdrt,'RA')
+        _dec=lsc.util.readkey3(hdrt,'DEC')
     _object=lsc.util.readkey3(hdrt,'object')
     if ':' in str(_ra):        
        _ra,_dec=lsc.deg2HMS(_ra,_dec)

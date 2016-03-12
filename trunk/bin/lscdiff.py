@@ -427,9 +427,13 @@ if __name__ == "__main__":
                                 print dictionary['filepath']
                                 os.mkdir(dictionary['filepath'])
                             if not os.path.isfile(dictionary['filepath'] + imgout0) or _force in ['yes', True]:
-                                print 'mv ' + imgout + ' ' + dictionary['filepath'] + imgout0
-                                os.system('mv ' + imgout + ' ' + dictionary['filepath'] + imgout0)
-                                os.system('mv ' + imgtemp + ' ' + dictionary['filepath'] + re.sub('.diff.', '.ref.', imgout0))
+                                if _force in ['yes', True]:
+                                    move = 'mv -vf '
+                                else:
+                                    move = 'mv '
+                                print move + imgout + ' ' + dictionary['filepath'] + imgout0
+                                os.system(move + imgout + ' ' + dictionary['filepath'] + imgout0)
+                                os.system(move + imgtemp + ' ' + dictionary['filepath'] + re.sub('.diff.', '.ref.', imgout0))
                         ###########################################################################################################
                         #                           choose sn2 file depending on
                         #                           normalization parameter

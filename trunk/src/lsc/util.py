@@ -154,6 +154,8 @@ def readkey3(hdr,keyword):
                            'ut'        : 'DATE-OBS',\
                            'RA'        : 'RA',\
                            'DEC'       : 'DEC',\
+                           'CAT-RA'    : 'CAT-RA',\
+                           'CAT-DEC'   : 'CAT-DEC',\
                            'datamin'   :  -100.0,\
                            'datamax'   : 'SATURATE',\
                            'observer'  : 'OBSERVER',\
@@ -176,6 +178,8 @@ def readkey3(hdr,keyword):
                            'ut'        : 'DATE-OBS',\
                            'RA'        : 'RA',\
                            'DEC'       : 'DEC',\
+                           'CAT-RA'    : 'CAT-RA',\
+                           'CAT-DEC'   : 'CAT-DEC',\
                            'datamin'   :  -100.0,\
                            'datamax'   : 'SATURATE',\
                            'observer'  : 'OBSERVER',\
@@ -202,6 +206,8 @@ def readkey3(hdr,keyword):
                          'ut'        : 'DATE-OBS',\
                          'RA'        : 'RA',\
                          'DEC'       : 'DEC',\
+                         'CAT-RA'    : 'CAT-RA',\
+                         'CAT-DEC'   : 'CAT-DEC',\
                          'datamin'   : -100,\
                          'datamax'   : 60000,\
                          'wcserr'    : 'WCS_ERR',\
@@ -224,6 +230,8 @@ def readkey3(hdr,keyword):
                             'ut'        : 'DATE-OBS',\
                             'RA'        : 'RA',\
                             'DEC'       : 'DEC',\
+                            'CAT-RA'    : 'CAT-RA',\
+                            'CAT-DEC'   : 'CAT-DEC',\
                             'datamin'   :  -100.0,\
                             'datamax'   : 'SATURATE',\
                             'observer'  : 'OBSERVER',\
@@ -279,10 +287,10 @@ def readkey3(hdr,keyword):
              value=[a for a in [value1,value2,value3] if 'air' not in a]
              if not value: value='air'
              else: value=value[0]
-          elif keyword=='RA':
+          elif keyword == 'RA' or keyword == 'CAT-RA':
              value=(((float(string.split(value,':')[2])/60+float(string.split(value,':')[1]))/60)\
                  +float(string.split(value,':')[0]))*15
-          elif keyword=='DEC':
+          elif keyword == 'DEC' or keyword == 'CAT-DEC':
                 if string.count(string.split(value,':')[0],'-')==0:
                     value=((float(string.split(value,':')[2])/60+float(string.split(value,':')[1]))/60)\
                         +float(string.split(value,':')[0])

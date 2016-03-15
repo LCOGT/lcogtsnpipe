@@ -691,7 +691,7 @@ def ingestredu(imglist,force='no',datatable='photlco'):
                            'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),\
                            'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
             dictionary['filename']=string.split(img,'/')[-1]
-            dictionary['filepath']='/science/supernova/data/lsc/'+readkey3(hdr,'date-night')+'/'
+            dictionary['filepath']=lsc.util.workdirectory + 'data/lsc/'+readkey3(hdr,'date-night')+'/'
             dictionary['filetype']=filetype
             dictionary['targetid']=_targetid
             if _groupidcode:
@@ -749,7 +749,7 @@ def ingestredu(imglist,force='no',datatable='photlco'):
                            'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),'groupidcode':_groupidcode,\
                            'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
             dictionary['filename']=string.split(img,'/')[-1]
-            dictionary['filepath']='/science/supernova/data/fts/'+readkey3(hdr,'date-night')+'/'
+            dictionary['filepath']=lsc.util.workdirectory + 'data/fts/'+readkey3(hdr,'date-night')+'/'
             dictionary['filetype']=filetype
             dictionary['targetid']=_targetid
 
@@ -802,7 +802,7 @@ def ingestredu(imglist,force='no',datatable='photlco'):
                            'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),\
                            'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
             dictionary['filename']=string.split(img,'/')[-1]
-            dictionary['filepath']='/science/supernova/data/fts/'+readkey3(hdr,'date-night')+'/'
+            dictionary['filepath']=lsc.util.workdirectory + 'data/fts/'+readkey3(hdr,'date-night')+'/'
             dictionary['filetype']=filetype
             dictionary['targetid']=_targetid
 
@@ -858,7 +858,7 @@ def ingestredu(imglist,force='no',datatable='photlco'):
                            'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
 
             dictionary['filename']=string.split(img,'/')[-1]
-            dictionary['filepath']='/science/supernova/data/extdata/'+str(readkey3(hdr,'dayobs'))+'/'
+            dictionary['filepath']=lsc.util.workdirectory + 'data/extdata/'+str(readkey3(hdr,'dayobs'))+'/'
             dictionary['filetype']=filetype
             dictionary['targetid']=_targetid
 

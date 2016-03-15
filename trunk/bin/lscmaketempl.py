@@ -212,7 +212,7 @@ if __name__ == "__main__":
                               'wcs': lsc.util.readkey3(hd, 'wcserr'), 'instrument': lsc.util.readkey3(hd, 'instrume'),
                               'ra0': lsc.util.readkey3(hd, 'RA'), 'dec0': lsc.util.readkey3(hd, 'DEC')}
                 dictionary['filename'] = string.split(imgout, '/')[-1]
-                dictionary['filepath'] = '/science/supernova/data/lsc/' + lsc.util.readkey3(hd, 'date-night') + '/'
+                dictionary['filepath'] = lsc.util.workdirectory + 'data/lsc/' + lsc.util.readkey3(hd, 'date-night') + '/'
                 dictionary['filetype'] = 4
 
                 dictionary['telescopeid'] = lsc.mysqldef.getfromdataraw(conn, 'telescopes', 'name', dictionary['telescope'], column2='id')[0]['id']

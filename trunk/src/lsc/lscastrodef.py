@@ -74,22 +74,27 @@ def wcsstart(img,CRPIX1='',CRPIX2=''):
         theta=(angle*pi/180.)
         pixscale=float(readkey3(hdr,'PIXSCALE'))
         CDELT0=pixscale/3600.
-#        CDELT0=0.000129722   # 1.3042840792028E-4   8.43604528922325E-5  #6.6888889999999995e-05
-#        CDELT0=0.0001057   # 1.3042840792028E-4   8.43604528922325E-5  #6.6888889999999995e-05
         CD1_1=CDELT0*cos(theta)
         CD1_2=CDELT0*sin(theta)
         CD2_1=CDELT0*sin(theta)
         CD2_2=(-1)*CDELT0*cos(theta)
+        if 'SITEID' in hdr:
+            if hdr['SITEID'] in ['elp']:
+                CD1_1 = (-1) * CD1_1
+                CD2_2 = (-1) * CD2_2
 #        CD1_1=(-1)*CDELT0*cos(theta)
 #        CD2_2=(-1)*CDELT0*cos(theta)
 #        CD1_2=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
 #        CD2_1=(-1)*abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        if not CRPIX1:        CRPIX1= 2115.
-        else: CRPIX1= 2115.+CRPIX1
-        if not CRPIX2:        CRPIX2= 2115.
-        else: CRPIX2= 2115.+CRPIX2
-        CDELT1=2
-        CDELT2=2
+        if not CRPIX1:        
+            CRPIX1 = _xdimen/2
+        else: 
+            CRPIX1 = (_xdimen/2)+CRPIX1
+        if not CRPIX2:        
+            CRPIX2 = _ydimen/2
+        else: CRPIX2 = (_ydimen/2)+CRPIX2
+        CDELT1 = 2
+        CDELT2 = 2
     elif _instrume in ['fs03']:
         angle=readkey3(hdr,'ROTSKYPA')#posang)
         theta=(angle*pi/180.)

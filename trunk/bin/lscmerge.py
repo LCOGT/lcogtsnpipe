@@ -231,9 +231,9 @@ if __name__ == "__main__":
             dictionary['filename'] = string.split(outname, '/')[-1]
             dictionary['targetid'] = _targetid
             if _tel in ['fts', 'ftn']:
-                dictionary['filepath'] = '/science/supernova/data/fts/' + lsc.util.readkey3(hd, 'date-night') + '/'
+                dictionary['filepath'] = lsc.util.workdirectory + 'data/fts/' + lsc.util.readkey3(hd, 'date-night') + '/'
             else:
-                dictionary['filepath'] = '/science/supernova/data/lsc/' + lsc.util.readkey3(hd, 'date-night') + '/'
+                dictionary['filepath'] = lsc.util.workdirectory + 'data/lsc/' + lsc.util.readkey3(hd, 'date-night') + '/'
             dictionary['filetype'] = 2
             ###################    insert in photlco
             ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', string.split(outname, '/')[-1], '*')

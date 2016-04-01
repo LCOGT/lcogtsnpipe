@@ -1331,8 +1331,8 @@ def run_astrometry(im, clobber=True,redo=False):
         #    ra = pyfits.getval(im, 'RA')
         #    dec = pyfits.getval(im, 'DEC')
         cmd = 'solve-field --crpix-center --no-verify --no-fits2fits --no-tweak -l 30 '
-        cmd += '--backend-config /science/supernova/usr/backend.cfg '
-        cmd += '--radius 1.0 --ra %s --dec %s --guess-scale ' % (ra, dec)
+        cmd += '--backend-config {}usr/backend.cfg '.format(lsc.util.workdirectory)
+        cmd += '--radius 1.0 --ra {} --dec {} --guess-scale '.format(ra, dec)
         cmd += '--scale-units arcsecperpix --scale-low 0.1 --scale-high .7 '
         cmd += '--no-plots -N tmpwcs.fits '
         if clobber: cmd += '--overwrite '
@@ -1359,7 +1359,7 @@ def run_astrometry(im, clobber=True,redo=False):
                 elif 'fl' in _instrume:
                     fwhm = np.median(np.array(fw))*.68*2.35*0.467          #  need to check
                 elif 'fs' in _instrume:
-                    fwhm = median(np.array(fw))*.68*2.35*0.30
+                    fwhm = np.median(np.array(fw))*.68*2.35*0.30
                 elif 'em' in _instrume:
                     fwhm = np.median(np.array(fw))*.68*2.35*0.278
                 else:

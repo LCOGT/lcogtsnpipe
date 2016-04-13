@@ -15,7 +15,7 @@ NTT is written in python and requires the following package:
 	    - matplotlib
 	    - pyfits
 	    - mysqldb
-
+	    - astropy
 - Iraf
 	    
 ##############################################################################

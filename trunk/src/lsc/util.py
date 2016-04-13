@@ -253,8 +253,12 @@ def readkey3(hdr,keyword):
                            'telescop'  : 'TELESCOP'}
     else: 
        useful_keys = {'object'    : 'OBJECT',\
-                         'ron'       : 'RDNOISE',\
-                         'date-obs'  : 'DATE-OBS'}
+                      'RA'        : 'RA',\
+                      'DEC'       : 'DEC',\
+                      'CAT-RA'    : 'CAT-RA',\
+                      'CAT-DEC'   : 'CAT-DEC',\
+                      'ron'       : 'RDNOISE',\
+                      'date-obs'  : 'DATE-OBS'}
     if keyword in useful_keys:
        if type(useful_keys[keyword])==float:
           value=useful_keys[keyword]
@@ -290,10 +294,10 @@ def readkey3(hdr,keyword):
              value=[a for a in [value1,value2,value3] if 'air' not in a]
              if not value: value='air'
              else: value=value[0]
-          elif keyword == 'RA' or keyword == 'CAT-RA':
+          elif keyword == 'RA' or keyword == 'CAT-RA' and ':' in value:
              value=(((float(string.split(value,':')[2])/60+float(string.split(value,':')[1]))/60)\
                  +float(string.split(value,':')[0]))*15
-          elif keyword == 'DEC' or keyword == 'CAT-DEC':
+          elif keyword == 'DEC' or keyword == 'CAT-DEC' and ':' in value:
                 if string.count(string.split(value,':')[0],'-')==0:
                     value=((float(string.split(value,':')[2])/60+float(string.split(value,':')[1]))/60)\
                         +float(string.split(value,':')[0])

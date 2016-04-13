@@ -176,11 +176,13 @@ def insert_values(conn,table,values):
     def insertFromDict(table, dicto):
         """Take dictionary object dict and produce sql for 
         inserting it into the named table"""
+        cleandict = {key: val for key, val in dicto.items() if val not in ['NaN', 'UNKNOWN', 'N/A', None, '']}
+
         sql = 'INSERT INTO ' + table
         sql += ' ('
-        sql += ', '.join(dicto)
+        sql += ', '.join(cleandict)
         sql += ') VALUES ('
-        sql += ', '.join(map(dictValuePad, dicto))
+        sql += ', '.join(map(dictValuePad, cleandict))
         sql += ');'
         return sql
 
@@ -1039,7 +1041,7 @@ def getfromcoordinate(conn, table, ra0, dec0,distance):
 
 ###################################################################################
 
-def targimg(img):
+def targimg(img='', hdrt=None):
     import lsc
     from lsc.util import readkey3,readhdr
     from lsc.mysqldef import getfromcoordinate
@@ -1048,8 +1050,10 @@ def targimg(img):
     proposalgroup = lsc.util.proposalgroup
     _targetid=''
     _group=''
-    hdrt=lsc.util.readhdr(img)
-    if 'CAT-RA' in hdrt and 'CAT-DEC' in hdrt:
+    if hdrt is None:
+        hdrt=lsc.util.readhdr(img)
+    if ('CAT-RA' in hdrt and 'CAT-DEC' in hdrt and 
+        hdrt['CAT-RA'] not in ['NaN', 'UNKNOWN', None, ''] and hdrt['CAT-DEC'] not in ['NaN', 'UNKNOWN', None, '']):
         _ra=lsc.util.readkey3(hdrt,'CAT-RA')
         _dec=lsc.util.readkey3(hdrt,'CAT-DEC')
     else:

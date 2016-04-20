@@ -13,7 +13,7 @@ elif 'valenti' in host:
    workdirectory =  '/science/supernova/'
    configfile = 'configure'
 elif host == 'supernova.lco.gtn':
-    workdirectory = '/data/supernova/'
+    workdirectory = '/supernova/'
     configfile = 'configure'
 else:
    sys.exit('ERROR: host machine not recognise, please add your machine in the util file')

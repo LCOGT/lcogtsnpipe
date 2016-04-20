@@ -1056,9 +1056,13 @@ def targimg(img='', hdrt=None):
         hdrt['CAT-RA'] not in ['NaN', 'UNKNOWN', None, ''] and hdrt['CAT-DEC'] not in ['NaN', 'UNKNOWN', None, '']):
         _ra=lsc.util.readkey3(hdrt,'CAT-RA')
         _dec=lsc.util.readkey3(hdrt,'CAT-DEC')
-    else:
+    elif ('RA' in hdrt and 'DEC' in hdrt and 
+        hdrt['RA'] not in ['NaN', 'UNKNOWN', None, ''] and hdrt['DEC'] not in ['NaN', 'UNKNOWN', None, '']):
         _ra=lsc.util.readkey3(hdrt,'RA')
         _dec=lsc.util.readkey3(hdrt,'DEC')
+    else:
+        _ra = None
+        _dec = None
     _object=lsc.util.readkey3(hdrt,'object')
     if ':' in str(_ra):        
        _ra,_dec=lsc.deg2HMS(_ra,_dec)
@@ -1242,8 +1246,9 @@ def gettargetid(_name,_ra,_dec,conn,_radius=.01,verbose=False):
    import lsc
    from numpy import argmin
    if _name:
+        _name = _name.lower().replace('at20', 'at20%').replace('sn20', 'sn20%').replace(' ', '%')
         command=['select distinct(r.name), r.targetid, t.id, t.ra0, t.dec0 from targetnames as r join targets as t where r.name like "'+\
-                 str(_name).replace(' ', '%') +'" and t.id=r.targetid']
+                 _name +'" and t.id=r.targetid']
         lista=lsc.mysqldef.query(command,conn)
    elif _ra and _dec:
       if ':' in  str(_ra):

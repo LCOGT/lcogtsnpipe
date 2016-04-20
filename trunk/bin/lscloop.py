@@ -1,4 +1,4 @@
-#!/opt/epd/bin/python
+#!/usr/bin/env python
 description = "> process lsc data  "
 usage = "%prog  -e epoch [-s stage -n name -f filter -d idnumber]\n available stages [wcs, psf, psfmag, zcat, abscat," \
         " mag,local,getmag]\n"

@@ -1,4 +1,4 @@
-import socket
+.import socket
 import sys
 
 host = socket.gethostname()
@@ -72,7 +72,7 @@ def ReadAscii2(ascifile):
    return vec1,vec2
 #########################################################################
 def readlist(listfile):
-    from lsc.util import correctcard
+#    from lsc.util import correctcard
     import string,os,sys,re,glob
     from pyfits import open as opn
     if '*' in listfile:
@@ -95,12 +95,14 @@ def readlist(listfile):
                     try:
                        hdulist= opn(ff)
                        imglist.append(ff)
-                    except:
-                       try:
-                          correctcard(ff)
-                          hdulist= opn(ff)
-                          imglist.append(ff)
-                       except:                          pass
+                    except Exception as e:
+                        print 'problem reading header of', ff
+                        print e
+#                       try:
+#                          correctcard(ff)
+#                          hdulist= opn(ff)
+#                          imglist.append(ff)
+#                       except:                          pass
            except:              sys.exit('\n##### Error ###\n file '+str(listfile)+' do not  exist\n')
     if len(imglist)==0:
            sys.exit('\n##### Error ###\nIf "'+str(listfile)\
@@ -128,17 +130,26 @@ def delete(listfile):
             except:       pass
 ###############################################################
 def readhdr(img):
-   from pyfits import open as popen
-   try:    hdr=popen(img)[0].header
-   except:
-      from lsc.util import correctcard
-      try: 
-         correctcard(img)
-      except: 
-         import sys
-         sys.exit('image '+str(img)+' is corrupted, delete it and start again')
-      hdr=popen(img)[0].header
-   return hdr
+    from astropy.io.fits import getheader
+    try:
+        hdr = getheader(img)
+    except Exception as e:
+        print "Couldn't read header of {}. Try deleting it and starting over.".format(img)
+        raise e
+    return hdr
+
+#def readhdr(img):
+#   from pyfits import open as popen
+#   try:    hdr=popen(img)[0].header
+#   except:
+#      from lsc.util import correctcard
+#      try: 
+#         correctcard(img)
+#      except: 
+#         import sys
+#         sys.exit('image '+str(img)+' is corrupted, delete it and start again')
+#      hdr=popen(img)[0].header
+#   return hdr
 
 def readkey3(hdr,keyword):
     import re,string,sys
@@ -340,71 +351,83 @@ def writeinthelog(text,logfile):
     f.write(text)
     f.close()
 ################################################
-def correctcard(img):
-    from  pyfits import open as popen
-    from numpy  import asarray
-    import re
-    hdulist=popen(img)
-    a=hdulist[0]._verify('fix')    
-    _header=hdulist[0].header
-    for i in range(len(a)):
-        if not a[i]:
-            a[i]=['']
-    ww=asarray([i for i in range(len(a)) if (re.sub(' ','',a[i][0])!='')])
-    if len(ww)>0:
-        newheader=[]
-        headername=[]
-        for j in _header.items():
-            headername.append(j[0])
-            newheader.append(j[1])
-        hdulist.close()
-        imm=popen(img,mode='update')
-        _header=imm[0].header
-        for i in ww:
-            if headername[i]:
-                try:
-#                    _header[headername[i]] = newheader[i]
-                    _header.update(headername[i],newheader[i]) # deprecated in PyFITS 3.3
-                except:
-#                    _header[headername[i]] = 'xxxx'
-                    _header.update(headername[i],'xxxx') # deprecated in PyFITS 3.3
-        imm.flush()
-        imm.close()
+# THESE NO LONGER WORK WITH PYFITS 3.4
+#def correctcard(img):
+#    from  pyfits import open as popen
+#    from numpy  import asarray
+#    import re
+#    hdulist=popen(img)
+#    a=hdulist[0]._verify('fix')    
+#    _header=hdulist[0].header
+#    for i in range(len(a)):
+#        if not a[i]:
+#            a[i]=['']
+#    ww=asarray([i for i in range(len(a)) if (re.sub(' ','',a[i][0])!='')])
+#    if len(ww)>0:
+#        newheader=[]
+#        headername=[]
+#        for j in _header.items():
+#            headername.append(j[0])
+#            newheader.append(j[1])
+#        hdulist.close()
+#        imm=popen(img,mode='update')
+#        _header=imm[0].header
+#        for i in ww:
+#            if headername[i]:
+#                try:
+##                    _header[headername[i]] = newheader[i]
+#                    _header.update(headername[i],newheader[i]) # deprecated in PyFITS 3.3
+#                except:
+##                    _header[headername[i]] = 'xxxx'
+#                    _header.update(headername[i],'xxxx') # deprecated in PyFITS 3.3
+#        imm.flush()
+#        imm.close()
 ######################################################################################################
-def updateheader(image,dimension,headerdict):
-    from pyfits import open as opp
+#def updateheader(image,dimension,headerdict):
+#    from pyfits import open as opp
+#    try:
+#        imm=opp(image,mode='update')
+#        _header=imm[dimension].header
+#################################
+##   change way to update to speed up the process
+##   now get dictionary   08 12  2012
+#################################
+#        for i in headerdict.keys():
+##           _header[i] = tuple(headerdict[i])
+#           _header.update(i,headerdict[i][0],headerdict[i][1]) # deprecated in PyFITS 3.3
+####################################################
+#        imm.flush()
+#        imm.close()
+#    except:
+#        import lsc
+#        from lsc.util import correctcard
+#        print 'warning: problem to update header, try to correct header format ....'
+#        correctcard(image)
+#        try:
+#            imm=opp(image,mode='update')
+#            _header=imm[dimension].header
+####################################################
+#            for i in headerdict.keys():
+##               _header[i] = tuple(headerdict[i])
+#               _header.update(i,headerdict[i][0],headerdict[i][1]) # deprecated in PyFITS 3.3
+####################################################
+#            imm.flush()
+#            imm.close()
+#        except:
+#           print 'niente'
+##           import sys
+##            sys.exit('error: not possible update header')
+def updateheader(filename, dimension, headerdict):
+    from astropy.io import fits
+    tupledict = {key: tuple(value) for key, value in headerdict.items()}
     try:
-        imm=opp(image,mode='update')
-        _header=imm[dimension].header
-################################
-#   change way to update to speed up the process
-#   now get dictionary   08 12  2012
-################################
-        for i in headerdict.keys():
-#           _header[i] = tuple(headerdict[i])
-           _header.update(i,headerdict[i][0],headerdict[i][1]) # deprecated in PyFITS 3.3
-###################################################
-        imm.flush()
-        imm.close()
-    except:
-        import lsc
-        from lsc.util import correctcard
-        print 'warning: problem to update header, try to correct header format ....'
-        correctcard(image)
-        try:
-            imm=opp(image,mode='update')
-            _header=imm[dimension].header
-###################################################
-            for i in headerdict.keys():
-#               _header[i] = tuple(headerdict[i])
-               _header.update(i,headerdict[i][0],headerdict[i][1]) # deprecated in PyFITS 3.3
-###################################################
-            imm.flush()
-            imm.close()
-        except:
-           print 'niente'
-#           import sys
-#            sys.exit('error: not possible update header')
+        hdulist = fits.open(filename, mode='update')
+        header = hdulist[dimension].header
+        header.update(tupledict)
+        hdulist.close()
+    except Exception as e:
+        print 'header of', image, 'not updated:'
+        print e
 #################################################################################################
 def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,_erase='yes'):
     goon='True'
@@ -660,7 +683,7 @@ def correctobject(img,coordinatefile):
     scal=pi/180.
     std,rastd,decstd,magstd=readstandard(coordinatefile)
     img=re.sub('\n','',img)
-    correctcard(img)
+#    correctcard(img)
     hdr=readhdr(img)
     _ra=readkey3(hdr,'RA')
     _dec=readkey3(hdr,'DEC')

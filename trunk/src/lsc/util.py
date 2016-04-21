@@ -1,4 +1,4 @@
-.import socket
+import socket
 import sys
 
 host = socket.gethostname()

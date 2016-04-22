@@ -11,6 +11,7 @@ import time
 from optparse import OptionParser
 from pyraf import iraf
 import pyfits
+from astropy.io import fits
 import lsc
 import re
 import string
@@ -462,32 +463,33 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                     break
             smagf.append(_smagf)
             smagerrf.append(_smagerrf)
-        tbhdu = pyfits.new_table(pyfits.ColDefs([pyfits.Column(name='ra', format='20A', array=np.array(rap)),
-                                                 pyfits.Column(name='dec', format='20A', array=np.array(decp)),
-                                                 pyfits.Column(name='ra0', format='E', array=np.array(rap0)),
-                                                 pyfits.Column(name='dec0', format='E', array=np.array(decp0)),
-                                                 pyfits.Column(name='magp2', format='E',
-                                                               array=np.array(np.where((np.array(magp2) != 'INDEF'),
-                                                                                       np.array(magp2), 9999), float)),
-                                                 pyfits.Column(name='magp3', format='E',
+        tbhdu = fits.BinTableHDU.from_columns(fits.ColDefs([fits.Column(name='ra', format='20A', array=np.array(rap)),
+                                               fits.Column(name='dec', format='20A', array=np.array(decp)),
+                                               fits.Column(name='ra0', format='E', array=np.array(rap0)),
+                                               fits.Column(name='dec0', format='E', array=np.array(decp0)),
+                                               fits.Column(name='magp2', format='E',
+                                                           array=np.array(np.where((np.array(magp2) != 'INDEF'),
+                                                                                   np.array(magp2), 9999), float)),
+                                               fits.Column(name='magp3', format='E',
                                                                array=np.array(np.where((np.array(magp3) != 'INDEF'),
                                                                                        np.array(magp3), 9999), float)),
-                                                 pyfits.Column(name='merrp3', format='E',
+                                               fits.Column(name='merrp3', format='E',
                                                                array=np.array(np.where((np.array(merrp3) != 'INDEF'),
                                                                                        np.array(merrp3), 9999), float)),
-                                                 pyfits.Column(name='magp4', format='E',
+                                               fits.Column(name='magp4', format='E',
                                                                array=np.array(np.where((np.array(magp4) != 'INDEF'),
                                                                                        np.array(magp4), 9999), float)),
-                                                 pyfits.Column(name='smagf', format='E',
+                                               fits.Column(name='smagf', format='E',
                                                                array=np.array(np.where((np.array(smagf) != 'INDEF'),
                                                                                        np.array(smagf), 9999), float)),
-                                                 pyfits.Column(name='smagerrf', format='E',
+                                               fits.Column(name='smagerrf', format='E',
                                                                array=np.array(np.where((np.array(smagerrf) != 'INDEF'),
                                                                                        np.array(smagerrf), 9999),
                                                                               float)),
         ]))
-        hdu = pyfits.PrimaryHDU(header=hdr)
-        thdulist = pyfits.HDUList([hdu, tbhdu])
+
+        hdu = fits.PrimaryHDU(header=hdr)
+        thdulist = fits.HDUList([hdu, tbhdu])
         lsc.util.delete(img + '.sn2.fits')
         thdulist.writeto(img + '.sn2.fits')
         lsc.util.updateheader(img + '.sn2.fits', 0, {'APCO': [np.mean(_dmag), 'Aperture correction']})

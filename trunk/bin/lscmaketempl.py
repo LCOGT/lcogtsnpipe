@@ -8,7 +8,7 @@ import os
 import sys
 import string
 import re
-from pyfits import getheader
+from astropy.io.fits import getheader
 from optparse import OptionParser
 import math
 

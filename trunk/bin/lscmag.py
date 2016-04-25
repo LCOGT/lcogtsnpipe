@@ -12,13 +12,13 @@ import numpy as np
 
 
 def makecatalogue(imglist):
-    import pyfits
+    from astropy.io import fits
     import lsc
 
     filters = {}
     dicti = {}
     for img in imglist:
-        t = pyfits.open(img)
+        t = fits.open(img)
         tbdata = t[1].data
         hdr1 = t[0].header
         _filter = lsc.util.readkey3(hdr1, 'filter')

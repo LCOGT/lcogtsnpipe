@@ -7,7 +7,7 @@ import string
 import lsc
 import numpy as np
 import math
-import pyfits
+from astropy.io import fits
 
 def weighted_avg_and_std(values, weights):
     """
@@ -521,7 +521,8 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
 def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _recenter=False, _ref='', interactive=False,
             show=False, redo=False, dmax=51000, dmin=-500, database='photlco', _ra0='', _dec0=''):
     import lsc
-    import os, string, pyfits  # MySQLdb,
+    import os, string
+    from astropy.io import fits
 
     direc = lsc.__path__[0]
 
@@ -567,7 +568,7 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
                       ' --datamax ' + str(dmax) + ' '+' --datamin='+str(dmin) + ' '+_ra0+' '+_dec0
             #if str(ggg[0]['filetype']) == '3':
             #    try:
-            #        img2 = pyfits.getheader(_dir + img)['PSF']
+            #        img2 = fits.getheader(_dir + img)['PSF']
             #        ggg2 = mysqldef.getfromdataraw(conn, database, 'filename', str(img2), '*')
             #        _dir2 = ggg2[0]['filepath']
             #        pp = ' -p ' + _dir2 + re.sub('.fits', '.psf.fits', img2) + ' '
@@ -663,7 +664,7 @@ def checkstage(img, stage, database='photlco'):
 # ###################################################################################
 def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2  import pyraf outside
     import lsc
-    import pyfits
+    from astropy.io import fits
     from numpy import zeros, array, median, compress
     from pyraf import iraf
 
@@ -689,7 +690,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
             dec02 = dicti2[i][j]['dec0']
 
     print _dir1 + img1
-    t = pyfits.open(_dir1 + img1)
+    t = fits.open(_dir1 + img1)
     tbdata = t[1].data
     hdr1 = t[0].header
     psfx1 = lsc.util.readkey3(hdr1, 'PSFX1')
@@ -953,14 +954,14 @@ def run_local(imglist, _field, _interactive=False, database='photlco'):
 def position(imglist, ra1, dec1, show=False):
     import lsc
     from pyraf import iraf
-    import pyfits
+    from astropy.io import fits
     from numpy import array, zeros, median, argmin, cos, abs, pi, mean
 
     iraf.imcoords(_doprint=0)
     ra, dec = [], []
     if not ra1 and not dec1:
         for img in imglist:
-            t = pyfits.open(img)
+            t = fits.open(img)
             tbdata = t[1].data
             hdr1 = t[0].header
             psfx = lsc.util.readkey3(hdr1, 'PSFX1')
@@ -1204,7 +1205,8 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
 
 def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, redo=False, _output=''):
     import lsc
-    import os, string, pyfits  #MySQLdb,
+    import os, string
+    from astropy.io import fits
     import numpy as np
     import pylab as plt
     import pywcs
@@ -1223,7 +1225,7 @@ def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, re
                     status = -5
         if status >= 0:  # or force==False:
             _targetid = ggg[0]['targetid']
-            hdr = pyfits.open(_dir + img)
+            hdr = fits.open(_dir + img)
             X = hdr[0].data
             header = hdr[0].header
             wcs = pywcs.WCS(header)
@@ -2088,8 +2090,8 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
                 if os.path.isfile(_dir + re.sub('.fits', '.var.fits', img)):
                     print 'variance image found'
                     os.system('cp '+_dir + img+' '+_dir + re.sub('.fits', '.clean.fits',img))
-                    ar, hd = pyfits.getdata(_dir + img, header=True)
-                    out_fits = pyfits.PrimaryHDU(header=hd,data=(ar-ar).astype('uint8'))
+                    ar, hd = fits.getdata(_dir + img, header=True)
+                    out_fits = fits.PrimaryHDU(header=hd,data=(ar-ar).astype('uint8'))
                     out_fits.writeto(re.sub('.fits', '.mask.fits', _dir + img), clobber=True, output_verify='fix')
                 else:
                     if not os.path.isfile(re.sub('.fits', '.clean.fits', _dir + img)) or _force:

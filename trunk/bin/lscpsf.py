@@ -247,8 +247,11 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
             else:
                 seeing = 3
         else:
-            seeing = float(lsc.util.readkey3(hdr, 'PSF_FWHM'))
-            sys.exit('astrometry not good')
+            seeing = 3
+            if 'PSF_FWHM' in hdr:
+                seeing = float(lsc.util.readkey3(hdr, 'PSF_FWHM'))
+            else:
+                sys.exit('astrometry not good')
         #except:  sys.exit('astrometry not good')
 
         fwhm = seeing / scale

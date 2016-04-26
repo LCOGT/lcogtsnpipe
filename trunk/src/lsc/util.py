@@ -12,7 +12,7 @@ elif host in ['svalenti-linux.lco.gtn','cc3.lco.gtn',\
 elif 'valenti' in host:
    workdirectory =  '/science/supernova/'
    configfile = 'configure'
-elif host in ['supernova.lco.gtn', 'griffin-linux.lco.gtn']:
+elif host in ['supernova.lco.gtn', 'griffin-linux.lco.gtn', 'griffin-Aspire-M5-583P']:
     workdirectory = '/supernova/'
     configfile = 'configure'
 else:

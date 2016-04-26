@@ -501,10 +501,10 @@ if __name__ == "__main__":
                     else:
                         if not _interactive:
                             print 'select'
-                            xb1 = int(min(xxsn) - fwhm0*1.5)
-                            xb2 = int(max(xxsn) + fwhm0*1.5)
-                            yb1 = int(min(yysn) - fwhm0*1.5)
-                            yb2 = int(max(yysn) + fwhm0*1.5)
+                            xb1 = int(min(xxsn) - fwhm0*_fb)
+                            xb2 = int(max(xxsn) + fwhm0*_fb)
+                            yb1 = int(min(yysn) - fwhm0*_fb)
+                            yb2 = int(max(yysn) + fwhm0*_fb)
 
                         else:
                             lsc.util.delete("tmplabel")

@@ -10,7 +10,7 @@ import glob
 from optparse import OptionParser
 import time
 import lsc
-import pyfits
+from astropy.io import fits
 import numpy as np
 
 
@@ -152,7 +152,7 @@ if __name__ == "__main__":
         #    _magp3=table[table.keys()[0]][table[table.keys()[0]].keys()[0]]['magp3']
         #    _merrp2=table[table.keys()[0]][table[table.keys()[0]].keys()[0]]['merrp2']
         #    _merrp3=table[table.keys()[0]][table[table.keys()[0]].keys()[0]]['merrp3']
-        hdr = pyfits.open(img)[0].header
+        hdr = fits.open(img)[0].header
         _ra0 = hdr['RA']
         _dec0 = hdr['DEC']
 

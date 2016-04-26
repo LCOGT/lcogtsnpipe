@@ -10,7 +10,7 @@ import os, sys, shutil, subprocess
 import time
 from optparse import OptionParser
 from pyraf import iraf
-import pyfits
+from astropy.io import fits
 from astropy.io import fits
 import lsc
 import re

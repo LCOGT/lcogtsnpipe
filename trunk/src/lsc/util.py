@@ -74,12 +74,12 @@ def ReadAscii2(ascifile):
 def readlist(listfile):
 #    from lsc.util import correctcard
     import string,os,sys,re,glob
-    from pyfits import open as opn
+    from astropy.io import fits
     if '*' in listfile:
         imglist=glob.glob(listfile)
     elif ',' in listfile: imglist = string.split(listfile,sep=',')
     else:
-        try:            hdulist= opn(listfile)
+        try:            hdulist= fits.open(listfile)
         except:           hdulist=[]
         if hdulist:            imglist = [listfile]
         else:
@@ -93,14 +93,14 @@ def readlist(listfile):
                  if not ff=='\n' and ff[0]!='#':
                     ff=re.sub('\n','',ff)
                     try:
-                       hdulist= opn(ff)
+                       hdulist= fits.open(ff)
                        imglist.append(ff)
                     except Exception as e:
                         print 'problem reading header of', ff
                         print e
 #                       try:
 #                          correctcard(ff)
-#                          hdulist= opn(ff)
+#                          hdulist= fits.open(ff)
 #                          imglist.append(ff)
 #                       except:                          pass
            except:              sys.exit('\n##### Error ###\n file '+str(listfile)+' do not  exist\n')
@@ -139,7 +139,7 @@ def readhdr(img):
     return hdr
 
 #def readhdr(img):
-#   from pyfits import open as popen
+#   from astropy.io.fits import open as popen
 #   try:    hdr=popen(img)[0].header
 #   except:
 #      from lsc.util import correctcard
@@ -153,11 +153,7 @@ def readhdr(img):
 
 def readkey3(hdr,keyword):
     import re,string,sys
-    import pyfits
-    if int(re.sub('\.','',str(pyfits.__version__))[:2]) <= 30:  
-       aa = 'HIERARCH '
-    else: 
-       aa = ''
+
     try:    
        _instrume=hdr.get('INSTRUME').lower()
     except: 
@@ -353,7 +349,7 @@ def writeinthelog(text,logfile):
 ################################################
 # THESE NO LONGER WORK WITH PYFITS 3.4
 #def correctcard(img):
-#    from  pyfits import open as popen
+#    from  fits import open as popen
 #    from numpy  import asarray
 #    import re
 #    hdulist=popen(img)
@@ -384,7 +380,7 @@ def writeinthelog(text,logfile):
 #        imm.close()
 ######################################################################################################
 #def updateheader(image,dimension,headerdict):
-#    from pyfits import open as opp
+#    from astropy.io.fits import open as opp
 #    try:
 #        imm=opp(image,mode='update')
 #        _header=imm[dimension].header
@@ -519,12 +515,12 @@ def readstandard(standardfile):
 #################################################################################################
 def readspectrum(img):
     from numpy import array
-    import pyfits
+    from astropy.io import fits
     import string
     fl=''
     lam=''
     graf=1
-    spec = pyfits.open(img)
+    spec = fits.open(img)
     head = spec[0].header
     try:
         if spec[0].data.ndim == 1: fl = spec[0].data
@@ -737,7 +733,7 @@ def limmag(img):
 ##########################################################################
 def marksn2(img,fitstab,frame=1,fitstab2='',verbose=False):
    from pyraf import iraf
-   import pyfits
+   from astropy.io import fits
    from numpy import array   #,log10
    import lsc
    iraf.noao(_doprint=0)
@@ -792,12 +788,12 @@ def marksn2(img,fitstab,frame=1,fitstab2='',verbose=False):
 def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    import time
    start=time.time()
-   import pyfits
+   from astropy.io import fits
    import lsc
    import re,os,string
    import numpy as np
 
-   ar, hd = pyfits.getdata(img, header=True)
+   ar, hd = fits.getdata(img, header=True)
 
    if 'TELID' in hd:
       _tel=hd['TELID']
@@ -808,10 +804,10 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
 
    if _tel in ['fts','ftn']:
       lsc.delete('new.fits')
-      out_fits = pyfits.PrimaryHDU(header=hd,data=ar)
+      out_fits = fits.PrimaryHDU(header=hd,data=ar)
       out_fits.scale('float32',bzero=0,bscale=1)
       out_fits.writeto('new.fits', clobber=True, output_verify='fix')
-      ar = pyfits.getdata('new.fits')
+      ar = fits.getdata('new.fits')
       lsc.delete('new.fits')
       gain    = hd['GAIN']
       sat     = 35000
@@ -859,17 +855,17 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    out2=c.cleanarray-c.rawarray
    out3=c.getsatstars()
 
-   out_fits = pyfits.PrimaryHDU(header=hd,data=out1)
+   out_fits = fits.PrimaryHDU(header=hd,data=out1)
    out_fits.writeto(out, clobber=True, output_verify='fix')
 
    # we are going to register the mask for the template image,
    # so it makes sense to save it as a float instead of an int
    if 'temp' in img: pixtype = 'float32'
    else:             pixtype = 'uint8'
-   out_fits = pyfits.PrimaryHDU(header=hd,data=(out2!=0).astype(pixtype))
+   out_fits = fits.PrimaryHDU(header=hd,data=(out2!=0).astype(pixtype))
    out_fits.writeto(outmask, clobber=True, output_verify='fix')
 
-   out_fits = pyfits.PrimaryHDU(header=hd,data=(out3!=0).astype('uint8'))
+   out_fits = fits.PrimaryHDU(header=hd,data=(out3!=0).astype('uint8'))
    out_fits.writeto(outsat, clobber=True, output_verify='fix')
 
    print 'time to do cosmic ray rejection:', time.time()-start

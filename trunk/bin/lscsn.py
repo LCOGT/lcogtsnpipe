@@ -10,7 +10,7 @@ import sys
 import shutil
 import string
 import re
-from pyfits import getheader
+from astropy.io.fits import getheader
 from optparse import OptionParser
 
 if __name__ == "__main__":

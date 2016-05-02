@@ -9,6 +9,7 @@ from astropy.coordinates import Angle
 from astropy import units as u
 from matplotlib.image import imsave
 import numpy as np
+from datetime import datetime
 
 def authenticate(username, password):
     '''Get the authentication token'''
@@ -55,6 +56,12 @@ def download_frame(frame, force=False):
             f.write(requests.get(frame['url']).content)
     else:
         print filename, 'already in', filepath
+    if os.path.isfile(filepath + filename) and os.stat(filepath + filename).st_size == 0:
+        print filename, 'has size 0. Redownloading.'
+        with open('filesize0.log', 'a') as l:
+            l.write(str(datetime.utcnow()) + '\t' + filename)
+        with open(filepath + filename, 'wb') as f:
+            f.write(requests.get(frame['url']).content)
     if filename[-3:] == '.fz' and (not (os.path.isfile(filepath + filename[:-3]) or
                     os.path.isfile(filepath + 'bad/' + filename[:-3])) or force):
         print 'unpacking', filename

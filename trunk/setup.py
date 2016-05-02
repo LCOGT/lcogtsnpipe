@@ -11,7 +11,7 @@ from imp import find_module
 try: find_module('numpy')
 except: sys.exit('### Error: python module numpy not found')
     
-try: find_module('pyfits')
+try: find_module('astropy')
 except: sys.exit('### Error: python module pyfits not found')
 
 #try: find_module('pyraf')
@@ -44,21 +44,17 @@ setup(
     version=verstr,#'0.1.3',
     author='S. Valenti',
     author_email='svalenti@lcogt.net',
-    scripts=['bin/lscingestrawdata.py','bin/lscingestredudata.py','bin/lscabsphot.py','bin/runlsc.py','bin/lscdiff.py',\
-                 'bin/lscastro.py','bin/lsccatalogue.py','bin/lsccheck.py','bin/lscloop.py','bin/lscmerge.py',\
-                 'bin/lscmaketempl.py','bin/runingestion.py', 'bin/lscmaglocal.py', 'bin/lscingestsloan.py',\
-                 'bin/lscmag.py','bin/lscpsf.py','bin/lscsn.py','bin/lsctestheader.py','bin/lscnewcalib.py'],
+    scripts=['bin/*.py'],
     url='lcogt.net',
     license='LICENSE.txt', 
     description='lsc is a package to reduce PHTOMETRIC SN data',
     long_description=open('README.txt').read(),
-    requires=['numpy','pyfits','matplotlib','MySQLdb'],
+    requires=['numpy','astropy','matplotlib','MySQLdb'],
     packages=['lsc'],
     package_dir={'':'src'},
-    package_data = {'lsc' : ["standard/astrometry/*cat","standard/*txt","standard/stdlist/*txt",\
-                                 "standard/cat/*dat","standard/cat/*cat",\
-                                 "standard/cat/sloan/*cat","standard/cat/landolt/*cat",\
-                                 "standard/cat/sloan/*cat","standard/cat/apass/*cat",\
-                                 "standard/cat/sloanprime/*cat","standard/cat/sloannatural/*cat","standard/cat/landoltnatural/*cat",\
-                                 "standard/sex/*"]}
+    package_data = {'lsc' : ["standard/astrometry/*cat","standard/*txt","standard/stdlist/*txt",
+                             "standard/cat/*dat","standard/cat/*cat",
+                             "standard/cat/sloan/*cat","standard/cat/landolt/*cat","standard/cat/apass/*cat",
+                             "standard/cat/sloanprime/*cat","standard/cat/sloannatural/*cat","standard/cat/landoltnatural/*cat",
+                             "standard/sex/*"]}
 )

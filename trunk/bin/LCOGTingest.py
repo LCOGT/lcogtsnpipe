@@ -49,14 +49,14 @@ def download_frame(frame, force=False):
     filepath = lsc.util.workdirectory + daydir
     if not os.path.isdir(filepath):
         os.mkdir(filepath)
-    if (not os.path.isfile(filepath + filename) and not os.path.isfile(filepath + 'bad/' + filename)) or force:
+    if not (os.path.isfile(filepath + filename) or os.path.isfile(filepath + 'bad/' + filename)) or force:
         print 'downloading', filename, 'to', filepath
         with open(filepath + filename, 'wb') as f:
             f.write(requests.get(frame['url']).content)
     else:
         print filename, 'already in', filepath
-    if (filename[-3:] == '.fz' and not os.path.isfile(filepath + filename[:-3]) and
-                    not os.path.isfile(filepath + 'bad/' + filename[:-3])) or force:
+    if filename[-3:] == '.fz' and (not (os.path.isfile(filepath + filename[:-3]) or
+                    os.path.isfile(filepath + 'bad/' + filename[:-3])) or force):
         print 'unpacking', filename
         os.system('funpack ' + filepath + filename)
         filename = filename[:-3]

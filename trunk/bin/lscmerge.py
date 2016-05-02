@@ -8,7 +8,7 @@ import re
 import string
 import sys
 import lsc
-import pyfits
+from astropy.io import fits
 from optparse import OptionParser
 
 
@@ -133,11 +133,11 @@ if __name__ == "__main__":
                 kkk = lsc.lscastrodef.finewcs(gg)
                 print gg
                 output, mask, satu = lsc.util.Docosmic(gg)  #  cosmic correction on a fly ....not really fly
-                hdm = pyfits.getheader(output)
-                dmask = pyfits.getdata(mask)
-                dsat = pyfits.getdata(satu)
+                hdm = fits.getheader(output)
+                dmask = fits.getdata(mask)
+                dsat = fits.getdata(satu)
                 #ar1=where(arm>saturation,2,0)
-                out_fits = pyfits.PrimaryHDU(header=hdm, data=dsat + dmask)
+                out_fits = fits.PrimaryHDU(header=hdm, data=dsat + dmask)
                 out_fits.writeto(re.sub('.fits', '.mask.fits', string.split(gg, '/')[-1]), clobber=True,
                                  output_verify='fix')
                 imglist2 = imglist2 + ',' + output
@@ -172,8 +172,8 @@ if __name__ == "__main__":
             print line2
             os.system(line)
 
-            hd = pyfits.getheader(outname)
-            ar = pyfits.getdata(outname)
+            hd = fits.getheader(outname)
+            ar = fits.getdata(outname)
             ar = where(ar <= 0, mean(ar[where(ar > 0)]), ar)
             keyw = ['OBJECT', 'DATE', 'ORIGIN', 'EXPTIME', 'HDUCLAS1', 'HDUCLAS2', 'HDSTYPE', 'DATADICV', 'HDRVER',
                     'SITEID', 'SITE', 'MJD-OBS', 'MJD',
@@ -213,12 +213,12 @@ if __name__ == "__main__":
                     hd.update(jj, hdr0[jj], hdr0.comments[jj])
                 except:
                     pass
-            out_fits = pyfits.PrimaryHDU(header=hd, data=ar)
+            out_fits = fits.PrimaryHDU(header=hd, data=ar)
             out_fits.writeto(outname, clobber=True, output_verify='fix')
             os.system(line2)  # make noise image
 
             print outname
-            hd = pyfits.getheader(outname)
+            hd = fits.getheader(outname)
             _targetid = lsc.mysqldef.targimg(outname)
             _tel = lsc.util.readkey3(hd, 'telid')
             dictionary = {'dateobs': lsc.util.readkey3(hd, 'date-obs'), 'exptime': lsc.util.readkey3(hd, 'exptime'),

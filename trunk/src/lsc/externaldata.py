@@ -1,4 +1,4 @@
-import pyfits
+from astropy.io import fits
 import os
 import numpy as np
 import lsc
@@ -162,7 +162,7 @@ def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
     from astroquery.sdss import SDSS
     from astropy import coordinates as coords
     import astropy.units as u
-    import pyfits
+    from astropy.io import fits
     import os
     import sys
     import string
@@ -211,7 +211,7 @@ def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
           im[0].writeto(output1)
 #         im[0][0].writeto(output2)
 
-          FITS_file = pyfits.open(output1)
+          FITS_file = fits.open(output1)
           new_header = FITS_file[0].header
           camcol     = FITS_file[0].header['CAMCOL']  # camcol
           ugriz      = FITS_file[0].header['FILTER']  # ugriz filter
@@ -243,11 +243,11 @@ def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
           frame_weight = 1 / ((dn_err_image)**2)
           new_header['SKYLEVEL']  = np.mean(sky_image)
           #  save image in count
-          pyfits.writeto(output2, dn_image.transpose(), new_header,clobber=True)
+          fits.writeto(output2, dn_image.transpose(), new_header,clobber=True)
           #  save weight image
-          pyfits.writeto(output3, frame_weight.transpose(), new_header,clobber=True)
+          fits.writeto(output3, frame_weight.transpose(), new_header,clobber=True)
           #  save sky image 
-          pyfits.writeto(output4, sky_image.transpose(), new_header,clobber=True)
+          fits.writeto(output4, sky_image.transpose(), new_header,clobber=True)
           filevec.append(output2)
           filevec.append(output3)
        return filevec
@@ -273,7 +273,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
 
     if survey =='sloan':
        out1 = 'SDSS'
-       hdr = pyfits.getheader(imglist[0])
+       hdr = fits.getheader(imglist[0])
        _filter = hdr.get('filter')
        _gain   = hdr.get('gain')
        _ron   = hdr.get('rdnoise')
@@ -304,14 +304,14 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        imglist2=[]
        for i,img in enumerate(imglist):
            print i,img
-           hdr = pyfits.open(img)
+           hdr = fits.open(img)
            if os.path.isfile(re.sub('.fits','_1.fits',img)):
               os.system('rm '+re.sub('.fits','_1.fits',img))
-           pyfits.writeto(re.sub('.fits','_1.fits',img),hdr[1].data,hdr[1].header)
+           fits.writeto(re.sub('.fits','_1.fits',img),hdr[1].data,hdr[1].header)
            imglist2.append(re.sub('.fits','_1.fits',img))
 
        imglist = imglist2
-       hdr = pyfits.getheader(imglist[0])
+       hdr = fits.getheader(imglist[0])
        _saturate = hdr.get('HIERARCH CELL.SATURATION')
        _filter = string.split(hdr.get('HIERARCH FPA.FILTER'),'.')[0]
        _gain   = hdr.get('HIERARCH CELL.GAIN')
@@ -356,7 +356,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
           imglist = [j for j in imglist if j not in welist]
           imgmask = welist
           for jj in imglist:
-             img_data,img_header=pyfits.getdata(jj, header=True)
+             img_data,img_header=fits.getdata(jj, header=True)
              if 'SKYLEVEL' in img_header:
                 skylevel.append(img_header['SKYLEVEL'])
     elif survey=='ps1':
@@ -367,17 +367,17 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
              weightimg = re.sub('.wt_','.weight.',name)
              imgmask.append(weightimg)
              if re.sub('.wt_','.mk_',name) in mklist:
-                weight_data, weight_header = pyfits.getdata(name, header=True)
-                mask_data, mask_header = pyfits.getdata(re.sub('.wt_','.mk_',name), header=True)
+                weight_data, weight_header = fits.getdata(name, header=True)
+                mask_data, mask_header = fits.getdata(re.sub('.wt_','.mk_',name), header=True)
                 weight_data = 1/weight_data 
-                weight_fits = pyfits.PrimaryHDU(header=weight_header, data=weight_data)
+                weight_fits = fits.PrimaryHDU(header=weight_header, data=weight_data)
                 weight_fits.writeto(weightimg, output_verify='fix', clobber=True)             
              else:
                 os.system('cp '+name+' '+weightimg)
        imglist = [j for j in imglist if (j not in wtlist) and (j not in mklist)]
        # measure skylevel in all ps1 images
        for jj in imglist:
-          img_data,img_header=pyfits.getdata(jj, header=True)
+          img_data,img_header=fits.getdata(jj, header=True)
           skylevel.append(np.mean(img_data))
 
 #    elif len(welist):
@@ -406,15 +406,15 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     # the output of swarp give the normalized weight 
     # we want to store the variance image
     # we invert the normalized weight and we "de-normalized" this image
-    hd = pyfits.getheader(output)
-    ar = pyfits.getdata(output)
-    hd2 = pyfits.getheader(re.sub('.fits', '', output) + '.weight.fits')
-    ar2 = pyfits.getdata(re.sub('.fits', '', output) + '.weight.fits')
+    hd = fits.getheader(output)
+    ar = fits.getdata(output)
+    hd2 = fits.getheader(re.sub('.fits', '', output) + '.weight.fits')
+    ar2 = fits.getdata(re.sub('.fits', '', output) + '.weight.fits')
     variance = 1 / ar2
     #  this is to take in account that the weight is normalized
     variance *= (np.median(np.abs(ar - np.median(ar)))*1.48)**2/np.median(variance)
     varimg = re.sub('.fits', '', output) + '.var.fits'
-    pyfits.writeto(varimg, variance, hd2, clobber=True)
+    fits.writeto(varimg, variance, hd2, clobber=True)
 
     # put the saturation all values where the weight is zero 
     ar = np.where(ar2 == 0, _saturate, ar)
@@ -483,7 +483,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
 #       new_header['CD2_2']  = CD2_2*(-1)
 
     ar, hdr = northupeastleft(data=ar, header=hd)
-    out_fits = pyfits.PrimaryHDU(header=hd, data=ar)
+    out_fits = fits.PrimaryHDU(header=hd, data=ar)
     out_fits.writeto(output, clobber=True, output_verify='fix')
     northupeastleft(filename=varimg)
 
@@ -507,7 +507,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     return output, varimg
 
 def northupeastleft(filename='', data=None, header=None):
-    from pyfits import getdata, PrimaryHDU
+    from astropy.io.fits import getdata, PrimaryHDU
     if filename:
         data, header = getdata(filename, header=True)
     if header['cd1_1'] > 0:
@@ -527,10 +527,10 @@ def northupeastleft(filename='', data=None, header=None):
         return data, header
 
 def rotateflipimage(img,rot180=False,flipx=False,flipy=False):
-   import pyfits
+   from astropy.io import fits
    import os
-   hd = pyfits.getheader(img)
-   ar = pyfits.getdata(img)
+   hd = fits.getheader(img)
+   ar = fits.getdata(img)
    new_header = hd
    CD1_1 = hd['CD1_1']
    CD2_2 = hd['CD2_2']
@@ -545,7 +545,7 @@ def rotateflipimage(img,rot180=False,flipx=False,flipy=False):
       new_header['CD1_1']  = CD1_1*(-1)
       ar = np.fliplr(ar)
    os.system('rm '+img)
-   out_fits = pyfits.PrimaryHDU(header=new_header, data=ar)
+   out_fits = fits.PrimaryHDU(header=new_header, data=ar)
    out_fits.writeto(img, clobber=True, output_verify='fix')
    return img
 

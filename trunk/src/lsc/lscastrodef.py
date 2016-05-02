@@ -1113,9 +1113,9 @@ def sextractor(img):
         from pyraf import iraf
         from iraf import proto
         from numpy import compress,array,asarray
-        import pyfits
+        from astropy.io import fits
         
-        hd = pyfits.getheader(img)
+        hd = fits.getheader(img)
         if hd.get('SATURATE'):    _saturation=hd.get('SATURATE')
         else:                     _saturation=45000
         if _saturation>55000: _saturation=55000
@@ -1328,8 +1328,8 @@ def run_astrometry(im, clobber=True,redo=False):
     else:
         ra = lsc.readkey3(hdr,'RA')
         dec = lsc.readkey3(hdr,'DEC')
-        #    ra = pyfits.getval(im, 'RA')
-        #    dec = pyfits.getval(im, 'DEC')
+        #    ra = fits.getval(im, 'RA')
+        #    dec = fits.getval(im, 'DEC')
         cmd = 'solve-field --crpix-center --no-verify --no-fits2fits --no-tweak -l 30 '
         cmd += '--backend-config {}usr/backend.cfg '.format(lsc.util.workdirectory)
         cmd += '--radius 1.0 --ra {} --dec {} --guess-scale '.format(ra, dec)

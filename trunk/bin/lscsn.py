@@ -10,7 +10,7 @@ import sys
 import shutil
 import string
 import re
-from pyfits import getheader
+from astropy.io.fits import getheader
 from optparse import OptionParser
 
 if __name__ == "__main__":
@@ -501,10 +501,10 @@ if __name__ == "__main__":
                     else:
                         if not _interactive:
                             print 'select'
-                            xb1 = int(min(xxsn) - fwhm0*1.5)
-                            xb2 = int(max(xxsn) + fwhm0*1.5)
-                            yb1 = int(min(yysn) - fwhm0*1.5)
-                            yb2 = int(max(yysn) + fwhm0*1.5)
+                            xb1 = int(min(xxsn) - fwhm0*_fb)
+                            xb2 = int(max(xxsn) + fwhm0*_fb)
+                            yb1 = int(min(yysn) - fwhm0*_fb)
+                            yb2 = int(max(yysn) + fwhm0*_fb)
 
                         else:
                             lsc.util.delete("tmplabel")
@@ -776,7 +776,7 @@ if __name__ == "__main__":
 
                     headers = {'PSFX' + str(i + 1): [str(centx[i] + x1 - 1), 'x pos psf mag'],
                                'PSFY' + str(i + 1): [str(centy[i] + y1 - 1), 'y pos psf mag'],
-                               'PSFMAG' + str(i + 1): [str(truemag[i] - DM), 'psf magnitude'],
+                               'PSFMAG' + str(i + 1): [str(float(truemag[i]) - DM), 'psf magnitude'],
                                'PSFDMAG' + str(i + 1): [str(max(arterr, magerr[i])), 'psf mag error'],
                                'APMAG' + str(i + 1): [str(apmag3[i]), 'ap mag after bgsub']}
                     lsc.util.updateheader(img + '.sn2.fits', 0, headers)

@@ -5,7 +5,7 @@ import os, string, re, sys, glob
 # from numpy import array, median, argmin, sqrt, round, isnan, compress, std
 import lsc
 import time
-import pyfits
+from astropy.io import fits
 import numpy as np
 from optparse import OptionParser, OptionGroup
 
@@ -19,8 +19,8 @@ def crossmatchtwofiles(img1, img2, radius=3):
     import pywcs
     from numpy import array, argmin, min, sqrt
 
-    hd1 = pyfits.getheader(img1)
-    hd2 = pyfits.getheader(img2)
+    hd1 = fits.getheader(img1)
+    hd2 = fits.getheader(img2)
     wcs1 = pywcs.WCS(hd1)
     wcs2 = pywcs.WCS(hd2)
 
@@ -173,10 +173,10 @@ if __name__ == "__main__":
                             print "no cosmic ray mask for template image, run 'lscloop.py -s cosmic' first"
                             continue
                         outmask0 = re.sub('.fits', '.mask.fits', imgout0)
-                        artar, hdtar = pyfits.getdata(_dir+imgtarg0, header=True)
+                        artar, hdtar = fits.getdata(_dir+imgtarg0, header=True)
 
                         if os.path.isfile(_dirtemp+re.sub('.fits', '.sn2.fits', imgtemp0)):
-                            hdtempsn = pyfits.getheader(_dirtemp+re.sub('.fits', '.sn2.fits', imgtemp0))
+                            hdtempsn = fits.getheader(_dirtemp+re.sub('.fits', '.sn2.fits', imgtemp0))
                         else:
                             hdtempsn = {}
 
@@ -230,15 +230,15 @@ if __name__ == "__main__":
                                                interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
 #                        print 'warning: registration failed '
-#                        hd = pyfits.getheader(_dirtemp + imgtemp0)
-#                        ar = pyfits.getdata(_dirtemp + imgtemp0)
+#                        hd = fits.getheader(_dirtemp + imgtemp0)
+#                        ar = fits.getdata(_dirtemp + imgtemp0)
 #                        ar = np.rot90(np.rot90(ar))
 #                        new_header = hd
 #                        CD1_1 = hd['CD1_1']
 #                        CD2_2 = hd['CD2_2']
 #                        new_header['CD1_1']  = CD1_1*(-1)
 #                        new_header['CD2_2']  = CD2_2*(-1)
-#                        out_fits = pyfits.PrimaryHDU(header=new_header, data=ar)
+#                        out_fits = fits.PrimaryHDU(header=new_header, data=ar)
 #                        out_fits.writeto('flip.fits', clobber=True, output_verify='fix')
 #                        print "try flipping the template image\n cp flip.fits "+_dirtemp + imgtemp0+'\n and run again psf and cosmic'
                         #sys.exit()
@@ -251,13 +251,13 @@ if __name__ == "__main__":
 
                         ###########################################################
 
-                        data_targ, head_targ = pyfits.getdata(imgtarg, header=True)
+                        data_targ, head_targ = fits.getdata(imgtarg, header=True)
                         exp_targ  = lsc.util.readkey3(head_targ, 'exptime')
                         sat_targ = lsc.util.readkey3(head_targ, 'saturate')
                         gain_targ = lsc.util.readkey3(head_targ, 'gain')
                         rn_targ = lsc.readkey3(head_targ,'ron')
 
-                        data_temp, head_temp = pyfits.getdata(imgtemp, header=True)
+                        data_temp, head_temp = fits.getdata(imgtemp, header=True)
                         exp_temp = lsc.util.readkey3(head_temp, 'exptime')
                         sat_temp = lsc.util.readkey3(head_temp, 'saturate')
                         gain_temp = lsc.util.readkey3(head_temp, 'gain')
@@ -272,12 +272,12 @@ if __name__ == "__main__":
                         else:                     
                             max_fwhm = 3.0
 
-                        targmask_data = pyfits.getdata(targmask)
+                        targmask_data = fits.getdata(targmask)
 
                         # round all values in template mask up to 1 (unless they are 0)
-                        tempmask_data, tempmask_header = pyfits.getdata(tempmask, header=True)
+                        tempmask_data, tempmask_header = fits.getdata(tempmask, header=True)
                         tempmask_int = (tempmask_data > 0).astype('uint8')
-                        tempmask_fits = pyfits.PrimaryHDU(header=tempmask_header, data=tempmask_int)
+                        tempmask_fits = fits.PrimaryHDU(header=tempmask_header, data=tempmask_int)
                         tempmask_fits.writeto(tempmask, clobber=True, output_verify='fix')
 
                         # create the noise images
@@ -287,7 +287,7 @@ if __name__ == "__main__":
                         #noiseimg = (data_targ - median)**2
                         noiseimg = data_targ + pssl_targ + rn_targ**2
                         noiseimg[targmask_data > 0] = sat_targ
-                        pyfits.writeto('targnoise.fits', noiseimg, output_verify='fix', clobber=True)
+                        fits.writeto('targnoise.fits', noiseimg, output_verify='fix', clobber=True)
 
 #                        print 'variance image already there, do not create noise image'
                         if not os.path.isfile(_dirtemp +re.sub('.fits','.var.fits',imgtemp0)):                            
@@ -297,7 +297,7 @@ if __name__ == "__main__":
                             #noiseimg = (data_temp - median)**2
                             noiseimg = data_temp + pssl_temp + rn_temp**2
                             noiseimg[tempmask_data > 0] = sat_temp
-                            pyfits.writeto('tempnoise.fits', noiseimg, output_verify='fix', clobber=True)
+                            fits.writeto('tempnoise.fits', noiseimg, output_verify='fix', clobber=True)
                         else:
                             pssl_temp = 0
                             print 'variance image already there, do not create noise image'
@@ -309,7 +309,7 @@ if __name__ == "__main__":
                         # create mask image for template
                         data_temp, head_temp
                         mask = np.abs(data_temp) < 1e-6
-                        pyfits.writeto('tempmask.fits',mask.astype('i'))
+                        fits.writeto('tempmask.fits',mask.astype('i'))
 
                         if _fixpix:
                             iraf.flpr(); iraf.flpr()
@@ -371,7 +371,7 @@ if __name__ == "__main__":
                         if os.path.isfile(re.sub('.fits', 'xy.all', imgout0)):
                             os.system('rm ' + re.sub('.fits', 'xy.all', imgout0))
 
-                        hd = pyfits.getheader(imgout)
+                        hd = fits.getheader(imgout)
                         lsc.util.updateheader(imgout, 0,
                                               {'template': [imgtemp0, 'template image'],
                                                'exptemp': [exp_temp,'exposure time template']})
@@ -390,7 +390,7 @@ if __name__ == "__main__":
                             lsc.util.updateheader(imgout, 0, {'PSF': [imgtemp0, 'image to compute  psf']})
 
                             #                    copy all information from target
-                        hd = pyfits.getheader(imgout)
+                        hd = fits.getheader(imgout)
                         dictionary = {}
                         try:
                             ggg0 = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', imgtarg0, '*')

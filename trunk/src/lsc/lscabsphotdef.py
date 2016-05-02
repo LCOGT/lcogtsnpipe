@@ -1,11 +1,11 @@
 from scipy.optimize import fsolve # root
-import pyfits
+from astropy.io import fits
 import numpy as np
 from scipy import stats, odr
 import matplotlib.pyplot as plt
 
 def limmag(img, zeropoint=0, Nsigma_limit=3, _fwhm = 5):
-    image = pyfits.open(img)
+    image = fits.open(img)
     hdr = image[0].header
     data = image[0].data
     #_sky = np.median(data)
@@ -199,7 +199,7 @@ def onclick(event):
 
 
 def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit',redo=False,show=False,cutmag=-1,database='photlco',_calib='sloan',zcatnew=False):
-    import pyfits
+    from astropy.io import fits
     import lsc
     import math
     import sys,re,string,os
@@ -215,7 +215,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
     iraf.images(_doprint=0)
     iraf.imcoords(_doprint=0)
     iraf.proto(_doprint=0)
-    t = pyfits.open(img)
+    t = fits.open(img)
     tbdata = t[1].data
     hdr2=t[1].header
     hdr=lsc.util.readhdr(img)
@@ -929,13 +929,13 @@ def meanclip3(xx,yy,slope, clipsig=3.0, maxiter=5, converge_num=0.1, verbose=0):
 ########################################################################
 
 def makecatalogue(imglist):
-    import pyfits
+    from astropy.io import fits
     import lsc
     from numpy import array, zeros
     filters={}
     dicti={}
     for img in imglist:
-        t = pyfits.open(img)
+        t = fits.open(img)
         tbdata = t[1].data
         hdr1=t[0].header
         hdr2=t[1].header

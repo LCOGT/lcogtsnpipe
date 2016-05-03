@@ -12,7 +12,7 @@ setup(
     license='LICENSE.txt', 
     description='lsc is a package to reduce PHTOMETRIC SN data',
     long_description=open('README.txt').read(),
-    install_requires=['numpy','astropy','matplotlib','MySQLdb', 'pyraf'],
+    requires=['numpy','astropy','matplotlib','MySQLdb', 'pyraf'],
     packages=['lsc'],
     package_dir={'': 'src'},
     package_data={'lsc': ["standard/astrometry/*cat","standard/*txt","standard/stdlist/*txt",

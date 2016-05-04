@@ -50,4 +50,5 @@ for system in args.field:
         lsc.mysqldef.query(['update targets set ' + system + '_cat="" where ' + system + '_cat is NULL'], lsc.conn) # change NULL to '' if not in field
 
 os.chdir(gitdir)
+os.system('git pull')
 os.system('python setup.py install')

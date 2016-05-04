@@ -15,9 +15,9 @@ username = login[0]['username']
 password = base64.decodestring(login[0]['userpw'])
 authtoken = authenticate(username, password)
 
-frames = get_metadata(authtoken, start=start, OBSTYPE='EXPOSE', RLEVEL=90, public=False)    # all images where SNEx is a co-I
-frames += get_metadata(authtoken, start=start, TELID='1m0a', OBSTYPE='STANDARD', RLEVEL=90) # all 1m standard fields
-frames += get_metadata(authtoken, start=start, TELID='2m0a', OBSTYPE='STANDARD', RLEVEL=90) # all 2m standard fields
+frames = get_metadata(authtoken, start=start, OBSTYPE='EXPOSE', RLEVEL=91, public=False)    # all images where SNEx is a co-I
+frames += get_metadata(authtoken, start=start, TELID='1m0a', OBSTYPE='STANDARD', RLEVEL=91) # all 1m standard fields
+frames += get_metadata(authtoken, start=start, TELID='2m0a', OBSTYPE='STANDARD', RLEVEL=91) # all 2m standard fields
 frames += get_metadata(authtoken, start=start, INSTRUME='en06', RLEVEL=0, public=False)     # all FTN spectra SNEx is a co-I
 frames += get_metadata(authtoken, start=start, INSTRUME='en05', RLEVEL=0, public=False)     # all FTS spectra SNEx is a co-I
 frames += get_metadata(authtoken, start=start, PROPID='OGG_calib', RLEVEL=0)                # FTN standard star spectra

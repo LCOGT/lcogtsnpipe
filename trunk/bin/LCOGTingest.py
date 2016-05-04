@@ -50,7 +50,10 @@ def download_frame(frame, force=False):
     filepath = lsc.util.workdirectory + daydir
     if not os.path.isdir(filepath):
         os.mkdir(filepath)
-    if not (os.path.isfile(filepath + filename) or os.path.isfile(filepath + 'bad/' + filename)) or force:
+    if force or not (os.path.isfile(filepath + filename)
+            or os.path.isfile(filepath + 'bad/' + filename)
+            or os.path.isfile(filepath + filename.replace('e90', 'e91')
+            or os.path.isfile(filepath + 'bad/' + filename.replace('e90', 'e91')):
         print 'downloading', filename, 'to', filepath
         with open(filepath + filename, 'wb') as f:
             f.write(requests.get(frame['url']).content)

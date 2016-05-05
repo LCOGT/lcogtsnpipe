@@ -61,17 +61,19 @@ def download_frame(frame, force=False):
             f.write(requests.get(frame['url']).content)
     else:
         matches_filenames = [fullpath.replace(filepath, '') for fullpath in matches]
-        print matches_filenames, 'already in', filepath
+        if filename not in matches_filenames:
+            filename = matches_filenames[0]
+        print filename, 'already in', filepath
 
     if os.path.isfile(filepath + filename) and os.stat(filepath + filename).st_size == 0:
         print filename, 'has size 0. Redownloading.'
         with open('filesize0.log', 'a') as l:
             l.write(str(datetime.utcnow()) + '\t' + filename)
+        filename = frame['filename']
         with open(filepath + filename, 'wb') as f:
             f.write(requests.get(frame['url']).content)
 
-    if (filename[-3:] == '.fz' and os.path.isfile(filepath + filename)
-            and (not os.path.isfile(filepath + filename[:-3]) or force)):
+    if filename[-3:] == '.fz' and (not os.path.isfile(filepath + filename[:-3]) or force):
         print 'unpacking', filename
         os.system('funpack ' + filepath + filename)
         filename = filename[:-3]

@@ -14,21 +14,21 @@ from optparse import OptionParser
 
 def checkast(imglist):
     import lsc
-    import pywcs
+    from astropy.wcs import WCS
     from numpy import median, array, compress, abs, std, argmin, isnan, sqrt
 
     hdr0 = lsc.util.readhdr(imglist[0])
     # ######  check with sources the accuracy of the astrometry
-    wcs = pywcs.WCS(hdr0)
+    wcs = WCS(hdr0)
     xpix, ypix, fw, cl, cm, ell, bkg = lsc.lscastrodef.sextractor(imglist1[0])
     pixref = array(zip(xpix, ypix), float)
-    sky0 = wcs.wcs_pix2sky(pixref, 1)
+    sky0 = wcs.wcs_pix2world(pixref, 1)
     max_sep = 10
     for img in imglist1:
         xsex, ysex, fw, cl, cm, ell, bkg = lsc.lscastrodef.sextractor(img)  # sextractor
         hdr1 = lsc.util.readhdr(img)
-        wcs1 = pywcs.WCS(hdr1)
-        pix1 = wcs1.wcs_sky2pix(sky0, 1)
+        wcs1 = WCS(hdr1)
+        pix1 = wcs1.wcs_world2pix(sky0, 1)
         xpix1, ypix1 = zip(*pix1)  # pixel position of the obj in image 0
         xdist, ydist = [], []
         for i in range(len(xpix1)):

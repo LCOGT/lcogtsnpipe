@@ -16,21 +16,21 @@ def crossmatchtwofiles(img1, img2, radius=3):
         The output is a dictionary with the objects in common
     '''
     import lsc
-    import pywcs
+    from astropy.wcs import WCS
     from numpy import array, argmin, min, sqrt
 
     hd1 = fits.getheader(img1)
     hd2 = fits.getheader(img2)
-    wcs1 = pywcs.WCS(hd1)
-    wcs2 = pywcs.WCS(hd2)
+    wcs1 = WCS(hd1)
+    wcs2 = WCS(hd2)
 
     xpix1, ypix1, fw1, cl1, cm1, ell1, bkg1, fl1 = lsc.lscastrodef.sextractor(img1)
     xpix2, ypix2, fw2, cl2, cm2, ell2, bkg2, fl2 = lsc.lscastrodef.sextractor(img2)
     xpix1, ypix1, xpix2, ypix2 = array(xpix1, float), array(ypix1, float), array(xpix2, float), array(ypix2, float)
 
-    bb = wcs1.wcs_pix2sky(zip(xpix1, ypix1), 1)  #   transform pixel in coordinate
+    bb = wcs1.wcs_pix2world(zip(xpix1, ypix1), 1)  #   transform pixel in coordinate
     xra1, xdec1 = zip(*bb)
-    bb = wcs2.wcs_pix2sky(zip(xpix2, ypix2), 1)  #   transform pixel in coordinate
+    bb = wcs2.wcs_pix2world(zip(xpix2, ypix2), 1)  #   transform pixel in coordinate
     xra2, xdec2 = zip(*bb)
 
     xra1, xdec1, xra2, xdec2 = array(xra1, float), array(xdec1, float), array(xra2, float), array(xdec2, float)

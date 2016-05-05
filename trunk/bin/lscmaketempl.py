@@ -65,7 +65,7 @@ if __name__ == "__main__":
     from pyraf import iraf
     from iraf import digiphot
     from iraf import daophot
-    import pywcs
+    from astropy.wcs import WCS
     ##################################
     goon = False
     for fil in imgdic:
@@ -130,8 +130,8 @@ if __name__ == "__main__":
                 if _ra and _dec:
                     print 'convert RA, dec to xpos, ypos using header'
                     hdr0 = lsc.util.readhdr(img0)
-                    wcs = pywcs.WCS(hdr0)
-                    pix1 = wcs.wcs_sky2pix([(_ra, _dec)], 1)
+                    wcs = WCS(hdr0)
+                    pix1 = wcs.wcs_world2pix([(_ra, _dec)], 1)
                     _xpos, _ypos = pix1[0][0], pix1[0][1]
                 elif _mag != 0:
                     sys.exit('need to define coordinates for subtraction')

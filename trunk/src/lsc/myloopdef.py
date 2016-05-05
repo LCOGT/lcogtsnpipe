@@ -1209,7 +1209,7 @@ def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, re
     from astropy.io import fits
     import numpy as np
     import pylab as plt
-    import pywcs
+    from astropy.wcs import WCS
 
     for img in imglist:
         _targetid = ''
@@ -1228,10 +1228,10 @@ def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, re
             hdr = fits.open(_dir + img)
             X = hdr[0].data
             header = hdr[0].header
-            wcs = pywcs.WCS(header)
+            wcs = WCS(header)
             _ra0, _dec0, _SN0, _tt = lsc.util.checksndb(_dir + img, 'targets')
             if _SN0:
-                [[xPix, yPix]] = wcs.wcs_sky2pix([(_ra0, _dec0)], 1)
+                [[xPix, yPix]] = wcs.wcs_world2pix([(_ra0, _dec0)], 1)
                 if (xPix > 0 and xPix <= header.get('NAXIS1')) and (yPix <= header.get('NAXIS2') and yPix > 0):
                     xmin, xmax = xPix - 300, xPix + 300
                     ymin, ymax = yPix - 300, yPix + 300

@@ -10,6 +10,7 @@ from astropy import units as u
 from matplotlib.image import imsave
 import numpy as np
 from datetime import datetime
+from glob import glob
 
 def authenticate(username, password):
     '''Get the authentication token'''
@@ -48,31 +49,36 @@ def download_frame(frame, force=False):
     else:
         daydir = 'data/lsc/' + dayobs + '/'
     filepath = lsc.util.workdirectory + daydir
+
     if not os.path.isdir(filepath):
         os.mkdir(filepath)
-    if force or not (os.path.isfile(filepath + filename)
-            or os.path.isfile(filepath + 'bad/' + filename)
-            or os.path.isfile(filepath + filename.replace('e91', 'e90').replace('.fz', ''))
-            or os.path.isfile(filepath + 'bad/' + filename.replace('e91', 'e90').replace('.fz', ''))):
+
+    basename = filename.replace('.fits.fz', '')[:-1] + '?.fits'
+    matches = glob(filepath + basename) + glob(filepath + 'bad/' + basename)
+    if not matches or force:
         print 'downloading', filename, 'to', filepath
         with open(filepath + filename, 'wb') as f:
             f.write(requests.get(frame['url']).content)
     else:
-        print filename, 'already in', filepath
+        matches_filenames = [fullpath.replace(filepath, '') for fullpath in matches]
+        print matches_filenames, 'already in', filepath
+
     if os.path.isfile(filepath + filename) and os.stat(filepath + filename).st_size == 0:
         print filename, 'has size 0. Redownloading.'
         with open('filesize0.log', 'a') as l:
             l.write(str(datetime.utcnow()) + '\t' + filename)
         with open(filepath + filename, 'wb') as f:
             f.write(requests.get(frame['url']).content)
-    if filename[-3:] == '.fz' and (not (os.path.isfile(filepath + filename[:-3]) or
-                    os.path.isfile(filepath + 'bad/' + filename[:-3])) or force):
+
+    if (filename[-3:] == '.fz' and os.path.isfile(filepath + filename)
+            and (not os.path.isfile(filepath + filename[:-3]) or force)):
         print 'unpacking', filename
         os.system('funpack ' + filepath + filename)
         filename = filename[:-3]
     elif filename[-3:] == '.fz':
         print filename, 'already unpacked'
         filename = filename[:-3]
+
     return filepath, filename
 
 hostname, username, passwd, database = lsc.mysqldef.getconnection('lcogt2')

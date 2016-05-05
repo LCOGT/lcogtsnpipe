@@ -68,7 +68,7 @@ def download_frame(frame, force=False):
     if os.path.isfile(filepath + filename) and os.stat(filepath + filename).st_size == 0:
         print filename, 'has size 0. Redownloading.'
         with open('filesize0.log', 'a') as l:
-            l.write(str(datetime.utcnow()) + '\t' + filename)
+            l.write(str(datetime.utcnow()) + '\t' + filename + '\n')
         filename = frame['filename']
         with open(filepath + filename, 'wb') as f:
             f.write(requests.get(frame['url']).content)

@@ -305,12 +305,7 @@ if __name__ == "__main__":   # main program
             if _stage == 'local':  # calibrate local sequence from .cat files
                 lsc.myloopdef.run_local(ll['filename'], _field, _interactive)
             elif _stage == 'getmag':  # get final magnitude from mysql
-                if not _field:
-                    sys.exit('use option --field landolt or sloan')
-                else:
-                    fields = [_field]
-                for ff in fields:
-                    lsc.myloopdef.run_getmag(ll['filename'], _field, _output, _interactive, _show, _bin, _type)
+                lsc.myloopdef.run_getmag(ll['filename'], _output, _interactive, _show, _bin, _type)
             elif _stage == 'psf':
                 lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, XX, _fix, _catalogue, 'photlco')
             elif _stage == 'psfmag':

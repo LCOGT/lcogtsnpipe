@@ -31,8 +31,7 @@ except ImportError as e:
 except:
     print '### warning: problem connecting to the database'
 
-def run_getmag(imglist, _field, _output='', _interactive=False, _show=False, _bin=1e-10, magtype='mag',
-               database='photlco'):
+def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10, magtype='mag', database='photlco'):
     import lsc
     import datetime
     import mysqldef
@@ -53,16 +52,6 @@ def run_getmag(imglist, _field, _output='', _interactive=False, _show=False, _bi
     elif magtype == 'ph':
         mtype = 'apmag'
         mtypeerr = 'psfdmag'
-
-    if _field == 'landolt':
-        filters0 = ['U', 'B', 'V', 'R', 'I', 'Bessell-B', 'Bessell-V', 'Bessell-R',
-                    'Bessell-I']  # to be raplace when more telescopes available with dictionary
-    elif _field == 'sloan':
-        filters0 = ['up', 'gp', 'rp', 'ip', 'zs', 'SDSS-G', 'SDSS-R', 'SDSS-I', 'Pan-Starrs-Z']
-    elif _field == 'apass':
-        filters0 = ['B', 'V', 'gp', 'rp', 'ip', 'Bessell-B', 'Bessell-V', 'SDSS-R', 'SDSS-I', 'Pan-Starrs-G']
-    else:
-        filters0 = ['up', 'gp', 'rp', 'ip', 'zs', 'SDSS-G', 'SDSS-R', 'SDSS-I', 'Pan-Starrs-Z']
 
     setup = {}
     mag, dmag, mjd, filt, tel, date, filename = [], [], [], [], [], [], []
@@ -143,22 +132,13 @@ def run_getmag(imglist, _field, _output='', _interactive=False, _show=False, _bi
             setup[_tel][_fil]['filename'] = filename1
 
     if _show:
-        plotfast(setup)
-        try:
-            plotfast(setup)
-        except:
-            pass
-    else:
-        if _output:
-            try:
-                plotfast(setup, _output)
-            except:
-                pass
+        plotfast2(setup)
+    elif _output:
+        plotfast(setup, _output)
 
     keytelescope = {'1m0-03': '3', '1m0-04': '4', '1m0-05': '5', '1m0-06': '6', '1m0-07': '7', '1m0-08': '8',
-                    '1m0-09': '9', '1m0-10': '10', \
-                    '1m0-11': '11', '1m0-12': '12', '1m0-13': '13', 'fts': '14', 'ftn': '15', 'SDSS': '20',  'PS1': '20', \
-                    'ogg': '15', '2m0-02': '15', '2m0-01': '14'}
+                    '1m0-09': '9', '1m0-10': '10', '1m0-11': '11', '1m0-12': '12', '1m0-13': '13',
+                    'fts': '14', 'ftn': '15', 'SDSS': '20',  'PS1': '20', 'ogg': '15', '2m0-02': '15', '2m0-01': '14'}
 
     if _tel not in keytelescope.keys():
         _tel = 'extdata'
@@ -169,25 +149,22 @@ def run_getmag(imglist, _field, _output='', _interactive=False, _show=False, _bi
 
     filters = []
     for _tel in setup:
-        filters = list(filters)+ list(setup[_tel].keys())
+        filters += setup[_tel].keys()
     filters = list(set(filters))
     for _tel in setup:
-#        filters = setup[_tel].keys()
         line0 = '# %15s%15s' % ('dateobs', 'jd')
-        for filt in filters0:
-            if filt in filters and filt in setup[_tel].keys():
-                line0 = line0 + '%12s%12s ' % (str(filt), str(filt) + 'err')
+        for filt in filters:
+            if filt in setup[_tel].keys():
+                line0 += '%12s%12s ' % (str(filt), str(filt) + 'err')
         for _fil in setup[_tel]:
             for j in range(0, len(setup[_tel][_fil]['mjd'])):
                 line = '  %10s %12.12s ' % (str(setup[_tel][_fil]['date'][j]), str(setup[_tel][_fil]['jd'][j]))
-                for filt in filters0:
-                    if filt in filters:
-                        if filt == _fil:
-                            line = line + '%12.7s %12.6s ' % (
-                            str(setup[_tel][_fil]['mag'][j]), str(setup[_tel][_fil]['dmag'][j]))
-                        else:
-                            line = line + '%12.7s %12.6s ' % ('9999', '0.0')
-                line = line + '%5s%10s\n' % (str(keytelescope[_tel]), str(_tel) + '_' + str(_fil))
+                for filt in filters:
+                    if filt == _fil:
+                        line += '%12.7s %12.6s ' % (str(setup[_tel][_fil]['mag'][j]), str(setup[_tel][_fil]['dmag'][j]))
+                    else:
+                        line += '%12.7s %12.6s ' % ('9999', '0.0')
+                line += '%5s%10s\n' % (str(keytelescope[_tel]), str(_tel) + '_' + str(_fil))
                 linetot[setup[_tel][_fil]['mjd'][j]] = line
     aaa = linetot.keys()
     if _output:
@@ -1602,6 +1579,122 @@ def onkeypress2(event):
     plt.plot(_mjd, _mag, 'ok', markersize=1)
     plt.plot(_mjd[nonincl], _mag[nonincl], 'ow')
 
+##################################################################
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+class PickablePlot():
+    def __init__(self, x, y, dy=None, mainmenu='', selectedmenu='', hooks={}):
+        self.x = x
+        self.y = y
+        if dy is None:
+            self.dy = np.zeros(len(x))
+        else:
+            self.dy = dy
+        self.selectedmenu = selectedmenu
+        self.hooks = hooks
+        
+        plt.ion()
+        fig = plt.figure()
+        fig.canvas.mpl_connect('pick_event', self.onclick)
+        self.i_active = None
+        self.xdel = np.array([])
+        self.ydel = np.array([])
+        self.dydel = np.array([])
+
+        while True:
+            fig.clf()
+            hooks['plot']()
+            plt.plot(self.x, self.y, 'k.', picker=5)
+            plt.plot(self.xdel, self.ydel, 'kx')
+            key = raw_input(mainmenu)
+            if key in hooks:
+                hooks[key](self.i_active)
+            if key == '':
+                break
+            else:
+                self.delete_current()
+                self.i_active = None
+            plt.draw()
+        
+    def onclick(self, event):
+        self.i_active = event.ind[0]
+        if 'click' in self.hooks:
+            self.hooks['click'](self.i_active)
+        print # to get off the raw_input line
+        print self.selectedmenu
+
+    def delete_current(self):
+        if self.i_active is None:
+            print 'no point selected'
+        else:
+            self.xdel = np.append(self.xdel, self.x[self.i_active])
+            self.ydel = np.append(self.ydel, self.y[self.i_active])
+            self.dydel = np.append(self.dydel, self.dy[self.i_active])
+            self.x = np.delete(self.x, self.i_active)
+            self.y = np.delete(self.y, self.i_active)
+            self.dy = np.delete(self.dy, self.i_active)
+
+def plotfast2(setup):
+    _symbol = 'sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*'
+    _color = {'up': '#2c0080', 'gp': '#00ccff', 'rp': '#ff7d00', 'ip': '#90002c', 'zs': '#000000',
+                'U': '#3c0072', 'B': '#0057ff', 'V': '#79ff00', 'R': '#ff7000', 'I': '#80000d'}
+    _shift = {'U': -3, 'B': -2, 'V': -1, 'R': 0, 'I': 1, 'up': -2, 'gp': -1, 'rp': 0, 'ip': 1, 'zs': 2}
+
+    filenames = np.concatenate(
+                  [np.concatenate([[fn if isinstance(fn, str) else min(fn) for fn in setup[_tel][_fil]['filename']] for _fil in setup[_tel]]) for _tel in setup]
+                )
+    mjds = np.concatenate([np.concatenate([setup[_tel][_fil]['mjd'] for _fil in setup[_tel]]) for _tel in setup])
+    mags = np.concatenate([np.concatenate([setup[_tel][_fil]['mag'] for _fil in setup[_tel]]) for _tel in setup])
+    shifts = np.concatenate([np.concatenate([np.tile(_shift[_fil], len(setup[_tel][_fil]['mag'])) for _fil in setup[_tel]]) for _tel in setup])
+    dmags = np.concatenate([np.concatenate([setup[_tel][_fil]['dmag'] for _fil in setup[_tel]]) for _tel in setup])
+    colors = np.concatenate([np.concatenate([np.tile(_color[_fil], len(setup[_tel][_fil]['mag'])) for _fil in setup[_tel]]) for _tel in setup])
+    markers = np.concatenate([np.concatenate([np.tile(_symbol[i], len(setup[_tel][_fil]['mag'])) for _fil in setup[_tel]]) for i, _tel in enumerate(setup)])
+
+    def plot_hook():
+        plt.gca().invert_yaxis()
+        plt.xlabel('MJD')
+        plt.ylabel('Magnitude')
+        for _tel, mark in zip(setup.keys(), _symbol):
+            for _fil, data_dict in setup[_tel].items():
+                plt.errorbar(data_dict['mjd'], np.array(data_dict['mag']) + _shift[_fil], data_dict['dmag'],
+                            ls='none', color=_color[_fil], marker=mark, label=_tel+' '+_fil+'{:+.0f}'.format(_shift[_fil]))
+        plt.legend(loc='best', fontsize='small', numpoints=1)
+
+    def click_hook(i):
+        from pyraf import iraf
+        _dir = mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath')[0]['filepath']
+        og_file = _dir + filenames[i].replace('.fits', '.og.fits')
+        rs_file = _dir + filenames[i].replace('.fits', '.rs.fits')
+        if os.path.isfile(og_file) and os.path.isfile(rs_file):
+            iraf.digiphot(_doprint=0)
+            iraf.daophot(_doprint=0)
+            iraf.display(og_file, 1, fill=True, Stdout=1)
+            iraf.display(rs_file, 2, fill=True, Stdout=1)
+
+    def delete_hook(i):
+        lsc.mysqldef.updatevalue('photlco', 'mag', 9999, filenames[i])
+        lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, filenames[i])
+        lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, filenames[i])
+        _dir = mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath')[0]['filepath']
+        if _dir:
+            lsc.util.updateheader(_dir + filenames[i].replace('.fits', '.sn2.fits'), 0,
+                                  {'PSFMAG1': [9999, 'psf magnitude'], 'APMAG1': [9999, 'ap magnitude']})
+        print 'deleted'
+
+    def bad_hook(i):
+        lsc.mysqldef.updatevalue('photlco', 'magtype', -1, filenames[i])
+        print 'marked as bad'
+
+    def limit_hook(i):
+        lsc.mysqldef.updatevalue('photlco', 'quality', 1, filenames[i])
+        print 'changed to upper limit'
+
+    PickablePlot(mjds, mags + shifts, dmags,
+                mainmenu='Click to select a point. Press return to exit.',
+                selectedmenu='Enter d to delete a point, b to mark an image as bad, or u to set a point as an upper limit.',
+                hooks={'plot': plot_hook, 'click': click_hook, 'd': delete_hook, 'b': bad_hook, 'u': limit_hook})
 
 ##############################################################################
 def plotfast(setup, output='', database='photlco'):  #,band,color,fissa=''):

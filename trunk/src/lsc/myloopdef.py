@@ -1585,13 +1585,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class PickablePlot():
-    def __init__(self, x, y, dy=None, mainmenu='', selectedmenu='', hooks={}):
+    def __init__(self, x, y, mainmenu='', selectedmenu='', hooks={}):
         self.x = x
         self.y = y
-        if dy is None:
-            self.dy = np.zeros(len(x))
-        else:
-            self.dy = dy
         self.selectedmenu = selectedmenu
         self.hooks = hooks
         
@@ -1601,13 +1597,15 @@ class PickablePlot():
         self.i_active = None
         self.xdel = np.array([])
         self.ydel = np.array([])
-        self.dydel = np.array([])
 
+        axlims = None
         while True:
             fig.clf()
             hooks['plot']()
-            plt.plot(self.x, self.y, 'k.', picker=5)
-            plt.plot(self.xdel, self.ydel, 'kx')
+            plt.plot(self.x, self.y, 'k,', picker=5)
+            plt.plot(self.xdel, self.ydel, 'kx', ms=10)
+            if axlims is not None:
+                plt.axis(axlims)
             key = raw_input(mainmenu)
             if key in hooks:
                 hooks[key](self.i_active)
@@ -1617,12 +1615,13 @@ class PickablePlot():
                 self.delete_current()
                 self.i_active = None
             plt.draw()
+            axlims = plt.axis()
         
     def onclick(self, event):
+        print # to get off the raw_input line
         self.i_active = event.ind[0]
         if 'click' in self.hooks:
             self.hooks['click'](self.i_active)
-        print # to get off the raw_input line
         print self.selectedmenu
 
     def delete_current(self):
@@ -1631,10 +1630,8 @@ class PickablePlot():
         else:
             self.xdel = np.append(self.xdel, self.x[self.i_active])
             self.ydel = np.append(self.ydel, self.y[self.i_active])
-            self.dydel = np.append(self.dydel, self.dy[self.i_active])
             self.x = np.delete(self.x, self.i_active)
             self.y = np.delete(self.y, self.i_active)
-            self.dy = np.delete(self.dy, self.i_active)
 
 def plotfast2(setup):
     _symbol = 'sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*'
@@ -1642,15 +1639,16 @@ def plotfast2(setup):
                 'U': '#3c0072', 'B': '#0057ff', 'V': '#79ff00', 'R': '#ff7000', 'I': '#80000d'}
     _shift = {'U': -3, 'B': -2, 'V': -1, 'R': 0, 'I': 1, 'up': -2, 'gp': -1, 'rp': 0, 'ip': 1, 'zs': 2}
 
-    filenames = np.concatenate(
-                  [np.concatenate([[fn if isinstance(fn, str) else min(fn) for fn in setup[_tel][_fil]['filename']] for _fil in setup[_tel]]) for _tel in setup]
-                )
-    mjds = np.concatenate([np.concatenate([setup[_tel][_fil]['mjd'] for _fil in setup[_tel]]) for _tel in setup])
-    mags = np.concatenate([np.concatenate([setup[_tel][_fil]['mag'] for _fil in setup[_tel]]) for _tel in setup])
-    shifts = np.concatenate([np.concatenate([np.tile(_shift[_fil], len(setup[_tel][_fil]['mag'])) for _fil in setup[_tel]]) for _tel in setup])
-    dmags = np.concatenate([np.concatenate([setup[_tel][_fil]['dmag'] for _fil in setup[_tel]]) for _tel in setup])
-    colors = np.concatenate([np.concatenate([np.tile(_color[_fil], len(setup[_tel][_fil]['mag'])) for _fil in setup[_tel]]) for _tel in setup])
-    markers = np.concatenate([np.concatenate([np.tile(_symbol[i], len(setup[_tel][_fil]['mag'])) for _fil in setup[_tel]]) for i, _tel in enumerate(setup)])
+    filenames = []
+    mjds = []
+    mags = []
+    shifts = []
+    for _telescope in setup:
+        for _filter in setup[_telescope]:
+            filenames += setup[_telescope][_filter]['filename']
+            mjds += setup[_telescope][_filter]['mjd']
+            mags += setup[_telescope][_filter]['mag']
+            shifts += [_shift[_filter]] * len(setup[_telescope][_filter]['mag'])
 
     def plot_hook():
         plt.gca().invert_yaxis()
@@ -1664,6 +1662,8 @@ def plotfast2(setup):
 
     def click_hook(i):
         from pyraf import iraf
+        print filenames[i], 'selected'
+        print 'mjd = {:.2f}\tmag = {:.2f} ({:+d} shift)'.format(mjds[i], mags[i], shifts[i])
         _dir = mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath')[0]['filepath']
         og_file = _dir + filenames[i].replace('.fits', '.og.fits')
         rs_file = _dir + filenames[i].replace('.fits', '.rs.fits')
@@ -1681,17 +1681,17 @@ def plotfast2(setup):
         if _dir:
             lsc.util.updateheader(_dir + filenames[i].replace('.fits', '.sn2.fits'), 0,
                                   {'PSFMAG1': [9999, 'psf magnitude'], 'APMAG1': [9999, 'ap magnitude']})
-        print 'deleted'
+        print 'deleted', filenames[i]
 
     def bad_hook(i):
         lsc.mysqldef.updatevalue('photlco', 'magtype', -1, filenames[i])
-        print 'marked as bad'
+        print 'marked', filenames[i], 'as bad'
 
     def limit_hook(i):
         lsc.mysqldef.updatevalue('photlco', 'quality', 1, filenames[i])
-        print 'changed to upper limit'
+        print 'changed', filenames[i], 'to upper limit'
 
-    PickablePlot(mjds, mags + shifts, dmags,
+    PickablePlot(mjds, np.array(mags) + np.array(shifts),
                 mainmenu='Click to select a point. Press return to exit.',
                 selectedmenu='Enter d to delete a point, b to mark an image as bad, or u to set a point as an upper limit.',
                 hooks={'plot': plot_hook, 'click': click_hook, 'd': delete_hook, 'b': bad_hook, 'u': limit_hook})

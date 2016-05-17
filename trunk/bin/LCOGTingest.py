@@ -60,7 +60,7 @@ def download_frame(frame, force=False):
         with open(filepath + filename, 'wb') as f:
             f.write(requests.get(frame['url']).content)
     else:
-        matches_filenames = [fullpath.replace(filepath, '') for fullpath in matches]
+        matches_filenames = [os.path.basename(fullpath) for fullpath in matches]
         if filename not in matches_filenames:
             filename = matches_filenames[0]
         print filename, 'already in', filepath

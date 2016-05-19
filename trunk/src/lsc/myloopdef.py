@@ -1607,7 +1607,7 @@ class PickablePlot():
             if axlims is not None:
                 plt.axis(axlims)
             key = raw_input(mainmenu)
-            if key in hooks:
+            if key in hooks and self.i_active is not None:
                 hooks[key](self.i_active)
             if key == '':
                 break
@@ -1630,8 +1630,8 @@ class PickablePlot():
         else:
             self.xdel = np.append(self.xdel, self.x[self.i_active])
             self.ydel = np.append(self.ydel, self.y[self.i_active])
-            self.x = np.delete(self.x, self.i_active)
-            self.y = np.delete(self.y, self.i_active)
+            self.x[self.i_active] = np.nan
+            self.y[self.i_active] = np.nan
 
 def plotfast2(setup):
     _symbol = 'sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*'
@@ -1663,10 +1663,11 @@ def plotfast2(setup):
     def click_hook(i):
         from pyraf import iraf
         print filenames[i], 'selected'
-        print 'mjd = {:.2f}\tmag = {:.2f} ({:+d} shift)'.format(mjds[i], mags[i], shifts[i])
-        _dir = mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath')[0]['filepath']
-        og_file = _dir + filenames[i].replace('.fits', '.og.fits')
-        rs_file = _dir + filenames[i].replace('.fits', '.rs.fits')
+        print 'mjd = {:.2f}\tmag = {:.2f} ({:+d} shift on plot)'.format(mjds[i], mags[i], shifts[i])
+        dbrow = mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, mjd, mag')[0]
+        print 'mjd = {:.2f}\tmag = {:.2f} (from database)'.format(dbrow['mjd'], dbrow['mag'])
+        og_file = dbrow['filepath'] + filenames[i].replace('.fits', '.og.fits')
+        rs_file = dbrow['filepath'] + filenames[i].replace('.fits', '.rs.fits')
         if os.path.isfile(og_file) and os.path.isfile(rs_file):
             iraf.digiphot(_doprint=0)
             iraf.daophot(_doprint=0)
@@ -1803,47 +1804,22 @@ def subset(xx, _avg=''):  # lista  mjd
 ##########################################################
 
 def chosecolor(allfilter, usegood=False, _field=''):
-    goodcol = {'B': 'BV', 'V': 'VR', 'R': 'VR', 'I': 'RI', 'U': 'UB', 'u': 'ug', 'g': 'gr', 'r': 'ri', 'i': 'ri',
-               'z': 'iz'}
-    if not _field:
-        if allfilter[0] in 'UBVRI':
-            tot, tot2 = 'UBVRI', 'IRVBU'
-        else:
-            tot, tot2 = 'ugriz', 'zirgu'
-    else:
-        if _field == 'landolt':
-            tot, tot2 = 'UBVRI', 'IRVBU'
-        elif _field == 'sloan':
-            tot, tot2 = 'ugriz', 'zirgu'
-        elif _field == 'apass':
-            tot, tot2 = 'BVgri', 'irgVB'
-
     color = {}
     for filt in allfilter:
-        if tot.index(filt) == 0:
-            for _fil in tot[1:]:
-                if _fil in allfilter:
-                    if _fil not in color: color[_fil] = []
-                    color[_fil].append(filt + _fil)
-                    break
-        elif tot.index(filt) == len(tot):
-            for _fil in tot2[1:]:
-                if _fil in allfilter:
-                    if _fil not in color: color[_fil] = []
-                    color[_fil].append(_fil + filt)
-                    break
-        else:
-            for _fil in tot[tot.index(filt) + 1:]:
-                if _fil in allfilter:
-                    if _fil not in color: color[_fil] = []
-                    color[_fil].append(filt + _fil)
-                    break
-            for _fil in tot2[tot2.index(filt) + 1:]:
-                if _fil in allfilter:
-                    if _fil not in color: color[_fil] = []
-                    color[_fil].append(_fil + filt)
-                    break
+        tot = 'UBVRI' if filt in 'UBVRI' else 'ugriz'
+        for _fil in tot[tot.index(filt) + 1:]:
+            if _fil in allfilter:
+                if _fil not in color: color[_fil] = []
+                color[_fil].append(filt + _fil)
+                break
+        for _fil in tot[tot.index(filt) - 1::-1]:
+            if _fil in allfilter:
+                if _fil not in color: color[_fil] = []
+                color[_fil].append(_fil + filt)
+                break
     if usegood:
+        goodcol = {'U': 'UB', 'B': 'BV', 'V': 'VR', 'R': 'VR', 'I': 'RI',
+                    'u': 'ug', 'g': 'gr', 'r': 'ri', 'i': 'ri', 'z': 'iz'}
         for i in color:
             if goodcol[i] in color[i]: color[i] = [goodcol[i]]
     return color

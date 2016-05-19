@@ -206,9 +206,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
     from lsc.util import readkey3, readhdr
     from numpy import array, compress, zeros, median, std, asarray, isfinite,mean
     from pyraf import iraf
-    if show:
-          from pylab import ion,plot,draw,clf
-          import time
+
     iraf.noao(_doprint=0)
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
@@ -602,7 +600,9 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         zero = array(zero)
         zeroerr = array(zeroerr)
         print 'attempting these colors:', colorvec
-        for col in colorvec:
+        if zcatnew and show and not _interactive:
+            fig, axarr = plt.subplots(ncols=len(colorvec), figsize=(8*len(colorvec), 6), squeeze=False)
+        for i, col in enumerate(colorvec):
             col0=magstd0[col[0]] 
             col1=magstd0[col[1]]
             colstd0=array(col0,float)-array(col1,float)
@@ -635,7 +635,9 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 #                b,a,sa,sb=9999,9999,0,0
             else:
                 if zcatnew:
-                    a, b, sa, sb = fitcol3(colore2, zero2, coloreerr2, zeroerr2, fisso, _filter, ' - '.join(col), show, _interactive, rejection)
+                    if show and not _interactive:
+                        plt.axes(axarr[0, i])
+                    a, sa, b, sb = fitcol3(colore2, zero2, coloreerr2, zeroerr2, fisso, _filter, ' - '.join(col), show, _interactive, rejection)
                 else:
                     if _interactive:    a,sa,b,sb=fitcol(colore2,zero2,_filter,col,fisso)
                     else:               a,sa,b,sb=fitcol2(colore2,zero2,_filter,col,fisso,show,rejection)
@@ -706,9 +708,9 @@ def fitcol3(colors, deltas, dcolors=None, ddeltas=None, fixedC=None, filt='', co
             i = event.ind[0] # find closest point
             keep[i] = not keep[i] # toggle rejection
             print
-            plt.cla()
             Z, dZ, C, dC = calcZC(colors, deltas, dcolors, ddeltas, fixedC, filt, col, show=True, guess=[Z, C])
-        cid = plt.gcf().canvas.mpl_connect('pick_event', onpick)
+        plt.gcf().canvas.mpl_connect('pick_event', onpick)
+        raw_input('Press enter to continue.')
     elif fixedC is None and C > 0.3: # if the color term is too crazy, use fixed color term
         if filt=='g': fixedC = 0.1
         else:         fixedC = 0
@@ -719,7 +721,6 @@ def fitcol3(colors, deltas, dcolors=None, ddeltas=None, fixedC=None, filt='', co
         Z = np.median(zeros)
         resids = zeros - Z
         keep = abs(resids) <= clipsig*dzeros
-        if show: plt.cla()
         Z, dZ, C, dC = calcZC(colors, deltas, dcolors, ddeltas, fixedC, filt, col, show, guess=[Z, C])
     if extra: return Z, dZ, C, dC, keep
     else: return Z, dZ, C, dC
@@ -743,6 +744,7 @@ def calcZC(colors, deltas, dcolors=None, ddeltas=None, #keep=None,
     print 'zero point = {:5.2f} +/- {:4.2f}'.format(Z, dZ)
     print 'color term = {:5.2f} +/- {:4.2f}'.format(C, dC)
     if show:
+        plt.cla()
         plt.scatter(colors, deltas, marker='.', picker=5)
         plt.errorbar(colors[keep], deltas[keep], xerr=dcolors[keep], yerr=ddeltas[keep], color='g', marker='o', linestyle='none')
         plt.errorbar(colors[~keep], deltas[~keep], xerr=dcolors[~keep], yerr=ddeltas[~keep], color='r', marker='o', linestyle='none')
@@ -753,6 +755,7 @@ def calcZC(colors, deltas, dcolors=None, ddeltas=None, #keep=None,
         plt.xlabel(col)
         plt.ylabel('Calibrated Mag - Instrumental Mag')
         plt.title(filt)
+        plt.pause(0.1)
     if fixedC is None and extra: return Z, dZ, C, dC, x_reg, y_reg
     else: return Z, dZ, C, dC
 #################################################################
@@ -847,16 +850,16 @@ def fitcol2(_col,_dmag,band,col,fixcol='',show=False,rejection=2):
             sigmab = sigmae*sqrt(1/sum((xx0-mean(xx0))**2))
         if show:
             import time
-            from pylab import plot,ion,clf,draw,xlabel,ylabel,title
-            ion()
-            clf()
-            plot(_col,_dmag,'ob')
-            plot(xx0,yy0,'xr')
-            plot(_col,yy,'-g')
-            ylabel('zeropoint')
-            xlabel(f)
-            title(sss)
-            draw()
+            import matplotlib.pyplot as plt
+            plt.ion()
+            plt.clf()
+            plt.plot(_col,_dmag,'ob')
+            plt.plot(xx0,yy0,'xr')
+            plt.plot(_col,yy,'-g')
+            plt.ylabel('zeropoint')
+            plt.xlabel(f)
+            plt.title(sss)
+            plt.draw()
             time.sleep(1)
     try:
         print '###', mean0, sigmaa, slope, sigmab
@@ -1023,7 +1026,7 @@ def zeropoint(data,mag,maxiter=10,nn=2,show=False):
     std2=np.std(data2)
     iter=0; 
     if show:  
-        import pylab as pl
+        import matplotlib.pyplot as pl
         pl.ion()
 
     while iter < maxiter and len(data2)>5:
@@ -1083,7 +1086,7 @@ def zeropoint2(xx,mag,maxiter=10,nn=2,show=False,_cutmag=99):
       iter=0; 
       if show:  
             print len(data2)
-            import pylab as pl
+            import matplotlib.pyplot as pl
             pl.ion()
             pl.clf()
             pl.plot(mag,data,'or')
@@ -1227,7 +1230,7 @@ def zeronew(ZZ,maxiter=10,nn=5,verbose=False,show=False):
           if verbose:   
               print len(ZZcut2),sigmacut,mediancut
      if show:
-          import pylab as pl
+          import matplotlib.pyplot as pl
           pl.ion()
           xxc=np.arange(len(ZZcut))
           pl.plot(xx,ZZ,'or')

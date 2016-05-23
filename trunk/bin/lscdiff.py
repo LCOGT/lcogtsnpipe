@@ -314,10 +314,13 @@ if __name__ == "__main__":
                         if _fixpix:
                             iraf.flpr(); iraf.flpr()
                             iraf.unlearn(iraf.fixpix)
-                            iraf.fixpix('./'+imgtarg, './'+targmask, verbose='yes')
+                            cwd = os.getcwd()
+                            iraf.fixpix(os.path.join(cwd, imgtarg),
+                                        os.path.join(cwd, targmask), verbose='yes')
                             iraf.flpr(); iraf.flpr()
                             iraf.unlearn(iraf.fixpix)
-                            iraf.fixpix('./'+imgtemp, './'+tempmask, verbose='yes')
+                            iraf.fixpix(os.path.join(cwd, imgtemp),
+                                        os.path.join(cwd, tempmask), verbose='yes')
                             iraf.flpr(); iraf.flpr()
                             iraf.unlearn(iraf.fixpix)
                         # hotpants parameters

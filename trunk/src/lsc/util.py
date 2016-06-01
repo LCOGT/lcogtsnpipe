@@ -152,7 +152,8 @@ def readhdr(img):
 #   return hdr
 
 def readkey3(hdr,keyword):
-    import re,string,sys
+    from astropy.coordinates import Angle
+    from astropy import units as u
 
     try:    
        _instrume=hdr.get('INSTRUME').lower()
@@ -272,25 +273,17 @@ def readkey3(hdr,keyword):
        else:
           value=hdr.get(useful_keys[keyword])
           if keyword=='date-obs':
-             import string,re
              try:
-                value=re.sub('-','',string.split(value,'T')[0])
+                value = value.split('T')[0].replace('-', '')
              except:
                 pass
           elif keyword=='ut':
-             import string,re
              try:
-                value=string.split(value,'T')[1]
+                value = value.split('T')[1]
              except:
                 pass
           elif keyword=='object':
-             value=re.sub('\}','',value)
-             value=re.sub('\{','',value)
-             value=re.sub('\[','',value)
-             value=re.sub('\]','',value)
-             value=re.sub('\(','',value)
-             value=re.sub('\)','',value)
-             value=re.sub(' ','',value)
+             value = value.translate(None, ' }{][)(')
           elif keyword=='JD':       
              value=value+0.5
           elif keyword=='instrume':      value=value.lower()
@@ -301,44 +294,36 @@ def readkey3(hdr,keyword):
              value=[a for a in [value1,value2,value3] if 'air' not in a]
              if not value: value='air'
              else: value=value[0]
-          elif keyword == 'RA' or keyword == 'CAT-RA' and ':' in value:
-             value=(((float(string.split(value,':')[2])/60+float(string.split(value,':')[1]))/60)\
-                 +float(string.split(value,':')[0]))*15
-          elif keyword == 'DEC' or keyword == 'CAT-DEC' and ':' in value:
-                if string.count(string.split(value,':')[0],'-')==0:
-                    value=((float(string.split(value,':')[2])/60+float(string.split(value,':')[1]))/60)\
-                        +float(string.split(value,':')[0])
-                else:
-                    value=(-1)*(((abs(float(string.split(value,':')[2])/60)+float(string.split(value,':')[1]))/60)\
-                                    +abs(float(string.split(value,':')[0])))
-    else:
-       if keyword=='date-night':
-            try:
-               _tel=hdr.get('TELID').lower()
-               if _tel in ['1m0-08']:                       # elp  shift
-                  delta=0.0
-               elif _tel in ['fts','ftn']:  # FTS,FTN no shift
-                  delta=0.0
-               elif _tel in ['1m0-10','1m0-12','1m0-13']:  # south africa
-                  delta=0.4
-               elif _tel in ['1m0-03','1m0-11']:           # south spring
-                  delta=0.0
-               elif _tel in ['1m0-05','1m0-04','1m0-09']:  # cile shift
-                  delta=0.5
-               else:
-                  delta=0.5
-            except:   
-               delta=0.5
-            import datetime
-            _date=readkey3(hdr,'DATE-OBS')
-            a=(datetime.datetime.strptime(string.split(_date,'.')[0],"20%y-%m-%dT%H:%M:%S")-datetime.timedelta(delta)).isoformat()
-            value=re.sub('-','',string.split(a,'T')[0])
-       else:
-          if keyword in hdr:   
-             value=hdr.get(keyword)
+          elif keyword in ['RA', 'CAT-RA'] and type(value) == str and ':' in value:
+             value = Angle(value, u.hourangle).deg
+          elif keyword in ['RA', 'CAT-RA', 'DEC', 'CAT-DEC']:
+             value = Angle(value, u.deg).deg
+    elif keyword=='date-night':
+       try:
+          _tel=hdr.get('TELID').lower()
+          if _tel in ['1m0-08']:                       # elp  shift
+             delta=0.0
+          elif _tel in ['fts','ftn']:  # FTS,FTN no shift
+             delta=0.0
+          elif _tel in ['1m0-10','1m0-12','1m0-13']:  # south africa
+             delta=0.4
+          elif _tel in ['1m0-03','1m0-11']:           # south spring
+             delta=0.0
+          elif _tel in ['1m0-05','1m0-04','1m0-09']:  # cile shift
+             delta=0.5
           else:
-             value=''
-    if type(value) == str:    value=re.sub('\#','',value)
+             delta=0.5
+       except:
+          delta=0.5
+       from datetime import datetime, timedelta
+       _date = readkey3(hdr, 'DATE-OBS')
+       value = datetime.strftime(datetime.strptime(_date, "%Y-%m-%dT%H:%M:%S.%f") - timedelta(delta), "%Y%m%d")
+    elif keyword in hdr:
+       value=hdr.get(keyword)
+    else:
+       value=''
+    if type(value) == str:
+       value = value.replace('\#', '')
     return value
 
 #######################################################

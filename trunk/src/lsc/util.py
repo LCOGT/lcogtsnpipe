@@ -163,6 +163,7 @@ def readkey3(hdr,keyword):
         useful_keys = {'object'    : 'OBJECT',\
                            'date-obs'  : 'DATE-OBS',\
                            'ut'        : 'DATE-OBS',\
+                           'date-night': 'DAY-OBS',\
                            'RA'        : 'RA',\
                            'DEC'       : 'DEC',\
                            'CAT-RA'    : 'CAT-RA',\
@@ -187,6 +188,7 @@ def readkey3(hdr,keyword):
         useful_keys = {'object'    : 'OBJECT',\
                            'date-obs'  : 'DATE-OBS',\
                            'ut'        : 'DATE-OBS',\
+                           'date-night': 'DAY-OBS',\
                            'RA'        : 'RA',\
                            'DEC'       : 'DEC',\
                            'CAT-RA'    : 'CAT-RA',\
@@ -215,6 +217,7 @@ def readkey3(hdr,keyword):
           useful_keys = {'object'    : 'OBJECT',\
                          'date-obs'  : 'DATE-OBS',\
                          'ut'        : 'DATE-OBS',\
+                         'date-night': 'DAY-OBS',\
                          'RA'        : 'RA',\
                          'DEC'       : 'DEC',\
                          'CAT-RA'    : 'CAT-RA',\
@@ -239,6 +242,7 @@ def readkey3(hdr,keyword):
           useful_keys = {'object'    : 'OBJECT',\
                             'date-obs'  : 'DATE-OBS',\
                             'ut'        : 'DATE-OBS',\
+                            'date-night': 'DAY-OBS',\
                             'RA'        : 'RA',\
                             'DEC'       : 'DEC',\
                             'CAT-RA'    : 'CAT-RA',\
@@ -266,7 +270,9 @@ def readkey3(hdr,keyword):
                       'CAT-RA'    : 'CAT-RA',\
                       'CAT-DEC'   : 'CAT-DEC',\
                       'ron'       : 'RDNOISE',\
-                      'date-obs'  : 'DATE-OBS'}
+                      'date-obs'  : 'DATE-OBS',\
+                      'date-night': 'DAY-OBS',\
+}
     if keyword in useful_keys:
        if type(useful_keys[keyword])==float:
           value=useful_keys[keyword]
@@ -298,26 +304,29 @@ def readkey3(hdr,keyword):
              value = Angle(value, u.hourangle).deg
           elif keyword in ['RA', 'CAT-RA', 'DEC', 'CAT-DEC']:
              value = Angle(value, u.deg).deg
-    elif keyword=='date-night':
-       try:
-          _tel=hdr.get('TELID').lower()
-          if _tel in ['1m0-08']:                       # elp  shift
-             delta=0.0
-          elif _tel in ['fts','ftn']:  # FTS,FTN no shift
-             delta=0.0
-          elif _tel in ['1m0-10','1m0-12','1m0-13']:  # south africa
-             delta=0.4
-          elif _tel in ['1m0-03','1m0-11']:           # south spring
-             delta=0.0
-          elif _tel in ['1m0-05','1m0-04','1m0-09']:  # cile shift
-             delta=0.5
-          else:
-             delta=0.5
-       except:
-          delta=0.5
-       from datetime import datetime, timedelta
-       _date = readkey3(hdr, 'DATE-OBS')
-       value = datetime.strftime(datetime.strptime(_date, "%Y-%m-%dT%H:%M:%S.%f") - timedelta(delta), "%Y%m%d")
+# REPLACED WITH HEADER KEYWORD DAY-OBS
+#    elif keyword=='date-night':
+#       try:
+#          _tel=hdr.get('TELID').lower()
+#          if _tel in ['1m0-08']:                       # elp  shift
+#             delta=0.0
+#          elif _tel in ['fts','ftn']:  # FTS,FTN no shift
+#             delta=0.0
+#          elif _tel in ['1m0-10','1m0-12','1m0-13']:  # south africa
+#             delta=0.4
+#          elif _tel in ['1m0-03','1m0-11']:           # south spring
+#             delta=0.0
+#          elif _tel in ['1m0-05','1m0-04','1m0-09']:  # cile shift
+#             delta=0.5
+#          else:
+#             delta=0.5
+#       except:
+#          delta=0.5
+#       from astropy.time import Time, TimeDelta
+#       _date = readkey3(hdr, 'DATE-OBS')
+#       datenight = Time(_date, format='isot') - TimeDelta(delta, format='jd')
+#       datenight.out_subfmt = 'date'
+#       value = datenight.iso.replace('-', '')
     elif keyword in hdr:
        value=hdr.get(keyword)
     else:

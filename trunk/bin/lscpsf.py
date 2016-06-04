@@ -233,15 +233,13 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
 
         if 'kb' in instrument:
             _datamax = 45000
-        elif 'fl' in instrument:
-            _datamax = 120000
         else:
             _datamax = 65000
         _wcserr = lsc.util.readkey3(hdr, 'wcserr')
         print _wcserr
         if float(_wcserr) == 0:
             if 'L1FWHM' in hdr:
-                seeing = float(lsc.util.readkey3(hdr, 'L1FWHM')) * .75
+                seeing = float(lsc.util.readkey3(hdr, 'L1FWHM'))
             elif 'L1SEEING' in hdr:
                 seeing = float(lsc.util.readkey3(hdr, 'L1SEEING')) * scale
             else:

@@ -416,7 +416,7 @@ def updateheader(filename, dimension, headerdict):
         header.update(tupledict)
         hdulist.close()
     except Exception as e:
-        print 'header of', image, 'not updated:'
+        print 'header of', filename, 'not updated:'
         print e
 #################################################################################################
 def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,_erase='yes'):
@@ -759,7 +759,7 @@ def marksn2(img,fitstab,frame=1,fitstab2='',verbose=False):
    for i in range(0,len(rasex)):
       vector.append(str(rasex[i])+' '+str(decsex[i]))
 
-   xy = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vector,Stdout=1,image=img,inwcs='world',units='degrees degrees',outwcs='logical',\
+   xy = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vector,Stdout=1,image=img+'[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                          formats='%10.1f %10.1f',verbose='yes')[3:]
    iraf.tvmark(frame,'STDIN',Stdin=list(xy),mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=207,txsize=2)
 
@@ -772,7 +772,7 @@ def marksn2(img,fitstab,frame=1,fitstab2='',verbose=False):
       vector2=[]
       for i in range(0,len(rasex2)):
          vector2.append(str(rasex2[i])+' '+str(decsex2[i]))
-      xy1 = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vector2,Stdout=1,image=img,inwcs='world',units='degrees degrees',outwcs='logical',\
+      xy1 = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vector2,Stdout=1,image=img+'[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                             formats='%10.1f %10.1f',verbose='yes')[3:]
       iraf.tvmark(frame,'STDIN',Stdin=list(xy1),mark="cross",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=205,txsize=2)
 
@@ -885,7 +885,7 @@ def checksnlist(img,listfile):
     dd=arccos(sin(_dec*scal)*sin(decstd*scal)+cos(_dec*scal)*cos(decstd*scal)*cos((_ra-rastd)*scal))*((180/pi)*3600)
     lll=[str(rastd[argmin(dd)])+' '+str(decstd[argmin(dd)])]
     from pyraf import iraf
-    bbb=iraf.wcsctran('STDIN','STDOUT',img,Stdin=lll,inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.5f %10.5f',Stdout=1)[3]
+    bbb=iraf.wcsctran('STDIN','STDOUT',img+'[0]',Stdin=lll,inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.5f %10.5f',Stdout=1)[3]
     if    float(string.split(bbb)[0])<=_xdimen and float(string.split(bbb)[1])<=_ydimen and float(string.split(bbb)[0])>=0 and float(string.split(bbb)[1])>=0:
         #print str(std[argmin(dd)])+' in the field '+str(bbb)
         _RA=rastd[argmin(dd)]

@@ -60,7 +60,7 @@ def runsex(img, fwhm, thresh, pix_scale):  ## run_sextractor  fwhm in pixel
                 tab[cparam[i]].append(float(r.split()[i]))
     for k in cparam: tab[k] = np.array(tab[k])
 
-    xdim, ydim = iraf.hselect(img, 'i_naxis1,i_naxis2', 'yes', Stdout=1) \
+    xdim, ydim = iraf.hselect(img+'[0]', 'i_naxis1,i_naxis2', 'yes', Stdout=1) \
         [0].split()
 
     xcoo, ycoo, ra, dec, magbest, classstar, fluxrad, bkg = [], [], [], [], [], [], [], []
@@ -257,7 +257,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
         if ofwhm: fwhm = float(ofwhm)
         print '    FWHM[input]  ', fwhm, ' in pixel'
 
-        xdim, ydim = iraf.hselect(img, 'i_naxis1,i_naxis2', 'yes', Stdout=1)[0].split()
+        xdim, ydim = iraf.hselect(img+'[0]', 'i_naxis1,i_naxis2', 'yes', Stdout=1)[0].split()
         print img, fwhm, threshold, scale,xdim
 
         #################################################################################

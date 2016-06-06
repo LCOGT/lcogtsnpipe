@@ -322,7 +322,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                         x2 = int(xdim)
                     if y2 > int(ydim):
                         y2 = int(ydim)
-                    sect = '[' + str(x1) + ':' + str(x2) + ',' + str(y1) + ':' + str(y2) + ']'
+                    sect = '[0][' + str(x1) + ':' + str(x2) + ',' + str(y1) + ':' + str(y2) + ']'
                     fmax = iraf.imstat(img + sect, fields='max', Stdout=1)[1]
                 ##########       cut saturated object               ########################
                     if float(fmax) < _datamax:  # not saturated

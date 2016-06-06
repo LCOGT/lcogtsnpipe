@@ -330,7 +330,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
             ff.close()
 
             iraf.delete('tmp.lo?,tmp.sta?,tmp.gk?', verify=False)
-            iraf.psfmeasure(img, imagecur='tmp.cursor', logfile='tmp.log', radius=int(fwhm), iter=3,
+            iraf.psfmeasure(img+'[0]', imagecur='tmp.cursor', logfile='tmp.log', radius=int(fwhm), iter=3,
                             display=False, StdoutG='tmp.gki')
 
             ff = open('tmp.log')

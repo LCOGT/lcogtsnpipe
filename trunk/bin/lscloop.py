@@ -99,7 +99,9 @@ if __name__ == "__main__":   # main program
     parser.add_option("-o", "--output", dest="output", default='', type="str",
                       help='--output  write magnitude in the output file \t [%default]')
     parser.add_option("--tempdate", dest="tempdate", default='', type="str",
-                      help='--tempdate  tamplate date \t [%default]')
+                      help='--tempdate  template date \t [%default]')
+    parser.add_option("--temptel", dest="temptel", default='', type="str",
+                      help='--temptel  template instrument \t [%default]')
     parser.add_option("--normalize", dest="normalize", default='i', type="str",
                       help='--normalize image [i], template [t] \t hotpants parameter  \t [%default]')
     parser.add_option("--convolve", dest="convolve", default='', type="str",
@@ -203,6 +205,7 @@ if __name__ == "__main__":   # main program
     _dmax = option.dmax
     _dmin = option.dmin
     _tempdate = option.tempdate
+    _temptel = option.temptel
     _z1 = option.z1
     _z2 = option.z2
     zcatnew = option.zcatnew
@@ -503,57 +506,37 @@ if __name__ == "__main__":   # main program
                             startdate = '20120101'
                             enddate   = '20150101'
 
-                        if _telescope == 'kb':
-                            _temptel = 'sbig'
-                        elif _telescope == 'fs':
-                            _temptel = 'spectral'
-                        elif _telescope == 'fl':
-                            _temptel = 'sinistro'
+                        if _temptel.upper() in ['SDSS', 'PS1']:
+                            if _telescope == 'kb':
+                                _temptel = 'sbig'
+                            elif _telescope == 'fs':
+                                _temptel = 'spectral'
+                            elif _telescope == 'fl':
+                                _temptel = 'sinistro'
                         print _temptel
 
-                        lista1 = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _telescope)
-                        if lista1:
+                        lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _temptel)
+                        if lista:
                             ll00 = {}
-                            for jj in lista1[0].keys():
+                            for jj in lista[0].keys():
                                 ll00[jj] = []
-                            for i in range(0, len(lista1)):
-                                for jj in lista1[0].keys():
-                                    ll00[jj].append(lista1[i][jj])
+                            for i in range(0, len(lista)):
+                                for jj in lista[0].keys():
+                                    ll00[jj].append(lista[i][jj])
                             inds = argsort(ll00['mjd'])  #  sort by mjd
                             for i in ll00.keys():
                                 ll00[i] = take(ll00[i], inds)
-                            lltemp1 = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid, '')
+                            lltemp = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid, '')
                         else:
-                            lltemp1=()
-
-                        lista2 = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _temptel)
-                        if lista2:
-                            ll00 = {}
-                            for jj in lista2[0].keys():
-                                ll00[jj] = []
-                            for i in range(0, len(lista2)):
-                                for jj in lista2[0].keys():
-                                    ll00[jj].append(lista2[i][jj])
-                            inds = argsort(ll00['mjd'])  #  sort by mjd
-                            for i in ll00.keys():
-                                ll00[i] = take(ll00[i], inds)
-                            lltemp2 = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid, '')
-                        else:
-                            lltemp2=()
-
-                        if lltemp1:
-                            lltemp = lltemp1
-                        elif lltemp2:
-                            lltemp = lltemp2
-                        else:
-                            sys.exit('template not found')
+                            lltemp = ()
 
                         listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                         listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
 
+                        if not listtemp:
+                            sys.exit('template not found')
                         lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix)
-                        if len(listtemp) == 0 or len(listtar) == 0:
-                            sys.exit('no data selected ')
+
                     elif _stage == 'template':  #    merge images using lacos and swarp
                         listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                         lsc.myloopdef.run_template(array(listfile), _show, _redo, _interactive, _ra, _dec, _psf, _mag, _clean, _subtract_mag_from_header)

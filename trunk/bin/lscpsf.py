@@ -204,10 +204,10 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'
     else:
         iraf.pstselect(img+'[0]', '_psf.mag', '_psf.pst', psfstars, interac=False, verify=False)
 
-    iraf.psf(img, '_psf.mag', '_psf.pst', img + '.psf', '_psf.psto', '_psf.psg', interac=interactive,
+    iraf.psf(img + '[0]', '_psf.mag', '_psf.pst', img + '.psf', '_psf.psto', '_psf.psg', interac=interactive,
              verify=False, verbose=False)
-    iraf.group(img, '_psf.mag', img + '.psf', '_psf.grp', verify=False, verbose=False)
-    iraf.nstar(img, '_psf.grp', img + '.psf', '_psf.nst', '_psf.nrj', verify=False, verbose=False)
+    iraf.group(img + '[0]', '_psf.mag', img + '.psf', '_psf.grp', verify=False, verbose=False)
+    iraf.nstar(img + '[0]', '_psf.grp', img + '.psf', '_psf.nst', '_psf.nrj', verify=False, verbose=False)
 
     photmag = iraf.txdump("_psf.mag", 'xcenter,ycenter,id,mag,merr', expr='yes', Stdout=1)
     pst = iraf.txdump("_psf.pst", 'xcenter,ycenter,id', expr='yes', Stdout=1)

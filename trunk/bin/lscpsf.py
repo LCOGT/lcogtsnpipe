@@ -35,7 +35,7 @@ def runsex(img, fwhm, thresh, pix_scale):  ## run_sextractor  fwhm in pixel
         if r[0] != '#' and len(r.strip()) > 0: \
                 cparam.append(r.split()[0])
 
-    pid = subprocess.Popen("sex " + img + ".fits -catalog_name tmp.cat" + \
+    pid = subprocess.Popen("sex '" + img + ".fits[0]' -catalog_name tmp.cat" + \
                            " -c  " + lsc.__path__[0] + '/standard/sex/default2.sex' \
                                                        " -PARAMETERS_NAME " + lsc.__path__[
                                0] + "/standard/sex/default2.param" + \

@@ -683,7 +683,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
         print '\n###  standard field: '+str(_field)
         ###############  sextractor on standard field
         namesex=lsc.util.defsex('default.sex')
-        os.system('sex '+img+' -c '+namesex+' > _logsex')
+        os.system("sex '"+img+"[0]' -c "+namesex+" > _logsex")
         delete(namesex)
         delete('_logsex')
         xsex=iraf.proto.fields('detections.cat',fields='2',Stdout=1)
@@ -1127,7 +1127,7 @@ def sextractor(img):
 
         #_saturation=45000
         namesex=defsex('default.sex')
-        os.system('sex '+img+' -c '+namesex+' -CLEAN YES -SATUR_LEVEL '+str(_saturation)+' > _logsex')
+        os.system("sex '"+img+"[0]' -c "+namesex+" -CLEAN YES -SATUR_LEVEL "+str(_saturation)+' > _logsex')
         print 'sex '+img+' -c '+namesex+' -CLEAN YES -SATUR_LEVEL '+str(_saturation)+' > _logsex'
         delete(namesex)
         delete('_logsex')
@@ -1254,7 +1254,7 @@ def finewcs(img):
     import os,string
     catvec=lsc.lscastrodef.querycatalogue('2mass',img,'vizir')
     namesex=lsc.util.defsex('default.sex')
-    os.system('sex '+img+' -c '+namesex+' -CATALOG_NAME _temp_catalog  > _logsex')
+    os.system("sex '"+img+"[0]' -c "+namesex+" -CATALOG_NAME _temp_catalog  > _logsex")
     aaa=np.genfromtxt('_temp_catalog',float)
     bbb=zip(*aaa)
     vector2=[str(k)+' '+str(v) for k,v in  zip(bbb[1],bbb[2])]

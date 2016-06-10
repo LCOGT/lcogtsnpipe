@@ -1387,9 +1387,9 @@ def run_astrometry(im, clobber=True,redo=False):
                     'CD2_2'   : [ hdrt['CD2_2'] , 'no comment'],
                     'IMAGEW'  : [ hdrt['IMAGEW']  , 'Image width,  in pixels.'],
                     'IMAGEH'  : [ hdrt['IMAGEH']  , 'Image height, in pixels.']}
-            if 'WCS_ERR' in hdr:
+            if 'WCS_ERR' in hdr and 'WCSERR' not in hdr:
                 dictionary['WCS_ERR'] = [0, '']
-            if 'WCSERR' in hdr:
+            else:
                 dictionary['WCSERR'] = [0, '']
             lsc.util.updateheader(im, 0, dictionary)
             lsc.mysqldef.updatevalue('photlco', 'WCS', 0, string.split(im, '/')[-1])

@@ -175,12 +175,8 @@ if __name__ == "__main__":
                 WCSERR = 99
             print WCSERR
             if WCSERR == 0:
-                _instrume = lsc.readkey3(hdr, 'instrume')
-                if 'fs' in _instrume or 'em' in _instrume:  # FT WCSERR keyword is WCS_ERR
-                    if 'WCS_ERR' in hdr:
-                        lsc.util.updateheader(img, 0, {'WCS_ERR': [0, '']})
-                    if 'WCSERR' in hdr:
-                        lsc.util.updateheader(img, 0, {'WCSERR': [0, '']})
+                if 'WCS_ERR' in hdr and 'WCSERR' not in hdr:
+                    lsc.util.updateheader(img, 0, {'WCS_ERR': [0, '']})
                 else:
                     lsc.util.updateheader(img, 0, {'WCSERR': [0, '']})
                 lsc.mysqldef.updatevalue('photlco', 'WCS', 0, string.split(img, '/')[-1])

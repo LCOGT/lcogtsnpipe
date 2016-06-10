@@ -124,7 +124,7 @@ def psffit2(img, fwhm, psfstars, hdr, _datamax=45000, psffun='gauss',  fixapertu
     iraf.daopars.recenter = 'yes'
     iraf.delete('_psf2.ma*', verify=False)
 
-    iraf.phot(img, '_psf2.coo', '_psf2.mag', interac=False, verify=False, verbose=False)
+    iraf.phot(img+'[0]', '_psf2.coo', '_psf2.mag', interac=False, verify=False, verbose=False)
 
     iraf.daopars.psfrad = a4
     iraf.daopars.functio = psffun

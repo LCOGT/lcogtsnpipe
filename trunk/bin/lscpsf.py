@@ -134,8 +134,8 @@ def psffit2(img, fwhm, psfstars, hdr, _datamax=45000, psffun='gauss',  fixapertu
     iraf.daopars.recenter = 'yes'
     iraf.daopars.varorder = varord
     iraf.delete("_als2,_psf.grp,_psf.nrj", verify=False)
-    iraf.group(img, '_psf2.mag', img + '.psf', '_psf.grp', verify=False, verbose=False)
-    iraf.nstar(img, '_psf.grp', img + '.psf', '_als2', '_psf.nrj', verify=False, verbose=False)
+    iraf.group(img + '[0]', '_psf2.mag', img + '.psf', '_psf.grp', verify=False, verbose=False)
+    iraf.nstar(img + '[0]', '_psf.grp', img + '.psf', '_als2', '_psf.nrj', verify=False, verbose=False)
     photmag = iraf.txdump("_psf2.mag", 'xcenter,ycenter,id,mag,merr', expr='yes', Stdout=1)
     fitmag = iraf.txdump("_als2", 'xcenter,ycenter,id,mag,merr', expr='yes', Stdout=1)
     return photmag, fitmag

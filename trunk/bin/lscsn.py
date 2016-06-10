@@ -663,7 +663,7 @@ if __name__ == "__main__":
                             print 'WARNING: value not valid !!'
                             checkorder = 'yes'
                     iraf.imsurfit("skyfit", "tmp", regions="all", xorder=xbgord0, yorder=ybgord0)
-                    midpt = float(iraf.imstat("tmp", field="mean", Stdout=1)[1])
+                    midpt = np.mean(fits.getdata("tmp.fits"))
                     iraf.imarith("original", "-", "tmp", "sn", calctype="r", pixtype="r")
                     iraf.imarith("sn.fits", "+", midpt, "sn.fits")
                     lsc.util.delete("skyfit.fits")

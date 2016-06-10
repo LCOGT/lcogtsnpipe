@@ -320,7 +320,7 @@ def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_num
         inp = "artbg.fits["+str(xb1)+":"+str(xb2)+","+str(yb1)+":"+str(yb2)+"]"
         out = "artsky.fits["+str(xb1)+":"+str(xb2)+","+str(yb1)+":"+str(yb2)+"]" 
         iraf.imsurfit("reserr","artbg",xorder=xbgord0,yorder=ybgord0,regions="section",section="sec")  
-        midpt=np.mean(fits.getdata('artbg.fits')
+        midpt=np.mean(fits.getdata('artbg.fits'))
         iraf.imcopy('reserr.fits','artsky.fits')
         iraf.imcopy(inp,'artbgs.fits')
         iraf.imcopy("artbgs.fits",out)
@@ -340,8 +340,8 @@ def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_num
             lsc.util.delete("artres.fit?")
             lsc.util.delete("artlist.al?")
 
-            iraf.imsurfit("skyfit","artbg",xorder=xbgord0,yorder=ybgord0,regions="section",section="sec")  
-            midpt=float(iraf.imstat("artbg",field="mean", Stdout=1)[1])
+            iraf.imsurfit("skyfit","artbg",xorder=xbgord0,yorder=ybgord0,regions="section",section="sec")
+            midpt = np.mean(fits.getdata('artbg.fits'))
             iraf.imcopy("reserr.fits","artsky.fits")
             iraf.imcopy(inp,"artbgs.fits")
             iraf.imcopy("artbgs.fits",out)

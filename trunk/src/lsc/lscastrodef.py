@@ -244,9 +244,9 @@ def querycatalogue(catalogue,img,method='iraf'):
             column={'ra':1,'dec':2,'r':3}
 
         if  string.count(stdcoo['ra'][0],':'):
-            ddd2=iraf.wcsctran('STDIN','STDOUT',img,Stdin=lll,Stdout=1,inwcs='world',units='hour degrees',outwcs='logical',columns=colonne3,formats='%10.1f %10.1f')
+            ddd2=iraf.wcsctran('STDIN','STDOUT',img + '[0]',Stdin=lll,Stdout=1,inwcs='world',units='hour degrees',outwcs='logical',columns=colonne3,formats='%10.1f %10.1f')
         else:
-            ddd2=iraf.wcsctran('STDIN','STDOUT',img,Stdin=lll,Stdout=1,inwcs='world',units='degree degrees',outwcs='logical',columns=colonne3,formats='%10.1f %10.1f')
+            ddd2=iraf.wcsctran('STDIN','STDOUT',img + '[0]',Stdin=lll,Stdout=1,inwcs='world',units='degree degrees',outwcs='logical',columns=colonne3,formats='%10.1f %10.1f')
         xx,yy=[],[]
         for i in ddd2[ddd2.index('# END CATALOG HEADER')+2:]:
             xx.append(float(i.split()[column['ra']-1]))
@@ -515,7 +515,7 @@ def lscastrometry2(lista,catalogue,_interactive,number,sexvec,catvec,guess=False
 #                    raw_input('go on ')
                     _ccmap1=iraf.ccmap('STDIN','STDOUT',images=img,Stdin=vettoretran,fitgeome=fitgeo,xcolum=3, xxorder=2,\
                                        yyorder=2, ycolum=4,lngcolum=1,latcolumn=2,lngunit='degrees',update='Yes',interact='No',maxiter=3,Stdout=1)
-                    xy = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vettoretran,Stdout=1,image=img,inwcs='physical', outwcs='world',column="3 4",formats='%10.6f %10.6f',verbose='yes')[3:]
+                    xy = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vettoretran,Stdout=1,image=img + '[0]',inwcs='physical', outwcs='world',column="3 4",formats='%10.6f %10.6f',verbose='yes')[3:]
                     rasys=median(array([float(xy[i].split()[2])-float(xy[i].split()[0]) for i in range(0, len(xy)) ]))
                     decsys=median(array([float(xy[i].split()[3])-float(xy[i].split()[1]) for i in range(0, len(xy)) ]))
                 else:
@@ -593,7 +593,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
             stdcooC=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/'+catalogue+'.cat')
             rastdC,decstdC=array(stdcooC['ra'],float),array(stdcooC['dec'],float)
             delete('tmp.stdC.pix')
-            iraf.wcsctran(lsc.__path__[0]+'/standard/cat/'+catalogue+'.cat','tmp.stdC.pix',img,inwcs='world',units='degrees degrees',outwcs='logical',\
+            iraf.wcsctran(lsc.__path__[0]+'/standard/cat/'+catalogue+'.cat','tmp.stdC.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                               columns='1 2',formats='%10.1f %10.1f',verbose='no')
             standardpixC=lsc.lscastrodef.readtxt('tmp.stdC.pix')
             xstdC=standardpixC['ra']
@@ -605,7 +605,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
         stdcooL=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/landolt.cat')
         rastdL,decstdL=array(stdcooL['ra'],float),array(stdcooL['dec'],float)
         delete('tmp.stdL.pix')
-        iraf.wcsctran(lsc.__path__[0]+'/standard/cat/landolt.cat','tmp.stdL.pix',img,inwcs='world',units='degrees degrees',outwcs='logical',\
+        iraf.wcsctran(lsc.__path__[0]+'/standard/cat/landolt.cat','tmp.stdL.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                           columns='1 2',formats='%10.1f %10.1f',verbose='no')
         standardpixL=lsc.lscastrodef.readtxt('tmp.stdL.pix')
         xstdL=standardpixL['ra']
@@ -624,7 +624,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
         stdcooS=lsc.lscastrodef.readtxt(ascifile)
         rastdS,decstdS=array(stdcooS['ra'],float),array(stdcooS['dec'],float)
         delete('tmp.stdS.pix')
-        iraf.wcsctran(ascifile,'tmp.stdS.pix',img,inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.1f %10.1f',verbose='no')
+        iraf.wcsctran(ascifile,'tmp.stdS.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.1f %10.1f',verbose='no')
         standardpixS=lsc.lscastrodef.readtxt('tmp.stdS.pix')
         xstdS=standardpixS['ra']
         ystdS=standardpixS['dec']
@@ -700,7 +700,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
             f.write(str(xsex[i])+' '+str(ysex[i])+'\n')
         f.close()
         delete('detection_sex.coo')
-        iraf.wcsctran('detection_sex.pix','detection_sex.coo',img,inwcs='logical',units='degrees degrees',outwcs='world',columns='1 2',formats='%10.8f %10.8f')
+        iraf.wcsctran('detection_sex.pix','detection_sex.coo',img + '[0]',inwcs='logical',units='degrees degrees',outwcs='world',columns='1 2',formats='%10.8f %10.8f')
         rasex=compress(array(iraf.proto.fields('detection_sex.coo',fields='1',Stdout=1))!='',array(iraf.proto.fields('detection_sex.coo',fields='1',Stdout=1)))
         decsex=compress(array(iraf.proto.fields('detection_sex.coo',fields='2',Stdout=1))!='',array(iraf.proto.fields('detection_sex.coo',fields='2',Stdout=1)))
         rasex=array(rasex,float)
@@ -1337,7 +1337,7 @@ def run_astrometry(im, clobber=True,redo=False):
         cmd += '--no-plots -N tmpwcs.fits '
         if clobber: cmd += '--overwrite '
         cmd += '--solved none --match none --rdls none --wcs none --corr none '
-        cmd += ' --downsample 4 '
+        cmd += ' --downsample 4 --fits-image '
         cmd += '%s' % im
         print cmd
         os.system(cmd)

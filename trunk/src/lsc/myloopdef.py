@@ -675,7 +675,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
     print psfx1, psfy1, 'dddd'
     if psfx1 != None and psfy1 != None:
         lll = str(psfx1) + ' ' + str(psfy1)
-        aaa = iraf.wcsctran('STDIN', 'STDOUT', _dir1 + img1, Stdin=[lll], inwcs='logical', units='degrees degrees',
+        aaa = iraf.wcsctran('STDIN', 'STDOUT', _dir1 + img1 + '[0]', Stdin=[lll], inwcs='logical', units='degrees degrees',
                             outwcs='world', columns='1 2', formats='%10.5f %10.5f', Stdout=1)[3]
         rasn1, decsn1 = string.split(aaa)
         if _show:
@@ -717,7 +717,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
         iraf.display(_dir2 + re.sub('sn2.fits', 'fits', img2), 2, fill=True, Stdout=1, zsc='yes',
                      zra='yes')  #,z1=0,z2=3000)
         lll = str(rasn2c) + ' ' + str(decsn2c)
-        bbb = iraf.wcsctran('STDIN', 'STDOUT', _dir2 + img2, Stdin=[lll], inwcs='world', units='degrees degrees',
+        bbb = iraf.wcsctran('STDIN', 'STDOUT', _dir2 + img2 + '[0]', Stdin=[lll], inwcs='world', units='degrees degrees',
                             outwcs='logical', columns='1 2', formats='%10.5f %10.5f', Stdout=1)[3]
         iraf.tvmark(2, 'STDIN', Stdin=[bbb], mark="cross", number='no', label='no', radii=5, nxoffse=5, nyoffse=5,
                     color=206, txsize=1)
@@ -945,7 +945,7 @@ def position(imglist, ra1, dec1, show=False):
             psfy = lsc.util.readkey3(hdr1, 'PSFY1')
             if psfx != None and psfy != None:
                 lll = str(psfx) + ' ' + str(psfy)
-                aaa = iraf.wcsctran('STDIN', 'STDOUT', img, Stdin=[lll], inwcs='logical', units='degrees degrees',
+                aaa = iraf.wcsctran('STDIN', 'STDOUT', img + '[0]', Stdin=[lll], inwcs='logical', units='degrees degrees',
                                     outwcs='world', columns='1 2', formats='%10.5f %10.5f', Stdout=1)[3]
                 try:
                     ra.append(float(string.split(aaa)[0]))
@@ -1105,16 +1105,16 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
             _filter = ggg[0]['filter']
             _exptime = ggg[0]['exptime']
             if _z1 != None and _z2 != None:
-                iraf.display(_dir + img, 1, fill=True, Stdout=1, zscale='no', zrange='no', z1=_z1, z2=_z2)
+                iraf.display(_dir + img + '[0]', 1, fill=True, Stdout=1, zscale='no', zrange='no', z1=_z1, z2=_z2)
             else:
-                iraf.display(_dir + img, 1, fill=True, Stdout=1)
+                iraf.display(_dir + img + '[0]', 1, fill=True, Stdout=1)
                 ###########################################
             _ra0, _dec0, _SN0 = lsc.util.checksnlist(_dir + img, 'supernovaelist.txt')
             if not _SN0:    _ra0, _dec0, _SN0 = lsc.util.checksnlist(_dir + img, 'standardlist.txt')
             if not _SN0:    _ra0, _dec0, _SN0, _tt = lsc.util.checksndb(_dir + img, 'targets')
             print _ra0, _dec0, _SN0, img, _filter, _exptime
             if _SN0:
-                ccc = iraf.wcsctran('STDIN', 'STDOUT', _dir + img, Stdin=[str(_ra0) + ' ' + str(_dec0)], inwcs='world',
+                ccc = iraf.wcsctran('STDIN', 'STDOUT', _dir + img + '[0]', Stdin=[str(_ra0) + ' ' + str(_dec0)], inwcs='world',
                                     units='degrees degrees', outwcs='logical', \
                                     columns='1 2', formats='%10.5f %10.5f', Stdout=1)
                 iraf.tvmark(1, 'STDIN', Stdin=list(ccc), mark="circle", number='yes', label='no', radii=15, nxoffse=5,
@@ -1132,7 +1132,7 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
                 bbb = []
                 for i in range(0, len(catvec['ra'])):
                     bbb.append(catvec['ra'][i] + ' ' + catvec['dec'][i])
-                aaa = iraf.wcsctran('STDIN', 'STDOUT', _dir + img, Stdin=list(bbb), inwcs='world',
+                aaa = iraf.wcsctran('STDIN', 'STDOUT', _dir + img + '[0]', Stdin=list(bbb), inwcs='world',
                                     units='degrees degrees', outwcs='logical', columns='1 2', formats='%10.5f %10.5f',
                                     Stdout=1)
                 iraf.tvmark(1, 'STDIN', Stdin=list(aaa), mark="cross", number='yes', label='no', radii=1, nxoffse=5,
@@ -1270,7 +1270,7 @@ def checkfast(imglist, force=True, database='photlco'):
         if status >= 0 or force == False:
             ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
-            iraf.display(_dir + img, 1, fill=True, Stdout=1)
+            iraf.display(_dir + img + '[0]', 1, fill=True, Stdout=1)
             ###########################################
             aa = raw_input('>>>good or bad quality [[g]/b]? ')
             if not aa: aa = 'g'
@@ -1471,7 +1471,7 @@ def checkquality(imglist, database='photlco'):
             else:
                 _dir = ggg[0]['filepath']
                 if os.path.isfile(_dir + img):
-                    iraf.display(_dir + img, 1, fill=True, Stdout=1)
+                    iraf.display(_dir + img + '[0]', 1, fill=True, Stdout=1)
                     aa = raw_input('>>>good image [y/[n]] ? ')
                     if not aa: aa = 'n'
                     if aa in ['n', 'N', 'No', 'NO']:

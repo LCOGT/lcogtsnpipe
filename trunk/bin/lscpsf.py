@@ -185,7 +185,7 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'
     iraf.photpars.zmag = zmag
 
     iraf.delete('_psf.ma*,' + img + '.psf.fit?,_psf.ps*,_psf.gr?,_psf.n*,_psf.sub.fit?', verify=False)
-    iraf.phot(img, '_psf.coo', '_psf.mag', interac=False, verify=False, verbose=False)
+    iraf.phot(img+'[0]', '_psf.coo', '_psf.mag', interac=False, verify=False, verbose=False)
 
     iraf.daopars.psfrad = a4
     iraf.daopars.functio = psffun

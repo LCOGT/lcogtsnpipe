@@ -202,7 +202,7 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'
               ' "w"-write and "q"-uit (cursor on ds9)'
         print '-' * 80
     else:
-        iraf.pstselect(img, '_psf.mag', '_psf.pst', psfstars, interac=False, verify=False)
+        iraf.pstselect(img+'[0]', '_psf.mag', '_psf.pst', psfstars, interac=False, verify=False)
 
     iraf.psf(img, '_psf.mag', '_psf.pst', img + '.psf', '_psf.psto', '_psf.psg', interac=interactive,
              verify=False, verbose=False)

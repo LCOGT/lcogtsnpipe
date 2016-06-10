@@ -395,11 +395,11 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
         photmag2, fitmag2 = psffit2(img, fwhm, psfstars, hdr, _datamax, psffun, fixaperture)
 
         radec = iraf.wcsctran(input='STDIN', output='STDOUT', Stdin=photmag,
-                              Stdout=1, image=img, inwcs='logical', outwcs='world', columns="1 2",
+                              Stdout=1, image=img + '[0]', inwcs='logical', outwcs='world', columns="1 2",
                               format='%13.3H %12.2h', min_sig=9, mode='h')[3:]
 
         radec2 = iraf.wcsctran(input='STDIN', output='STDOUT', Stdin=photmag2,
-                               Stdout=1, image=img, inwcs='logical', outwcs='world', columns="1 2",
+                               Stdout=1, image=img + '[0]', inwcs='logical', outwcs='world', columns="1 2",
                                format='%13.3H %12.2h', min_sig=9, mode='h')[3:]
 
         if ds9 == 0 and interactive:

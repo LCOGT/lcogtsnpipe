@@ -308,6 +308,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                 print 'try using option --fwhm xxx'
 
             ff = open('tmp.cursor', 'w')
+            image_hdu = fits.open(img + '.fits')
             for i in range(len(xs)):
                 _xs = np.delete(xs, i)
                 _ys = np.delete(ys, i)
@@ -322,12 +323,12 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                         x2 = int(xdim)
                     if y2 > int(ydim):
                         y2 = int(ydim)
-                    sect = '[SCI][' + str(x1) + ':' + str(x2) + ',' + str(y1) + ':' + str(y2) + ']'
-                    fmax = iraf.imstat(img + sect, fields='max', Stdout=1)[1]
+                    fmax = np.max(image_hdu[0].data[y1-1:y2, x1-1:x2])
                 ##########       cut saturated object               ########################
                     if float(fmax) < _datamax:  # not saturated
                         ff.write('%10.3f %10.3f 1 m \n' % (xs[i], ys[i]))
             ff.close()
+            image_hdu.close()
 
             iraf.delete('tmp.lo?,tmp.sta?,tmp.gk?', verify=False)
             iraf.psfmeasure(img+'[0]', imagecur='tmp.cursor', logfile='tmp.log', radius=int(fwhm), iter=3,

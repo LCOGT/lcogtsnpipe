@@ -3,6 +3,7 @@ description = ">> New automated sn measurement"
 usage = "%prog image [options] "
 
 from numpy import array,log10
+import numpy as np
 import lsc
 import glob
 import os
@@ -11,6 +12,7 @@ import shutil
 import string
 import re
 from astropy.io.fits import getheader
+from astropy.io import fits
 from optparse import OptionParser
 
 if __name__ == "__main__":
@@ -564,7 +566,7 @@ if __name__ == "__main__":
                         iraf.imsurfit("original", "bg", xorder=xbgord0, yorder=ybgord0, regions="sections",
                                       sections="sec")
 
-                    midpt = float(iraf.imstat("bg", field="mean", Stdout=1)[1])
+                    midpt = np.mean(fits.getdata('bg.fits'))
                     iraf.imcopy("original.fits", "sky.fits")
                     iraf.imcopy(inp, "bgs.fits")
                     iraf.imcopy("bgs.fits", out)

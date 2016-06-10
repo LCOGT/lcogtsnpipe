@@ -1,3 +1,6 @@
+import numpy as np
+from astropy.io import fits
+
 ##########################        DEFINE FITSN  #########################################
 def fitsn(img,imgpsf,coordlist,_recenter,fwhm0,original,sn,residual,_show,_interactive,z11='',z22='',midpt='',size=7,apco0=0,dmax=51000,dmin=-500):
     import lsc
@@ -317,7 +320,7 @@ def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_num
         inp = "artbg.fits["+str(xb1)+":"+str(xb2)+","+str(yb1)+":"+str(yb2)+"]"
         out = "artsky.fits["+str(xb1)+":"+str(xb2)+","+str(yb1)+":"+str(yb2)+"]" 
         iraf.imsurfit("reserr","artbg",xorder=xbgord0,yorder=ybgord0,regions="section",section="sec")  
-        midpt=float(iraf.imstat("artbg",field="mean", Stdout=1)[1])
+        midpt=np.mean(fits.getdata('artbg.fits')
         iraf.imcopy('reserr.fits','artsky.fits')
         iraf.imcopy(inp,'artbgs.fits')
         iraf.imcopy("artbgs.fits",out)

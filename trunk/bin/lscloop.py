@@ -72,6 +72,7 @@ if __name__ == "__main__":   # main program
                       help='--field  [landolt, sloan, apass]  \t [%default]')
     parser.add_option("--ref", dest="ref", default='', type="str",
                       help='--ref  sn22_20130303_0111.sn2.fits get sn position from this file \t [%default]')
+    parser.add_option("--use-sextractor", action="store_true", help="use souces from sextractor for PSF instead of catalog")
     parser.add_option("--catalogue", dest="catalogue", default='', type="str",
                       help='--catalogue  sn09ip.cat    \t [%default]')
     parser.add_option("--calib", dest="calib", default='', type="str",
@@ -310,7 +311,7 @@ if __name__ == "__main__":   # main program
             elif _stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], _output, _interactive, _show, _bin, _type)
             elif _stage == 'psf':
-                lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, XX, _fix, _catalogue, 'photlco')
+                lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, XX, _fix, _catalogue, 'photlco', option.use_sextractor)
             elif _stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], _ras, _decs, _xord, _yord, _bkg, _size, _recenter, _ref,
                                       _interactive, _show, _redo, _dmax,_dmin,'photlco',_ra0,_dec0)

@@ -387,7 +387,7 @@ def run_zero(imglist, _fix, _type, _field, _catalogue, _color='', interactive=Fa
 
 
 def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, xwindow='',\
-            fix=True, catalog='', database='photlco'):
+            fix=True, catalog='', database='photlco', use_sextractor=False):
     import lsc
     import os
     import  string
@@ -419,7 +419,10 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
             cc=' --catalog '+catalog+' '
         else:
             cc=' '
-
+        if use_sextractor:
+            xx = ' --use-sextractor '
+        else:
+            xx = ''
 
         status = checkstage(img, 'psf')
         print status
@@ -479,7 +482,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                 _dir = ggg[0]['filepath']
                 img0 = img
                 command = 'lscpsf.py ' + _dir + img0 + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
-                    treshold) + xwindow + gg + cc
+                    treshold) + xwindow + gg + cc + xx
                 print command
                 os.system(command)
         elif status == 0:

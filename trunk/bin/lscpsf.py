@@ -283,7 +283,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
             fwhm = np.median(_fws)
         elif _catalog:
             print '\n#### use catalog to measure the psf'
-            ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img,inwcs='world',outwcs='logical',
+            ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img + '[0]',inwcs='world',outwcs='logical',
                               units='degrees degrees',columns='1 2',formats='%10.1f %10.1f',verbose='no')
             ddd=[i for i in ddd if i[0]!='#']
             ddd=['  '.join(i.split()[0:3]) for i in ddd]
@@ -291,7 +291,6 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
             for i in ddd:
                 a,b,c = string.split(i)
                 if float(a) < float(xdim) and  float(b) < float(ydim) and float(b) > 0:
-                    print a,b,c
                     line = line + '%10s %10s %10s \n' % (a, b, c)
             if line:
                 ff = open('_psf.coo', 'w')
@@ -372,8 +371,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                 ff.write('%10s %10s %10s \n' % (xs[i], ys[i], fluxrad[i]))
             ff.close()
         elif _catalog:
-            print '\n#### use catalog '
-            ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img,inwcs='world',outwcs='logical',
+            ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img + '[0]',inwcs='world',outwcs='logical',
                               units='degrees degrees',columns='1 2',formats='%10.1f %10.1f',verbose='no')
             ddd=[i for i in ddd if i[0]!='#']
             ddd=['  '.join(i.split()[0:3]) for i in ddd]
@@ -382,7 +380,6 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                 a,b,c = string.split(i)
                 ff.write('%10s %10s %10s \n' % (a, b, c))
             ff.close()
-            print 'use catalog'
         else:
             os.system('cp _psf.coo _psf2.coo')
 #            dflux = fluxrad - np.median(fluxrad)
@@ -531,6 +528,7 @@ if __name__ == "__main__":
                       default=False, help='Show PSF output \t\t [%default]')
     parser.add_option("-X", "--xwindow", action="store_true", dest='xwindow', default=False,
                       help='xwindow \t\t\t [%default]')
+    parser.add_option("--use-sextractor", action="store_true", help="use souces from sextractor instead of catalog")
     parser.add_option("-c", "--catalog", dest="catalog", default='', type='str',
                       help='use input catalog  \t\t %default')
     parser.add_option("--fix", action="store_true", dest='fixaperture', default=False,
@@ -555,6 +553,14 @@ if __name__ == "__main__":
         capable.OF_GRAPHICS = False
 
     for img in imglist:
+        if not option.use_sextractor and not _catalog:
+            targetid = lsc.mysqldef.targimg(img)
+            cats = lsc.mysqldef.query(["select sloan_cat, landolt_cat, apass_cat from targets where id="+str(targetid)], lsc.conn)
+            if cats:
+                for system in ['sloan', 'apass', 'landolt']:
+                    if cats[0][system + '_cat']:
+                        _catalog = lsc.__path__[0] + '/standard/cat/' + system + '/' + cats[0][system + '_cat']
+                        break
         if '.fits' in img: img = img[:-5]
         if os.path.exists(img + '.sn2.fits') and not option.redo:
             print img + ': psf already calculated'

@@ -626,8 +626,10 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
             zeroerr2 = zeroerr[good]
             coloreerr2 = colerrstd0[good]
 
-            if _fix: fisso=colorefisso[filters[_filter]+col]
-            else: fisso = None
+            if _fix and filters[_filter]+col in colorefisso:
+                fisso = colorefisso[filters[_filter]+col]
+            else:
+                fisso = None
 
             if len(colore2)==0:
                 print 'no calibration:', filters[_filter], col, _field

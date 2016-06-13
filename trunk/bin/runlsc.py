@@ -204,11 +204,13 @@ if __name__ == "__main__":
     #  try again or set to bad image
     os.system('lscloop.py -e ' + epoch + ' -b wcs -s wcs --xshift 1 --yshift 1 ' + ff + tt + XX)
 
-    print '\n####  compute  psf, when missing '
+    print '\n####  compute  psf, when missing, with catalog'
     os.system('lscloop.py -e ' + epoch + ' -b psf -s psf ' + ff + tt + XX)  #  compute psf
 
-    print '\n####  compute  psf, when missing with fix fwhm'
-    os.system('lscloop.py -e ' + epoch + ' -b psf -s psf --fwhm 6 ' + ff + tt + XX)  #  compute psf
+    print '\n####  compute  psf, when missing, with sextractor'
+    os.system('lscloop.py -e ' + epoch + ' -b psf -s psf --use-sextractor ' + ff + tt + XX)  #  compute psf
+#    print '\n####  compute  psf, when missing with fix fwhm'
+#    os.system('lscloop.py -e ' + epoch + ' -b psf -s psf --fwhm 6 ' + ff + tt + XX)  #  compute psf
 
     #############################################################################
     import glob

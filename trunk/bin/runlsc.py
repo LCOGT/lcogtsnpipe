@@ -390,15 +390,15 @@ if __name__ == "__main__":
                         except:
                             pass
 
-
-    # make stamps for all new images
-    try:
-        if _telescope == 'all':
-            os.system('lscloop.py -e ' + str(epoch) + ' -s makestamp' + ' ' + XX)
-        else:
-            os.system('lscloop.py -e ' + str(epoch) + ' -s makestamp' + ' ' + XX+' -T '+_telescope)
-    except:
-        print 'warning makestap did not work'
+# cannot run this stage as a cronjob, because matplotlib needs $DISPLAY to be set
+#    # make stamps for all new images
+#    try:
+#        if _telescope == 'all':
+#            os.system('lscloop.py -e ' + str(epoch) + ' -s makestamp' + ' ' + XX)
+#        else:
+#            os.system('lscloop.py -e ' + str(epoch) + ' -s makestamp' + ' ' + XX+' -T '+_telescope)
+#    except:
+#        print 'warning makestap did not work'
 
     stop = time.time()
     print 'time to process all  data ', str(stop - start)

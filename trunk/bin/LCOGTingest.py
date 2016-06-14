@@ -144,6 +144,22 @@ speclcoraw_to_hdrkey = {'objname': 'OBJECT',
                         'fwhm': 'AGFWHM',
                         'tracknumber': 'TRACKNUM'}
 
+def get_groupidcode(hdr):
+    if hdr['tracknum'] != 'UNSPECIFIED':
+        result = lsc.mysqldef.query(['''select obsrequests.groupidcode, obsrequests.targetid
+                                        from obsrequests, obslog
+                                        where obsrequests.id = obslog.requestsid
+                                        and obslog.tracknumber = ''' + str(hdr['tracknum'])], lsc.conn)
+    else:
+        result = ()
+    if result:
+        targetid = result[0]['targetid']
+    else:
+        targetid = lsc.mysqldef.targimg(hdrt=hdr)
+        result = lsc.mysqldef.query(['select groupidcode from targets where id=' + str(targetid)], lsc.conn)
+    groupidcode = result[0]['groupidcode']
+    return groupidcode, targetid
+
 def db_ingest(filepath, filename, force=False):
     '''Read an image header and add a row to the database'''
     global telescopeids, instrumentids
@@ -161,10 +177,11 @@ def db_ingest(filepath, filename, force=False):
             hdr = fits.getheader(filepath + filename, 1)
         else:
             hdr = fits.getheader(filepath + filename)
-        dbdict = {'targetid': lsc.mysqldef.targimg(hdrt=hdr),
-                    'filename': filename,
-                    'filepath': filepath,
-                    'groupidcode': groupidcodes[hdr['PROPID']]}
+        groupidcode, targetid = get_groupidcode(hdr)
+        dbdict = {'filename': filename,
+                  'filepath': filepath,
+                  'groupidcode': groupidcode,
+                  'targetid': targetid}
         for dbcol, hdrkey in db_to_hdrkey.items():
             if hdrkey in hdr and hdr[hdrkey] not in ['NaN', 'UNKNOWN', None, '']:
                 if hdrkey in ['RA', 'CAT-RA']:

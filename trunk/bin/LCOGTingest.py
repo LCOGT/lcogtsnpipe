@@ -3,7 +3,6 @@ import requests
 import lsc
 import re
 import os
-import sys
 from astropy.io import fits
 from astropy.coordinates import Angle
 from astropy import units as u
@@ -88,9 +87,6 @@ def download_frame(frame, force=False):
 hostname, username, passwd, database = lsc.mysqldef.getconnection('lcogt2')
 conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
 
-programs = lsc.mysqldef.query(['select idcode, groupidcode from programs'], conn)
-groupidcodes = {prog['idcode']: prog['groupidcode'] for prog in programs}
-
 telescopes = lsc.mysqldef.query(['select id, name from telescopes'], conn)
 telescopeids = {tel['name']: tel['id'] for tel in telescopes}
 
@@ -149,14 +145,14 @@ def get_groupidcode(hdr):
         result = lsc.mysqldef.query(['''select obsrequests.groupidcode, obsrequests.targetid
                                         from obsrequests, obslog
                                         where obsrequests.id = obslog.requestsid
-                                        and obslog.tracknumber = ''' + str(hdr['tracknum'])], lsc.conn)
+                                        and obslog.tracknumber = ''' + str(hdr['tracknum'])], conn)
     else:
         result = ()
     if result:
         targetid = result[0]['targetid']
     else:
         targetid = lsc.mysqldef.targimg(hdrt=hdr)
-        result = lsc.mysqldef.query(['select groupidcode from targets where id=' + str(targetid)], lsc.conn)
+        result = lsc.mysqldef.query(['select groupidcode from targets where id=' + str(targetid)], conn)
     groupidcode = result[0]['groupidcode']
     return groupidcode, targetid
 
@@ -198,7 +194,7 @@ def db_ingest(filepath, filename, force=False):
         dbdict['telescopeid'] = telescopeids[hdr['TELESCOP']]
         if hdr['INSTRUME'] not in instrumentids:
             print hdr['INSTRUME'], 'not recognized. Adding to instruments table.'
-            lsc.mysqldef.insert_values(conn, 'instruments', {'telescopeid': telescopeids[hdr['TELESCOP']], 'name': hdr['INSTRUME']})
+            lsc.mysqldef.insert_values(conn, 'instruments', {'name': hdr['INSTRUME']})
             instruments = lsc.mysqldef.query(['select id, name from instruments'], conn)
             instrumentids = {inst['name']: inst['id'] for inst in instruments}
         dbdict['instrumentid'] = instrumentids[hdr['INSTRUME']]

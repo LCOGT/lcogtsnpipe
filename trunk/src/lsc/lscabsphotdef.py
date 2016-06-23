@@ -833,7 +833,7 @@ def fitcol2(_col,_dmag,band,col,fixcol='',show=False,rejection=2):
     sss=band
     f=col
     if len(_col)>1:
-        if fixcol!='':
+        if fixcol:
             slope=fixcol
             mean0,sig0,yy0,xx0=lsc.lscabsphotdef.meanclip2(_col,_dmag,fixcol, clipsig=rejection, maxiter=5, converge_num=.99, verbose=0)
             xx = [min(_col)-.1,max(_col)+.1]

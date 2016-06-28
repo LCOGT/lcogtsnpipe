@@ -528,10 +528,8 @@ if __name__ == "__main__":   # main program
                             for i in ll00.keys():
                                 ll00[i] = take(ll00[i], inds)
                             lltemp = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid, '')
-                        else:
-                            lltemp = ()
 
-                        if not listtemp:
+                        if not lista or not lltemp:
                             sys.exit('template not found')
 
                         listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]

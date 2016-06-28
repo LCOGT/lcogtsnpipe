@@ -1125,10 +1125,9 @@ def sextractor(img):
         if hd.get('NAXIS2'):  _ydim=int(hd.get('NAXIS2'))
         else: _ydim=4010
 
-        #_saturation=45000
         namesex=defsex('default.sex')
         os.system("sex '"+img+"[0]' -c "+namesex+" -CLEAN YES -SATUR_LEVEL "+str(_saturation)+' > _logsex')
-        print 'sex '+img+' -c '+namesex+' -CLEAN YES -SATUR_LEVEL '+str(_saturation)+' > _logsex'
+        print 'sex '+img+'[0] -c '+namesex+' -CLEAN YES -SATUR_LEVEL '+str(_saturation)+' > _logsex'
         delete(namesex)
         delete('_logsex')
         xpix=iraf.proto.fields('detections.cat',fields='2',Stdout=1)
@@ -1151,16 +1150,16 @@ def sextractor(img):
 
         try:
             print len(fl),_xdim,_ydim
-            ww=asarray([i for i in range(len(xpix)) if ((xpix[i]<_xdim) or (ypix[i]<_ydim))])
+            ww=asarray([i for i in range(len(xpix)) if ((xpix[i]<_xdim) or (ypix[i]<_ydim))], dtype=int)
             cl,cm,fw,ell,xpix,ypix,bkg,fl=cl[ww],cm[ww],fw[ww],ell[ww],xpix[ww],ypix[ww],bkg[ww],fl[ww]
 
-            ww=asarray([i for i in range(len(xpix)) if ((xpix[i]>20) or (ypix[i]<_ydim))])
+            ww=asarray([i for i in range(len(xpix)) if ((xpix[i]>20) or (ypix[i]<_ydim))], dtype=int)
             cl,cm,fw,ell,xpix,ypix,bkg,fl=cl[ww],cm[ww],fw[ww],ell[ww],xpix[ww],ypix[ww],bkg[ww],fl[ww]
 
-            ww=asarray([i for i in range(len(xpix)) if (xpix[i]>3)])
+            ww=asarray([i for i in range(len(xpix)) if (xpix[i]>3)], dtype=int)
             cl,cm,fw,ell,xpix,ypix,bkg,fl=cl[ww],cm[ww],fw[ww],ell[ww],xpix[ww],ypix[ww],bkg[ww],fl[ww]
 
-            ww=asarray([i for i in range(len(fl)) if (fl[i]<=3)])
+            ww=asarray([i for i in range(len(fl)) if (fl[i]<=3)], dtype=int)
             cl,cm,fw,ell,xpix,ypix,bkg,fl=cl[ww],cm[ww],fw[ww],ell[ww],xpix[ww],ypix[ww],bkg[ww],fl[ww]
 
             fl=compress((array(fw)<=15)&(array(fw)>=-2),array(fl))

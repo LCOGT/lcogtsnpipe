@@ -514,7 +514,8 @@ if __name__ == "__main__":   # main program
                                 _temptel = 'spectral'
                             elif _telescope == 'fl':
                                 _temptel = 'sinistro'
-                        print _temptel
+                        elif not _temptel:
+                            _temptel = _telescope
 
                         lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _temptel)
                         if lista:

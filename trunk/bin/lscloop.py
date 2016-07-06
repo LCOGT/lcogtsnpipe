@@ -126,6 +126,8 @@ if __name__ == "__main__":   # main program
     parser.add_option("--subtract-mag-from-header", action='store_true', help='automatically subtract mag from header of template image \t\t [%default]')
     parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing image subtraction')
+    parser.add_option("--optimal", dest="optimal", action="store_true", default=False, 
+                      help='Use Zackey optimal image subtraction \t [%default]')
 
     option, args = parser.parse_args()
     _instrument=option.instrument
@@ -215,6 +217,7 @@ if __name__ == "__main__":   # main program
     _clean = option.clean
     _subtract_mag_from_header = option.subtract_mag_from_header
     _psf = option.psf
+    _optimal = option.optimal
 
     if _xwindow:
         from stsci.tools import capable
@@ -536,7 +539,7 @@ if __name__ == "__main__":   # main program
 
                         if not listtemp:
                             sys.exit('template not found')
-                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix)
+                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, _optimal)
 
                     elif _stage == 'template':  #    merge images using lacos and swarp
                         listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]

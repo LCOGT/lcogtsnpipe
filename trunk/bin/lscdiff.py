@@ -52,6 +52,8 @@ if __name__ == "__main__":
                       default=False, help=' show result  \t\t\t [%default]')
     parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing the subtraction')
+    parser.add_option("--optimal", dest="optimal", action="store_true", default=False,
+                      help='Use Zackey optimal image subtraction \t [%default]')
 
     hotpants = OptionGroup(parser, "hotpants parameters")
     hotpants.add_option("--nrxy", dest="nrxy", default='1,1',
@@ -93,6 +95,7 @@ if __name__ == "__main__":
     _force = option.force
     _show = option.show
     _fixpix = option.fixpix
+    _optimal = option.optimal
 
     #     saturation=40000
     nrxy = option.nrxy
@@ -160,7 +163,10 @@ if __name__ == "__main__":
                         imgtemp_path = imglist2[0]
                         _dirtemp, imgtemp0 = os.path.split(imgtemp_path)
                         if _dirtemp: _dirtemp += '/'
-                        imgout0 = re.sub('.fits', '.diff.fits', imgtarg0)
+                        if _optimal:
+                            imgout0 = re.sub('.fits', '.opti.fits', imgtarg0)
+                        else:
+                            imgout0 = re.sub('.fits', '.diff.fits', imgtarg0)
                         if os.path.isfile(_dir + imgout0) and not _force:
                             print 'file', imgout0, 'already there'
                             continue
@@ -344,25 +350,34 @@ if __name__ == "__main__":
                             _afssc = ' -cmp ' + str(substamplist) + ' -afssc 1 '
                         else:
                             _afssc = ''
-                        line = ('hotpants -inim ' + imgtarg + ' -tmplim ' + imgtemp + ' -outim ' + imgout +
-                                ' -tu ' + tuthresh + ' -tuk ' + tucthresh +
-                                ' -tl ' + str(min(-pssl_temp,0)) + ' -tg ' + str(gain_temp) +
-                                ' -tr ' + str(rn_temp) + ' -tp ' + str(min(-pssl_temp,0)) +
-                                ' -tni tempnoise.fits ' +
-                                ' -iu ' + str(iuthresh) + ' -iuk ' + str(iucthresh) + 
-                                ' -il ' + str(min(-pssl_targ,0)) + ' -ig ' + str(gain_targ) +
-                                ' -ir ' + str(rn_targ) + ' -ip ' + str(min(-pssl_targ,0)) +
-                                ' -ini targnoise.fits ' +
-                                ' -r ' + str(rkernel) +
-                                ' -nrx ' + nrxy.split(',')[0] + ' -nry ' + nrxy.split(',')[1] +
-                                ' -nsx ' + nsxy.split(',')[0] + ' -nsy ' + nsxy.split(',')[1] +
-                                _afssc + ' -rss ' + str(radius) +
-                                _convolve + ' -n ' + normalize + ' ' + sconv +
-                                ' -ko ' + ko + ' -bgo ' + bgo+' -tmi tempmask.fits  -okn -ng 4 9 0.70 6 1.50 4 3.00 2 5 ')
+
+                        if _optimal:
+                            import OptimalSub
+                            psftarg = imgtarg_path.replace('.fits','.psf.fits')
+                            psftemp = imgtemp_path.replace('.fits','.psf.fits')
+                            OptimalSub.Subtract(imgtarg, imgtemp, psftarg, psftemp, imgout)
+                            
+
+                        else:
+                            line = ('hotpants -inim ' + imgtarg + ' -tmplim ' + imgtemp + ' -outim ' + imgout +
+                                    ' -tu ' + tuthresh + ' -tuk ' + tucthresh +
+                                    ' -tl ' + str(min(-pssl_temp,0)) + ' -tg ' + str(gain_temp) +
+                                    ' -tr ' + str(rn_temp) + ' -tp ' + str(min(-pssl_temp,0)) +
+                                    ' -tni tempnoise.fits ' +
+                                    ' -iu ' + str(iuthresh) + ' -iuk ' + str(iucthresh) + 
+                                    ' -il ' + str(min(-pssl_targ,0)) + ' -ig ' + str(gain_targ) +
+                                    ' -ir ' + str(rn_targ) + ' -ip ' + str(min(-pssl_targ,0)) +
+                                    ' -ini targnoise.fits ' +
+                                    ' -r ' + str(rkernel) +
+                                    ' -nrx ' + nrxy.split(',')[0] + ' -nry ' + nrxy.split(',')[1] +
+                                    ' -nsx ' + nsxy.split(',')[0] + ' -nsy ' + nsxy.split(',')[1] +
+                                    _afssc + ' -rss ' + str(radius) +
+                                    _convolve + ' -n ' + normalize + ' ' + sconv +
+                                    ' -ko ' + ko + ' -bgo ' + bgo+' -tmi tempmask.fits  -okn -ng 4 9 0.70 6 1.50 4 3.00 2 5 ')
 
 
-                        print line
-                        os.system(line)
+                            print line
+                            os.system(line)
 
                         # delete temporary files
                         if os.path.isfile(re.sub('.fits', '.conv.fits', imgout0)):

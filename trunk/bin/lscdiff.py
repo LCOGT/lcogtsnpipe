@@ -164,7 +164,7 @@ if __name__ == "__main__":
                         _dirtemp, imgtemp0 = os.path.split(imgtemp_path)
                         if _dirtemp: _dirtemp += '/'
                         if _optimal:
-                            imgout0 = re.sub('.fits', '.opti.fits', imgtarg0)
+                            imgout0 = re.sub('.fits', '.optimal.diff.fits', imgtarg0)
                         else:
                             imgout0 = re.sub('.fits', '.diff.fits', imgtarg0)
                         if os.path.isfile(_dir + imgout0) and not _force:

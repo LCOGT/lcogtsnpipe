@@ -47,11 +47,8 @@ def Subtract(Nf,Rf,Pnf,Prf,Df):
 
     print 'B = '+str(B)
     print 'Gamma = '+str(gamma)
-    #print 'dx:',dx,'dy:',dy
     print 'Fit time: '+str(time.time()-t0)
-
     print 'Subtracting images...'
-
 
     N=np.subtract(N,gamma)
 

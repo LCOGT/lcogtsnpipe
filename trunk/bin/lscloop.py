@@ -352,7 +352,7 @@ if __name__ == "__main__":   # main program
                 ll0['ra'] = ll0['ra0'][:]
                 ll0['dec'] = ll0['dec0'][:]
                 print _filter, _id, _name, _ra, _dec
-                ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype,_groupid, _instrument)
+                ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype, _groupid, _instrument, _temptel)
                 if len(ll['filename']) > 0:
                     # print '##'*50
                     #                 print '# IMAGE                                    OBJECT           FILTER           WCS             PSF           PSFMAG          ZCAT          MAG      ABSCAT'

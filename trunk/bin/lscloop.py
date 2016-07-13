@@ -287,7 +287,7 @@ if __name__ == "__main__":   # main program
             ll0['ra'] = ll0['ra0'][:]
             ll0['dec'] = ll0['dec0'][:]
 
-            ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype,_groupid, _instrument)
+            ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype, _groupid, _instrument, _temptel)
             print '##' * 50
             print '# IMAGE                                    OBJECT           FILTER           WCS            ' \
                   ' PSF           PSFMAG    APMAG       ZCAT          MAG      ABSCAT'
@@ -507,6 +507,7 @@ if __name__ == "__main__":   # main program
                             startdate = '20120101'
                             enddate   = '20150101'
 
+                        suffix = '.{}.diff.fits'.format(_temptel).replace('..', '')
                         if _temptel.upper() in ['SDSS', 'PS1']:
                             if _telescope == 'kb':
                                 _temptel = 'sbig'
@@ -536,7 +537,7 @@ if __name__ == "__main__":   # main program
                         listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                         listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
 
-                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix)
+                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, suffix)
 
                     elif _stage == 'template':  #    merge images using lacos and swarp
                         listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]

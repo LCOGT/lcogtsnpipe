@@ -733,7 +733,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
     return rasn2c, decsn2c
 
 
-def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1,_groupid='', _instrument=''):
+def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel=''):
     from numpy import array, asarray
     import string, re, os, sys
     import lsc
@@ -854,6 +854,12 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1,_groupid='
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
+
+    if _filetype == 3 and _temptel:
+        temptels = np.array([fn.split('.')[1] if fn.count('.') == 3 else inst[0:2] for fn, inst in zip(ll1['filename'], ll1['instrument'])])
+        for jj in ll1:
+            ll1[jj] = array(ll1[jj])[temptels == _temptel]
+
 ######################
     if _bad:
         if _bad == 'wcs':
@@ -2003,7 +2009,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
     os.system(command)
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convolve='',_bgo=3,_fixpix=False):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, suffix='.diff.fits'):
     import lsc
 
     direc = lsc.__path__[0]
@@ -2047,7 +2053,7 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convo
         fixpix = ' --fixpix '
     else:
         fixpix = ''
-    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo + fixpix
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo + fixpix + ' --suffix ' + suffix
     print command
     os.system(command)
 

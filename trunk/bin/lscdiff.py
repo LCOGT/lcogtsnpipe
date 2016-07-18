@@ -52,8 +52,12 @@ if __name__ == "__main__":
                       default=False, help=' show result  \t\t\t [%default]')
     parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing the subtraction')
+<<<<<<< HEAD
     parser.add_option("--optimal", dest="optimal", action="store_true", default=False,
                       help='Use Zackey optimal image subtraction \t [%default]')
+=======
+    parser.add_option('--suffix', default='.diff.fits', help='suffix for difference images')
+>>>>>>> b0be4dec5d64665957e0cddc4188266505668522
 
     hotpants = OptionGroup(parser, "hotpants parameters")
     hotpants.add_option("--nrxy", dest="nrxy", default='1,1',
@@ -163,10 +167,14 @@ if __name__ == "__main__":
                         imgtemp_path = imglist2[0]
                         _dirtemp, imgtemp0 = os.path.split(imgtemp_path)
                         if _dirtemp: _dirtemp += '/'
+<<<<<<< HEAD
                         if _optimal:
                             imgout0 = re.sub('.fits', '.optimal.diff.fits', imgtarg0)
                         else:
                             imgout0 = re.sub('.fits', '.diff.fits', imgtarg0)
+=======
+                        imgout0 = re.sub('.fits', option.suffix, imgtarg0)
+>>>>>>> b0be4dec5d64665957e0cddc4188266505668522
                         if os.path.isfile(_dir + imgout0) and not _force:
                             print 'file', imgout0, 'already there'
                             continue

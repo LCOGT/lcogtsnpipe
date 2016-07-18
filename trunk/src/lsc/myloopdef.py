@@ -733,7 +733,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
     return rasn2c, decsn2c
 
 
-def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1,_groupid='', _instrument=''):
+def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel=''):
     from numpy import array, asarray
     import string, re, os, sys
     import lsc
@@ -854,6 +854,12 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1,_groupid='
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
+
+    if _filetype == 3 and _temptel:
+        temptels = np.array([fn.split('.')[1] if fn.count('.') == 3 else inst[0:2] for fn, inst in zip(ll1['filename'], ll1['instrument'])], dtype=str)
+        for jj in ll1:
+            ll1[jj] = array(ll1[jj])[temptels == _temptel]
+
 ######################
     if _bad:
         if _bad == 'wcs':
@@ -1358,11 +1364,16 @@ def checkdiff(imglist, database='photlco'):
             photlcodict = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
             _dir = photlcodict[0]['filepath']
             diffimg = _dir + img
+<<<<<<< HEAD
             if '.optimal' in diffimg:
                 origimg = diffimg.replace('.optimal.diff','')
             else:
                 origimg = diffimg.replace('.diff', '')
             tempimg = origimg.replace('.fits', '.ref.fits')
+=======
+            origimg = re.sub('\..*diff', '', diffimg)
+            tempimg = diffimg.replace('diff', 'ref')
+>>>>>>> b0be4dec5d64665957e0cddc4188266505668522
             if os.path.isfile(diffimg) and os.path.isfile(origimg) and os.path.isfile(tempimg):
                 print img, photlcodict[0]['filter']
                 iraf.display(origimg, 1, fill=True, Stdout=1)
@@ -2006,7 +2017,11 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
     os.system(command)
 
 #####################################################################
+<<<<<<< HEAD
 def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convolve='',_bgo=3,_fixpix=False, _optimal=False):
+=======
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, suffix='.diff.fits'):
+>>>>>>> b0be4dec5d64665957e0cddc4188266505668522
     import lsc
 
     direc = lsc.__path__[0]
@@ -2050,11 +2065,15 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i',_convo
         fixpix = ' --fixpix '
     else:
         fixpix = ''
+<<<<<<< HEAD
     if _optimal:
         optimal = ' --optimal '
     else:
         optimal = ''
     command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo + fixpix + optimal
+=======
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo + fixpix + ' --suffix ' + suffix
+>>>>>>> b0be4dec5d64665957e0cddc4188266505668522
     print command
     os.system(command)
 
@@ -2173,7 +2192,7 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
                     out_fits = fits.PrimaryHDU(header=hd,data=(ar-ar).astype('uint8'))
                     out_fits.writeto(re.sub('.fits', '.mask.fits', _dir + img), clobber=True, output_verify='fix')
                 else:
-                    if not os.path.isfile(re.sub('.fits', '.clean.fits', _dir + img)) or _force:
+                    if not os.path.isfile(_dir + img.replace('.fits', '.clean.fits')) or not os.path.isfile(_dir + img.replace('.fits', '.mask.fits')) or _force:
                         output, mask, satu = lsc.util.Docosmic(_dir + img, _sigclip, _sigfrac, _objlim)
                         lsc.util.updateheader(output, 0, {'DOCOSMIC': [True, 'Cosmic rejection using LACosmic']})
                         print 'mv ' + output + ' ' + _dir

@@ -230,7 +230,7 @@ if __name__ == "__main__":
                     for jj in range(0,len(_ra)):
                         lll.append(str(_ra[jj]) + '    ' + str(_dec[jj]))
                         #lll = [str(_ra) + '    ' + str(_dec)]
-                    iraf.wcsctran('STDIN', 'tmp.pix', img, Stdin=lll, inwcs='world', units='degrees degrees',
+                    iraf.wcsctran('STDIN', 'tmp.pix', img + '[0]', Stdin=lll, inwcs='world', units='degrees degrees',
                                   outwcs='logical', columns='1 2', formats='%10.1f %10.1f')
                     if _show:
                         iraf.tvmark(1, 'tmp.pix', mark="circle", number='yes', radii=10, nxoffse=5, nyoffse=5,

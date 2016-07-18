@@ -41,6 +41,8 @@ if __name__ == "__main__":
                       help='z1 \t [%default]')
     parser.add_option("--z2", dest="z2", default=None, type="int",
                       help='z2 \t [%default]')
+    parser.add_option("--temptel", dest="temptel", default='', type="str",
+                      help='--temptel  template instrument \t [%default]')
 
     option, args = parser.parse_args()
     _telescope = option.telescope
@@ -57,6 +59,7 @@ if __name__ == "__main__":
     _z1 = option.z1
     _z2 = option.z2
     _filetype = option.filetype
+    _temptel = option.temptel
     if option.force == None:
         _redo = False
     else:
@@ -102,7 +105,7 @@ if __name__ == "__main__":
         inds = argsort(ll0['mjd'])  # sort by mjd
         for i in ll0.keys():
             ll0[i] = take(ll0[i], inds)
-        ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype)
+        ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype, _temptel=_temptel)
         print '##' * 50
         print '# IMAGE                                    OBJECT           FILTER           WCS             PSF   ' \
               '        PSFMAG          ZCAT          MAG      ABSCAT'

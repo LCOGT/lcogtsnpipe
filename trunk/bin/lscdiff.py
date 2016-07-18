@@ -356,7 +356,14 @@ if __name__ == "__main__":
                             psftarg = imgtarg_path.replace('.fits','.psf.fits')
                             psftemp = imgtemp_path.replace('.fits','.psf.fits')
                             OptimalSub.Subtract(imgtarg, imgtemp, psftarg, psftemp, imgout)
-                            
+                            # create fields that hotpants does automatically
+                            hotpants_fields = {'PHOTNORM': (normalize, 'Direction of photometric normalization'),
+                                               'TARGET': (imgtarg_path, 'target image'),
+                                               'TEMPLATE': (imgtemp_path, 'template image'),
+                                               'DIFFIM': (imgout, 'Difference Image'),
+                                               'NREGION': (1, 'Number of independent regions'),
+                                               'MASKVAL': (1e-30, 'Value of Masked Pixels')}
+                            lsc.util.updateheader(imgout, 0,  hotpants_fields)
 
                         else:
                             line = ('hotpants -inim ' + imgtarg + ' -tmplim ' + imgtemp + ' -outim ' + imgout +

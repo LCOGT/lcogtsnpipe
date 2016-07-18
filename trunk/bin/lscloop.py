@@ -540,13 +540,10 @@ if __name__ == "__main__":   # main program
                         listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                         listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
 
-<<<<<<< HEAD
                         if not listtemp:
                             sys.exit('template not found')
                         lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, _optimal)
-=======
                         lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, suffix)
->>>>>>> b0be4dec5d64665957e0cddc4188266505668522
 
                     elif _stage == 'template':  #    merge images using lacos and swarp
                         listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]

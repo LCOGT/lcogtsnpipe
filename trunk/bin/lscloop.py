@@ -510,15 +510,17 @@ if __name__ == "__main__":   # main program
                         suffix = '.{}.diff.fits'.format(_temptel).replace('..', '')
                         if _temptel.upper() in ['SDSS', 'PS1']:
                             if _telescope == 'kb':
-                                _temptel = 'sbig'
+                                fake_temptel = 'sbig'
                             elif _telescope == 'fs':
-                                _temptel = 'spectral'
+                                fake_temptel = 'spectral'
                             elif _telescope == 'fl':
-                                _temptel = 'sinistro'
-                        elif not _temptel:
-                            _temptel = _telescope
+                                fake_temptel = 'sinistro'
+                        elif _temptel:
+                            fake_temptel = _temptel
+                        else:
+                            fake_temptel = _telescope
 
-                        lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _temptel)
+                        lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', fake_temptel)
                         if lista:
                             ll00 = {}
                             for jj in lista[0].keys():

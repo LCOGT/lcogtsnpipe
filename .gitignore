@@ -1,5 +1,3 @@
+*.fits
 *.cat
-trunk/build/
-.idea/
-*.*~
-.AppleDouble
+*.py~

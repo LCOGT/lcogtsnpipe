@@ -49,4 +49,4 @@ if __name__ == '__main__':
             print varimg
             os.system('cp '+varimg+ ' '+_path[0]['filepath'])
             print 'cp '+varimg+ ' '+_path[0]['filepath']
-        lsc.mysqldef.updatevalue('photlco','filetype',4,image0,'lcogt2','filename')        
+        lsc.mysqldef.updatevalue('photlco','filetype',4,image0,'lcogt2','filename')

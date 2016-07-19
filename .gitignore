@@ -1,3 +1,5 @@
 *.fits
 *.cat
 *.py~
+*.cat~
+trunk/build

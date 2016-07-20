@@ -388,18 +388,18 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     print imgmask
     print skylevel
     sampling = 'BILINEAR' # LANCZOS3
-    line = 'swarp ' + ','.join(imglist) + ' -IMAGEOUT_NAME ' + str(output) + ' -WEIGHTOUT_NAME ' + \
-                   re.sub('.fits', '', output) + '.weight.fits -RESAMPLE_DIR ' + \
-                   './ -RESAMPLE_SUFFIX .swarptemp.fits -COMBINE Y -RESAMPLING_TYPE '+sampling+' -VERBOSE_TYPE NORMAL ' +\
-                   '-SUBTRACT_BACK Y  -INTERPOLATE Y -PIXELSCALE_TYPE MANUAL,MANUAL -COMBINE_TYPE '+str(combine_type)+\
-                   ' -PIXEL_SCALE ' +\
-                   str(pixelscale) + ',' + str(pixelscale) + ' -IMAGE_SIZE ' + str(_imagesize) + ',' +\
-                   str(_imagesize) + ' -CENTER_TYPE MANUAL,MANUAL -CENTER ' + str(_ra) + ',' + str(_dec) +\
-                   ' -RDNOISE_DEFAULT ' + str(_ron) + ' -GAIN_KEYWORD NONONO ' + '-GAIN_DEFAULT ' +\
-                   str(_gain)
+    line = 'swarp ' + ','.join(imglist) + ' -IMAGEOUT_NAME ' + str(output) + \
+            ' -WEIGHTOUT_NAME ' + re.sub('.fits', '', output) + '.weight.fits' + \
+            ' -RESAMPLE_DIR ./ -RESAMPLE_SUFFIX .swarptemp.fits -RESAMPLING_TYPE ' +sampling+ \
+            ' -COMBINE Y  -COMBINE_TYPE ' + str(combine_type)+ \
+            ' -VERBOSE_TYPE NORMAL -SUBTRACT_BACK Y -INTERPOLATE Y' + \
+            ' -PIXELSCALE_TYPE MANUAL,MANUAL -PIXEL_SCALE ' + str(pixelscale) + ',' + str(pixelscale) + \
+            ' -IMAGE_SIZE ' + str(_imagesize) + ',' + str(_imagesize) + \
+            ' -CENTER_TYPE MANUAL,MANUAL -CENTER ' + str(_ra) + ',' + str(_dec) + \
+            ' -GAIN_DEFAULT ' + str(_gain)
 
     if imgmask:
-       line = line+' -WEIGHT_TYPE MAP_WEIGHT -WEIGHT_THRESH 0.5 -WEIGHT_IMAGE ' +  ','.join(imgmask)
+       line += ' -WEIGHT_TYPE MAP_WEIGHT -WEIGHT_IMAGE ' +  ','.join(imgmask)
     print line
     os.system(line)
 

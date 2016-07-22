@@ -711,8 +711,9 @@ def fitcol3(colors, deltas, dcolors=None, ddeltas=None, fixedC=None, filt='', co
             keep[i] = not keep[i] # toggle rejection
             print
             Z, dZ, C, dC = calcZC(colors, deltas, dcolors, ddeltas, fixedC, filt, col, show=True, guess=[Z, C])
-        plt.gcf().canvas.mpl_connect('pick_event', onpick)
+        cid = plt.gcf().canvas.mpl_connect('pick_event', onpick)
         raw_input('Press enter to continue.')
+        plt.gcf().canvas.mpl_disconnect(cid)
     elif fixedC is None and C > 0.3: # if the color term is too crazy, use fixed color term
         if filt=='g': fixedC = 0.1
         else:         fixedC = 0
@@ -739,10 +740,13 @@ def calcZC(colors, deltas, dcolors=None, ddeltas=None, #keep=None,
         dZ, dC = myoutput.sd_beta
         x_reg = myoutput.xplus
         y_reg = myoutput.y
-    else:
+    elif np.any(keep):
         Z, sum_of_weights = np.average(deltas[keep], weights=ddeltas[keep]**-2, returned=True)
         dZ = sum_of_weights**-0.5
         C, dC = fixedC, 0
+    else:
+        Z, C = guess
+        dZ, dC = 0, 0
     print 'zero point = {:5.2f} +/- {:4.2f}'.format(Z, dZ)
     print 'color term = {:5.2f} +/- {:4.2f}'.format(C, dC)
     if show:

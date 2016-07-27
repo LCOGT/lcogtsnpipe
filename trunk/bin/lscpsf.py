@@ -582,10 +582,9 @@ if __name__ == "__main__":
                     iraf.seepsf(img + '.psf', '_psf.psf')
                     iraf.surface('_psf.psf')
                     aa = raw_input('>>>good psf [[y]/n] ? ')
-                    if not aa: 
-                        aa = 'y'
+                    if not aa or aa.lower()[0] == 'y':
                         break
-                    if aa in ['n', 'N', 'No', 'NO']: 
+                    if aa.lower()[0] == 'n':
                         result = 0
                         bb = raw_input('If you want to try again, type the new FWHM to try here. Otherwise press enter to continue. ')
                         if bb: fwhm0 = float(bb)

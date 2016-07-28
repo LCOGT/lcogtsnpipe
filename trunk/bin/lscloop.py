@@ -507,7 +507,7 @@ if __name__ == "__main__":   # main program
                             startdate = '20120101'
                             enddate   = '20150101'
 
-                        suffix = '.{}.diff.fits'.format(_temptel).replace('..', '')
+                        suffix = '.{}.diff.fits'.format(_temptel).replace('..', '.')
                         if _temptel.upper() in ['SDSS', 'PS1']:
                             if _telescope == 'kb':
                                 fake_temptel = 'sbig'

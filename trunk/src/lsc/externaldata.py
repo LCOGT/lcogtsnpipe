@@ -343,7 +343,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     print _dateobs, _dayobs, _mjd, _filter
 
     if not output:
-       output = _telescope+'_'+str(out1)+'_'+str(_dayobs)+'_'+str(_filter)+'.fits'
+       output = _telescope+'_'+str(out1)+'_'+str(_dayobs)+'_'+str(_filter)+'_'+objname +'.fits'
 
     imgmask = [] 
     skylevel = []
@@ -443,65 +443,10 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
         hd['TELESCOP'] = ('PS1', 'name of the telescope')
         hd['INSTRUME'] = ('PS1', 'instrument used')
 
-# this syntax for updating headers is deprecated and
-# causes a lot of warning messages when running the pipeline
-
-#    if len(skylevel):
-#       hd.update('skylevel', np.mean(skylevel), 'avarage skylevel')
-#       
-
-#    hd.update('L1FWHM', 9999, 'FHWM (arcsec) - computed with sectractor')
-#    hd.update('WCSERR', 0,    'Error status of WCS fit. 0 for no error')
-#    hd.update('MJD-OBS', _mjd,        'MJD')
-#    hd.update('RA'     ,  _ra,        'RA')
-#    hd.update('DEC'    ,  _dec,       'DEC')
-#    hd.update('RDNOISE' , _ron,       'read out noise')
-#    hd.update('PIXSCALE', pixelscale, '[arcsec/pixel] Nominal pixel scale on sky')
-#    hd.update('FILTER' , _filter,     'Instrument used')
-#    hd.update('DAYOBS' , _dayobs,     'day of observation')
-#    hd.update('AIRMASS', _airmass,    'day of observation')
-#    hd.update('DATE-OBS', _dateobs,    'date of observation')
-#    hd.update('GAIN'   ,    _gain,    ' gain ')
-#    hd.update('saturate', _saturate,  ' saturatiopn level ')
-#    if objname:
-#       hd.update('OBJECT', objname, 'Title of the dataset')
-
-#    if survey == 'sloan':
-#       hd.update('TELESCOP', 'SDSS', 'The Name of the Telescope')
-#       hd.update('INSTRUME', 'SDSS', 'Instrument used')
-#    elif survey == 'ps1':
-#       hd.update('TELESCOP', 'PS1', 'The Name of the Telescope')
-#       hd.update('INSTRUME', 'PS1', 'Instrument used')
-       
-#    new_header = hd
-#    # sinistro images are rotated 180 degree
-#    if _telescope == 'sinistro':
-#       ar = np.rot90(np.rot90(ar))
-#       CD1_1 = hd['CD1_1']
-#       CD2_2 = hd['CD2_2']
-#       new_header['CD1_1']  = CD1_1*(-1)
-#       new_header['CD2_2']  = CD2_2*(-1)
-
     ar, hdr = northupeastleft(data=ar, header=hd)
     out_fits = fits.PrimaryHDU(header=hd, data=ar)
     out_fits.writeto(output, clobber=True, output_verify='fix')
     northupeastleft(filename=varimg)
-
-#    _=lsc.display_image(output,2,True,'','')
-#    answ='no'
-#    while answ in ['no','n','N','No']:
-#       answ = raw_input('flip, rotate the image ((n)o, rotate 180 (r), flip (x), flip (y)) [n] ')
-#       if answ in ['180','r']:
-#          output = rotateflipimage(output,rot180=True,flipx=False,flipy=False)
-#          varimg = rotateflipimage(varimg,rot180=True,flipx=False,flipy=False)
-#       elif answ in ['x']:
-#          output = rotateflipimage(output,rot180=False,flipx=True,flipy=False)
-#          varimg = rotateflipimage(varimg,rot180=False,flipx=True,flipy=False)
-#       elif answ in ['y']:
-#          output = rotateflipimage(output,rot180=False,flipx=False,flipy=True)
-#          varimg = rotateflipimage(varimg,rot180=False,flipx=False,flipy=True)
-#       time.sleep(1)
-
     if show:
        lsc.display_image(output,2,True,'','')
     return output, varimg

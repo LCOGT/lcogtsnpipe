@@ -504,8 +504,8 @@ if __name__ == "__main__":   # main program
                             startdate = _tempdate.split('-')[0]
                             enddate   = _tempdate.split('-')[-1]
                         else:
-                            startdate = '20120101'
-                            enddate   = '20150101'
+                            startdate = '19990101'
+                            enddate   = '20080101'
 
                         suffix = '.{}.diff.fits'.format(_temptel).replace('..', '.')
                         if _temptel.upper() in ['SDSS', 'PS1']:

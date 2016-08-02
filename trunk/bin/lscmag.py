@@ -341,43 +341,34 @@ if __name__ == "__main__":
                         kk = lsc.sites.extintion('siding')
                     else:
                         print _filter, img, dicti[_filter][img]
-                        sys.exit('problem with dicti')
-                    Z1 = ''
-                    C1 = ''
-                    for ww in dicti[_filter][img].keys():
-                        if 'ZP' + filters1[_filter].upper() == ww[0:3] and float(
-                                string.split(dicti[_filter][img][ww])[1]) < 99:
-                            Z1 = float(string.split(dicti[_filter][img][ww])[1])
-                            DZ1 = float(string.split(dicti[_filter][img][ww])[3])
-                            C1 = float(string.split(dicti[_filter][img][ww])[2])
-                            break
-                            # mag0=dicti[_filter][img][namemag[_typemag][0]]+2.5*math.log10(dicti[_filter][img]['exptime'])-kk[filters1[_filter]]*dicti[_filter][img]['airmass']
-                    mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filters1[_filter]] * dicti[_filter][img][
-                        'airmass']
+                        sys.exit('telescope not in lsc.sites.extintion [sic]')
+
+                    filename = img.split('/')[-1].replace('sn2.fits', '.fits')
+                    mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filters1[_filter]] * dicti[_filter][img]['airmass']
                     dmag0 = dicti[_filter][img][namemag[_typemag][1]]
-                    if Z1 and mag0 < 99:
-                        M1 = mag0 + Z1
-                        DM1=DZ1+dmag0
-                        lsc.mysqldef.updatevalue(_datatable, 'mag', M1,
-                                                 re.sub('sn2.fits', 'fits', string.split(img, '/')[-1]))
-                        lsc.mysqldef.updatevalue(_datatable, 'dmag', DM1, 
-                                                 re.sub('sn2.fits', 'fits', string.split(img, '/')[-1]))
-                        if _typemag == 'fit':
-                            lsc.mysqldef.updatevalue(_datatable, 'magtype', 2, re.sub('sn2.fits', 'fits',
-                                                                                      string.split(img, '/')[-1]))
-                        elif _typemag == 'ph':
-                            lsc.mysqldef.updatevalue(_datatable, 'magtype', 3, re.sub('sn2.fits', 'fits',
-                                                                                      string.split(img, '/')[-1]))
-                        lsc.util.updateheader(img, 0, {'mag': [M1, 'calibrated mag']})
-                    else:
+                    Z1 = ''
+                    if mag0 < 99:
+                        color_choices = queste1[lsc.sites.filterst1(tel)[_filter]] + queste0[lsc.sites.filterst1(tel)[_filter]]
+                        for col in color_choices:
+                            hdr_kwd = 'ZP' + filters1[_filter].upper() + col.upper()
+                            if hdr_kwd in dicti[_filter][img] and float(dicti[_filter][img][hdr_kwd].split()[1]) < 99:
+                                Z1 = float(dicti[_filter][img][hdr_kwd].split()[1])
+                                DZ1 = float(dicti[_filter][img][hdr_kwd].split()[3])
+                                M1 = mag0 + Z1
+                                DM1 = (DZ1**2 + dmag0**2)**0.5
+
+                                lsc.mysqldef.updatevalue(_datatable, 'mag', M1, filename)
+                                lsc.mysqldef.updatevalue(_datatable, 'dmag', DM1,  filename)
+                                if _typemag == 'fit':
+                                    lsc.mysqldef.updatevalue(_datatable, 'magtype', 2, filename)
+                                elif _typemag == 'ph':
+                                    lsc.mysqldef.updatevalue(_datatable, 'magtype', 3, filename)
+                                lsc.util.updateheader(img, 0, {'mag': [M1, 'calibrated mag']})
+                    if not Z1:
                         print 'no other filters with calibration in ' + _filter + ' band'
                         print '(or zcat did not put the color terms in the header)'
-                        print img, _filter, mag0, dmag0, Z1, C1
-                        lsc.mysqldef.updatevalue(_datatable, 'mag', 9999,
-                                                 re.sub('sn2.fits', 'fits', string.split(img, '/')[-1]))
+                        print img, _filter, mag0, dmag0
+                        lsc.mysqldef.updatevalue(_datatable, 'mag', 9999, filename)
                         lsc.util.updateheader(img, 0, {'mag': [9999, 'calibrated mag']})
-                        # try:
-                        # except:
-#                        print 'module mysqldef not found'
     else:
         print '\n### warning: no measurement in sn2 files'

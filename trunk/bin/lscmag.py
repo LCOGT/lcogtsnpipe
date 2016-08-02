@@ -343,7 +343,7 @@ if __name__ == "__main__":
                         print _filter, img, dicti[_filter][img]
                         sys.exit('telescope not in lsc.sites.extintion [sic]')
 
-                    filename = img.split('/')[-1].replace('sn2.fits', '.fits')
+                    filename = img.split('/')[-1].replace('.sn2.fits', '.fits')
                     mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filters1[_filter]] * dicti[_filter][img]['airmass']
                     dmag0 = dicti[_filter][img][namemag[_typemag][1]]
                     Z1 = ''

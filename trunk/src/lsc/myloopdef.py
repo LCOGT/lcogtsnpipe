@@ -1826,6 +1826,7 @@ def chosecolor(allfilter, usegood=False, _field=''):
                 if _fil not in color: color[_fil] = []
                 color[_fil].append(_fil + filt)
                 break
+
     if usegood:
         goodcol = {'U': 'UB', 'B': 'BV', 'V': 'VR', 'R': 'VR', 'I': 'RI',
                     'u': 'ug', 'g': 'gr', 'r': 'ri', 'i': 'ri', 'z': 'iz'}

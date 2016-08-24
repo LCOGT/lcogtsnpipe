@@ -193,6 +193,7 @@ def insert_values(conn,table,values):
         resultSet = cursor.fetchall ()
         if cursor.rowcount == 0:
             pass
+        conn.commit()
         cursor.close ()
     except MySQLdb.Error, e:
         print "Error %d: %s" % (e.args[0], e.args[1])

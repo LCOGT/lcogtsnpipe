@@ -351,11 +351,13 @@ if __name__ == "__main__":
                         best_color = lsc.chosecolor('uUBgVrRiIz', usegood=True)[lsc.sites.filterst1(tel)[_filter]][0]
                         hdr_kwd = 'ZP' + filters1[_filter].upper() + best_color.upper()
                         if hdr_kwd in dicti[_filter][img] and float(dicti[_filter][img][hdr_kwd].split()[1]) < 99:
+                            print 'using', hdr_kwd
                             Z1 = float(dicti[_filter][img][hdr_kwd].split()[1])
                             DZ1 = float(dicti[_filter][img][hdr_kwd].split()[3])
                         else:
                             for ww in dicti[_filter][img].keys():
                                 if ww[:3] == 'ZP' + filters1[_filter].upper() and float(dicti[_filter][img][ww].split()[1]) < 99:
+                                    print 'using', ww
                                     Z1 = float(string.split(dicti[_filter][img][ww])[1])
                                     DZ1 = float(string.split(dicti[_filter][img][ww])[3])
                                     break
@@ -363,6 +365,7 @@ if __name__ == "__main__":
                     if Z1:
                         M1 = mag0 + Z1
                         DM1 = (DZ1**2 + dmag0**2)**0.5
+                        print 'final mag = {:.2f} +/- {:.2f}'.format(M1, DM1)
                         lsc.mysqldef.updatevalue(_datatable, 'mag', M1, filename)
                         lsc.mysqldef.updatevalue(_datatable, 'dmag', DM1,  filename)
                         if _typemag == 'fit':

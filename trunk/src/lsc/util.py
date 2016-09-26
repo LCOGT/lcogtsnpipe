@@ -902,8 +902,8 @@ def checksndb(img,table):
    from lsc.mysqldef import getfromcoordinate, gettargetid,query
    from lsc import conn
    hdrt=readhdr(img)
-   _ra=readkey3(hdrt,'RA')
-   _dec=readkey3(hdrt,'DEC')
+   _ra=readkey3(hdrt,'CAT-RA')
+   _dec=readkey3(hdrt,'CAT-DEC')
    _targetid=gettargetid('',_ra,_dec,conn,.01,False)
    if not _targetid:
        _targetid=gettargetid('',_ra,_dec,conn,.02,False)

@@ -23,13 +23,14 @@ username = login[0]['username']
 password = base64.decodestring(login[0]['userpw'])
 authtoken = authenticate(username, password)
 
-frames = get_metadata(authtoken, start=start, end=end, OBSTYPE='EXPOSE', RLEVEL=91, public=False)    # all images where SNEx is a co-I
-frames += get_metadata(authtoken, start=start, end=end, TELID='1m0a', OBSTYPE='STANDARD', RLEVEL=91) # all 1m standard fields
-frames += get_metadata(authtoken, start=start, end=end, TELID='2m0a', OBSTYPE='STANDARD', RLEVEL=91) # all 2m standard fields
-frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=0, public=False)     # all FTN spectra SNEx is a co-I
-frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=0, public=False)     # all FTS spectra SNEx is a co-I
-frames += get_metadata(authtoken, start=start, end=end, PROPID='OGG_calib', RLEVEL=0)                # FTN standard star spectra
-frames += get_metadata(authtoken, start=start, end=end, PROPID='COJ_calib', RLEVEL=0)                # FTS standard star spectra
+frames = []
+for telid in ['2m0a', '1m0a']: # , '0m4a', '0m4b', '0m4c'
+    frames += get_metadata(authtoken, start=start, end=end, OBSTYPE='EXPOSE', RLEVEL=91, public=False)  # all images where SNEx is a co-I
+    frames += get_metadata(authtoken, start=start, end=end, OBSTYPE='STANDARD', TELID=telid, RLEVEL=91) # all photometric standards (except SQA)
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=0, public=False)        # all FTN spectra SNEx is a co-I
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=0, public=False)        # all FTS spectra SNEx is a co-I
+frames += get_metadata(authtoken, start=start, end=end, PROPID='OGG_calib', RLEVEL=0)                   # FTN standard star spectra
+frames += get_metadata(authtoken, start=start, end=end, PROPID='COJ_calib', RLEVEL=0)                   # FTS standard star spectra
 
 print 'Total number of frames:', len(frames)
 

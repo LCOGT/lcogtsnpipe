@@ -145,7 +145,7 @@ speclcoraw_to_hdrkey = {'objname': 'OBJECT',
                         'tracknumber': 'TRACKNUM'}
 
 def get_groupidcode(hdr):
-    if hdr['tracknum'] != 'UNSPECIFIED':
+    if 'tracknum' in hdr and hdr['tracknum'] != 'UNSPECIFIED':
         result = lsc.mysqldef.query(['''select obsrequests.groupidcode, obsrequests.targetid
                                         from obsrequests, obslog
                                         where obsrequests.id = obslog.requestsid

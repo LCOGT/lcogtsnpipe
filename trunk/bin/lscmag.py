@@ -8,7 +8,7 @@ import sys
 from optparse import OptionParser
 import time, math
 import lsc
-import lsc.sites.filterst1 as filters1
+from lsc.sites import filterst1 as filters1
 import numpy as np
 
 

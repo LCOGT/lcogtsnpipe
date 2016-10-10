@@ -8,7 +8,7 @@ import sys
 from optparse import OptionParser
 import time, math
 import lsc
-from lsc.sites import filterst1 as filters1
+from lsc.sites import filterst1
 import numpy as np
 
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     if len(dicti) > 0:
         allfilters = ''
-        for fil in dicti:     allfilters = allfilters + filters1[fil]
+        for fil in dicti:     allfilters = allfilters + filterst1[fil]
         if _interactive:  print allfilters
         if _field == 'apass' or _calib == 'apass':
             queste0 = lsc.myloopdef.chosecolor(allfilters, False, 'apass')
@@ -133,11 +133,11 @@ if __name__ == "__main__":
                                             colore.append(cc)
                 if len(secondimage) > 0:
                     colorescelto = ''
-                    vv = queste1[filters1[_filter]]
+                    vv = queste1[filterst1[_filter]]
                     if len(vv) > 0:
                         if vv[0].upper() in colore:  colorescelto = vv[0].upper()
                     else:
-                        vv = queste0[filters1[_filter]]
+                        vv = queste0[filterst1[_filter]]
                         if len(vv) > 0:
                             if vv[0].upper() in colore:  colorescelto = vv[0].upper()
                     if colorescelto:
@@ -162,11 +162,11 @@ if __name__ == "__main__":
 
                     if _interactive:
                         print dicti[_filter][img]['airmass']
-                        print kk[filters1[_filter]]
+                        print kk[filterst1[_filter]]
                         print 2.5 * math.log10(dicti[_filter][img]['exptime'])
                         print dicti[_filter][img][namemag[_typemag][0]]
                     # instrumental mag corrected for exp time and airmass
-                    mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filters1[_filter]] * dicti[_filter][img][
+                    mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filterst1[_filter]] * dicti[_filter][img][
                         'airmass']
                     dmag0 = dicti[_filter][img][namemag[_typemag][1]]
 
@@ -177,21 +177,21 @@ if __name__ == "__main__":
                         print dicti[_filter2][img2]
                         sys.exit('siteid not in lsc.sites.extinction')
                     # instrumental mag corrected for exp time and airmass
-                    mag1 = dicti[_filter2][img2][namemag[_typemag][0]] - kk[filters1[_filter2]] * dicti[_filter2][img2][
+                    mag1 = dicti[_filter2][img2][namemag[_typemag][0]] - kk[filterst1[_filter2]] * dicti[_filter2][img2][
                         'airmass']
                     dmag1 = dicti[_filter2][img2][namemag[_typemag][1]]
 
-                    if filters1[_filter].upper() == col[0]:
-                        Z1 = float(string.split(dicti[_filter][img]['ZP' + filters1[_filter].upper() + col.upper()])[1])
-                        C1 = float(string.split(dicti[_filter][img]['ZP' + filters1[_filter].upper() + col.upper()])[2])
+                    if filterst1[_filter].upper() == col[0]:
+                        Z1 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[1])
+                        C1 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[2])
                         DZ1 = float(
-                            string.split(dicti[_filter][img]['ZP' + filters1[_filter].upper() + col.upper()])[3])
+                            string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[3])
                         Z2 = float(
-                            string.split(dicti[_filter2][img2]['ZP' + filters1[_filter2].upper() + col.upper()])[1])
+                            string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[1])
                         C2 = float(
-                            string.split(dicti[_filter2][img2]['ZP' + filters1[_filter2].upper() + col.upper()])[2])
+                            string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[2])
                         DZ2 = float(
-                            string.split(dicti[_filter2][img2]['ZP' + filters1[_filter2].upper() + col.upper()])[3])
+                            string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[3])
 
                         M1, M2 = lsc.lscabsphotdef.finalmag(Z1, Z2, C1, C2, mag0, mag1)
 
@@ -237,16 +237,16 @@ if __name__ == "__main__":
                         except:
                             print 'module mysqldef not found'
                     else:
-                        Z2 = float(string.split(dicti[_filter][img]['ZP' + filters1[_filter].upper() + col.upper()])[1])
-                        C2 = float(string.split(dicti[_filter][img]['ZP' + filters1[_filter].upper() + col.upper()])[2])
+                        Z2 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[1])
+                        C2 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[2])
                         DZ2 = float(
-                            string.split(dicti[_filter][img]['ZP' + filters1[_filter].upper() + col.upper()])[3])
+                            string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[3])
                         Z1 = float(
-                            string.split(dicti[_filter2][img2]['ZP' + filters1[_filter2].upper() + col.upper()])[1])
+                            string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[1])
                         C1 = float(
-                            string.split(dicti[_filter2][img2]['ZP' + filters1[_filter2].upper() + col.upper()])[2])
+                            string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[2])
                         DZ1 = float(
-                            string.split(dicti[_filter2][img2]['ZP' + filters1[_filter2].upper() + col.upper()])[3])
+                            string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[3])
 
                         M1, M2 = lsc.lscabsphotdef.finalmag(Z1, Z2, C1, C2, mag1, mag0)
 
@@ -299,19 +299,19 @@ if __name__ == "__main__":
                         sys.exit('siteid not in lsc.sites.extinction')
 
                     filename = img.split('/')[-1].replace('.sn2.fits', '.fits')
-                    mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filters1[_filter]] * dicti[_filter][img]['airmass']
+                    mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filterst1[_filter]] * dicti[_filter][img]['airmass']
                     dmag0 = dicti[_filter][img][namemag[_typemag][1]]
                     Z1 = ''
                     if mag0 < 99:
-                        best_color = lsc.chosecolor('uUBgVrRiIz', usegood=True)[filters1[_filter]][0]
-                        hdr_kwd = 'ZP' + filters1[_filter].upper() + best_color.upper()
+                        best_color = lsc.chosecolor('uUBgVrRiIz', usegood=True)[filterst1[_filter]][0]
+                        hdr_kwd = 'ZP' + filterst1[_filter].upper() + best_color.upper()
                         if hdr_kwd in dicti[_filter][img] and float(dicti[_filter][img][hdr_kwd].split()[1]) < 99:
                             print 'using', hdr_kwd
                             Z1 = float(dicti[_filter][img][hdr_kwd].split()[1])
                             DZ1 = float(dicti[_filter][img][hdr_kwd].split()[3])
                         else:
                             for ww in dicti[_filter][img].keys():
-                                if ww[:3] == 'ZP' + filters1[_filter].upper() and float(dicti[_filter][img][ww].split()[1]) < 99:
+                                if ww[:3] == 'ZP' + filterst1[_filter].upper() and float(dicti[_filter][img][ww].split()[1]) < 99:
                                     print 'using', ww
                                     Z1 = float(string.split(dicti[_filter][img][ww])[1])
                                     DZ1 = float(string.split(dicti[_filter][img][ww])[3])

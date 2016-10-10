@@ -9,7 +9,7 @@ import sys
 from optparse import OptionParser
 import time
 import lsc
-import lsc.sites.filterst1 as filters1
+from lsc.sites import filterst1
 import numpy as np
 
 if __name__ == "__main__":
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     namemag = {'fit': ['smagf', 'smagerrf'], 'ph': ['magp3', 'merrp3']}
     allfilters = ''
     for fil in dicti:
-        allfilters = allfilters + filters1[fil]
+        allfilters = allfilters + filterst1[fil]
     queste0 = lsc.myloopdef.chosecolor(allfilters, False)
     queste1 = lsc.myloopdef.chosecolor(allfilters, True)
 
@@ -98,12 +98,12 @@ if __name__ == "__main__":
 
             if len(secondimage) > 0:
                 colorescelto = ''
-                vv = queste1[filters1[_filter]]
+                vv = queste1[filterst1[_filter]]
                 if len(vv) > 0:
                     if vv[0].upper() in colore:
                         colorescelto = vv[0].upper()
                 else:
-                    vv = queste0[filters1[_filter]]
+                    vv = queste0[filterst1[_filter]]
                     if len(vv) > 0:
                         if vv[0].upper() in colore:
                             colorescelto = vv[0].upper()
@@ -129,8 +129,8 @@ if __name__ == "__main__":
                     print dicti[_filter][img]
                     sys.exit('siteid not in lsc.sites.extinction')
                     # instrumental mag to exposure 1 second corrected for airmass
-                # mag0=dicti[_filter][img][namemag[_typemag][0]]+2.5*np.log10(dicti[_filter][img]['exptime'])-kk[filters1[_filter]]*dicti[_filter][img]['airmass']
-                mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filters1[_filter]] * dicti[_filter][img][
+                # mag0=dicti[_filter][img][namemag[_typemag][0]]+2.5*np.log10(dicti[_filter][img]['exptime'])-kk[filterst1[_filter]]*dicti[_filter][img]['airmass']
+                mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filterst1[_filter]] * dicti[_filter][img][
                     'airmass']
                 dmag0 = dicti[_filter][img][namemag[_typemag][1]]
 
@@ -146,15 +146,15 @@ if __name__ == "__main__":
                     print dicti[_filter2][img2]
                     sys.exit('siteid not in lsc.sites.extinction')
                     #                                                    instrumental mag to exposure 1 second corrected for airmass
-                #                mag1=dicti[_filter2][img2][namemag[_typemag][0]]+2.5*np.log10(dicti[_filter2][img2]['exptime'])-kk[filters1[_filter2]]*dicti[_filter2][img2]['airmass']
-                mag1 = dicti[_filter2][img2][namemag[_typemag][0]] - kk[filters1[_filter2]] * dicti[_filter2][img2][
+                #                mag1=dicti[_filter2][img2][namemag[_typemag][0]]+2.5*np.log10(dicti[_filter2][img2]['exptime'])-kk[filterst1[_filter2]]*dicti[_filter2][img2]['airmass']
+                mag1 = dicti[_filter2][img2][namemag[_typemag][0]] - kk[filterst1[_filter2]] * dicti[_filter2][img2][
                     'airmass']
                 dmag1 = dicti[_filter2][img2][namemag[_typemag][1]]
 
                 if _interactive:
                     lsc.util.marksn2(re.sub('sn2.fits', 'fits', img), img, 1, img2)
                     lsc.util.marksn2(re.sub('sn2.fits', 'fits', img2), img2, 2, img)
-                    print img, img2, _filter, _filter2, 2.5 * np.log10(dicti[_filter2][img2]['exptime']), kk[filters1[
+                    print img, img2, _filter, _filter2, 2.5 * np.log10(dicti[_filter2][img2]['exptime']), kk[filterst1[
                         _filter2]] * dicti[_filter2][img2]['airmass']
 
                 distvec, pos0, pos1 = lsc.lscastrodef.crossmatch(np.array(ra0), np.array(dec0), np.array(ra1),
@@ -188,12 +188,12 @@ if __name__ == "__main__":
 
                 output = re.sub('sn2.fits', 'cat', img)
                 f = open(output, 'w')
-                f.write('#daophot+standardfield\n#ra   dec   ' + filters1[_filter] + '   d' + filters1[_filter] + '\n')
-                if filters1[_filter].upper() == col[0]:
-                    Z1 = float(string.split(dicti[_filter][img]['ZP' + filters1[_filter].upper() + col.upper()])[1])
-                    C1 = float(string.split(dicti[_filter][img]['ZP' + filters1[_filter].upper() + col.upper()])[2])
-                    Z2 = float(string.split(dicti[_filter2][img2]['ZP' + filters1[_filter2].upper() + col.upper()])[1])
-                    C2 = float(string.split(dicti[_filter2][img2]['ZP' + filters1[_filter2].upper() + col.upper()])[2])
+                f.write('#daophot+standardfield\n#ra   dec   ' + filterst1[_filter] + '   d' + filterst1[_filter] + '\n')
+                if filterst1[_filter].upper() == col[0]:
+                    Z1 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[1])
+                    C1 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[2])
+                    Z2 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[1])
+                    C2 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[2])
                     DZ1 = 0.0
                     DZ2 = 0.0
                     M1, M2 = lsc.lscabsphotdef.finalmag(Z1, Z2, C1, C2, mag0cut, mag1cut)
@@ -210,10 +210,10 @@ if __name__ == "__main__":
                     for i in range(0, len(ra0cut)):
                         f.write('%15s \t%15s \t%s\t%s\n' % (racut[i], deccut[i], M1[i], dmag0cut[i]))
                 else:
-                    Z2 = float(string.split(dicti[_filter][img]['ZP' + filters1[_filter].upper() + col.upper()])[1])
-                    C2 = float(string.split(dicti[_filter][img]['ZP' + filters1[_filter].upper() + col.upper()])[2])
-                    Z1 = float(string.split(dicti[_filter2][img2]['ZP' + filters1[_filter2].upper() + col.upper()])[1])
-                    C1 = float(string.split(dicti[_filter2][img2]['ZP' + filters1[_filter2].upper() + col.upper()])[2])
+                    Z2 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[1])
+                    C2 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[2])
+                    Z1 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[1])
+                    C1 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[2])
                     M1, M2 = lsc.lscabsphotdef.finalmag(Z1, Z2, C1, C2, mag1cut, mag0cut)
                     DZ1 = 0.0
                     DZ2 = 0.0

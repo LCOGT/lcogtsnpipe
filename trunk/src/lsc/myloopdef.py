@@ -136,13 +136,6 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     elif _output:
         plotfast(setup, _output)
 
-    keytelescope = {'1m0-03': '3', '1m0-04': '4', '1m0-05': '5', '1m0-06': '6', '1m0-07': '7', '1m0-08': '8',
-                    '1m0-09': '9', '1m0-10': '10', '1m0-11': '11', '1m0-12': '12', '1m0-13': '13',
-                    'fts': '14', 'ftn': '15', 'SDSS': '20',  'PS1': '20', 'ogg': '15', '2m0-02': '15', '2m0-01': '14'}
-
-    if _tel not in keytelescope.keys():
-        _tel = 'extdata'
-
     linetot = {}
     if _output:
         ff = open(_output, 'w')
@@ -164,7 +157,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                         line += '%12.7s %12.6s ' % (str(setup[_tel][_fil]['mag'][j]), str(setup[_tel][_fil]['dmag'][j]))
                     else:
                         line += '%12.7s %12.6s ' % ('9999', '0.0')
-                line += '%5s%10s\n' % (str(keytelescope[_tel]), str(_tel) + '_' + str(_fil))
+                line += '%6s %2s\n' % (_tel, _fil)
                 linetot[setup[_tel][_fil]['mjd'][j]] = line
     aaa = linetot.keys()
     if _output:

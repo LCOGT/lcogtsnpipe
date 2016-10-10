@@ -38,15 +38,8 @@ if __name__ == '__main__':
         print 'add here ingestion of different images (DES)'
 
     if image0:
-        lsc.mysqldef.ingestdata('tar', '', ['20121212'], args.force, 'oracproc', '', [image0])
-        if args.force:
-            lsc.mysqldef.ingestredu([image0], 'yes', 'photlco')
-        else:
-            lsc.mysqldef.ingestredu([image0], 'no', 'photlco')
-        _path = lsc.mysqldef.query(['select filepath from photlco where filename = "'+str(image0)+'"'],conn)
-        if _path and varimg:
-            print _path[0]['filepath']
-            print varimg
-            os.system('cp '+varimg+ ' '+_path[0]['filepath'])
-            print 'cp '+varimg+ ' '+_path[0]['filepath']
-        lsc.mysqldef.updatevalue('photlco','filetype',4,image0,'lcogt2','filename')        
+        hdr = fits.getheader(image0)
+        filepath = lsc.util.workdirectory + 'data/extdata/' + hdr['DAYOBS'] + '/'
+        os.system('mv -v {} {} {}'.format(image0, varimg, filepath))
+        lsc.LCOGTingest.db_ingest(filepath, image0, force=args.force)
+        lsc.mysqldef.ingestredu([filepath + image0], 'yes' if args.force else 'no', 'photlco', filetype=4)

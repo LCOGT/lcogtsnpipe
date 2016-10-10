@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     if image0:
         hdr = fits.getheader(image0)
-        filepath = lsc.util.workdirectory + 'data/extdata/' + hdr['DAYOBS'] + '/'
+        filepath = lsc.util.workdirectory + 'data/extdata/' + hdr['DAY-OBS'] + '/'
         os.system('mkdir -vp ' + filepath)
         os.system('mv -v {} {} {}'.format(image0, varimg, filepath))
         db_ingest(filepath, image0, force=args.force)

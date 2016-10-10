@@ -1,10 +1,3 @@
-                    siteid = dicti[_filter][img]['siteid']
-                    if siteid in lsc.sites.extinction:
-                        kk = lsc.sites.extinction[siteid]
-                    else:
-                        print _filter, img, dicti[_filter][img]
-                        sys.exit('siteid not in lsc.sites.extinction')#!/usr/bin/env python
-
 import string
 import sys
 import re

@@ -285,7 +285,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        if not _saturate:
           _saturate = 61000
        if 'day-obs' in hdr:
-          _dayobs = hdr.get('dayobs')
+          _dayobs = hdr.get('day-obs')
        elif 'date-obs' in hdr:
           _dayobs = re.sub('-','',hdr.get('date-obs'))
 
@@ -429,7 +429,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     hd['RDNOISE']  = (_ron,       'read out noise')
     hd['PIXSCALE'] = (pixelscale, '[arcsec/pixel] Nominal pixel scale on sky')
     hd['FILTER']   = (_filter,    'filter used')
-    hd['DAYOBS']   = (_dayobs,    'day of observation')
+    hd['DAY-OBS']   = (_dayobs,    'day of observation')
     hd['AIRMASS']  = (_airmass,   'airmass')
     hd['DATE-OBS'] = (_dateobs,   'date of observation')
     hd['GAIN']     = (_gain,      'gain')

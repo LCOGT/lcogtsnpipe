@@ -523,7 +523,7 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
                _dateobs = hdr.get('date-obs')
             else:
                _dataobs = None
-            _dayobs = hdr.get('DAYOBS')
+            _dayobs = hdr.get('DAY-OBS')
             _telescope = hdr.get('TELESCOP')
             _instrume = hdr.get('instrume')
             _fwhm = hdr.get('L1FWHM')

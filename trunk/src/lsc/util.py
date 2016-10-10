@@ -297,36 +297,13 @@ def readkey3(hdr,keyword):
              value1=hdr.get('FILTER2')
              value2=hdr.get('FILTER1')
              value3=hdr.get('FILTER3')
-             value=[a for a in [value1,value2,value3] if 'air' not in a]
-             if not value: value='air'
-             else: value=value[0]
+             values=[a for a in [value,value1,value2,value3] if 'air' not in a]
+             if not values: value='air'
+             else: value=values[0]
           elif keyword in ['RA', 'CAT-RA'] and type(value) == str and ':' in value:
              value = Angle(value, u.hourangle).deg
           elif keyword in ['RA', 'CAT-RA', 'DEC', 'CAT-DEC']:
              value = Angle(value, u.deg).deg
-# REPLACED WITH HEADER KEYWORD DAY-OBS
-#    elif keyword=='date-night':
-#       try:
-#          _tel=hdr.get('TELID').lower()
-#          if _tel in ['1m0-08']:                       # elp  shift
-#             delta=0.0
-#          elif _tel in ['fts','ftn']:  # FTS,FTN no shift
-#             delta=0.0
-#          elif _tel in ['1m0-10','1m0-12','1m0-13']:  # south africa
-#             delta=0.4
-#          elif _tel in ['1m0-03','1m0-11']:           # south spring
-#             delta=0.0
-#          elif _tel in ['1m0-05','1m0-04','1m0-09']:  # cile shift
-#             delta=0.5
-#          else:
-#             delta=0.5
-#       except:
-#          delta=0.5
-#       from astropy.time import Time, TimeDelta
-#       _date = readkey3(hdr, 'DATE-OBS')
-#       datenight = Time(_date, format='isot') - TimeDelta(delta, format='jd')
-#       datenight.out_subfmt = 'date'
-#       value = datenight.iso.replace('-', '')
     elif keyword in hdr:
        value=hdr.get(keyword)
     else:

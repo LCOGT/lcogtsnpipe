@@ -6,6 +6,7 @@ if __name__ == '__main__':
     from lsc import readkey3, readhdr
     import argparse
     import os
+    from astropy.io import fits
 
     parser = argparse.ArgumentParser(description='Download and ingest SDSS or PS1 templates')
     parser.add_argument('images', nargs='+', help='LCOGT images to use for field of view and filter')

@@ -7,6 +7,7 @@ if __name__ == '__main__':
     import argparse
     import os
     from astropy.io import fits
+    from LCOGTingest import db_ingest
 
     parser = argparse.ArgumentParser(description='Download and ingest SDSS or PS1 templates')
     parser.add_argument('images', nargs='+', help='LCOGT images to use for field of view and filter')
@@ -41,6 +42,7 @@ if __name__ == '__main__':
     if image0:
         hdr = fits.getheader(image0)
         filepath = lsc.util.workdirectory + 'data/extdata/' + hdr['DAYOBS'] + '/'
+        os.system('mkdir -vp ' + filepath)
         os.system('mv -v {} {} {}'.format(image0, varimg, filepath))
-        lsc.LCOGTingest.db_ingest(filepath, image0, force=args.force)
+        db_ingest(filepath, image0, force=args.force)
         lsc.mysqldef.ingestredu([filepath + image0], 'yes' if args.force else 'no', 'photlco', filetype=4)

@@ -676,10 +676,8 @@ def ingestredu(imglist,force='no',dataredutable='photlco'):
          instid=_instid[0]['id']
          dictionary['instrumentid']=str(instid)
 
-         print img,_type
          print dictionary
          print 'insert reduced'
-         print database
          ggg=lsc.mysqldef.getfromdataraw(conn, dataredutable, 'filename',str(img), '*')
          if not ggg:
             lsc.mysqldef.insert_values(conn,dataredutable,dictionary)

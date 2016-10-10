@@ -439,9 +439,11 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     if survey == 'sloan':
         hd['TELESCOP'] = ('SDSS', 'name of the telescope')
         hd['INSTRUME'] = ('SDSS', 'instrument used')
+        hd['SITEID'] = ('SDSS', 'ID code of the Observatory site')
     elif survey == 'ps1':
         hd['TELESCOP'] = ('PS1', 'name of the telescope')
         hd['INSTRUME'] = ('PS1', 'instrument used')
+        hd['SITEID'] = ('PS1', 'ID code of the Observatory site')
 
     ar, hdr = northupeastleft(data=ar, header=hd)
     out_fits = fits.PrimaryHDU(header=hd, data=ar)

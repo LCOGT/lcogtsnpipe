@@ -863,7 +863,7 @@ def checksnlist(img,listfile):
     lll=[str(rastd[argmin(dd)])+' '+str(decstd[argmin(dd)])]
     from pyraf import iraf
     bbb=iraf.wcsctran('STDIN','STDOUT',img+'[0]',Stdin=lll,inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.5f %10.5f',Stdout=1)[3]
-    if    float(string.split(bbb)[0])<=_xdimen and float(string.split(bbb)[1])<=_ydimen and float(string.split(bbb)[0])>=0 and float(string.split(bbb)[1])>=0:
+    if 'INDEF' not in bbb and float(string.split(bbb)[0])<=_xdimen and float(string.split(bbb)[1])<=_ydimen and float(string.split(bbb)[0])>=0 and float(string.split(bbb)[1])>=0:
         #print str(std[argmin(dd)])+' in the field '+str(bbb)
         _RA=rastd[argmin(dd)]
         _DEC=decstd[argmin(dd)]

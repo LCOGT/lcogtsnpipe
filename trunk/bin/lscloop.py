@@ -18,9 +18,7 @@ if __name__ == "__main__":   # main program
     parser = OptionParser(usage=usage, description=description, version="%prog 1.0")
     parser.add_option("-e", "--epoch", dest="epoch", default='20121212', type="str",
                       help='epoch to reduce  \t [%default]')
-    parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str",
-                      help='-T telescope ' + ', '.join(lsc.telescope0['all']) + ', '.join(
-                          lsc.site0) + ', fts, ftn, 1m0, kb, fl, fs, sinistro, sbig \t [%default]')
+    parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str")
     parser.add_option("--instrument", dest="instrument", default='', type="str",
                       help='--instrument ' + ' kb, fl, fs, sinistro, sbig \t [%default]')
     parser.add_option("-R", "--RA", dest="ra", default='', type="str",
@@ -143,8 +141,6 @@ if __name__ == "__main__":   # main program
         _groupid=''
     _normalize = option.normalize
     _convolve = option.convolve
-    if _telescope not in lsc.telescope0['all'] + lsc.site0 + ['all', 'ftn', 'fts', '1m0', '2m0', 'kb', 'fl', 'fs','sinistro','sbig']:
-        sys.argv.append('--help')
     if option.force == None:
         _redo = False
     else:
@@ -227,17 +223,12 @@ if __name__ == "__main__":   # main program
     else:
         XX = ''
 
-    if _filter:
-        if _filter not in ['landolt', 'sloan', 'apass', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I',
-                           'SDSS-I', 'SDSS-G', 'SDSS-R', 'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V',
-                           'Bessell-R', 'Bessell-I', 'SDSS-G,SDSS-R,SDSS-I', 'Bessell-B,Bessell-V,Bessell-R',
-                           'u,g', 'g,r', 'g,r,i', 'g,r,i,z', 'r,i,z', 'B,V,R', 'B,V', 'B,V,R,I', 'V,R,I']:
-            sys.argv.append('--help')
-        else:
-            try:
-                _filter = lsc.sites.filterst(_telescope)[_filter]
-            except:
-                pass
+    if _filter not in ['landolt', 'sloan', 'apass', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I',
+                       'SDSS-I', 'SDSS-G', 'SDSS-R', 'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V',
+                       'Bessell-R', 'Bessell-I', 'SDSS-G,SDSS-R,SDSS-I', 'Bessell-B,Bessell-V,Bessell-R',
+                       'u,g', 'g,r', 'g,r,i', 'g,r,i,z', 'r,i,z', 'B,V,R', 'B,V', 'B,V,R,I', 'V,R,I', '']:
+        sys.argv.append('--help')
+
 
     if _filter and not _field:
         if _filter == 'landolt':
@@ -415,7 +406,7 @@ if __name__ == "__main__":   # main program
                             if len(ww0) >= 1:
                                 for jj in ['B', 'V']:
                                     if jj in list(set(ll3['filter'])):
-                                        _color = _color + lsc.sites.filterst1(_telescope)[jj]
+                                        _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww0], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
@@ -423,7 +414,7 @@ if __name__ == "__main__":   # main program
                             if len(ww1) >= 1:
                                 for jj in ['gp', 'rp', 'ip']:
                                     if jj in list(set(ll3['filter'])):
-                                        _color = _color + lsc.sites.filterst1(_telescope)[jj]
+                                        _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww1], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
@@ -431,7 +422,7 @@ if __name__ == "__main__":   # main program
                             if len(ww2) >= 1:
                                 for jj in ['SDSS-G', 'SDSS-R', 'SDSS-I']:
                                     if jj in list(set(ll3['filter'])):
-                                        _color = _color + lsc.sites.filterst1(_telescope)[jj]
+                                        _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww2], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
@@ -443,7 +434,7 @@ if __name__ == "__main__":   # main program
                             if len(ww0) >= 1:
                                 for jj in ['U', 'I', 'R', 'V', 'B']:
                                     if jj in list(set(ll3['filter'])):
-                                        _color = _color + lsc.sites.filterst1(_telescope)[jj]
+                                        _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww0], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
@@ -454,7 +445,7 @@ if __name__ == "__main__":   # main program
                             if len(ww0) >= 1:
                                 for jj in ['gp', 'up', 'rp', 'ip', 'zs']:
                                     if jj in list(set(ll3['filter'])):
-                                        _color = _color + lsc.sites.filterst1(_telescope)[jj]
+                                        _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww0], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)

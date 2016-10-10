@@ -49,34 +49,22 @@ def getmissing(conn, epoch0, epoch2,telescope,datatable='photlco'):
             cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where "+\
                                " raw.dayobs = "+str(epoch0)+\
                                " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
-      elif telescope in lsc.util.site0+['1m0','fl','kb','2m0','fs']:
-         #['elp','lsc','cpt','coj','1m0','kb','fl','ogg']:
-         if epoch2:  
-            print "select raw.filename, raw.objname from photlcoraw raw where raw.filename like '%"+telescope+"%'"+\
-                               " and raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)"
-            cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where raw.filename like '%"+telescope+"%'"+\
-                               " and raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
-         else:
-            print "select raw.filename, raw.objname from photlcoraw raw where raw.filename like '%"+telescope+"%'"+\
-                               " and raw.dayobs = "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)"
-            cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where raw.filename like '%"+telescope+"%'"+\
-                               " and raw.dayobs = "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
       else:
-         if epoch2:
-            cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where raw.telescope = '"+str(telescope)+\
-                               "' and raw.dayobs < '"+str(epoch2)+"' and raw.dayobs >= '"+str(epoch0)+\
-                               "' and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
+         fntel = telescope.replace('-', '') # 1m0-01 (input) --> 1m001 (in filename)
+         if epoch2:  
+            print "select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
+                               " or raw.telescope = '"+telescope+"') and raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
+                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)"
+            cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
+                               " or raw.telescope = '"+telescope+"') and raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
+                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
          else:
-            print "select raw.filename, raw.objname from photlcoraw raw where raw.telescope = '"+str(telescope)+\
-                "' and raw.dayobs = "+str(epoch0)+\
-                " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)"
-            cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where raw.telescope = '"+str(telescope)+\
-                               "' and raw.dayobs = '"+str(epoch0)+\
-                               "' and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
+            print "select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
+                               " or raw.telescope = '"+telescope+"') and raw.dayobs = "+str(epoch0)+\
+                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)"
+            cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
+                               " or raw.telescope = '"+telescope+"') and raw.dayobs = "+str(epoch0)+\
+                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
       resultSet = cursor.fetchall ()
       if cursor.rowcount == 0:
          pass
@@ -113,16 +101,12 @@ def getlistfromraw(conn, table, column, value1,value2,column2='*',telescope='all
             cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"'")
          else:
             cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"="+"'"+value1+"'")
-      elif telescope in lsc.util.site0+['1m0','fl','kb','2m0','fs','spectral','sbig','sinistro']:
-         if value2:
-            cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"' and filename like '%"+telescope+"%'")
-         else:
-            cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"="+"'"+value1+"' and filename like '%"+telescope+"%'")
       else:
+         fntel = telescope.replace('-', '')  # 1m0-01 (input) --> 1m001 (in filename)
          if value2:
-            cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"' and telescope='"+telescope+"'")
+            cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"' and (filename like '%"+fntel+"%' or telescope='"+telescope+"')")
          else:
-            cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"="+"'"+value1+"' and  telescope='"+telescope+"'")
+            cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"="+"'"+value1+"' and (filename like '%"+fntel+"%' or telescope='"+telescope+"')")
       resultSet = cursor.fetchall ()
       if cursor.rowcount == 0:
          pass
@@ -233,6 +217,7 @@ def insert_values(conn,table,values):
 # delete from dataraw where filename='test';
 #######################################
 
+# no longer up to date (this is for the old ingestion)
 def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object='',lista=''):
    import glob,string,os,re,sys
    import lsc
@@ -627,22 +612,17 @@ def ingestdata(telescope,instrument,listepoch,_force,_type='oracproc',_object=''
          print img+' already ingested'
 ###############################################################################################################################################
 
-def ingestredu(imglist,force='no',datatable='photlco'):
+def ingestredu(imglist,force='no',dataredutable='photlco'):
    import string,re,os,sys
    import lsc
-   #os.umask(000)   # permission to supernova user and group 
+   from lsc.util import readkey3, readhdr
+
    hostname, username, passwd, database=lsc.mysqldef.getconnection('lcogt2')
    conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
-   dataredutable=datatable
-   _type=''
 
-   for img in imglist:
-      if [i for i in ['a_e_','d_e_','d_s','m_e_','b_e_'] if i in img]: _type='2mold'
-      elif [i for i in ['2m001','2m002'] if i in img]: _type='2m'
-      elif [i for i in ['1m003','1m004','1m005','1m008','1m009','1m010','1m011','1m012','1m013'] if i in img]: _type='1m'
-      else:
-         _type='extdata'
-#         sys.exit('error: problem with '+img)
+   for fullpath in imglist:
+      path, img = os.path.split(fullpath)
+      path += '/'
 
       exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
       exist2=lsc.mysqldef.getfromdataraw(conn,'photlcoraw','filename', string.split(img,'/')[-1],column2='filename, groupidcode')
@@ -660,248 +640,52 @@ def ingestredu(imglist,force='no',datatable='photlco'):
             exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
 
       if not exist or force =='update':
-         _dir=lsc.mysqldef.getfromdataraw(conn,'photlcoraw','filename', string.split(img,'/')[-1],column2='filepath')[0]['filepath']
-         if _dir:                                                      filetype=1  #   data in raw table, the image is a single image
-         else:
-            if 'diff' in string.split(img,'/')[-1][0:4]=='diff':       filetype=3  #   difference image
-            else:                                                      filetype=2  #   merge image
-         print filetype
-         if img[0]=='/':
-            _dir=re.sub(string.split(img,'/')[-1],'',img)
-            img=string.split(img,'/')[-1]
-         else:
-            if not _dir: sys.exit('warning: '+str(img)+' not in raw table and full path missing')
-
-         if _type=='1m':
-            import lsc
-            from lsc.util import readkey3,readhdr
-            hdr=readhdr(_dir+img)
-            _targetid=lsc.mysqldef.targimg(_dir+img)
-            try:
-               _tracknumber=int(readkey3(hdr,'TRACKNUM'))
-            except:
-               _tracknumber=0
-	    if hdr.get('TELESCOP'):  
-               _tel=hdr.get('TELESCOP')
-            else: 
-               _tel=''
-            if _tel in ['Faulkes Telescope South','fts']:  
-               _tel='2m0-02'
-            elif _tel in ['Faulkes Telescope North','ftn']: 
-               _tel='2m0-01'
-            _inst=hdr.get('instrume')
-            dictionary={'dateobs':readkey3(hdr,'date-obs'),'dayobs':readkey3(hdr,'DAY-OBS'),\
-                           'exptime':readkey3(hdr,'exptime'), 'filter':readkey3(hdr,'filter'),'mjd':readkey3(hdr,'mjd'),'tracknumber':_tracknumber,\
-                           'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),\
-                           'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
-            dictionary['filename']=string.split(img,'/')[-1]
-            dictionary['filepath']=lsc.util.workdirectory + 'data/lsc/'+readkey3(hdr,'date-night')+'/'
-            dictionary['filetype']=filetype
-            dictionary['targetid']=_targetid
-            if _groupidcode:
-               dictionary['groupidcode']=_groupidcode
-
-            _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
-            if not _telid:
-              print 'Telescope ',_tel,' not recognized.  Adding to telescopes table.'
-              lsc.mysqldef.insert_values(conn,'telescopes',{'name':_tel})
-              _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
-            telid=_telid[0]['id']
-            dictionary['telescopeid']=str(telid)
-
-            _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
-            if not _instid:
-              print 'Instrument ',_inst,' not recognized.  Adding to instruments table.'
-              lsc.mysqldef.insert_values(conn,'instruments',{'name':_inst})
-              _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
-            instid=_instid[0]['id']
-            dictionary['instrumentid']=str(instid)
-
-            print img,_type
-            print dictionary
-            print 'insert reduced'
-            print database
-            ggg=lsc.mysqldef.getfromdataraw(conn, dataredutable, 'filename',str(img), '*')
-            if not ggg:
-               lsc.mysqldef.insert_values(conn,dataredutable,dictionary)
-            else:
-               for voce in dictionary:
-                  lsc.mysqldef.updatevalue(dataredutable,voce,dictionary[voce],string.split(img,'/')[-1])
-         ######################################
-            if not os.path.isdir(dictionary['filepath']): os.mkdir(dictionary['filepath'])
-            if not os.path.isfile(dictionary['filepath']+img) or force in ['yes',True]: 
-               print 'cp '+_dir+img+' '+dictionary['filepath']+img
-               os.system('cp '+_dir+img+' '+dictionary['filepath']+img)
-               os.chmod(dictionary['filepath']+img,0664)
-
-         elif _type=='2mold': 
-            import lsc
-            from lsc.util import readkey3,readhdr
-            hdr=readhdr(_dir+img)
-            _targetid=lsc.mysqldef.targimg(_dir+img)
-            try:
-               _tracknumber=int(readkey3(hdr,'TRACKNUM'))
-            except:
-               _tracknumber=0
-            if hdr.get('TELESCOP'):  _tel=hdr.get('TELESCOP')
-            else: _tel=''
-            if _tel in ['Faulkes Telescope South','fts']:  _tel='2m0-02'
-            elif _tel in ['Faulkes Telescope North','ftn']: _tel='2m0-01'
-            _inst=hdr.get('instrume')
-            dictionary={'dateobs':readkey3(hdr,'date-obs'),'exptime':readkey3(hdr,'exptime'),\
-                           'filter':readkey3(hdr,'filter'),'mjd':readkey3(hdr,'mjd'), 'dayobs':readkey3(hdr,'DAY-OBS'),\
-                           'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),'groupidcode':_groupidcode,\
-                           'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
-            dictionary['filename']=string.split(img,'/')[-1]
-            dictionary['filepath']=lsc.util.workdirectory + 'data/fts/'+readkey3(hdr,'date-night')+'/'
-            dictionary['filetype']=filetype
-            dictionary['targetid']=_targetid
-
-            _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
-            if not _telid:
-              print 'Telescope ',_tel,' not recognized.  Adding to telescopes table.'
-              lsc.mysqldef.insert_values(conn,'telescopes',{'name':_tel})
-              _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
-            telid=_telid[0]['id']
-            dictionary['telescopeid']=str(telid)
-
-            _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
-            if not _instid:
-              print 'Instrument ',_inst,' not recognized.  Adding to instruments table.'
-              lsc.mysqldef.insert_values(conn,'instruments',{'name':_inst})
-              _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
-            instid=_instid[0]['id']
-            dictionary['instrumentid']=str(instid)
-
-            print 'insert reduced old format '
-            ggg=lsc.mysqldef.getfromdataraw(conn, dataredutable, 'filename',str(img), '*')
-            if not ggg:
-               lsc.mysqldef.insert_values(conn,dataredutable,dictionary)
-               print 'new line in the database'
-            else:
-               for voce in dictionary:
-#               for voce in ['filetype','ra0','dec0']:
-                  lsc.mysqldef.updatevalue(dataredutable,voce,dictionary[voce],string.split(img,'/')[-1])
-            if not os.path.isdir(dictionary['filepath']): os.mkdir(dictionary['filepath'])
-            if not os.path.isfile(dictionary['filepath']+img) or force=='yes': 
-               print 'cp '+_dir+img+' '+dictionary['filepath']+img
-               os.system('cp '+_dir+img+' '+dictionary['filepath']+img)
-               os.chmod(dictionary['filepath']+img,0664)
-
-         elif _type=='2m': 
-            import lsc
-            from lsc.util import readkey3,readhdr
-            hdr=readhdr(_dir+img)
-            _targetid=lsc.mysqldef.targimg(_dir+img)
-            if hdr.get('TELESCOP'):  _tel=hdr.get('TELESCOP')
-            else: _tel=''
-            if _tel in ['Faulkes Telescope South','fts']:  _tel='2m0-02'
-            elif _tel in ['Faulkes Telescope North','ftn']: _tel='2m0-01'
-            _inst=hdr.get('instrume')
-            _tracknum=readkey3(hdr,'TRACKNUM')
-            if not _tracknum.isdigit():
-               _tracknum=0
-            dictionary={'dateobs':readkey3(hdr,'date-obs'),'dayobs':readkey3(hdr,'DAY-OBS'),'groupidcode':_groupidcode,\
-                           'exptime':readkey3(hdr,'exptime'), 'filter':readkey3(hdr,'filter'),'mjd':readkey3(hdr,'mjd'),'tracknumber':int(_tracknum),\
-                           'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),\
-                           'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
-            dictionary['filename']=string.split(img,'/')[-1]
-            dictionary['filepath']=lsc.util.workdirectory + 'data/fts/'+readkey3(hdr,'date-night')+'/'
-            dictionary['filetype']=filetype
-            dictionary['targetid']=_targetid
-
-            _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
-            if not _telid:
-              print 'Telescope ',_tel,' not recognized.  Adding to telescopes table.'
-              lsc.mysqldef.insert_values(conn,'telescopes',{'name':_tel})
-              _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
-            telid=_telid[0]['id']
-            dictionary['telescopeid']=str(telid)
-
-            _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
-            if not _instid:
-              print 'Instrument ',_inst,' not recognized.  Adding to instruments table.'
-              lsc.mysqldef.insert_values(conn,'instruments',{'name':_inst})
-              _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
-            instid=_instid[0]['id']
-            dictionary['instrumentid']=str(instid)
-
-            print 'insert reduced'
-            print database
-            ggg=lsc.mysqldef.getfromdataraw(conn, dataredutable, 'filename',str(img), '*')
-            if not ggg:
-               lsc.mysqldef.insert_values(conn,dataredutable,dictionary)
-            else:
-               for voce in dictionary:
-#               for voce in ['filetype','ra0','dec0','jd','exptime','filter']:
-                  lsc.mysqldef.updatevalue(dataredutable,voce,dictionary[voce],string.split(img,'/')[-1])
-         ######################################
-            if not os.path.isdir(dictionary['filepath']): os.mkdir(dictionary['filepath'])
-            if not os.path.isfile(dictionary['filepath']+img) or force=='yes': 
-               print 'cp '+_dir+img+' '+dictionary['filepath']+img
-               os.system('cp '+_dir+img+' '+dictionary['filepath']+img)
-               os.chmod(dictionary['filepath']+img,0664)
-
-         elif _type=='extdata':
-            print _type
-            import lsc
-            from lsc.util import readkey3,readhdr
-            hdr=readhdr(_dir+img)
-            _targetid=lsc.mysqldef.targimg(_dir+img)
-            if hdr.get('TELESCOP'):  _tel=hdr.get('TELESCOP')
-            else: _tel=''
-
-            _inst=hdr.get('instrume')
-            _tracknum=readkey3(hdr,'TRACKNUM')
-            if not _tracknum.isdigit():
-               _tracknum=0
-
-            dictionary={'dateobs':readkey3(hdr,'date-obs'),'dayobs':readkey3(hdr,'DAYOBS'),'groupidcode':_groupidcode,\
-                           'exptime':readkey3(hdr,'exptime'), 'filter':readkey3(hdr,'filter'),'mjd':readkey3(hdr,'MJD-OBS'),'tracknumber':int(_tracknum),\
-                           'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),\
-                           'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
-
-            dictionary['filename']=string.split(img,'/')[-1]
-            dictionary['filepath']=lsc.util.workdirectory + 'data/extdata/'+str(readkey3(hdr,'dayobs'))+'/'
-            dictionary['filetype']=filetype
-            dictionary['targetid']=_targetid
-
-            _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
-            if not _telid:
-              print 'Telescope ',_tel,' not recognized.  Adding to telescopes table.'
-              lsc.mysqldef.insert_values(conn,'telescopes',{'name':_tel})
-              _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
-            telid=_telid[0]['id']
-            dictionary['telescopeid']=str(telid)
-
-            _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
-            if not _instid:
-              print 'Instrument ',_inst,' not recognized.  Adding to instruments table.'
-              lsc.mysqldef.insert_values(conn,'instruments',{'name':_inst})
-              _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
-            instid=_instid[0]['id']
-            dictionary['instrumentid']=str(instid)
-
-            print 'insert reduced'
-            print database
-            ggg=lsc.mysqldef.getfromdataraw(conn, dataredutable, 'filename',str(img), '*')
-            if not ggg:
-               lsc.mysqldef.insert_values(conn,dataredutable,dictionary)
-            else:
-               for voce in dictionary:
-                  lsc.mysqldef.updatevalue(dataredutable,voce,dictionary[voce],string.split(img,'/')[-1])
-         ######################################
-            if not os.path.isdir(dictionary['filepath']): 
-               os.mkdir(dictionary['filepath'])
-            if not os.path.isfile(dictionary['filepath']+img) or force=='yes': 
-               print 'cp '+_dir+img+' '+dictionary['filepath']+img
-               os.system('cp '+_dir+img+' '+dictionary['filepath']+img)
-               os.chmod(dictionary['filepath']+img,0664)
-#################################################
-         elif _type=='floyds': 
-            print 'floyds'
+         hdr=readhdr(fullpath)
+         _targetid=lsc.mysqldef.targimg(fullpath)
+         try:
+            _tracknumber=int(readkey3(hdr,'TRACKNUM'))
+         except:
+            _tracknumber=0
+         if hdr.get('TELESCOP'):  
+            _tel=hdr.get('TELESCOP')
          else: 
-            sys.exit('instrument not recognised')
+            _tel=''
+         if _tel in ['Faulkes Telescope South','fts']:  
+            _tel='2m0-02'
+         elif _tel in ['Faulkes Telescope North','ftn']: 
+            _tel='2m0-01'
+         _inst=hdr.get('instrume')
+         dictionary={'dateobs':readkey3(hdr,'date-obs'),'dayobs':readkey3(hdr,'DAY-OBS'),'filename':img,'filepath':path,'filetype':1,'targetid':_targetid,\
+                     'exptime':readkey3(hdr,'exptime'), 'filter':readkey3(hdr,'filter'),'mjd':readkey3(hdr,'mjd'),'tracknumber':_tracknumber,'groupidcode':_groupidcode,\
+                     'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),\
+                     'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
+
+         _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
+         if not _telid:
+           print 'Telescope ',_tel,' not recognized.  Adding to telescopes table.'
+           lsc.mysqldef.insert_values(conn,'telescopes',{'name':_tel})
+           _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
+         telid=_telid[0]['id']
+         dictionary['telescopeid']=str(telid)
+
+         _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
+         if not _instid:
+           print 'Instrument ',_inst,' not recognized.  Adding to instruments table.'
+           lsc.mysqldef.insert_values(conn,'instruments',{'name':_inst})
+           _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
+         instid=_instid[0]['id']
+         dictionary['instrumentid']=str(instid)
+
+         print img,_type
+         print dictionary
+         print 'insert reduced'
+         print database
+         ggg=lsc.mysqldef.getfromdataraw(conn, dataredutable, 'filename',str(img), '*')
+         if not ggg:
+            lsc.mysqldef.insert_values(conn,dataredutable,dictionary)
+         else:
+            for voce in dictionary:
+               lsc.mysqldef.updatevalue(dataredutable,voce,dictionary[voce],string.split(img,'/')[-1])
       else:
          print 'already ingested'
 
@@ -1307,21 +1091,3 @@ def get_snex_uid(interactive=True, return_fullname=False):
                   print 'SNEx username not found.'
     if return_fullname: return snex_uid, fullname
     else: return snex_uid
-
-#def update_useractionlog(filename, snex_uid=None, mode='add'):
-#    from lsc import conn
-#    from sys import exit
-#    row_id = query(["select id from spec where filename='"+filename+"'"], conn)
-#    if row_id: rowid = [0]['id']
-#    else: exit('No entry found for filename '+filename+'. User action not logged.')
-#    if mode=='add':   vals = {'columnmodified':'New Row', 'prevvalue':'None', 'newvalue':'Multiple'}
-#    elif mode=='del': vals = {'columnmodified':'All', 'prevvalue':'Multiple', 'newvalue':'None'}
-#    elif mode=='upd': vals = {'columnmodified':'Multiple', 'prevvalue':'Multiple', 'newvalue':'Multiple'}
-#    else: exit('Mode not recognized. User action not logged.')
-#    if snex_uid is None: snex_uid = get_snex_uid()
-#    if snex_uid is None: exit('SNEx User not found. User action not logged.')
-#    vals['userid'] = snex_uid
-#    vals['tablemodified'] = 'spec'
-#    vals['idmodified'] = row_id
-#    insert_values(conn, 'useractionlog', vals)
-#    print 'useractionlog updated:', vals

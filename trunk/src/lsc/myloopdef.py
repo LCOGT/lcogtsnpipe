@@ -780,15 +780,11 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             lista = []
             for fil in string.split(_filter, ','):
                 print fil
-                try:
-                    lista.append(lsc.sites.filterst('lsc')[fil])
-                except:
-                    try:
-                        lista.append(lsc.sites.filterst('fts')[fil])
-                    except:
-                        if fil in ['zs', 'up', 'gp', 'ip', 'rp', 'U', 'B', 'V', 'R', 'I', 'SDSS-G', 'SDSS-R', 'SDSS-I',
-                                   'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']:
-                            lista.append(fil)
+                if fil in lsc.sites.filterst:
+                    lista += lsc.sites.filterst[fil]
+                elif fil in ['zs', 'up', 'gp', 'ip', 'rp', 'U', 'B', 'V', 'R', 'I', 'SDSS-G', 'SDSS-R', 'SDSS-I',
+                             'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']:
+                    lista.append(fil)
             print lista
             ww = asarray([i for i in range(len(ll1['filter'])) if ((ll1['filter'][i] in lista))])
         if len(ww) > 0:

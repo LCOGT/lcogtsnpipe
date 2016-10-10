@@ -8,30 +8,17 @@ import sys
 from optparse import OptionParser
 import time, math
 import lsc
+import lsc.sites.filterst1 as filters1
 import numpy as np
 
 
 def makecatalogue(imglist):
     from astropy.io import fits
-    import lsc
-
-    filters = {}
     dicti = {}
     for img in imglist:
         t = fits.open(img)
-        tbdata = t[1].data
         hdr1 = t[0].header
         _filter = lsc.util.readkey3(hdr1, 'filter')
-        _exptime = lsc.util.readkey3(hdr1, 'exptime')
-        _airmass = lsc.util.readkey3(hdr1, 'airmass')
-        _telescope = lsc.util.readkey3(hdr1, 'telescop')
-        _psfmag1 = lsc.util.readkey3(hdr1, 'PSFMAG1')
-        _psfdmag1 = lsc.util.readkey3(hdr1, 'PSFDMAG1')
-        _apmag1 = lsc.util.readkey3(hdr1, 'APMAG1')
-        print img
-        print _filter
-        print _psfmag1
-        print _apmag1
         if _filter not in dicti: dicti[_filter] = {}
         if img not in dicti[_filter]: dicti[_filter][img] = {}
         for jj in hdr1:
@@ -42,14 +29,14 @@ def makecatalogue(imglist):
             dicti[_filter][img]['mjd'] = lsc.util.readkey3(hdr1, 'mjd')
         elif 'MJD-OBS' in hdr1:
             dicti[_filter][img]['mjd'] = lsc.util.readkey3(hdr1, 'MJD-OBS')
-#        dicti[_filter][img]['mjd'] = lsc.util.readkey3(hdr1, 'mjd')
-        dicti[_filter][img]['exptime'] = _exptime
-        dicti[_filter][img]['airmass'] = _airmass
-        dicti[_filter][img]['telescope'] = _telescope
+        dicti[_filter][img]['exptime'] = lsc.util.readkey3(hdr1, 'exptime')
+        dicti[_filter][img]['airmass'] = lsc.util.readkey3(hdr1, 'airmass')
+        dicti[_filter][img]['telescope'] = lsc.util.readkey3(hdr1, 'telescop')
+        dicti[_filter][img]['siteid'] = hdr1['SITEID']
         try:
-            dicti[_filter][img]['PSFMAG1'] = float(_psfmag1)
-            dicti[_filter][img]['APMAG1'] = float(_apmag1)
-            dicti[_filter][img]['PSFDMAG1'] = float(_psfdmag1)
+            dicti[_filter][img]['PSFMAG1'] = float(lsc.util.readkey3(hdr1, 'PSFMAG1'))
+            dicti[_filter][img]['APMAG1'] = float(lsc.util.readkey3(hdr1, 'PSFDMAG1'))
+            dicti[_filter][img]['PSFDMAG1'] = float(lsc.util.readkey3(hdr1, 'APMAG1'))
         except:
             dicti[_filter][img]['PSFMAG1'] = 9999.
             dicti[_filter][img]['APMAG1'] = 9999.
@@ -82,8 +69,6 @@ if __name__ == "__main__":
     lista = lsc.util.readlist(imglist)
     hdr = lsc.util.readhdr(lista[0])
     tel = lsc.util.readkey3(hdr, 'telescop')
-    filters = lsc.sites.filterst(tel)
-    filters1 = lsc.sites.filterst1(tel)
     _datatable = option.datatable
     _exzp = option.exzp
     _calib = option.calibration
@@ -148,11 +133,11 @@ if __name__ == "__main__":
                                             colore.append(cc)
                 if len(secondimage) > 0:
                     colorescelto = ''
-                    vv = queste1[lsc.sites.filterst1(tel)[_filter]]
+                    vv = queste1[filters1[_filter]]
                     if len(vv) > 0:
                         if vv[0].upper() in colore:  colorescelto = vv[0].upper()
                     else:
-                        vv = queste0[lsc.sites.filterst1(tel)[_filter]]
+                        vv = queste0[filters1[_filter]]
                         if len(vv) > 0:
                             if vv[0].upper() in colore:  colorescelto = vv[0].upper()
                     if colorescelto:
@@ -168,53 +153,30 @@ if __name__ == "__main__":
                     img2 = dicti[_filter][img]['secondimg']
                     col = colore[np.argmin(mjdvec)]
 
-                    if dicti[_filter][img]['telescope'] in ['lsc', '1m0-04', '1m0-05', '1m0-06', '1m0-09']:
-                        kk = lsc.sites.extintion('ctio')
-                    elif dicti[_filter][img]['telescope'] in ['elp', '1m0-08']:
-                        kk = lsc.sites.extintion('mcdonald')
-                    elif dicti[_filter][img]['telescope'] in ['cpt', '1m0-12', '1m0-10', '1m0-13']:
-                        kk = lsc.sites.extintion('southafrica')
-                    elif dicti[_filter][img]['telescope'] in ['ftn', '2m0-01']:
-                        kk = lsc.sites.extintion('mauna')
-                    elif dicti[_filter][img]['telescope'] in ['1m0-03', '1m0-11', 'fts', 'coj', '2m0-02']:
-                        kk = lsc.sites.extintion('siding')
-                    elif dicti[_filter][img]['telescope'] in ['SDSS']:
-                        kk = lsc.sites.extintion('mcdonald')
-                    elif dicti[_filter][img]['telescope'] in ['PS1']:
-                        kk = lsc.sites.extintion('mauna')
+                    siteid = dicti[_filter][img]['siteid']
+                    if siteid in lsc.sites.extinction:
+                        kk = lsc.sites.extinction[siteid]
                     else:
                         print _filter, img, dicti[_filter][img]
-                        sys.exit('problem with dicti')
+                        sys.exit('siteid not in lsc.sites.extinction')
 
                     if _interactive:
                         print dicti[_filter][img]['airmass']
                         print kk[filters1[_filter]]
                         print 2.5 * math.log10(dicti[_filter][img]['exptime'])
                         print dicti[_filter][img][namemag[_typemag][0]]
-                        # instrumental mag corrected for exp time and airmass
-                    # mag0=dicti[_filter][img][namemag[_typemag][0]]+2.5*math.log10(dicti[_filter][img]['exptime'])-kk[filters1[_filter]]*dicti[_filter][img]['airmass']
+                    # instrumental mag corrected for exp time and airmass
                     mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filters1[_filter]] * dicti[_filter][img][
                         'airmass']
                     dmag0 = dicti[_filter][img][namemag[_typemag][1]]
 
-                    if dicti[_filter2][img2]['telescope'] in ['1m0-04', '1m0-05', '1m0-06', '1m0-09']:
-                        kk = lsc.sites.extintion('ctio')
-                    elif dicti[_filter2][img2]['telescope'] in ['elp', '1m0-08']:
-                        kk = lsc.sites.extintion('mcdonald')
-                    elif dicti[_filter2][img2]['telescope'] in ['cpt', '1m0-12', '1m0-10', '1m0-13']:
-                        kk = lsc.sites.extintion('southafrica')
-                    elif dicti[_filter2][img2]['telescope'] in ['ftn', '2m0-01']:
-                        kk = lsc.sites.extintion('mauna')
-                    elif dicti[_filter2][img2]['telescope'] in ['1m0-03', '1m0-11', 'coj', 'fts', '2m0-02']:
-                        kk = lsc.sites.extintion('siding')
-                    elif dicti[_filter][img]['telescope'] in ['SDSS']:
-                        kk = lsc.sites.extintion('mcdonald')
-                    elif dicti[_filter][img]['telescope'] in ['PS1']:
-                        kk = lsc.sites.extintion('mauna')
+                    siteid = dicti[_filter2][img2]['siteid']
+                    if siteid in lsc.sites.extinction:
+                        kk = lsc.sites.extinction[siteid]
                     else:
                         print dicti[_filter2][img2]
-                        sys.exit('problem with dicti')  # instrumental mag corrected for exp time and airmass
-                    # mag1=dicti[_filter2][img2][namemag[_typemag][0]]+2.5*math.log10(dicti[_filter2][img2]['exptime'])-kk[filters1[_filter2]]*dicti[_filter2][img2]['airmass']
+                        sys.exit('siteid not in lsc.sites.extinction')
+                    # instrumental mag corrected for exp time and airmass
                     mag1 = dicti[_filter2][img2][namemag[_typemag][0]] - kk[filters1[_filter2]] * dicti[_filter2][img2][
                         'airmass']
                     dmag1 = dicti[_filter2][img2][namemag[_typemag][1]]
@@ -329,26 +291,19 @@ if __name__ == "__main__":
                             print 'module mysqldef not found'
                     print _filter, col
                 else:
-                    if dicti[_filter][img]['telescope'] in ['lsc', '1m0-04', '1m0-05', '1m0-06', '1m0-09']:
-                        kk = lsc.sites.extintion('ctio')
-                    elif dicti[_filter][img]['telescope'] in ['elp', '1m0-08', 'SDSS']:
-                        kk = lsc.sites.extintion('mcdonald')
-                    elif dicti[_filter][img]['telescope'] in ['cpt', '1m0-12', '1m0-10', '1m0-13']:
-                        kk = lsc.sites.extintion('southafrica')
-                    elif dicti[_filter][img]['telescope'] in ['ftn', '2m0-01', 'PS1']:
-                        kk = lsc.sites.extintion('mauna')
-                    elif dicti[_filter][img]['telescope'] in ['1m0-03', '1m0-11', 'coj', 'fts', '2m0-02']:
-                        kk = lsc.sites.extintion('siding')
+                    siteid = dicti[_filter][img]['siteid']
+                    if siteid in lsc.sites.extinction:
+                        kk = lsc.sites.extinction[siteid]
                     else:
                         print _filter, img, dicti[_filter][img]
-                        sys.exit('telescope not in lsc.sites.extintion [sic]')
+                        sys.exit('siteid not in lsc.sites.extinction')
 
                     filename = img.split('/')[-1].replace('.sn2.fits', '.fits')
                     mag0 = dicti[_filter][img][namemag[_typemag][0]] - kk[filters1[_filter]] * dicti[_filter][img]['airmass']
                     dmag0 = dicti[_filter][img][namemag[_typemag][1]]
                     Z1 = ''
                     if mag0 < 99:
-                        best_color = lsc.chosecolor('uUBgVrRiIz', usegood=True)[lsc.sites.filterst1(tel)[_filter]][0]
+                        best_color = lsc.chosecolor('uUBgVrRiIz', usegood=True)[filters1[_filter]][0]
                         hdr_kwd = 'ZP' + filters1[_filter].upper() + best_color.upper()
                         if hdr_kwd in dicti[_filter][img] and float(dicti[_filter][img][hdr_kwd].split()[1]) < 99:
                             print 'using', hdr_kwd

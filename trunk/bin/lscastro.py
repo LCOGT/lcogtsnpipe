@@ -1,4 +1,9 @@
-#!/usr/bin/env python
+                    siteid = dicti[_filter][img]['siteid']
+                    if siteid in lsc.sites.extinction:
+                        kk = lsc.sites.extinction[siteid]
+                    else:
+                        print _filter, img, dicti[_filter][img]
+                        sys.exit('siteid not in lsc.sites.extinction')#!/usr/bin/env python
 
 import string
 import sys
@@ -82,9 +87,8 @@ if __name__ == "__main__":
     _minnum = option.match
     _xshift = option.xshift
     _yshift = option.yshift
-    if _catalogue in ['inst']:
+    if _catalogue == 'inst':
         _catalogue2 = ['2mass', 'usnoa2', 'usnob1']
-    # elif _catalogue in ['2mass','usnoa2','usnob1']:   _catalogue2=_catalogue
     else:
         _catalogue2 = [_catalogue]
     for img in imglist:
@@ -107,7 +111,7 @@ if __name__ == "__main__":
 
             sexvec = lsc.lscastrodef.sextractor(img)
             try:
-                for cat in _catalogue2:  # ['2mass','usnoa2']:#,'usnob1']:
+                for cat in _catalogue2:
                     rmsx3, rmsy3, num3, fwhmgess, ellgess, ccc, rasys3, decsys3, mbkg3 = lsc.lscastrodef.lscastroloop(
                         [img], cat, _interactive, number1, number2, number3, 'rxyscale', _t1, _t2, sexvec, True,
                         _minnum, _method, _xshift, _yshift)
@@ -115,7 +119,7 @@ if __name__ == "__main__":
                         break
                 print 'no good solution with ' + str(_minnum) + ' ' + str(number1)
                 if rmsx3 > 2 and rmsy3 > 2:
-                    for cat in _catalogue2:  # ['2mass','usnoa2']:#,'usnob1']:
+                    for cat in _catalogue2:
                         rmsx3, rmsy3, num3, fwhmgess, ellgess, ccc, rasys3, decsys3, mbkg3 = \
                             lsc.lscastrodef.lscastroloop([img], cat, _interactive, int(number1 / 2.),
                                                          int(number2 / 2.),int(number3 / 2.),'rxyscale',_t1,_t2,
@@ -124,7 +128,7 @@ if __name__ == "__main__":
                             break
                     print 'no good solution with ' + str(_minnum / 2.) + ' ' + str(number1 / 2.)
                     if rmsx3 > 2 and rmsy3 > 2:
-                        for cat in _catalogue2:  # ['2mass','usnoa2']:#,'usnob1']:
+                        for cat in _catalogue2:
                             rmsx3, rmsy3, num3, fwhmgess, ellgess, ccc, rasys3, decsys3, mbkg3 = \
                                 lsc.lscastrodef.lscastroloop([img], cat, _interactive, int(10), int(10),
                                 int(25), 'rxyscale', _t1, _t2, sexvec, True, int(3), _method, _xshift, _yshift)

@@ -374,27 +374,12 @@ if __name__ == "__main__":   # main program
                                         you need to specify the name of the object''')
                         else:
                             if not _catalogue:
-                                namesql = _name.replace(' ','%')
-                                data = lsc.mysqldef.query(['select targetid from targetnames where name like "{}"'.format(namesql)], lsc.conn)
-                                if data: # exact match to name given with -n
-                                    _targetid = data[0]['targetid']
-                                else: # partial match to name given with -n
-                                    data = lsc.mysqldef.query(['select targetid from targetnames where name like "{}"'.format(namesql)], lsc.conn)
-                                if data: # exact match to name given with -n
-                                    _targetid = data[0]['targetid'] # pick the first result
-                                else:
-                                    sys.exit('Target not found in database. Try "SN YYYYaa" with a space.')
-                                print 'target ID =', _targetid
-                                data = lsc.mysqldef.query(['select name from targetnames where targetid={:d}'.format(_targetid)],lsc.conn)
-                                names = [targ['name'].replace(' ','').lower() for targ in data] # remove spaces & make lower case
-                                catlist = glob.glob(lsc.__path__[0] + '/standard/cat/' + _field + '/*')
-                                catnames = [os.path.basename(cat).split('_')[0].lower() for cat in catlist]
-                                name_match = set(names) & set(catnames)
-                                cat_match = [catlist[catnames.index(n)] for n in name_match]
-                                print 'found', len(cat_match), 'matching catalogues'
-                                if cat_match:
-                                    _catalogue = cat_match[0] # pick the first result
-                                    print 'using catalogue', _catalogue
+                                data = lsc.mysqldef.query(['''select {}_cat from targets, targetnames
+                                                              where name like "{}"
+                                                              and targets.id=targetnames.targetid'''.format(_field, _name.replace(' ', '%'))],
+                                                           lsc.conn)
+                                if data:
+                                    _catalogue = lsc.__path__[0] + '/standard/cat/' + _field + '/' + data[0][_field + '_cat']
                         if _field == 'apass':
                             ww0 = asarray([i for i in range(len(ll3['filter'])) if (ll['filter'][i] in ['V', 'B'])])
                             ww1 = asarray(

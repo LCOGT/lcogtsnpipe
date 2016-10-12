@@ -215,7 +215,7 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'
     return photmag, pst, fitmag
 
 
-def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='gauss', fixaperture=False, _catalog=''):
+def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='gauss', fixaperture=False, _catalog='', _datamax=None, show=False):
     try:
         import lsc, string
 
@@ -231,9 +231,9 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
             elif 'CCDSUM' in hdr:
                 scale = lsc.util.readkey3(hdr, 'CCDSCALE') * int(string.split(lsc.util.readkey3(hdr, 'CCDSUM'))[0])
 
-        if 'kb' in instrument:
+        if _datamax is None and 'kb' in instrument:
             _datamax = 45000
-        else:
+        elif _datamax is None:
             _datamax = 65000
         _wcserr = lsc.util.readkey3(hdr, 'wcserr')
         print _wcserr
@@ -399,12 +399,12 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                                Stdout=1, image=img + '[0]', inwcs='logical', outwcs='world', columns="1 2",
                                format='%13.3H %12.2h', min_sig=9, mode='h')[3:]
 
-        if ds9 == 0 and interactive:
+        if ds9 == 0 and (interactive or show):
             iraf.set(stdimage='imt1024')
             iraf.display(img, 1, fill=True, Stdout=1)
-            iraf.tvmark(1, coords='STDIN', mark='circle', radii=15, label=False, Stdin=photmag)
-            iraf.tvmark(1, coords='STDIN', mark='rectangle', length=35, label=False, Stdin=pst)
-            iraf.tvmark(1, coords='STDIN', mark='cross', length=35, label=False, Stdin=fitmag2, color=204)
+            iraf.tvmark(1, coords='STDIN', mark='circle', radii=15, label=True, Stdin=photmag, nxoffset=5, nyoffset=5, txsize=2)
+            iraf.tvmark(1, coords='STDIN', mark='circle', radii=35, label=False, Stdin=pst, color=208)
+#            iraf.tvmark(1, coords='STDIN', mark='cross', length=35, label=False, Stdin=fitmag2, color=204)
 
         idpsf = []
         for i in range(len(pst)):
@@ -533,6 +533,8 @@ if __name__ == "__main__":
                       help='use input catalog  \t\t %default')
     parser.add_option("--fix", action="store_true", dest='fixaperture', default=False,
                       help='fixaperture \t\t\t [%default]')
+    parser.add_option("--datamax", type=int,
+                      help="value above which pixels are considered saturated (default = 45000 for SBIG, 65000 otherwise)")
 
     option, args = parser.parse_args()
     if len(args) < 1: 
@@ -574,10 +576,11 @@ if __name__ == "__main__":
             fwhm0 = option.fwhm
             while True:
                 result, fwhm = ecpsf(img, fwhm0, option.threshold, option.psfstars,
-                                     option.distance, option.interactive, ds9, psffun, fixaperture, _catalog)
+                                     option.distance, option.interactive, ds9, psffun,
+                                     fixaperture, _catalog, option.datamax, option.show)
                 print '\n### ' + str(result)
                 if option.show:
-                    lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')
+#                    lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')
                     iraf.delete('tmp.psf.fit?', verify=False)
                     iraf.seepsf(img + '.psf', '_psf.psf')
                     iraf.surface('_psf.psf')

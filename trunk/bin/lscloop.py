@@ -87,10 +87,10 @@ if __name__ == "__main__":   # main program
                       help='mode for wcs (sv,astrometry)  \t [%default]')
     parser.add_option("--combine", dest="combine", default=1e-10, type="float",
                       help='range to combine (in days)  \t [%default]')
-    parser.add_option("--datamax", dest="dmax", default=51000, type="float",
-                      help='data max for saturation (counts)  \t [%default]')
-    parser.add_option("--datamin", dest="dmin", default=-500, type="float",
-                      help='data min for saturation (counts)  \t [%default]')
+    parser.add_option("--datamax", dest="dmax", type=int,
+                      help='data max for saturation (counts)')
+    parser.add_option("--datamin", dest="dmin", type=int,
+                      help='data min for saturation (counts)')
     parser.add_option("--yshift", dest="yshift", default=0, type="int",
                       help='y shift in the guess astrometry \t [%default]')
     parser.add_option("--filetype", dest="filetype", default=1, type="int",
@@ -124,6 +124,7 @@ if __name__ == "__main__":   # main program
     parser.add_option("--subtract-mag-from-header", action='store_true', help='automatically subtract mag from header of template image \t\t [%default]')
     parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing image subtraction')
+    parser.add_option("--nstars", type=int, default=6, help="number of stars used to make the PSF")
 
     option, args = parser.parse_args()
     _instrument=option.instrument
@@ -302,7 +303,7 @@ if __name__ == "__main__":   # main program
             elif _stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], _output, _interactive, _show, _bin, _type)
             elif _stage == 'psf':
-                lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, XX, _fix, _catalogue, 'photlco', option.use_sextractor)
+                lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, XX, _fix, _catalogue, 'photlco', option.use_sextractor, _dmax, option.nstars)
             elif _stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], _ras, _decs, _xord, _yord, _bkg, _size, _recenter, _ref,
                                       _interactive, _show, _redo, _dmax,_dmin,'photlco',_ra0,_dec0)

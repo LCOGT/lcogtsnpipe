@@ -380,7 +380,7 @@ def run_zero(imglist, _fix, _type, _field, _catalogue, _color='', interactive=Fa
 
 
 def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, xwindow='',\
-            fix=True, catalog='', database='photlco', use_sextractor=False):
+            fix=True, catalog='', database='photlco', use_sextractor=False, datamax=None, nstars=6):
     import lsc
     import os
     import  string
@@ -416,6 +416,11 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
             xx = ' --use-sextractor '
         else:
             xx = ''
+        if datamax is not None:
+            dm = ' --datamax ' + str(datamax) + ' '
+        else:
+            dm = ' '
+        pp = ' -p ' + str(nstars) + ' '
 
         status = checkstage(img, 'psf')
         print status
@@ -475,7 +480,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                 _dir = ggg[0]['filepath']
                 img0 = img
                 command = 'lscpsf.py ' + _dir + img0 + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
-                    treshold) + xwindow + gg + cc + xx
+                    treshold) + xwindow + gg + cc + xx + dm + pp
                 print command
                 os.system(command)
         elif status == 0:
@@ -492,7 +497,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
 
 
 def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _recenter=False, _ref='', interactive=False,
-            show=False, redo=False, dmax=51000, dmin=-500, database='photlco', _ra0='', _dec0=''):
+            show=False, redo=False, dmax=None, dmin=None, database='photlco', _ra0='', _dec0=''):
     import lsc
     import os, string
     from astropy.io import fits
@@ -523,6 +528,12 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
         _ra0 =  '--RA0 ' + str(_ra0)
     if _dec0:
         _dec0 = '--DEC0 '+ str(_dec0)
+
+    # different defaults for run_fit and run_psf
+    if dmax is None:
+        dmax = 51000
+    if dmin is None:
+        dmin = -500
 
     for img in imglist:
         status = checkstage(img, 'psfmag')

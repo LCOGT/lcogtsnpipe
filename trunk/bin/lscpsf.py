@@ -187,6 +187,13 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'
     iraf.delete('_psf.ma*,' + img + '.psf.fit?,_psf.ps*,_psf.gr?,_psf.n*,_psf.sub.fit?', verify=False)
     iraf.phot(img+'[0]', '_psf.coo', '_psf.mag', interac=False, verify=False, verbose=False)
 
+    # removes saturated stars from the list (IRAF just issues a warning)
+    with open('_psf.mag') as f:
+        text = f.read()
+    text = re.sub('(.*\n){6}.*BadPixels\* \n', '', text)
+    with open('_psf.mag', 'w') as f:
+        f.write(text)
+
     iraf.daopars.psfrad = a4
     iraf.daopars.functio = psffun
     iraf.daopars.fitrad = a1

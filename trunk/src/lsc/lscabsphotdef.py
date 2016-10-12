@@ -228,22 +228,39 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
     _fwhm = lsc.util.readkey3(hdr,'PSF_FWHM')
     _ra=lsc.util.readkey3(hdr,'RA')
     _dec=lsc.util.readkey3(hdr,'DEC')
-    if _telescope in ['lsc','1m0-04','1m0-05','1m0-09']:     kk=lsc.sites.extintion('ctio')
-    elif _telescope in ['elp','1m0-08']:                     kk=lsc.sites.extintion('mcdonald')
-    elif _telescope in ['cpt','1m0-12','1m0-10','1m0-13']:   kk=lsc.sites.extintion('southafrica')
-    elif _telescope in ['ftn','Faulkes Telescope North']:    kk=lsc.sites.extintion('mauna')
-    elif _telescope in ['1m0-03','1m0-11','coj','fts','Faulkes Telescope South']:    kk=lsc.sites.extintion('siding')
-    elif _telescope in ['2m0-01']:    kk=lsc.sites.extintion('mauna')
-    elif _telescope in ['2m0-02']:    kk=lsc.sites.extintion('siding')
-    elif _telescope in ['SDSS']:      kk=lsc.sites.extintion('mcdonald')  # to be replaces
-    elif _telescope in ['PS1']:        kk=lsc.sites.extintion('mauna')  # to be replaces
+    _siteid = hdr['SITEID']
+    if _siteid in lsc.sites.extinction:
+        kk = lsc.sites.extinction[_siteid]
+    else:
+        print _siteid
+        sys.exit('siteid not in lsc.sites.extinction')
 
     if _calib=='apass': _field='apass'
     if _field=='apass': _calib='apass'
     if _calib=='apass' and not _catalogue: sys.exit('ERROR: apass option for field or calib is valid only when apass catalogue is also provided')
 
-    if _calib not in ['sloan','sloanprime','natural','apass','']:   colorefisso=lsc.sites.colfix(_instrume)
-    else:                                                           colorefisso=lsc.sites.colfix(_instrume,_calib)
+    if _calib == 'sloanprime' and ('fs' in _instrume or 'em' in _instrume):
+        colorefisso = {'UUB':0.0,'uug':0.0,'BUB':0.0,'BBV':0.0,'VBV':0.0,'VVR':0.0,\
+                      'gug':0.0,'ggr':0.0,'RVR':0.0,'RRI':0.0,'rrz':0.0,'zrz':0.0,\
+                      'rgr':0.0,'rri':0.0,'iri':0.027,'iiz':0.0,'IRI':0.0,'ziz':0.0}
+    elif _calib == 'sloanprime':
+        colorefisso = {'UUB':0.059,'uug':0.0,'BUB':-0.095,'BBV':0.06,'VBV':0.03,'VVR':-0.059,\
+                      'gug':0.13,'ggr':0.054,'RVR':-0.028,'RRI':-0.033,'rrz':0.0,'zrz':0.0,'ggi':0.0,'igi':0.0,\
+                      'rgr':0.003,'rri':-0.007,'iri':0.028,'iiz':0.110,'IRI':0.013,'ziz':-0.16}
+    elif _calib == 'apass':
+        colorefisso = {'BBV':-0.13,'VBV':0.0,'VVg':0.0,'gVg':0.0,'ggr':0.0,'rgr':0.0,'rri':0.0,'iri':0.0}
+    elif _calib == 'natural':
+        colorefisso = {'UUB':0.0,'uug':0.0,'BUB':0.0,'BBV':0.0,'VBV':0.0,'VVR':0.0,\
+                      'gug':0.0,'ggr':0.0,'RVR':0.0,'RRI':0.0,'rrz':0.0,'zrz':0.0,\
+                      'rgr':0.0,'rri':0.0,'iri':0.0,'iiz':0.0,'IRI':0.0,'ziz':0.0}
+    elif 'fs' in _instrume or 'em' in _instrume: # landolt or sloan
+        colorefisso = {'UUB':0.0,'uug':0.0,'BUB':0.0,'BBV':0.0,'VBV':0.0,'VVR':0.0,\
+                      'gug':0.0,'ggr':0.105,'RVR':0.0,'RRI':0.0,'rrz':0.0,'zrz':0.0,\
+                      'rgr':0.013,'rri':0.029,'iri':0.0874,'iiz':0.0,'IRI':0.0,'ziz':-0.15}
+    else:
+        colorefisso = {'UUB':0.059,'uug':0.0,'BUB':-0.095,'BBV':0.06,'VBV':0.03,'VVR':-0.059,\
+                      'gug':0.13,'ggr':-0.02,'RVR':-0.028,'RRI':-0.033,'rrz':0.0,'zrz':0.0,'ggi':0.0,'igi':0.0,\
+                      'rgr':0.034,'rri':0.025,'iri':0.071,'iiz':0.110,'IRI':0.013,'ziz':-0.04}
 
     if _cat and not redo:
         print 'already calibrated'
@@ -581,7 +598,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
             zeroerr.append((float(errstd0[filters[_filter]][i])**2 + magerrsex[i]**2)**0.5)
             magcor.append(magsex[i])
         fil.close()
-        magstdn=lsc.lscabsphotdef.transform2natural(_instrume,magstd0,_field)
+        magstdn=lsc.lscabsphotdef.transform2natural(_instrume,magstd0,colorefisso,_field)
 
         magsex1=magsex+kk[filters[_filter]]*float(_airmass)  #   add again extinction for natural zero point comparison
 
@@ -684,7 +701,9 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 #################################################################
 #################### new zero point calculation #################
 def fitcol3(colors, deltas, dcolors=None, ddeltas=None, fixedC=None, filt='', col='Color', show=False, interactive=False, clipsig=2, extra=False):
-    if interactive: global keep, Z, dZ, C, dC
+    if interactive:
+        global keep, Z, dZ, C, dC
+        plt.cla()
     if fixedC is None:
         # fit Theil-Sen line and find outliers
         C, Z, _, _ = stats.theilslopes(deltas, colors) # delta = calibrated mag - instrumental mag
@@ -711,8 +730,9 @@ def fitcol3(colors, deltas, dcolors=None, ddeltas=None, fixedC=None, filt='', co
             keep[i] = not keep[i] # toggle rejection
             print
             Z, dZ, C, dC = calcZC(colors, deltas, dcolors, ddeltas, fixedC, filt, col, show=True, guess=[Z, C])
-        plt.gcf().canvas.mpl_connect('pick_event', onpick)
+        cid = plt.gcf().canvas.mpl_connect('pick_event', onpick)
         raw_input('Press enter to continue.')
+        plt.gcf().canvas.mpl_disconnect(cid)
     elif fixedC is None and C > 0.3: # if the color term is too crazy, use fixed color term
         if filt=='g': fixedC = 0.1
         else:         fixedC = 0
@@ -739,17 +759,25 @@ def calcZC(colors, deltas, dcolors=None, ddeltas=None, #keep=None,
         dZ, dC = myoutput.sd_beta
         x_reg = myoutput.xplus
         y_reg = myoutput.y
-    else:
-        Z, sum_of_weights = np.average(deltas[keep], weights=ddeltas[keep]**-2, returned=True)
+    elif np.any(keep):
+        Z, sum_of_weights = np.average(deltas[keep] - fixedC * colors[keep], weights=1/(ddeltas[keep]**2 + dcolors[keep]**2), returned=True)
         dZ = sum_of_weights**-0.5
         C, dC = fixedC, 0
+    else:
+        Z, C = guess
+        dZ, dC = 0, 0
     print 'zero point = {:5.2f} +/- {:4.2f}'.format(Z, dZ)
     print 'color term = {:5.2f} +/- {:4.2f}'.format(C, dC)
     if show:
+        if not plt.gca().get_autoscale_on():
+            lims = plt.axis()
+        else:
+            lims = [None, None, None, None]
         plt.cla()
         plt.scatter(colors, deltas, marker='.', picker=5)
         plt.errorbar(colors[keep], deltas[keep], xerr=dcolors[keep], yerr=ddeltas[keep], color='g', marker='o', linestyle='none')
         plt.errorbar(colors[~keep], deltas[~keep], xerr=dcolors[~keep], yerr=ddeltas[~keep], color='r', marker='o', linestyle='none')
+        plt.axis(lims)
         plt.autoscale(False)
         xx = np.array(plt.axis()[0:2])
         yy = Z + C*xx
@@ -943,11 +971,7 @@ def makecatalogue(imglist):
         t = fits.open(img)
         tbdata = t[1].data
         hdr1=t[0].header
-        hdr2=t[1].header
         _filter=lsc.util.readkey3(hdr1,'filter')
-        _exptime=lsc.util.readkey3(hdr1,'exptime')
-        _airmass=lsc.util.readkey3(hdr1,'airmass')
-        _telescope=lsc.util.readkey3(hdr1,'telescop')
         if _filter not in dicti: dicti[_filter]={}
         if img not in dicti[_filter]: dicti[_filter][img]={}
         for jj in hdr1:
@@ -964,9 +988,10 @@ def makecatalogue(imglist):
         dicti[_filter][img]['JD']=dicti[_filter][img]['mjd']
 #######################
 
-        dicti[_filter][img]['exptime']=_exptime
-        dicti[_filter][img]['airmass']=_airmass
-        dicti[_filter][img]['telescope']=_telescope
+        dicti[_filter][img]['exptime']=lsc.util.readkey3(hdr1,'exptime')
+        dicti[_filter][img]['airmass']=lsc.util.readkey3(hdr1,'airmass')
+        dicti[_filter][img]['telescope']=lsc.util.readkey3(hdr1,'telescop')
+        dicti[_filter][img]['siteid']=hdr1['SITEID']
         
         for col in tbdata.columns.names:
             dicti[_filter][img][col]=tbdata.field(col)
@@ -1132,15 +1157,13 @@ def zeropoint2(xx,mag,maxiter=10,nn=2,show=False,_cutmag=99):
 
 ########################################################################
 
-def transform2natural(_instrument,_catalogue,_inputsystem='sloan'):
+def transform2natural(_instrument,_catalogue,colorefisso,_inputsystem='sloan'):
    import lsc
    import numpy as np
    _catalogue2={}
    for i in _catalogue.keys():
       _catalogue2[i]=np.array(_catalogue[i][:],float)
    if _inputsystem in ['sloan','sloanprime']:
-      colorefisso=lsc.sites.colfix(_instrument,_inputsystem)
-      #colorefisso=lcogtcal.util.colorfix(_instrument,_inputsystem) 
       col={}
       col['ug']=[(_catalogue2['u'][i]-_catalogue2['g'][i]) if (_catalogue2['u'][i]<99 and _catalogue2['g'][i]<99) else  (_catalogue2['u'][i]-_catalogue2['u'][i]) for i in range(0,len(_catalogue2['u']))]
       col['gr']=[(_catalogue2['g'][i]-_catalogue2['r'][i]) if (_catalogue2['g'][i]<99 and _catalogue2['r'][i]<99) else  (_catalogue2['g'][i]-_catalogue2['g'][i]) for i in range(0,len(_catalogue2['g']))]
@@ -1158,8 +1181,6 @@ def transform2natural(_instrument,_catalogue,_inputsystem='sloan'):
       print 'in = i - '+str(colorefisso['iri'])+' * (r-i)'
       print 'zn = z - '+str(colorefisso['ziz'])+' * (i-z)'
    elif _inputsystem in ['landolt']:
-      colorefisso=lsc.sites.colfix(_instrument,_inputsystem)
-      #colorefisso=lcogtcal.util.colorfix(_instrument,_inputsystem)
       col={}
       col['UB']=[(_catalogue2['U'][i]-_catalogue2['B'][i]) if (_catalogue2['U'][i]<99 and _catalogue2['B'][i]<99) else  (_catalogue2['B'][i]-_catalogue2['B'][i]) for i in range(0,len(_catalogue2['U']))]
       col['BV']=[(_catalogue2['B'][i]-_catalogue2['V'][i]) if (_catalogue2['B'][i]<99 and _catalogue2['V'][i]<99) else  (_catalogue2['B'][i]-_catalogue2['B'][i]) for i in range(0,len(_catalogue2['B']))]
@@ -1177,8 +1198,6 @@ def transform2natural(_instrument,_catalogue,_inputsystem='sloan'):
       print "Rn = R - "+str(colorefisso['RVR'])+" * (V-R)"
       print "In = I - "+str(colorefisso['IRI'])+" * (R-I)"
    elif _inputsystem in ['apass']:
-      colorefisso=lsc.sites.colfix(_instrument,_inputsystem)
-      #colorefisso=lcogtcal.util.colorfix(_instrument,_inputsystem)
       col={}
       col['BV']=[(_catalogue2['B'][i]-_catalogue2['V'][i]) if (_catalogue2['B'][i]<99 and _catalogue2['V'][i]<99) else  (_catalogue2['B'][i]-_catalogue2['B'][i]) for i in range(0,len(_catalogue2['V']))]
       col['gr']=[(_catalogue2['g'][i]-_catalogue2['r'][i]) if (_catalogue2['g'][i]<99 and _catalogue2['r'][i]<99) else  (_catalogue2['g'][i]-_catalogue2['g'][i]) for i in range(0,len(_catalogue2['g']))]

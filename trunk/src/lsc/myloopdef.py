@@ -136,13 +136,6 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     elif _output:
         plotfast(setup, _output)
 
-    keytelescope = {'1m0-03': '3', '1m0-04': '4', '1m0-05': '5', '1m0-06': '6', '1m0-07': '7', '1m0-08': '8',
-                    '1m0-09': '9', '1m0-10': '10', '1m0-11': '11', '1m0-12': '12', '1m0-13': '13',
-                    'fts': '14', 'ftn': '15', 'SDSS': '20',  'PS1': '20', 'ogg': '15', '2m0-02': '15', '2m0-01': '14'}
-
-    if _tel not in keytelescope.keys():
-        _tel = 'extdata'
-
     linetot = {}
     if _output:
         ff = open(_output, 'w')
@@ -164,7 +157,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                         line += '%12.7s %12.6s ' % (str(setup[_tel][_fil]['mag'][j]), str(setup[_tel][_fil]['dmag'][j]))
                     else:
                         line += '%12.7s %12.6s ' % ('9999', '0.0')
-                line += '%5s%10s\n' % (str(keytelescope[_tel]), str(_tel) + '_' + str(_fil))
+                line += '%6s %2s\n' % (_tel, _fil)
                 linetot[setup[_tel][_fil]['mjd'][j]] = line
     aaa = linetot.keys()
     if _output:
@@ -387,7 +380,7 @@ def run_zero(imglist, _fix, _type, _field, _catalogue, _color='', interactive=Fa
 
 
 def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, xwindow='',\
-            fix=True, catalog='', database='photlco', use_sextractor=False):
+            fix=True, catalog='', database='photlco', use_sextractor=False, datamax=None, nstars=6):
     import lsc
     import os
     import  string
@@ -423,6 +416,11 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
             xx = ' --use-sextractor '
         else:
             xx = ''
+        if datamax is not None:
+            dm = ' --datamax ' + str(datamax) + ' '
+        else:
+            dm = ' '
+        pp = ' -p ' + str(nstars) + ' '
 
         status = checkstage(img, 'psf')
         print status
@@ -482,7 +480,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                 _dir = ggg[0]['filepath']
                 img0 = img
                 command = 'lscpsf.py ' + _dir + img0 + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
-                    treshold) + xwindow + gg + cc + xx
+                    treshold) + xwindow + gg + cc + xx + dm + pp
                 print command
                 os.system(command)
         elif status == 0:
@@ -499,7 +497,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
 
 
 def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _recenter=False, _ref='', interactive=False,
-            show=False, redo=False, dmax=51000, dmin=-500, database='photlco', _ra0='', _dec0=''):
+            show=False, redo=False, dmax=None, dmin=None, database='photlco', _ra0='', _dec0=''):
     import lsc
     import os, string
     from astropy.io import fits
@@ -530,6 +528,12 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
         _ra0 =  '--RA0 ' + str(_ra0)
     if _dec0:
         _dec0 = '--DEC0 '+ str(_dec0)
+
+    # different defaults for run_fit and run_psf
+    if dmax is None:
+        dmax = 51000
+    if dmin is None:
+        dmin = -500
 
     for img in imglist:
         status = checkstage(img, 'psfmag')
@@ -780,15 +784,11 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             lista = []
             for fil in string.split(_filter, ','):
                 print fil
-                try:
-                    lista.append(lsc.sites.filterst('lsc')[fil])
-                except:
-                    try:
-                        lista.append(lsc.sites.filterst('fts')[fil])
-                    except:
-                        if fil in ['zs', 'up', 'gp', 'ip', 'rp', 'U', 'B', 'V', 'R', 'I', 'SDSS-G', 'SDSS-R', 'SDSS-I',
-                                   'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']:
-                            lista.append(fil)
+                if fil in lsc.sites.filterst:
+                    lista += lsc.sites.filterst[fil]
+                elif fil in ['zs', 'up', 'gp', 'ip', 'rp', 'U', 'B', 'V', 'R', 'I', 'SDSS-G', 'SDSS-R', 'SDSS-I',
+                             'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']:
+                    lista.append(fil)
             print lista
             ww = asarray([i for i in range(len(ll1['filter'])) if ((ll1['filter'][i] in lista))])
         if len(ww) > 0:
@@ -1831,6 +1831,7 @@ def chosecolor(allfilter, usegood=False, _field=''):
                 if _fil not in color: color[_fil] = []
                 color[_fil].append(_fil + filt)
                 break
+
     if usegood:
         goodcol = {'U': 'UB', 'B': 'BV', 'V': 'VR', 'R': 'VR', 'I': 'RI',
                     'u': 'ug', 'g': 'gr', 'r': 'ri', 'i': 'ri', 'z': 'iz'}

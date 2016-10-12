@@ -301,8 +301,6 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
     for img in imglist:
         hdr=readhdr(img)
         _instrume=readkey3(hdr,'instrume')
-        if catalogue=='inst' and _instrume in lsc.instrument0['all']:
-            catalogue='2mass'
         if not sexvec:
             sexvec=lsc.lscastrodef.sextractor(img)
 ###################
@@ -351,13 +349,13 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
             fwhmgess3=9999
             fwhmgessime=9999
             ellgess3=9999
-        if _instrume in lsc.instrument0['all']:
+        if _instrume[:2] in ['kb', 'fl', 'fs', 'em']:
             mbkg3=median(bkg3)
             lsc.util.updateheader(img,0,{'MBKG':[mbkg3,'background level']})
         else:
             mbkg3=readkey3(hdr,'MBKG')
         if fwhmgess3:
-            if _instrume in lsc.instrument0['all']:
+            if _instrume[:2] in ['kb', 'fl', 'fs', 'em']:
                 V=(math.pi/(4*math.log(2)))*(45000-float(mbkg3))*(float(fwhmgess3)**2)
             else:                     
                 V=(math.pi/(4*math.log(2)))*(32000-float(mbkg3))*(float(fwhmgess3)**2)
@@ -581,13 +579,12 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
     _instrume=readkey3(hdr,'instrume')
     _date=readkey3(hdr,'date-night')
     _object=readkey3(hdr,'object')
-    # atmospheric absorptions for LSC
-    if _telescope in ['lsc','1m0-04','1m0-05','1m0-09']:     kk=lsc.sites.extintion('ctio')
-    elif _telescope in ['elp','1m0-08']:                     kk=lsc.sites.extintion('mcdonald')
-    elif _telescope in ['cpt','1m0-12','1m0-10','1m0-13']:   kk=lsc.sites.extintion('southafrica')
-    elif _telescope in ['ftn','Faulkes Telescope North']:    kk=lsc.sites.extintion('mauna')
-    elif _telescope in ['coj','1m0-11','fts','Faulkes Telescope South']:    kk=lsc.sites.extintion('siding')
-#    kk={'U':0.63,'u':0.70,'B':0.32,'g':0.26,'V':0.18,'r':0.15,'R':0.13,'i':0.08,'I':0.07,'z':0.06}
+    _siteid = hdr['SITEID']
+    if _siteid in lsc.sites.extinction:
+        kk = lsc.sites.extinction[_siteid]
+    else:
+        print _siteid
+        sys.exit('siteid not in lsc.sites.extinction')
     if 1==1:
         if catalogue:
             stdcooC=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/'+catalogue+'.cat')

@@ -10,9 +10,7 @@ import lsc
 
 if __name__ == "__main__":
     parser = OptionParser(usage=usage, description=description, version="%prog 1.0")
-    parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str",
-                      help='-T telescope fts, ftn, all, ' + ', '.join(list(lsc.telescope0['all'])) + ', '.join(
-                          list(lsc.site0)) + ' \t [%default]')
+    parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str")
     parser.add_option("-e", "--epoch", dest="epoch", default='20121212', type="str",
                       help='-e epoch \t [%default]')
     # parser.add_option("-f", "--force",dest="force",action="store_true")
@@ -55,7 +53,7 @@ if __name__ == "__main__":
             stop = re.sub('-', '', str(datetime.date(int(epoch2[0:4]), int(epoch2[4:6]), int(epoch2[6:8]))))
             pippo = lsc.mysqldef.getlistfromraw(conn, 'photlcoraw', 'dayobs', str(start), str(stop), '*',
                                                 _telescope)
-        listingested = [i['filename'] for i in pippo]
+        listingested = [i['filepath']+i['filename'] for i in pippo if (i['objname'] == _object or not _object)]
     else:
         if '-' not in str(epoch):
             epoch0 = re.sub('-', '', str(datetime.date(int(epoch[0:4]), int(epoch[4:6]), int(epoch[6:8]))))
@@ -65,19 +63,6 @@ if __name__ == "__main__":
             pippo = lsc.mysqldef.getmissing(conn, epoch1, epoch2, _telescope, 'photlco')
             print pippo
             print 'here'
-        listingested = [i['filename'] for i in pippo]
-    
-    listname = [i['objname'] for i in pippo]
-#    print listingested
-#    print listname
+        listingested = [i['filepath']+i['filename'] for i in pippo (i['objname'] == _object or not _object)]
 
-    if _object:
-         for ii, img in enumerate(listingested):
-             if listname[ii] == _object:
-                 lsc.mysqldef.ingestredu([img], _force, 'photlco')
-             else:
-                 print listname[ii],ii
-                 print 'not the right object'
-    else:
-        for img in listingested:
-            lsc.mysqldef.ingestredu([img], _force, 'photlco')
+    lsc.mysqldef.ingestredu(listingested, _force, 'photlco')

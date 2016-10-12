@@ -18,9 +18,7 @@ if __name__ == "__main__":   # main program
     parser = OptionParser(usage=usage, description=description, version="%prog 1.0")
     parser.add_option("-e", "--epoch", dest="epoch", default='20121212', type="str",
                       help='epoch to reduce  \t [%default]')
-    parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str",
-                      help='-T telescope ' + ', '.join(lsc.telescope0['all']) + ', '.join(
-                          lsc.site0) + ', fts, ftn, 1m0, kb, fl, fs, sinistro, sbig \t [%default]')
+    parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str")
     parser.add_option("--instrument", dest="instrument", default='', type="str",
                       help='--instrument ' + ' kb, fl, fs, sinistro, sbig \t [%default]')
     parser.add_option("-R", "--RA", dest="ra", default='', type="str",
@@ -89,10 +87,10 @@ if __name__ == "__main__":   # main program
                       help='mode for wcs (sv,astrometry)  \t [%default]')
     parser.add_option("--combine", dest="combine", default=1e-10, type="float",
                       help='range to combine (in days)  \t [%default]')
-    parser.add_option("--datamax", dest="dmax", default=51000, type="float",
-                      help='data max for saturation (counts)  \t [%default]')
-    parser.add_option("--datamin", dest="dmin", default=-500, type="float",
-                      help='data min for saturation (counts)  \t [%default]')
+    parser.add_option("--datamax", dest="dmax", type=int,
+                      help='data max for saturation (counts)')
+    parser.add_option("--datamin", dest="dmin", type=int,
+                      help='data min for saturation (counts)')
     parser.add_option("--yshift", dest="yshift", default=0, type="int",
                       help='y shift in the guess astrometry \t [%default]')
     parser.add_option("--filetype", dest="filetype", default=1, type="int",
@@ -126,8 +124,9 @@ if __name__ == "__main__":   # main program
     parser.add_option("--subtract-mag-from-header", action='store_true', help='automatically subtract mag from header of template image \t\t [%default]')
     parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing image subtraction')
+    parser.add_option("--nstars", type=int, default=6, help="number of stars used to make the PSF")
     parser.add_option("--optimal", dest="optimal", action="store_true", default=False, 
-                      help='Use Zackey optimal image subtraction \t [%default]')
+                      help='Use Zackey optimal image subtraction \t [%(default)s]')
 
     option, args = parser.parse_args()
     _instrument=option.instrument
@@ -145,8 +144,6 @@ if __name__ == "__main__":   # main program
         _groupid=''
     _normalize = option.normalize
     _convolve = option.convolve
-    if _telescope not in lsc.telescope0['all'] + lsc.site0 + ['all', 'ftn', 'fts', '1m0', '2m0', 'kb', 'fl', 'fs','sinistro','sbig']:
-        sys.argv.append('--help')
     if option.force == None:
         _redo = False
     else:
@@ -230,17 +227,12 @@ if __name__ == "__main__":   # main program
     else:
         XX = ''
 
-    if _filter:
-        if _filter not in ['landolt', 'sloan', 'apass', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I',
-                           'SDSS-I', 'SDSS-G', 'SDSS-R', 'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V',
-                           'Bessell-R', 'Bessell-I', 'SDSS-G,SDSS-R,SDSS-I', 'Bessell-B,Bessell-V,Bessell-R',
-                           'u,g', 'g,r', 'g,r,i', 'g,r,i,z', 'r,i,z', 'B,V,R', 'B,V', 'B,V,R,I', 'V,R,I']:
-            sys.argv.append('--help')
-        else:
-            try:
-                _filter = lsc.sites.filterst(_telescope)[_filter]
-            except:
-                pass
+    if _filter not in ['landolt', 'sloan', 'apass', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I',
+                       'SDSS-I', 'SDSS-G', 'SDSS-R', 'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V',
+                       'Bessell-R', 'Bessell-I', 'SDSS-G,SDSS-R,SDSS-I', 'Bessell-B,Bessell-V,Bessell-R',
+                       'u,g', 'g,r', 'g,r,i', 'g,r,i,z', 'r,i,z', 'B,V,R', 'B,V', 'B,V,R,I', 'V,R,I', '']:
+        sys.argv.append('--help')
+
 
     if _filter and not _field:
         if _filter == 'landolt':
@@ -314,7 +306,7 @@ if __name__ == "__main__":   # main program
             elif _stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], _output, _interactive, _show, _bin, _type)
             elif _stage == 'psf':
-                lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, XX, _fix, _catalogue, 'photlco', option.use_sextractor)
+                lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, XX, _fix, _catalogue, 'photlco', option.use_sextractor, _dmax, option.nstars)
             elif _stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], _ras, _decs, _xord, _yord, _bkg, _size, _recenter, _ref,
                                       _interactive, _show, _redo, _dmax,_dmin,'photlco',_ra0,_dec0)
@@ -386,27 +378,12 @@ if __name__ == "__main__":   # main program
                                         you need to specify the name of the object''')
                         else:
                             if not _catalogue:
-                                namesql = _name.replace(' ','%')
-                                data = lsc.mysqldef.query(['select targetid from targetnames where name like "{}"'.format(namesql)], lsc.conn)
-                                if data: # exact match to name given with -n
-                                    _targetid = data[0]['targetid']
-                                else: # partial match to name given with -n
-                                    data = lsc.mysqldef.query(['select targetid from targetnames where name like "{}"'.format(namesql)], lsc.conn)
-                                if data: # exact match to name given with -n
-                                    _targetid = data[0]['targetid'] # pick the first result
-                                else:
-                                    sys.exit('Target not found in database. Try "SN YYYYaa" with a space.')
-                                print 'target ID =', _targetid
-                                data = lsc.mysqldef.query(['select name from targetnames where targetid={:d}'.format(_targetid)],lsc.conn)
-                                names = [targ['name'].replace(' ','').lower() for targ in data] # remove spaces & make lower case
-                                catlist = glob.glob(lsc.__path__[0] + '/standard/cat/' + _field + '/*')
-                                catnames = [os.path.basename(cat).split('_')[0].lower() for cat in catlist]
-                                name_match = set(names) & set(catnames)
-                                cat_match = [catlist[catnames.index(n)] for n in name_match]
-                                print 'found', len(cat_match), 'matching catalogues'
-                                if cat_match:
-                                    _catalogue = cat_match[0] # pick the first result
-                                    print 'using catalogue', _catalogue
+                                data = lsc.mysqldef.query(['''select {}_cat from targets, targetnames
+                                                              where name like "{}"
+                                                              and targets.id=targetnames.targetid'''.format(_field, _name.replace(' ', '%'))],
+                                                           lsc.conn)
+                                if data and data[0][_field + '_cat']: # if target is found and catalog is not an empty string
+                                    _catalogue = lsc.__path__[0] + '/standard/cat/' + _field + '/' + data[0][_field + '_cat']
                         if _field == 'apass':
                             ww0 = asarray([i for i in range(len(ll3['filter'])) if (ll['filter'][i] in ['V', 'B'])])
                             ww1 = asarray(
@@ -418,7 +395,7 @@ if __name__ == "__main__":   # main program
                             if len(ww0) >= 1:
                                 for jj in ['B', 'V']:
                                     if jj in list(set(ll3['filter'])):
-                                        _color = _color + lsc.sites.filterst1(_telescope)[jj]
+                                        _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww0], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
@@ -426,7 +403,7 @@ if __name__ == "__main__":   # main program
                             if len(ww1) >= 1:
                                 for jj in ['gp', 'rp', 'ip']:
                                     if jj in list(set(ll3['filter'])):
-                                        _color = _color + lsc.sites.filterst1(_telescope)[jj]
+                                        _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww1], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
@@ -434,7 +411,7 @@ if __name__ == "__main__":   # main program
                             if len(ww2) >= 1:
                                 for jj in ['SDSS-G', 'SDSS-R', 'SDSS-I']:
                                     if jj in list(set(ll3['filter'])):
-                                        _color = _color + lsc.sites.filterst1(_telescope)[jj]
+                                        _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww2], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
@@ -446,7 +423,7 @@ if __name__ == "__main__":   # main program
                             if len(ww0) >= 1:
                                 for jj in ['U', 'I', 'R', 'V', 'B']:
                                     if jj in list(set(ll3['filter'])):
-                                        _color = _color + lsc.sites.filterst1(_telescope)[jj]
+                                        _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww0], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
@@ -457,7 +434,7 @@ if __name__ == "__main__":   # main program
                             if len(ww0) >= 1:
                                 for jj in ['gp', 'up', 'rp', 'ip', 'zs']:
                                     if jj in list(set(ll3['filter'])):
-                                        _color = _color + lsc.sites.filterst1(_telescope)[jj]
+                                        _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
                                 lsc.myloopdef.run_zero(ll3['filename'][ww0], _fix, _type, _field, _catalogue, _color,
                                                        _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
@@ -507,21 +484,23 @@ if __name__ == "__main__":   # main program
                             startdate = _tempdate.split('-')[0]
                             enddate   = _tempdate.split('-')[-1]
                         else:
-                            startdate = '20120101'
-                            enddate   = '20150101'
+                            startdate = '19990101'
+                            enddate   = '20080101'
 
-                        suffix = '.{}.diff.fits'.format(_temptel).replace('..', '')
+                        suffix = '.{}.optimal.diff.fits'.format(_temptel).replace('..', '.')
                         if _temptel.upper() in ['SDSS', 'PS1']:
                             if _telescope == 'kb':
-                                _temptel = 'sbig'
+                                fake_temptel = 'sbig'
                             elif _telescope == 'fs':
-                                _temptel = 'spectral'
+                                fake_temptel = 'spectral'
                             elif _telescope == 'fl':
-                                _temptel = 'sinistro'
-                        elif not _temptel:
-                            _temptel = _telescope
+                                fake_temptel = 'sinistro'
+                        elif _temptel:
+                            fake_temptel = _temptel
+                        else:
+                            fake_temptel = _telescope
 
-                        lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', _temptel)
+                        lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', fake_temptel)
                         if lista:
                             ll00 = {}
                             for jj in lista[0].keys():
@@ -540,9 +519,6 @@ if __name__ == "__main__":   # main program
                         listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                         listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
 
-                        if not listtemp:
-                            sys.exit('template not found')
-                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, _optimal)
                         lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, suffix)
 
                     elif _stage == 'template':  #    merge images using lacos and swarp

@@ -48,7 +48,7 @@ proposalingestion = readpass['proposalingestion']
 
 proposalgroup = {}
 proposalgroup['CON2014B-005'] = 5
-
+# no longer up to date (only used for old ingestion)
 instrument0={'sbig':['kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79'],\
              'sinistro':['fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10'],\
              'spectral':['fs01','fs02','fs03','em01','em02']}
@@ -300,36 +300,13 @@ def readkey3(hdr,keyword):
              value1=hdr.get('FILTER2')
              value2=hdr.get('FILTER1')
              value3=hdr.get('FILTER3')
-             value=[a for a in [value1,value2,value3] if 'air' not in a]
-             if not value: value='air'
-             else: value=value[0]
+             values=[a for a in [value,value1,value2,value3] if 'air' not in a]
+             if not values: value='air'
+             else: value=values[0]
           elif keyword in ['RA', 'CAT-RA'] and type(value) == str and ':' in value:
              value = Angle(value, u.hourangle).deg
           elif keyword in ['RA', 'CAT-RA', 'DEC', 'CAT-DEC']:
              value = Angle(value, u.deg).deg
-# REPLACED WITH HEADER KEYWORD DAY-OBS
-#    elif keyword=='date-night':
-#       try:
-#          _tel=hdr.get('TELID').lower()
-#          if _tel in ['1m0-08']:                       # elp  shift
-#             delta=0.0
-#          elif _tel in ['fts','ftn']:  # FTS,FTN no shift
-#             delta=0.0
-#          elif _tel in ['1m0-10','1m0-12','1m0-13']:  # south africa
-#             delta=0.4
-#          elif _tel in ['1m0-03','1m0-11']:           # south spring
-#             delta=0.0
-#          elif _tel in ['1m0-05','1m0-04','1m0-09']:  # cile shift
-#             delta=0.5
-#          else:
-#             delta=0.5
-#       except:
-#          delta=0.5
-#       from astropy.time import Time, TimeDelta
-#       _date = readkey3(hdr, 'DATE-OBS')
-#       datenight = Time(_date, format='isot') - TimeDelta(delta, format='jd')
-#       datenight.out_subfmt = 'date'
-#       value = datenight.iso.replace('-', '')
     elif keyword in hdr:
        value=hdr.get(keyword)
     else:
@@ -889,7 +866,7 @@ def checksnlist(img,listfile):
     lll=[str(rastd[argmin(dd)])+' '+str(decstd[argmin(dd)])]
     from pyraf import iraf
     bbb=iraf.wcsctran('STDIN','STDOUT',img+'[0]',Stdin=lll,inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.5f %10.5f',Stdout=1)[3]
-    if    float(string.split(bbb)[0])<=_xdimen and float(string.split(bbb)[1])<=_ydimen and float(string.split(bbb)[0])>=0 and float(string.split(bbb)[1])>=0:
+    if 'INDEF' not in bbb and float(string.split(bbb)[0])<=_xdimen and float(string.split(bbb)[1])<=_ydimen and float(string.split(bbb)[0])>=0 and float(string.split(bbb)[1])>=0:
         #print str(std[argmin(dd)])+' in the field '+str(bbb)
         _RA=rastd[argmin(dd)]
         _DEC=decstd[argmin(dd)]
@@ -905,8 +882,8 @@ def checksndb(img,table):
    from lsc.mysqldef import getfromcoordinate, gettargetid,query
    from lsc import conn
    hdrt=readhdr(img)
-   _ra=readkey3(hdrt,'RA')
-   _dec=readkey3(hdrt,'DEC')
+   _ra=readkey3(hdrt,'CAT-RA')
+   _dec=readkey3(hdrt,'CAT-DEC')
    _targetid=gettargetid('',_ra,_dec,conn,.01,False)
    if not _targetid:
        _targetid=gettargetid('',_ra,_dec,conn,.02,False)

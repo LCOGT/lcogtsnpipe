@@ -124,7 +124,7 @@ if __name__ == "__main__":
             _targetid = 1
 
         _filt = lsc.util.readkey3(hdr, 'filter')
-        _filter = lsc.sites.filterst1(lsc.util.readkey3(hdr, 'telescop'))[_filt]
+        _filter = lsc.sites.filterst1[_filt]
 
         _obj = lsc.util.readkey3(hdr, 'object')
         if _filter not in listatar:
@@ -142,7 +142,7 @@ if __name__ == "__main__":
         except:
             _targetid = 1
         _filt = lsc.util.readkey3(hdr, 'filter')
-        _filter = lsc.sites.filterst1(lsc.util.readkey3(hdr, 'telescop'))[_filt]
+        _filter = lsc.sites.filterst1[_filt]
 
         _obj = lsc.util.readkey3(hdr, 'object')
         if _filter not in listatemp:

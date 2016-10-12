@@ -69,30 +69,9 @@ coomandsn = {'LSQ12fxd': '-c -x 3 -y 3 --bkg 3 --size 6',
              'LSQ13cnl': '-c -x 4 -y 4 --bkg 3 --size 5 --ref cpt1m012-kb75-20131008-0126-e90.sn2.fits'
 }
 
-
-def runin(telescope, instrument, epoch, _type='raw'):
-    import os
-
-    if instrument:
-        ii = ' -i ' + instrument
-    else:
-        ii = ' '
-    try:
-        if _type == 'raw':
-            print 'ingestrawdata.py -T ' + telescope + ii + ' -e ' + epoch
-            os.system('ingestrawdata.py -T ' + telescope + ii + ' -e ' + epoch)
-        elif _type == 'redu':
-            print 'ingestredudata.py -e ' + epoch + ' -m -T ' + telescope + ii
-            os.system('ingestredudata.py -e ' + epoch + ' -m -T ' + telescope + ii)
-        else:
-            print 'type not defined'
-    except:
-        print 'problem with ingestion'
-
-
 # ##########################################################
 
-def zerostandard(standard, epoch, field, telescope='lsc'):
+def zerostandard(standard, epoch, field, telescope):
     import os, glob
     import lsc
 
@@ -117,9 +96,7 @@ if __name__ == "__main__":
     parser = OptionParser(usage=usage, description=description, version="%prog lsc")
     parser.add_option("-f", "--filter", dest="filter", default='', type="str",
                       help='-f filter [sloan,landolt,u,g,r,i,z,U,B,V,R,I] \t [%default]')
-    parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str",
-                      help='-T telescope ' + ', '.join(lsc.telescope0['all']) + ', ftn, fts, ' +
-                           ', '.join(lsc.site0) + ' \t [%default]')
+    parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str")
     parser.add_option("-e", "--epoch", dest="epoch", default='', type="str",
                       help='epoch to reduce  \t [%default]')
     parser.add_option("-i", "--ingest", action="store_true",
@@ -151,8 +128,6 @@ if __name__ == "__main__":
     else:
         XX = ''
 
-    if _telescope not in lsc.telescope0['all'] + lsc.site0 + ['all', 'ftn', 'fts']:
-        sys.argv.append('--help')
     if _filter:
         if _filter not in ['landolt', 'sloan', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I', 'ug',
                            'gr', 'gri', 'griz', 'riz', 'BVR', 'BV', 'BVRI', 'VRI']:
@@ -170,34 +145,17 @@ if __name__ == "__main__":
         g = d - datetime.timedelta(4)
         epoch = g.strftime("%Y%m%d") + '-' + d.strftime("%Y%m%d")
 
-    if _telescope:
-        if _telescope in lsc.telescope0.keys():
-            tel = lsc.telescope0[_telescope]
-        else:
-            tel = lsc.telescope0['all']
-    else:
-        tel = lsc.telescope0['all']
-
     if _field:
         fil = [_field]
     else:
         fil = ['landolt', 'sloan']
-
-    if _ingest:
-        print '\n### ingest raw data'
-        for i in range(0, len(tel)):    runin(tel[i], '', epoch, 'raw')  # ingest raw date
-        print '\n### ingest redu data'
-        for i in range(0, len(tel)):    runin(tel[i], '', epoch, 'redu')  # ingest redu data
 
     if _filter:
         ff = ' -f ' + _filter
     else:
         ff = ''
 
-    if _telescope == 'all':
-        tt = ''
-    else:
-        tt = '  -T ' + _telescope + ' '
+    tt = '  -T ' + _telescope + ' '
     print '\n####  compute  astrometry, when missing '
     #  compute astrometry when tim astrometry failed
     os.system('lscloop.py -e ' + epoch + ' -b wcs -s wcs --mode astrometry ' + ff + tt + XX)
@@ -215,7 +173,6 @@ if __name__ == "__main__":
     #############################################################################
     import glob
 
-#    ll = lsc.myloopdef.get_list(epoch, 'all', '', '', '', '', '', '', 'photlco', _filetype)
     ll = lsc.myloopdef.get_list(epoch, _telescope, '', '', '', '', '', '', 'photlco', _filetype)
     lista = list(set(ll['objname']))
     sloancal = []
@@ -289,30 +246,18 @@ if __name__ == "__main__":
         if field == 'sloan':
             listacampi = standard + sloancal
         for _standard in listacampi:
-            if _telescope == 'all':
-                for _tel in ['elp', 'lsc', 'cpt', 'coj','ogg']:
-                    zerostandard(_standard, epoch, field, _tel)
-            else:
-                zerostandard(_standard, epoch, field, _telescope)
+            zerostandard(_standard, epoch, field, _telescope)
 
     #    compute zeropoint for apass field not in landolt or sloan
     for field in fil:
         if field == 'landolt':
             for _name in apasscal:
                 if _name not in landoltcal:
-                    if _telescope == 'all':
-                        for _tel in ['elp', 'lsc', 'cpt', 'coj','ogg']:
-                            zerostandard(_name, epoch, 'apass', _tel)
-                    else:
-                        zerostandard(_name, epoch, 'apass', _telescope)
+                    zerostandard(_name, epoch, 'apass', _telescope)
         if field == 'sloan':
             for _name in apasscal:
                 if _name not in sloancal:
-                    if _telescope == 'all':
-                        for _tel in ['elp', 'lsc', 'cpt', 'coj','ogg']:
-                            zerostandard(_name, epoch, 'apass', _tel)
-                    else:
-                        zerostandard(_name, epoch, 'apass', _telescope)
+                    zerostandard(_name, epoch, 'apass', _telescope)
 
     #               compute catalogues for SN fields
     for field in fil:
@@ -322,24 +267,14 @@ if __name__ == "__main__":
                 #                if obj not in landoltcal:
                 print obj + ': object not calibrated in landolt'
                 for _std in standard:
-                    if _telescope == 'all':
-                        for _tel in ['elp', 'lsc', 'cpt']:
-                            os.system('lscloop.py --type ph  -F -e ' + epoch + ' -n ' + obj + ' -f ' + field + \
-                                          ' -b abscat -s abscat --standard ' + _std + ' -T ' + _tel + XX)
-                    else:
-                            os.system('lscloop.py --type ph  -F -e ' + epoch + ' -n ' + obj + ' -f ' + field + \
-                                          ' -b abscat -s abscat --standard ' + _std + ' -T ' + _telescope + XX)
+                    os.system('lscloop.py --type ph  -F -e ' + epoch + ' -n ' + obj + ' -f ' + field + \
+                              ' -b abscat -s abscat --standard ' + _std + ' -T ' + _telescope + XX)
             if field == 'sloan':
                 #               if obj not in sloancal:
                 print obj + ': object not calibrated in sloan'
                 for _std in standard:
-                    if _telescope == 'all':
-                        for _tel in ['elp', 'lsc', 'cpt']:
-                            os.system('lscloop.py --type ph  -F -e ' + epoch + ' -n ' + obj + ' -f ' + field + \
-                                          ' -b abscat -s abscat --standard ' + _std + ' -T ' + _tel + XX)
-                    else:
-                        os.system('lscloop.py --type ph  -F -e ' + epoch + ' -n ' + obj + ' -f ' + field + \
-                                      ' -b abscat -s abscat --standard ' + _std + ' -T ' + _telescope + XX)
+                    os.system('lscloop.py --type ph  -F -e ' + epoch + ' -n ' + obj + ' -f ' + field + \
+                              ' -b abscat -s abscat --standard ' + _std + ' -T ' + _telescope + XX)
     # run psffit on all objects
     for field in fil:
         for obj in lista:

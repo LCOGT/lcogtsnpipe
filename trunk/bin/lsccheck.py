@@ -15,10 +15,7 @@ if __name__ == "__main__":
     parser = OptionParser(usage=usage, description=description, version="%prog 1.0")
     parser.add_option("-e", "--epoch", dest="epoch", default='20121212', type="str",
                       help='epoch to reduce  \t [%default]')
-    parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str",
-                      help='-T telescope ' + ', '.join(lsc.telescope0['all']) + ', '.join(
-                          lsc.site0) + ', fts, ftn, 1m0, '
-                                       'kb, fl \t [%default]')
+    parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str")
     parser.add_option("-R", "--RA", dest="ra", default='', type="str",
                       help='-R  ra    \t [%default]')
     parser.add_option("-D", "--DEC", dest="dec", default='', type="str",
@@ -46,8 +43,6 @@ if __name__ == "__main__":
 
     option, args = parser.parse_args()
     _telescope = option.telescope
-    if _telescope not in lsc.telescope0['all'] + lsc.site0 + ['all', 'ftn', 'fts', '1m0', 'kb', 'fl']:
-        sys.argv.append('--help')
     option, args = parser.parse_args()
     _id = option.id
     _filter = option.filter
@@ -72,14 +67,9 @@ if __name__ == "__main__":
     if _bad:
         if _bad not in ['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'goodcat', 'quality', 'cosmic', 'diff']:
             sys.argv.append('--help')
-    if _filter:
-        if _filter not in ['landolt', 'sloan', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I']:
-            sys.argv.append('--help')
-        else:
-            try:
-                _filter = lsc.sites.filterst(_telescope)[_filter]
-            except:
-                pass
+    if _filter not in ['landolt', 'sloan', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I', '']:
+        sys.argv.append('--help')
+
     option, args = parser.parse_args()
     epoch = option.epoch
     if '-' not in str(epoch):

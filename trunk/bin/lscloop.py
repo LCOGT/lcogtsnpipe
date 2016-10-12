@@ -378,7 +378,7 @@ if __name__ == "__main__":   # main program
                                                               where name like "{}"
                                                               and targets.id=targetnames.targetid'''.format(_field, _name.replace(' ', '%'))],
                                                            lsc.conn)
-                                if data:
+                                if data and data[0][_field + '_cat']: # if target is found and catalog is not an empty string
                                     _catalogue = lsc.__path__[0] + '/standard/cat/' + _field + '/' + data[0][_field + '_cat']
                         if _field == 'apass':
                             ww0 = asarray([i for i in range(len(ll3['filter'])) if (ll['filter'][i] in ['V', 'B'])])

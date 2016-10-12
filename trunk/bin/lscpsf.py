@@ -263,7 +263,24 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
         #################################################################################
         ###################        write file to compute psf     _psf.coo    ############
         #################################################################################
-        if interactive:
+        if _catalog:
+            print '\n#### use catalog to measure the psf'
+            ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img + '[0]',inwcs='world',outwcs='logical',
+                              units='degrees degrees',columns='1 2',formats='%10.1f %10.1f',verbose='no')
+            ddd=[i for i in ddd if i[0]!='#']
+            ddd=['  '.join(i.split()[0:3]) for i in ddd]
+            line=''
+            for i in ddd:
+                a,b,c = string.split(i)
+                if float(a) < float(xdim) and  float(b) < float(ydim) and float(b) > 0:
+                    line = line + '%10s %10s %10s \n' % (a, b, c)
+            if line:
+                ff = open('_psf.coo', 'w')
+                ff.write(line)
+                ff.close()
+            else:
+                sys.exit('error: no catalog objects are in the field')
+        elif interactive:
             iraf.display(img, 1, fill=True)
             iraf.delete('tmp.lo?', verify=False)
             print '_' * 80
@@ -281,23 +298,6 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                 ff.write('%10.3f %10.3f %7.2f \n' % (xns[i], yns[i], float(_fws[i])))
             ff.close()
             fwhm = np.median(_fws)
-        elif _catalog:
-            print '\n#### use catalog to measure the psf'
-            ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img + '[0]',inwcs='world',outwcs='logical',
-                              units='degrees degrees',columns='1 2',formats='%10.1f %10.1f',verbose='no')
-            ddd=[i for i in ddd if i[0]!='#']
-            ddd=['  '.join(i.split()[0:3]) for i in ddd]
-            line=''
-            for i in ddd:
-                a,b,c = string.split(i)
-                if float(a) < float(xdim) and  float(b) < float(ydim) and float(b) > 0:
-                    line = line + '%10s %10s %10s \n' % (a, b, c)
-            if line:
-                ff = open('_psf.coo', 'w')
-                ff.write(line)
-                ff.close()
-            else:
-                sys.exit('error: no catalog objects are in the field')
         else:
             ############              run  sextractor                #####################################
             xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
@@ -364,13 +364,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
         ######################################################################################
         ###################        write file of object to store in  fits table  #############
         ######################################################################################
-        if interactive:
-            xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
-            ff = open('_psf2.coo', 'w')
-            for i in range(len(xs)):
-                ff.write('%10s %10s %10s \n' % (xs[i], ys[i], fluxrad[i]))
-            ff.close()
-        elif _catalog:
+        if _catalog:
             ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img + '[0]',inwcs='world',outwcs='logical',
                               units='degrees degrees',columns='1 2',formats='%10.1f %10.1f',verbose='no')
             ddd=[i for i in ddd if i[0]!='#']
@@ -379,6 +373,12 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
             for i in ddd:
                 a,b,c = string.split(i)
                 ff.write('%10s %10s %10s \n' % (a, b, c))
+            ff.close()
+        elif interactive:
+            xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
+            ff = open('_psf2.coo', 'w')
+            for i in range(len(xs)):
+                ff.write('%10s %10s %10s \n' % (xs[i], ys[i], fluxrad[i]))
             ff.close()
         else:
             os.system('cp _psf.coo _psf2.coo')

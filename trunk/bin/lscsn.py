@@ -318,7 +318,7 @@ if __name__ == "__main__":
                         y1 = 0
                     y2 = int(float(yy0) + size * fwhm0)
                     lsc.util.delete("original.fits")
-                    iraf.imcopy(imglong + "[" + str(x1) + ":" + str(x2) + "," + str(y1) + ":" + str(y2) + "]",
+                    iraf.imcopy(imglong + "[SCI][" + str(x1) + ":" + str(x2) + "," + str(y1) + ":" + str(y2) + "]",
                                 "original.fits")
                 else:
                     repeat = 'n'
@@ -335,7 +335,7 @@ if __name__ == "__main__":
                         if y1 <= 0: y1 = 0
                         y2 = int(float(yy0) + size * fwhm0)
                         lsc.util.delete("original.fits")
-                        iraf.imcopy(imglong + "[" + str(x1) + ":" + str(x2) + "," + str(y1) + ":" + str(y2) + "]",
+                        iraf.imcopy(imglong + "[SCI][" + str(x1) + ":" + str(x2) + "," + str(y1) + ":" + str(y2) + "]",
                                     "original.fits")
                         iraf.set(stdimage='imt512')
                         _tmp1, _tmp2, goon = lsc.util.display_image('original.fits', 1, '', '', False, _xsize=.5,

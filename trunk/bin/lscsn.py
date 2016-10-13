@@ -249,7 +249,7 @@ if __name__ == "__main__":
                 if _ra0 and _dec0:
                     os.system('rm -rf tmp.*')
                     lll = [str(_ra0) + '    ' + str(_dec0)]
-                    iraf.wcsctran('STDIN', 'tmp.pix', img, Stdin=lll, inwcs='world', units='degrees degrees',
+                    iraf.wcsctran('STDIN', 'tmp.pix', img + '[0]', Stdin=lll, inwcs='world', units='degrees degrees',
                                   outwcs='logical', columns='1 2', formats='%10.1f %10.1f')
                     if _show:
                         iraf.tvmark(1, 'tmp.pix', mark="circle", number='yes', radii=10, nxoffse=5, nyoffse=5,

@@ -687,7 +687,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
         rasn1, decsn1 = string.split(aaa)
         if _show:
             iraf.set(stdimage='imt8192')
-            iraf.display(_dir1 + re.sub('sn2.fits', 'fits', img1), 1, fill=True, Stdout=1, zsc='yes',
+            iraf.display(_dir1 + re.sub('sn2.fits', 'fits', img1) + '[0]', 1, fill=True, Stdout=1, zsc='yes',
                          zra='yes')  #,z1=0,z2=3000)
             iraf.tvmark(1, 'STDIN', Stdin=[lll], mark="cross", number='no', label='no', radii=5, nxoffse=5, nyoffse=5,
                         color=205, txsize=1)
@@ -721,7 +721,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
         print median(rra), median(ddec)
         print 'SN position on image 2 computed'
         print rasn2c, decsn2c
-        iraf.display(_dir2 + re.sub('sn2.fits', 'fits', img2), 2, fill=True, Stdout=1, zsc='yes',
+        iraf.display(_dir2 + re.sub('sn2.fits', 'fits', img2) + '[0]', 2, fill=True, Stdout=1, zsc='yes',
                      zra='yes')  #,z1=0,z2=3000)
         lll = str(rasn2c) + ' ' + str(decsn2c)
         bbb = iraf.wcsctran('STDIN', 'STDOUT', _dir2 + img2 + '[0]', Stdin=[lll], inwcs='world', units='degrees degrees',
@@ -1325,7 +1325,7 @@ def checkcosmic(imglist, database='photlco'):
             diffimg = origimg.replace('.fits', '.diff.fits')
             if os.path.isfile(origimg) and os.path.isfile(maskimg):
                 print img, photlcodict[0]['filter']
-                iraf.display(origimg, 1, fill=True, Stdout=1)
+                iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
                 iraf.display(maskimg, 2, fill=True, Stdout=1)
                 ans = raw_input('>>> good mask [[y]/n] or [b]ad quality? ')
                 if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
@@ -1368,7 +1368,7 @@ def checkdiff(imglist, database='photlco'):
             tempimg = diffimg.replace('diff', 'ref')
             if os.path.isfile(diffimg) and os.path.isfile(origimg) and os.path.isfile(tempimg):
                 print img, photlcodict[0]['filter']
-                iraf.display(origimg, 1, fill=True, Stdout=1)
+                iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
                 iraf.display(tempimg, 2, fill=True, Stdout=1)
                 iraf.display(diffimg, 3, fill=True, Stdout=1)
                 ans = raw_input('>>> good difference [[y]/n] or [b]ad quality (original image)? ')

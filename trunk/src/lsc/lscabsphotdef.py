@@ -295,7 +295,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 
      if _interactive:
         iraf.set(stdimage='imt1024')
-        iraf.display(re.sub('.sn2','',img),1,fill=True,Stdout=1)
+        iraf.display(re.sub('.sn2','',img) + '[0]',1,fill=True,Stdout=1)
         vector=[]
         for i in range(0,len(rasex)):
             vector.append(str(rasex[i])+' '+str(decsex[i]))

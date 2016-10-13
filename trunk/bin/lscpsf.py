@@ -288,7 +288,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
             else:
                 sys.exit('error: no catalog objects are in the field')
         elif interactive:
-            iraf.display(img, 1, fill=True)
+            iraf.display(img + '[0]', 1, fill=True)
             iraf.delete('tmp.lo?', verify=False)
             print '_' * 80
             print '>>> Mark reference stars with "a". Then "q"'
@@ -408,7 +408,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
 
         if ds9 == 0 and (interactive or show):
             iraf.set(stdimage='imt1024')
-            iraf.display(img, 1, fill=True, Stdout=1)
+            iraf.display(img + '[0]', 1, fill=True, Stdout=1)
             iraf.tvmark(1, coords='STDIN', mark='circle', radii=15, label=True, Stdin=photmag, nxoffset=5, nyoffset=5, txsize=2)
             iraf.tvmark(1, coords='STDIN', mark='circle', radii=35, label=False, Stdin=pst, color=208)
 #            iraf.tvmark(1, coords='STDIN', mark='cross', length=35, label=False, Stdin=fitmag2, color=204)

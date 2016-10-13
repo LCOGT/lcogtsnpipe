@@ -210,7 +210,7 @@ if __name__ == "__main__":
                         lsc.util.delete(tempmask)
                         lsc.util.delete(targmask)
                         lsc.util.delete('tempmask.fits')
-                        iraf.imcopy(_dir + imgtarg0 + '[SCI]', imgtarg, verbose='yes')
+                        iraf.imcopy(_dir + imgtarg0 + '[0]', imgtarg, verbose='yes')
                         iraf.imcopy(_dir + targmask0, targmask, verbose='yes')
 #                        try:
                         iraf.immatch.gregister(_dirtemp + imgtemp0, imgtemp, "tmp$db", "tmpcoo", geometr="geometric",

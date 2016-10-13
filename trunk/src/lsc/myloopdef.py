@@ -548,7 +548,7 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
                 _ras, _decs = lsc.myloopdef.getcoordfromref(img0, _ref, show)
 
             command = 'lscsn.py ' + _dir + img + ' ' + ii + ' ' + ss + ' ' + rr + ' -x ' + str(_xord) + ' -y ' +\
-                      str(_yord) + ' ' + _ras + ' ' + _decs + ' ' + cc + ' -b ' + str(_bkg) + '  -z ' + str(_size) +\
+                      str(_yord) + ' ' + str(_ras) + ' ' + str(_decs) + ' ' + cc + ' -b ' + str(_bkg) + '  -z ' + str(_size) +\
                       ' --datamax ' + str(dmax) + ' '+' --datamin='+str(dmin) + ' '+_ra0+' '+_dec0
             #if str(ggg[0]['filetype']) == '3':
             #    try:

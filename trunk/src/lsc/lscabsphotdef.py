@@ -299,7 +299,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         vector=[]
         for i in range(0,len(rasex)):
             vector.append(str(rasex[i])+' '+str(decsex[i]))
-        xy = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vector,Stdout=1,image=img,inwcs='world',units='degrees degrees',outwcs='logical',\
+        xy = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vector,Stdout=1,image=img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                                formats='%10.1f %10.1f',verbose='yes')[3:]
         iraf.tvmark(1,'STDIN',Stdin=list(xy),mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=207,txsize=2)
         print 'yelow circles sextractor'
@@ -312,10 +312,10 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         lsc.util.delete('tmp.stdL.pix')
         colonne=str(stdcooC['rapos'])+'   '+str(stdcooC['decpos'])
         if _catalogue[0]=='/': 
-            iraf.wcsctran(_catalogue,'tmp.stdL.pix',img,inwcs='world',units='degrees degrees',outwcs='logical',\
+            iraf.wcsctran(_catalogue,'tmp.stdL.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                           columns=colonne,formats='%10.1f %10.1f',verbose='no')
         else:
-            iraf.wcsctran(lsc.__path__[0]+'/standard/cat/'+_catalogue,'tmp.stdL.pix',img,inwcs='world',units='degrees degrees',outwcs='logical',\
+            iraf.wcsctran(lsc.__path__[0]+'/standard/cat/'+_catalogue,'tmp.stdL.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                           columns=colonne,formats='%10.1f %10.1f',verbose='no')
         standardpixC=lsc.lscastrodef.readtxt('tmp.stdL.pix')
         if _interactive:
@@ -335,7 +335,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         stdcooL=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/landolt.cat')
         rastdL,decstdL=array(stdcooL['ra'],float),array(stdcooL['dec'],float)
         lsc.util.delete('tmp.stdL.pix')
-        iraf.wcsctran(lsc.__path__[0]+'/standard/cat/landolt.cat','tmp.stdL.pix',img,inwcs='world',units='degrees degrees',outwcs='logical',\
+        iraf.wcsctran(lsc.__path__[0]+'/standard/cat/landolt.cat','tmp.stdL.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                           columns='1 2',formats='%10.1f %10.1f',verbose='no')
         standardpixL=lsc.lscastrodef.readtxt('tmp.stdL.pix')
         if _interactive:
@@ -364,7 +364,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 
         rastdLL,decstdLL=array(stdcooLL['ra'],float),array(stdcooLL['dec'],float)
         lsc.util.delete('tmp.stdLL.pix')
-        iraf.wcsctran('STDIN','tmp.stdLL.pix',img,inwcs='world',Stdin=lll,units='degrees degrees',outwcs='logical',\
+        iraf.wcsctran('STDIN','tmp.stdLL.pix',img + '[0]',inwcs='world',Stdin=lll,units='degrees degrees',outwcs='logical',\
                           columns='1 2',formats='%10.1f %10.1f',verbose='no')
 
         standardpixLL={}
@@ -389,7 +389,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         stdcooS=lsc.lscastrodef.readtxt(ascifile)
         rastdS,decstdS=array(stdcooS['ra'],float),array(stdcooS['dec'],float)
         lsc.util.delete('tmp.stdS.pix')
-        iraf.wcsctran(ascifile,'tmp.stdS.pix',img,inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.1f %10.1f',verbose='no')
+        iraf.wcsctran(ascifile,'tmp.stdS.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.1f %10.1f',verbose='no')
         standardpixS=lsc.lscastrodef.readtxt('tmp.stdS.pix')
         if _interactive:
               vector=[k+' '+v for k,v in  zip(standardpixS['ra'],standardpixS['dec'])]

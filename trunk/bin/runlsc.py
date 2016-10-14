@@ -66,7 +66,8 @@ coomandsn = {'LSQ12fxd': '-c -x 3 -y 3 --bkg 3 --size 6',
              'lsq14eer': '-c -x 3 -y 3 --bkg 3 --size 5',
              'PSN09554214': '-c -x 3 -y 3 --bkg 3 --size 5',
              'asassn-15aj': '-c -x 4 -y 4 --bkg 3 --size 5',
-             'LSQ13cnl': '-c -x 4 -y 4 --bkg 3 --size 5 --ref cpt1m012-kb75-20131008-0126-e90.sn2.fits'
+             'LSQ13cnl': '-c -x 4 -y 4 --bkg 3 --size 5 --ref cpt1m012-kb75-20131008-0126-e90.sn2.fits',
+             'SN 2016bkv': '-c -x 3 -y 3 --RAS 154.58051,154.58255 --DECS 41.427596,41.42898 --RA0 154.58144 --DEC0 41.428297',
 }
 
 # ##########################################################

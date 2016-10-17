@@ -16,7 +16,10 @@ def authenticate(username, password):
     response = requests.post('https://archive-api.lco.global/api-token-auth/',
                              data = {'username': username, 'password': password}).json()
     token = response.get('token')
-    authtoken = {'Authorization': 'Token ' + token}
+    if token is None:
+        raise Exception('Authentication failed with username ' + username)
+    else:
+        authtoken = {'Authorization': 'Token ' + token}
     return authtoken
 
 def get_metadata(authtoken={}, limit=None, **kwargs):

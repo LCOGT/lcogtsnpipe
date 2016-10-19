@@ -637,7 +637,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 #            zero2=compress(abs(array(colore1)) < maxcolor,array(zero1))
 #            colore2=compress(abs(array(colore1)) < maxcolor,array(colore1))
 
-            good = (abs(zero) < 50) & (abs(colstd0) < maxcolor)
+            good = (abs(zero) < 50) & (abs(colstd0) < maxcolor) & (zeroerr != 0) & (colerrstd0 != 0)
             zero2 = zero[good]
             colore2 = colstd0[good]
             zeroerr2 = zeroerr[good]

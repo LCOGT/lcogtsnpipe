@@ -62,8 +62,8 @@ if __name__ == "__main__":   # main program
                       dest='show', default=False, help='show psf fit \t\t\t [%default]')
     parser.add_option("-c", "--center", action="store_false",
                       dest='recenter', default=True, help='recenter \t\t\t [%default]')
-    parser.add_option("--fix", action="store_false",
-                      dest='fix', default=True, help='fix color \t\t\t [%default]')
+    parser.add_option("--unfix", action="store_false",
+                      dest='fix', default=True, help='use a variable color term')
     parser.add_option("--cutmag", dest="cutmag", default=99., type="float",
                       help='--cutmag  [magnitude instrumental cut for zeropoint ]  \t [%default]')
     parser.add_option("--field", dest="field", default='', type="str",
@@ -376,7 +376,7 @@ if __name__ == "__main__":   # main program
                         else:
                             if not _catalogue:
                                 data = lsc.mysqldef.query(['''select {}_cat from targets, targetnames
-                                                              where name like "{}"
+                                                              where name like "%{}"
                                                               and targets.id=targetnames.targetid'''.format(_field, _name.replace(' ', '%'))],
                                                            lsc.conn)
                                 if data and data[0][_field + '_cat']: # if target is found and catalog is not an empty string

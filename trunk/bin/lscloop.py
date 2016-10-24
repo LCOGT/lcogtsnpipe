@@ -227,7 +227,7 @@ if __name__ == "__main__":   # main program
     if _filter not in ['landolt', 'sloan', 'apass', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I',
                        'SDSS-I', 'SDSS-G', 'SDSS-R', 'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V',
                        'Bessell-R', 'Bessell-I', 'SDSS-G,SDSS-R,SDSS-I', 'Bessell-B,Bessell-V,Bessell-R',
-                       'u,g', 'g,r', 'g,r,i', 'g,r,i,z', 'r,i,z', 'B,V,R', 'B,V', 'B,V,R,I', 'V,R,I', '']:
+                       'u,g', 'g,r', 'g,r,i', 'g,r,i,z', 'r,i,z', 'U,B,V', 'B,V,R', 'B,V', 'B,V,R,I', 'V,R,I', '']:
         sys.argv.append('--help')
 
 
@@ -415,10 +415,10 @@ if __name__ == "__main__":   # main program
 
                         elif _field == 'landolt':
                             ww0 = asarray([i for i in range(len(ll3['filter'])) if
-                                           (ll['filter'][i] in ['U', 'I', 'R', 'V', 'B'])])
+                                           (ll['filter'][i] in ['U', 'B', 'V', 'R', 'I'])])
                             _color = ''
                             if len(ww0) >= 1:
-                                for jj in ['U', 'I', 'R', 'V', 'B']:
+                                for jj in ['U', 'B', 'V', 'R', 'I']:
                                     if jj in list(set(ll3['filter'])):
                                         _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
@@ -429,7 +429,7 @@ if __name__ == "__main__":   # main program
                                            (ll['filter'][i] in ['up', 'gp', 'rp', 'ip', 'zs', 'SDSS-G', 'SDSS-R', 'SDSS-I'])])
                             _color = ''
                             if len(ww0) >= 1:
-                                for jj in ['gp', 'up', 'rp', 'ip', 'zs']:
+                                for jj in ['up', 'gp', 'rp', 'ip', 'zs']:
                                     if jj in list(set(ll3['filter'])):
                                         _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field

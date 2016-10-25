@@ -1813,25 +1813,16 @@ def subset(xx, _avg=''):  # lista  mjd
 ##########################################################
 
 def chosecolor(allfilter, usegood=False, _field=''):
-    color = {}
-    for filt in allfilter:
-        tot = 'UBVRI' if filt in 'UBVRI' else 'ugriz'
-        for _fil in tot[tot.index(filt) + 1:]:
-            if _fil in allfilter:
-                if _fil not in color: color[_fil] = []
-                color[_fil].append(filt + _fil)
-                break
-        for _fil in tot[tot.index(filt) - 1:]:
-            if _fil in allfilter:
-                if _fil not in color: color[_fil] = []
-                color[_fil].append(_fil + filt)
-                break
-
+    color = {filt: [] for filt in allfilter}
+    for col in ['UB', 'BV', 'VR', 'RI', 'ug', 'gr', 'ri', 'iz']:
+        if col[0] in allfilter and col[1] in allfilter:
+            color[col[0]].append(col)
+            color[col[1]].append(col)
     if usegood:
         goodcol = {'U': 'UB', 'B': 'BV', 'V': 'VR', 'R': 'VR', 'I': 'RI',
-                    'u': 'ug', 'g': 'gr', 'r': 'ri', 'i': 'ri', 'z': 'iz'}
-        for i in color:
-            if goodcol[i] in color[i]: color[i] = [goodcol[i]]
+                   'u': 'ug', 'g': 'gr', 'r': 'ri', 'i': 'ri', 'z': 'iz'}
+        for filt in color:
+            if goodcol[filt] in color[filt]: color[filt] = [goodcol[filt]]
     return color
 
 

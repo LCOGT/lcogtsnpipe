@@ -1821,7 +1821,7 @@ def chosecolor(allfilter, usegood=False, _field=''):
                 if _fil not in color: color[_fil] = []
                 color[_fil].append(filt + _fil)
                 break
-        for _fil in tot[tot.index(filt) - 1::-1]:
+        for _fil in tot[tot.index(filt) - 1:]:
             if _fil in allfilter:
                 if _fil not in color: color[_fil] = []
                 color[_fil].append(_fil + filt)

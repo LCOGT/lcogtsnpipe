@@ -257,17 +257,17 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                       'rgr':0.013,'rri':0.029,'iri':0.0874,'iiz':0.0,'IRI':0.0,'ziz':-0.15}
     # color terms from Valenti et al. 2016, MNRAS, 459, 3939
     elif 'fl' in _instrume and _filter in 'BVgri':
-        colorefisso = {'ggr': 0.109, 'rri': 0.027, 'iri': 0.036, 'BBV': -0.024, 'VBV': -0.014}
+        colorefisso = {'ggr': 0.109, 'rri': 0.027, 'iri': 0.036, 'BBV': -0.024, 'VBV': -0.014, 'UUB':0.059}
     elif _siteid == 'coj' and _filter in 'BVgri':
-        colorefisso = {'ggr': 0.137, 'rri': -0.005, 'iri': 0.007, 'BBV': -0.025, 'VBV': 0.017}
+        colorefisso = {'ggr': 0.137, 'rri': -0.005, 'iri': 0.007, 'BBV': -0.025, 'VBV': 0.017, 'UUB':0.059}
     elif _siteid == 'lsc' and _filter in 'BVgri':
-        colorefisso = {'ggr': 0.120, 'rri': -0.002, 'iri': 0.019, 'BBV': -0.035, 'VBV': 0.000}
+        colorefisso = {'ggr': 0.120, 'rri': -0.002, 'iri': 0.019, 'BBV': -0.035, 'VBV': 0.000, 'UUB':0.059}
     elif _siteid == 'elp' and _filter in 'BVgri':
-        colorefisso = {'ggr': 0.114, 'rri': -0.004, 'iri': 0.024, 'BBV': -0.039, 'VBV': -0.005}
+        colorefisso = {'ggr': 0.114, 'rri': -0.004, 'iri': 0.024, 'BBV': -0.039, 'VBV': -0.005, 'UUB':0.059}
     elif _siteid == 'cpt' and _filter in 'BVgri':
-        colorefisso = {'ggr': 0.112, 'rri': -0.001, 'iri': 0.013, 'BBV': -0.030, 'VBV': -0.019}
+        colorefisso = {'ggr': 0.112, 'rri': -0.001, 'iri': 0.013, 'BBV': -0.030, 'VBV': -0.019, 'UUB':0.059}
     elif _siteid == 'tfn' and _filter in 'BVgri': # average of other SBIGs
-        colorefisso = {'ggr': 0.121, 'rri': -0.003, 'iri': 0.016, 'BBV': -0.032, 'VBV': -0.002}
+        colorefisso = {'ggr': 0.121, 'rri': -0.003, 'iri': 0.016, 'BBV': -0.032, 'VBV': -0.002, 'UUB':0.059}
     else:
         colorefisso = {'UUB':0.059,'uug':0.0,'BUB':-0.095,'BBV':0.06,'VBV':0.03,'VVR':-0.059,\
                       'gug':0.13,'ggr':-0.02,'RVR':-0.028,'RRI':-0.033,'rrz':0.0,'zrz':0.0,'ggi':0.0,'igi':0.0,\

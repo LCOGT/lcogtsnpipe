@@ -633,6 +633,8 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         zero = array(zero)
         zeroerr = array(zeroerr)
         print 'attempting these colors:', colorvec
+        if not colorvec:
+            colorvec.append(2*filters[_filter])
         if zcatnew and show and not _interactive:
             fig, axarr = plt.subplots(ncols=len(colorvec), figsize=(8*len(colorvec), 6), squeeze=False)
         for i, col in enumerate(colorvec):
@@ -661,6 +663,8 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 
             if _fix and filters[_filter]+col in colorefisso:
                 fisso = colorefisso[filters[_filter]+col]
+            elif col == 2*filters[_filter]:
+                fisso = 0.
             else:
                 fisso = None
 

@@ -230,7 +230,6 @@ if __name__ == "__main__":
                     for i in range(0, len(ra0cut)):
                         f.write('%15s \t%15s \t%s\t%s\n' % (racut[i], deccut[i], M2[i], dmag0cut[i]))
                 f.close()
-                os.chmod(output, 0664)
 
                 if _interactive:    raw_input('go on')
                 try:

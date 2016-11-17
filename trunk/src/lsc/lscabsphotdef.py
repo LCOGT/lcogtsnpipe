@@ -650,8 +650,8 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
             # cut stars with crazy magnitude and color
 #            colore1=compress(abs(array(zero))<50,array(colore))
 #            zero1=compress(abs(array(zero))<50,array(zero))
-            if _filter != 'up': maxcolor = 2
-            else:               maxcolor = 10
+            if _filter in ['up', 'zs']: maxcolor = 10
+            else:                       maxcolor = 2
 #            zero2=compress(abs(array(colore1)) < maxcolor,array(zero1))
 #            colore2=compress(abs(array(colore1)) < maxcolor,array(colore1))
 

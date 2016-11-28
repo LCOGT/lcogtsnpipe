@@ -134,6 +134,7 @@ def updatevalue(table,column,value,filename,connection='lcogt2',filename0='filen
       elif type(value) is float:
          cursor.execute ("UPDATE %s set %s=%16.16f where %s= '%s'   " % (table,column,value,filename0,filename) )
       else:
+         print "UPDATE "+str(table)+" set "+column+"="+"'"+str(value)+"'"+" where "+str(filename0)+"= "+"'"+str(filename)+"'"+"   "
          cursor.execute ("UPDATE "+str(table)+" set "+column+"="+"'"+str(value)+"'"+" where "+str(filename0)+"= "+"'"+str(filename)+"'"+"   ")
       resultSet = cursor.fetchall ()
       if cursor.rowcount == 0:

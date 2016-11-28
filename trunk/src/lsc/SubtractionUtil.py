@@ -23,7 +23,7 @@ def AlignImages(NewFile, RefFile):
 
 
 def CleanDataIndex(Data, SatCount = None, RmBackPix = True, Significance = 1.):
-    '''Clean saturated and background pixels from dataset'''
+    '''Remove saturated and background pixels from dataset'''
 
     if SatCount is not None:
         UnSatPixIndex = np.where(Data < SatCount)
@@ -92,7 +92,7 @@ def ExtractPSF(Pf):
 def FitB(NBackground, RBackground, Pn, Pr, sn, sr, NSaturation = None, RSaturation = None, Interactive = False):
     '''Fit gain matching (beta) and background (gamma) parameters'''
 
-    center, d = NBackground.shape[0] / 2, NBackground.shape[0]
+    center, d = NBackground.shape[0] / 2, NBackground.shape[0] / 16
     a, b = center - d, center + d
     coords = [[a, b, a, b]]
 
@@ -345,7 +345,7 @@ def IterativeSolve(N, R, Pn, Pr, sn, sr, NSaturation = None, RSaturation = None,
         x = sm.add_constant(DrFlatten)
         y = DnFlatten
 
-        
+
         RobustFit = sm.RLM(y, x).fit()
         Parameters = RobustFit.params
         Errors = RobustFit.bse
@@ -366,7 +366,7 @@ def IterativeSolve(N, R, Pn, Pr, sn, sr, NSaturation = None, RSaturation = None,
     if Interactive:
         plt.plot(DrFlatten, DnFlatten, 'bo', DrFlatten, RobustFit.fittedvalues, 'r-')
         plt.show()
-
+    #gammaPrime = FitNoise(y)[1] - FitNoise(x)[1]
     gamma = Gamma(beta, gammaPrime, sn, sr)
 
 
@@ -379,6 +379,8 @@ def IterativeSolve(N, R, Pn, Pr, sn, sr, NSaturation = None, RSaturation = None,
         logging.info('Parameter fitting for images failed')
         raise ValueError
 
+    plt.plot(DrFlatten, DnFlatten, 'bo', DrFlatten, RobustFit.fittedvalues, 'r-')
+    plt.show()
     print 'Beta = ' + str(beta)
     print 'Gamma = ' + str(gamma)
     print 'Beta Variance = ' +str(Cov)

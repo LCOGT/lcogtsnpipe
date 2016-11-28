@@ -217,12 +217,15 @@ class OptimalSubtraction:
 
     def Fd(self):
         '''Calculate the flux based zero point of D'''
+
         Fd = self.beta / np.sqrt(self.sn**2 + self.sr**2*self.beta**2)
         self.Fd_ = np.real(Fd)
         return np.real(Fd)
 
 
     def FindTransient(self, Threshold = 3., filename = 'transients.txt'):
+        '''Write transient detections to file'''
+
         try:
             self.Scorr_
         except AttributeError:
@@ -241,6 +244,7 @@ class OptimalSubtraction:
 
     def Flux(self, normalize = ''):
         '''Calculate transient Flux'''
+
         try:
             Flux = self.S_ / self.Fs_
         except AttributeError:
@@ -285,6 +289,7 @@ class OptimalSubtraction:
 
     def MakeCatalog(self, SortBy = 'magnitude'):
         '''Check for source catalog and make one if necessary'''
+
         try:
             cat = self.Catalog
             return cat
@@ -339,7 +344,7 @@ class OptimalSubtraction:
 
 
     def S(self):
-        '''Calculate S array'''
+        '''Calculate matched filter image S'''
 
         try:
             S_hat = self.Fd_ * np.fft.fft2(self.D_) * np.conj(np.fft.fft2(self.Pd_))
@@ -361,6 +366,7 @@ class OptimalSubtraction:
         hdu.header['PHOTNORM'] = normalize
         hdu.header['BETA'] = self.beta
         hdu.header['GAMMA'] = self.gamma
+        hdu.header['CONVOL00'] = normalize
         hdu.writeto(self.Df, clobber = True)
 
     def SaveS(self, Sf, normalize = ''):
@@ -421,6 +427,7 @@ class OptimalSubtraction:
 
     def SaveImageToWD(self):
         '''Save various images to working directory (testing only)'''
+
         Images = {'S.fits': self.S, 'Snoise.fits': self.Snoise, 'Scorr.fits': self.Scorr, 'D.fits': self.D, 'Flux.fits': self.Flux, 'Pd.fits': self.Pd}
 
         for element in Images:
@@ -442,6 +449,7 @@ class OptimalSubtraction:
 
     def Snoise(self):
         '''Calculate the noise image for Scorr'''
+
         # this whole function needs optimization
 
         N, R, Pn, Pr, sn, sr = self.N, self.R, self.Pn, self.Pr, self.sn, self.sr

@@ -125,8 +125,7 @@ if __name__ == "__main__":   # main program
     parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing image subtraction')
     parser.add_option("--nstars", type=int, default=6, help="number of stars used to make the PSF")
-    parser.add_option("--optimal", dest="optimal", action="store_true", default=False, 
-                      help='Use Zackey optimal image subtraction \t [%(default)s]')
+    parser.add_option("--difftype", choices=['hotpants', 'optimal', 'all'], help='Choose hotpants or optimal subtraction \t [%(default)s]')
 
     option, args = parser.parse_args()
     _instrument=option.instrument
@@ -214,7 +213,16 @@ if __name__ == "__main__":   # main program
     _clean = option.clean
     _subtract_mag_from_header = option.subtract_mag_from_header
     _psf = option.psf
-    _optimal = option.optimal
+
+    if (option.difftype == None or option.difftype == 'all') and option.stage == 'diff':
+        _difftype = 'hotpants'
+        _difftypenumber = 0
+    elif (option.difftype == None or option.difftype == 'all') and option.stage != 'diff':
+        _difftype = 'all'
+        _difftypenumber = -1
+    else:
+        _difftype = option.difftype
+        _difftypenumber = ['hotpants', 'optimal'].index(_difftype)
 
     if _xwindow:
         from stsci.tools import capable
@@ -282,7 +290,7 @@ if __name__ == "__main__":   # main program
             ll0['ra'] = ll0['ra0'][:]
             ll0['dec'] = ll0['dec0'][:]
 
-            ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype, _groupid, _instrument, _temptel)
+            ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype, _groupid, _instrument, _temptel, _difftypenumber)
             print '##' * 50
             print '# IMAGE                                    OBJECT           FILTER           WCS            ' \
                   ' PSF           PSFMAG    APMAG       ZCAT          MAG      ABSCAT'
@@ -442,7 +450,7 @@ if __name__ == "__main__":   # main program
                             print 'warning: field not defined, zeropoint not computed'
                     elif _stage == 'abscat':  #    compute magnitudes for sequence stars > img.cat
                         if _standard:
-                            mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument)
+                            mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument, _difftypenumber)
                             if len(mm['filename']) > 0:
                                 for i in range(0, len(mm['filename'])):
                                     print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
@@ -458,7 +466,7 @@ if __name__ == "__main__":   # main program
                             lsc.myloopdef.run_cat(ll3['filename'], '', _interactive, 1, _type, _fix, 'photlco', _field)
                     elif _stage == 'mag':  #    compute final magnitude using:   mag1  mag2  Z1  Z2  C1  C2
                         if _standard:
-                            mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument)
+                            mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument, _difftypenumber)
                             if len(mm['filename']) > 0:
                                 for i in range(0, len(mm['filename'])):
                                     print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
@@ -487,8 +495,8 @@ if __name__ == "__main__":   # main program
                             startdate = '19990101'
                             enddate   = '20080101'
 
-                        if _optimal:
-                            suffix = '.{}.optimal.diff.fits'.format(_temptel).replace('..', '.')
+                        if _difftype == 'optimal':
+                            suffix = '.optimal.{}.diff.fits'.format(_temptel).replace('..', '.')
                         else:
                             suffix = '.{}.diff.fits'.format(_temptel).replace('..', '.')
                         if _temptel.upper() in ['SDSS', 'PS1']:
@@ -522,7 +530,7 @@ if __name__ == "__main__":   # main program
                         listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                         listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
 
-                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, suffix)
+                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, _difftype, suffix)
 
                     elif _stage == 'template':  #    merge images using lacos and swarp
                         listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]

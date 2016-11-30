@@ -737,7 +737,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
     return rasn2c, decsn2c
 
 
-def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftypenumber=-1):
+def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype=''):
     from numpy import array, asarray
     import string, re, os, sys
     import lsc
@@ -746,10 +746,9 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     for key in ll2.keys():
         ll1[key] = ll2[key][:]
 
-    print _difftypenumber
-    if _difftypenumber in [0, 1]:
-        print ll1['difftype']
-        ww = asarray([i for i in range(len(ll1['difftype'])) if ((str(ll1['difftype'][i]) == str(_difftypenumber)))])
+    print _difftype
+    if len(_difftype) > 0:
+        ww = asarray([i for i in range(len(ll1['difftype'])) if ((str(ll1['difftype'][i]) in str(_difftype)))])
         if len(ww) > 0:
             for jj in ll1.keys():
                 ll1[jj] = array(ll1[jj])[ww]

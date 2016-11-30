@@ -361,7 +361,7 @@ class OptimalSubtraction:
         self.Df = filename
         self.D(normalize)
         hdu = fits.PrimaryHDU(np.real(self.D_))
-        #hdu.header = fits.getheader(self.Nf)
+        hdu.header = fits.getheader(self.Nf)
         #print normalize, self.beta, self.gamma
         hdu.header['PHOTNORM'] = normalize
         hdu.header['BETA'] = self.beta

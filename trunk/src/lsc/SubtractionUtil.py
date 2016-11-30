@@ -379,8 +379,8 @@ def IterativeSolve(N, R, Pn, Pr, sn, sr, NSaturation = None, RSaturation = None,
         logging.info('Parameter fitting for images failed')
         raise ValueError
 
-    plt.plot(DrFlatten, DnFlatten, 'bo', DrFlatten, RobustFit.fittedvalues, 'r-')
-    plt.show()
+    #plt.plot(DrFlatten, DnFlatten, 'bo', DrFlatten, RobustFit.fittedvalues, 'r-')
+    #plt.show()
     print 'Beta = ' + str(beta)
     print 'Gamma = ' + str(gamma)
     print 'Beta Variance = ' +str(Cov)

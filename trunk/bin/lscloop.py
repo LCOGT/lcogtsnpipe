@@ -12,6 +12,12 @@ from numpy import take, argsort, asarray, array
 from optparse import OptionParser
 import datetime
 import lsc
+from multiprocessing import Pool
+
+def multi_run_cosmic(args):
+    return lsc.myloopdef.run_cosmic(*args)
+
+
 # ###########################################################################
 
 if __name__ == "__main__":   # main program
@@ -125,6 +131,8 @@ if __name__ == "__main__":   # main program
     parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing image subtraction')
     parser.add_option("--nstars", type=int, default=6, help="number of stars used to make the PSF")
+    parser.add_option("--multicore", dest="multicore", default=8, type=int,
+                      help='--multicore numbers of cores   \t [%default]')
 
     option, args = parser.parse_args()
     _instrument=option.instrument
@@ -137,6 +145,7 @@ if __name__ == "__main__":   # main program
     _filetype = option.filetype
     _ps1frames = option.ps1frames
     _bgo = option.bgo
+    _multicore = option.multicore
 
     if not _groupid:
         _groupid=''
@@ -314,7 +323,15 @@ if __name__ == "__main__":   # main program
             elif _stage == 'apmag':
                 lsc.myloopdef.run_apmag(ll['filename'], 'photlco')
             elif _stage == 'cosmic':
-                lsc.myloopdef.run_cosmic(ll['filename'], 'photlco', 4.5, 0.2, 4, _redo)
+#############   SV 20161129 add multicore 
+                listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
+                p = Pool(_multicore)
+                inp = [([i], 'photlco', 4.5, 0.2, 4,_redo) for i in listfile]
+                p.map(multi_run_cosmic, inp)
+                p.close()
+                p.join()
+#                lsc.myloopdef.run_cosmic(ll['filename'], 'photlco', 4.5, 0.2, 4, _redo)
+
             elif _stage == 'ingestsloan':
                 listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                 lsc.myloopdef.run_ingestsloan(listfile, 'sloan', show=_show, force=_redo)

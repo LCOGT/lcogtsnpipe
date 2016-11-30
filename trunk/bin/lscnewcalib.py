@@ -244,7 +244,7 @@ if __name__ == "__main__":
                 rasn = aa[0]['ra0']
                 decsn = aa[0]['dec0']
                 lll = [str(rasn) + '    ' + str(decsn)]
-                sss = iraf.wcsctran('STDIN', 'STDOUT', img, Stdin=lll, inwcs='world', units='degrees degrees',
+                sss = iraf.wcsctran('STDIN', 'STDOUT', img + '[0]', Stdin=lll, inwcs='world', units='degrees degrees',
                                     outwcs='logical', columns='1 2', formats='%10.1f %10.1f', Stdout=1)
                 f = open('_coord', 'w')
                 f.write(sss[-1])

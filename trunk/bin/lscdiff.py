@@ -215,7 +215,7 @@ if __name__ == "__main__":
                         lsc.util.delete(tempmask)
                         lsc.util.delete(targmask)
                         lsc.util.delete('tempmask.fits')
-                        iraf.imcopy(_dir + imgtarg0, imgtarg, verbose='yes')
+                        iraf.imcopy(_dir + imgtarg0 + '[0]', imgtarg, verbose='yes')
                         iraf.imcopy(_dir + targmask0, targmask, verbose='yes')
 #                        try:
                         iraf.immatch.gregister(_dirtemp + imgtemp0, imgtemp, "tmp$db", "tmpcoo", geometr="geometric",
@@ -251,9 +251,9 @@ if __name__ == "__main__":
 
                         if _show:
                             iraf.display(imgtemp, frame=4, fill='yes')
-                            iraf.display(_dirtemp + imgtemp0, frame=3, fill='yes')
+                            iraf.display(_dirtemp + imgtemp0 + '[0]', frame=3, fill='yes')
                             iraf.display(imgtarg, frame=2, fill='yes')
-                            iraf.display(_dir + imgtarg0, frame=1, fill='yes')
+                            iraf.display(_dir + imgtarg0 + '[0]', frame=1, fill='yes')
 
                         ###########################################################
 

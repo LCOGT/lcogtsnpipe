@@ -12,6 +12,12 @@ from numpy import take, argsort, asarray, array
 from optparse import OptionParser
 import datetime
 import lsc
+from multiprocessing import Pool
+
+def multi_run_cosmic(args):
+    return lsc.myloopdef.run_cosmic(*args)
+
+
 # ###########################################################################
 
 if __name__ == "__main__":   # main program
@@ -62,8 +68,8 @@ if __name__ == "__main__":   # main program
                       dest='show', default=False, help='show psf fit \t\t\t [%default]')
     parser.add_option("-c", "--center", action="store_false",
                       dest='recenter', default=True, help='recenter \t\t\t [%default]')
-    parser.add_option("--fix", action="store_false",
-                      dest='fix', default=True, help='fix color \t\t\t [%default]')
+    parser.add_option("--unfix", action="store_false",
+                      dest='fix', default=True, help='use a variable color term')
     parser.add_option("--cutmag", dest="cutmag", default=99., type="float",
                       help='--cutmag  [magnitude instrumental cut for zeropoint ]  \t [%default]')
     parser.add_option("--field", dest="field", default='', type="str",
@@ -126,6 +132,8 @@ if __name__ == "__main__":   # main program
                       help='Run fixpix on the images before doing image subtraction')
     parser.add_option("--nstars", type=int, default=6, help="number of stars used to make the PSF")
     parser.add_option("--difftype", type=str, default='', help='Choose hotpants or optimal subtraction; hotpants = 0, difftype = 1, both = 0,1 \t [%(default)s]')
+    parser.add_option("--multicore", dest="multicore", default=8, type=int,
+                      help='--multicore numbers of cores   \t [%default]')
 
     option, args = parser.parse_args()
     _instrument=option.instrument
@@ -138,6 +146,7 @@ if __name__ == "__main__":   # main program
     _filetype = option.filetype
     _ps1frames = option.ps1frames
     _bgo = option.bgo
+    _multicore = option.multicore
 
     if not _groupid:
         _groupid=''
@@ -230,7 +239,7 @@ if __name__ == "__main__":   # main program
     if _filter not in ['landolt', 'sloan', 'apass', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I',
                        'SDSS-I', 'SDSS-G', 'SDSS-R', 'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V',
                        'Bessell-R', 'Bessell-I', 'SDSS-G,SDSS-R,SDSS-I', 'Bessell-B,Bessell-V,Bessell-R',
-                       'u,g', 'g,r', 'g,r,i', 'g,r,i,z', 'r,i,z', 'B,V,R', 'B,V', 'B,V,R,I', 'V,R,I', '']:
+                       'u,g', 'g,r', 'g,r,i', 'g,r,i,z', 'r,i,z', 'U,B,V', 'B,V,R', 'B,V', 'B,V,R,I', 'V,R,I', '']:
         sys.argv.append('--help')
 
 
@@ -317,7 +326,15 @@ if __name__ == "__main__":   # main program
             elif _stage == 'apmag':
                 lsc.myloopdef.run_apmag(ll['filename'], 'photlco')
             elif _stage == 'cosmic':
-                lsc.myloopdef.run_cosmic(ll['filename'], 'photlco', 4.5, 0.2, 4, _redo)
+#############   SV 20161129 add multicore 
+                listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
+                p = Pool(_multicore)
+                inp = [([i], 'photlco', 4.5, 0.2, 4,_redo) for i in listfile]
+                p.map(multi_run_cosmic, inp)
+                p.close()
+                p.join()
+#                lsc.myloopdef.run_cosmic(ll['filename'], 'photlco', 4.5, 0.2, 4, _redo)
+
             elif _stage == 'ingestsloan':
                 listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                 lsc.myloopdef.run_ingestsloan(listfile, 'sloan', show=_show, force=_redo)
@@ -382,7 +399,7 @@ if __name__ == "__main__":   # main program
                         else:
                             if not _catalogue:
                                 data = lsc.mysqldef.query(['''select {}_cat from targets, targetnames
-                                                              where name like "{}"
+                                                              where name like "%{}"
                                                               and targets.id=targetnames.targetid'''.format(_field, _name.replace(' ', '%'))],
                                                            lsc.conn)
                                 if data and data[0][_field + '_cat']: # if target is found and catalog is not an empty string
@@ -421,10 +438,10 @@ if __name__ == "__main__":   # main program
 
                         elif _field == 'landolt':
                             ww0 = asarray([i for i in range(len(ll3['filter'])) if
-                                           (ll['filter'][i] in ['U', 'I', 'R', 'V', 'B'])])
+                                           (ll['filter'][i] in ['U', 'B', 'V', 'R', 'I'])])
                             _color = ''
                             if len(ww0) >= 1:
-                                for jj in ['U', 'I', 'R', 'V', 'B']:
+                                for jj in ['U', 'B', 'V', 'R', 'I']:
                                     if jj in list(set(ll3['filter'])):
                                         _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field
@@ -435,7 +452,7 @@ if __name__ == "__main__":   # main program
                                            (ll['filter'][i] in ['up', 'gp', 'rp', 'ip', 'zs', 'SDSS-G', 'SDSS-R', 'SDSS-I'])])
                             _color = ''
                             if len(ww0) >= 1:
-                                for jj in ['gp', 'up', 'rp', 'ip', 'zs']:
+                                for jj in ['up', 'gp', 'rp', 'ip', 'zs']:
                                     if jj in list(set(ll3['filter'])):
                                         _color = _color + lsc.sites.filterst1[jj]
                                 print _color, _calib, _field

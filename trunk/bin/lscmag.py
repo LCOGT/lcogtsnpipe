@@ -35,8 +35,8 @@ def makecatalogue(imglist):
         dicti[_filter][img]['siteid'] = hdr1['SITEID']
         try:
             dicti[_filter][img]['PSFMAG1'] = float(lsc.util.readkey3(hdr1, 'PSFMAG1'))
-            dicti[_filter][img]['APMAG1'] = float(lsc.util.readkey3(hdr1, 'PSFDMAG1'))
-            dicti[_filter][img]['PSFDMAG1'] = float(lsc.util.readkey3(hdr1, 'APMAG1'))
+            dicti[_filter][img]['PSFDMAG1'] = float(lsc.util.readkey3(hdr1, 'PSFDMAG1'))
+            dicti[_filter][img]['APMAG1'] = float(lsc.util.readkey3(hdr1, 'APMAG1'))
         except:
             dicti[_filter][img]['PSFMAG1'] = 9999.
             dicti[_filter][img]['APMAG1'] = 9999.

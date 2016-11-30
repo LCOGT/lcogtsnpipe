@@ -247,20 +247,36 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         colorefisso = {'UUB':0.059,'uug':0.0,'BUB':-0.095,'BBV':0.06,'VBV':0.03,'VVR':-0.059,\
                       'gug':0.13,'ggr':0.054,'RVR':-0.028,'RRI':-0.033,'rrz':0.0,'zrz':0.0,'ggi':0.0,'igi':0.0,\
                       'rgr':0.003,'rri':-0.007,'iri':0.028,'iiz':0.110,'IRI':0.013,'ziz':-0.16}
-    elif _calib == 'apass':
-        colorefisso = {'BBV':-0.13,'VBV':0.0,'VVg':0.0,'gVg':0.0,'ggr':0.0,'rgr':0.0,'rri':0.0,'iri':0.0}
     elif _calib == 'natural':
         colorefisso = {'UUB':0.0,'uug':0.0,'BUB':0.0,'BBV':0.0,'VBV':0.0,'VVR':0.0,\
                       'gug':0.0,'ggr':0.0,'RVR':0.0,'RRI':0.0,'rrz':0.0,'zrz':0.0,\
                       'rgr':0.0,'rri':0.0,'iri':0.0,'iiz':0.0,'IRI':0.0,'ziz':0.0}
-    elif 'fs' in _instrume or 'em' in _instrume: # landolt or sloan
+    elif 'fs' in _instrume or 'em' in _instrume:
         colorefisso = {'UUB':0.0,'uug':0.0,'BUB':0.0,'BBV':0.0,'VBV':0.0,'VVR':0.0,\
                       'gug':0.0,'ggr':0.105,'RVR':0.0,'RRI':0.0,'rrz':0.0,'zrz':0.0,\
                       'rgr':0.013,'rri':0.029,'iri':0.0874,'iiz':0.0,'IRI':0.0,'ziz':-0.15}
-    else:
-        colorefisso = {'UUB':0.059,'uug':0.0,'BUB':-0.095,'BBV':0.06,'VBV':0.03,'VVR':-0.059,\
-                      'gug':0.13,'ggr':-0.02,'RVR':-0.028,'RRI':-0.033,'rrz':0.0,'zrz':0.0,'ggi':0.0,'igi':0.0,\
-                      'rgr':0.034,'rri':0.025,'iri':0.071,'iiz':0.110,'IRI':0.013,'ziz':-0.04}
+    # BVgri color terms from Valenti et al. 2016, MNRAS, 459, 3939
+    elif 'fl' in _instrume:
+        colorefisso = {'uug': 0.0, 'ggr': 0.109, 'rri': 0.027, 'iri': 0.036, 'BBV': -0.024, 'VBV': -0.014,
+                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
+    elif _siteid == 'coj':
+        colorefisso = {'uug': 0.0, 'ggr': 0.137, 'rri': -0.005, 'iri': 0.007, 'BBV': -0.025, 'VBV': 0.017, 'UUB':0.059,
+                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
+    elif _siteid == 'lsc':
+        colorefisso = {'uug': 0.0, 'ggr': 0.120, 'rri': -0.002, 'iri': 0.019, 'BBV': -0.035, 'VBV': 0.000, 'UUB':0.059,
+                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
+    elif _siteid == 'elp':
+        colorefisso = {'uug': 0.0, 'ggr': 0.114, 'rri': -0.004, 'iri': 0.024, 'BBV': -0.039, 'VBV': -0.005, 'UUB':0.059,
+                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
+    elif _siteid == 'cpt':
+        colorefisso = {'uug': 0.0, 'ggr': 0.112, 'rri': -0.001, 'iri': 0.013, 'BBV': -0.030, 'VBV': -0.019, 'UUB':0.059,
+                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
+    elif _siteid == 'tfn': # average of other SBIGs
+        colorefisso = {'uug': 0.0, 'ggr': 0.121, 'rri': -0.003, 'iri': 0.016, 'BBV': -0.032, 'VBV': -0.002, 'UUB':0.059,
+                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
+    else: # don't know where these came from
+        colorefisso = {'uug': 0.0, 'gug': 0.13, 'ggr': -0.02, 'rgr': 0.034, 'rri': 0.025, 'iri': 0.071, 'iiz': 0.110, 'ziz': -0.04,
+                       'UUB': 0.059, 'BUB': -0.095, 'BBV': 0.06, 'VBV': 0.03, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013}
 
     if _cat and not redo:
         print 'already calibrated'
@@ -295,11 +311,11 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 
      if _interactive:
         iraf.set(stdimage='imt1024')
-        iraf.display(re.sub('.sn2','',img),1,fill=True,Stdout=1)
+        iraf.display(re.sub('.sn2','',img) + '[0]',1,fill=True,Stdout=1)
         vector=[]
         for i in range(0,len(rasex)):
             vector.append(str(rasex[i])+' '+str(decsex[i]))
-        xy = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vector,Stdout=1,image=img,inwcs='world',units='degrees degrees',outwcs='logical',\
+        xy = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vector,Stdout=1,image=img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                                formats='%10.1f %10.1f',verbose='yes')[3:]
         iraf.tvmark(1,'STDIN',Stdin=list(xy),mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=207,txsize=2)
         print 'yelow circles sextractor'
@@ -312,10 +328,10 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         lsc.util.delete('tmp.stdL.pix')
         colonne=str(stdcooC['rapos'])+'   '+str(stdcooC['decpos'])
         if _catalogue[0]=='/': 
-            iraf.wcsctran(_catalogue,'tmp.stdL.pix',img,inwcs='world',units='degrees degrees',outwcs='logical',\
+            iraf.wcsctran(_catalogue,'tmp.stdL.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                           columns=colonne,formats='%10.1f %10.1f',verbose='no')
         else:
-            iraf.wcsctran(lsc.__path__[0]+'/standard/cat/'+_catalogue,'tmp.stdL.pix',img,inwcs='world',units='degrees degrees',outwcs='logical',\
+            iraf.wcsctran(lsc.__path__[0]+'/standard/cat/'+_catalogue,'tmp.stdL.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                           columns=colonne,formats='%10.1f %10.1f',verbose='no')
         standardpixC=lsc.lscastrodef.readtxt('tmp.stdL.pix')
         if _interactive:
@@ -335,7 +351,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         stdcooL=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/landolt.cat')
         rastdL,decstdL=array(stdcooL['ra'],float),array(stdcooL['dec'],float)
         lsc.util.delete('tmp.stdL.pix')
-        iraf.wcsctran(lsc.__path__[0]+'/standard/cat/landolt.cat','tmp.stdL.pix',img,inwcs='world',units='degrees degrees',outwcs='logical',\
+        iraf.wcsctran(lsc.__path__[0]+'/standard/cat/landolt.cat','tmp.stdL.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
                           columns='1 2',formats='%10.1f %10.1f',verbose='no')
         standardpixL=lsc.lscastrodef.readtxt('tmp.stdL.pix')
         if _interactive:
@@ -364,7 +380,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 
         rastdLL,decstdLL=array(stdcooLL['ra'],float),array(stdcooLL['dec'],float)
         lsc.util.delete('tmp.stdLL.pix')
-        iraf.wcsctran('STDIN','tmp.stdLL.pix',img,inwcs='world',Stdin=lll,units='degrees degrees',outwcs='logical',\
+        iraf.wcsctran('STDIN','tmp.stdLL.pix',img + '[0]',inwcs='world',Stdin=lll,units='degrees degrees',outwcs='logical',\
                           columns='1 2',formats='%10.1f %10.1f',verbose='no')
 
         standardpixLL={}
@@ -389,7 +405,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         stdcooS=lsc.lscastrodef.readtxt(ascifile)
         rastdS,decstdS=array(stdcooS['ra'],float),array(stdcooS['dec'],float)
         lsc.util.delete('tmp.stdS.pix')
-        iraf.wcsctran(ascifile,'tmp.stdS.pix',img,inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.1f %10.1f',verbose='no')
+        iraf.wcsctran(ascifile,'tmp.stdS.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.1f %10.1f',verbose='no')
         standardpixS=lsc.lscastrodef.readtxt('tmp.stdS.pix')
         if _interactive:
               vector=[k+' '+v for k,v in  zip(standardpixS['ra'],standardpixS['dec'])]
@@ -617,6 +633,8 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         zero = array(zero)
         zeroerr = array(zeroerr)
         print 'attempting these colors:', colorvec
+        if not colorvec:
+            colorvec.append(2*filters[_filter])
         if zcatnew and show and not _interactive:
             fig, axarr = plt.subplots(ncols=len(colorvec), figsize=(8*len(colorvec), 6), squeeze=False)
         for i, col in enumerate(colorvec):
@@ -632,12 +650,12 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
             # cut stars with crazy magnitude and color
 #            colore1=compress(abs(array(zero))<50,array(colore))
 #            zero1=compress(abs(array(zero))<50,array(zero))
-            if _filter != 'up': maxcolor = 2
-            else:               maxcolor = 10
+            if _filter in ['up', 'zs']: maxcolor = 10
+            else:                       maxcolor = 2
 #            zero2=compress(abs(array(colore1)) < maxcolor,array(zero1))
 #            colore2=compress(abs(array(colore1)) < maxcolor,array(colore1))
 
-            good = (abs(zero) < 50) & (abs(colstd0) < maxcolor)
+            good = (abs(zero) < 50) & (abs(colstd0) < maxcolor) & (zeroerr != 0) & (colerrstd0 != 0)
             zero2 = zero[good]
             colore2 = colstd0[good]
             zeroerr2 = zeroerr[good]
@@ -645,6 +663,8 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 
             if _fix and filters[_filter]+col in colorefisso:
                 fisso = colorefisso[filters[_filter]+col]
+            elif col == 2*filters[_filter]:
+                fisso = 0.
             else:
                 fisso = None
 

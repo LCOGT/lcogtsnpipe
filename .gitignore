@@ -2,4 +2,5 @@
 *.cat
 *.py~
 *.cat~
+*.pyc
 trunk/build

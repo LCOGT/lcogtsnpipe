@@ -187,6 +187,13 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'
     iraf.delete('_psf.ma*,' + img + '.psf.fit?,_psf.ps*,_psf.gr?,_psf.n*,_psf.sub.fit?', verify=False)
     iraf.phot(img+'[0]', '_psf.coo', '_psf.mag', interac=False, verify=False, verbose=False)
 
+    # removes saturated stars from the list (IRAF just issues a warning)
+    with open('_psf.mag') as f:
+        text = f.read()
+    text = re.sub('(.*\n){6}.*BadPixels\* \n', '', text)
+    with open('_psf.mag', 'w') as f:
+        f.write(text)
+
     iraf.daopars.psfrad = a4
     iraf.daopars.functio = psffun
     iraf.daopars.fitrad = a1
@@ -263,25 +270,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
         #################################################################################
         ###################        write file to compute psf     _psf.coo    ############
         #################################################################################
-        if interactive:
-            iraf.display(img, 1, fill=True)
-            iraf.delete('tmp.lo?', verify=False)
-            print '_' * 80
-            print '>>> Mark reference stars with "a". Then "q"'
-            print '-' * 80
-            iraf.imexamine(img, 1, wcs='logical', logfile='tmp.log', keeplog=True)
-            xyrefer = iraf.fields('tmp.log', '1,2,6,15', Stdout=1)
-            xns, yns, _fws = [], [], []
-            #############      write    file for PSF                           #########################
-            ff = open('_psf.coo', 'w')
-            for i in range(len(xyrefer)):
-                xns.append(float(xyrefer[i].split()[0]))
-                yns.append(float(xyrefer[i].split()[1]))
-                _fws.append(float(xyrefer[i].split()[3]))
-                ff.write('%10.3f %10.3f %7.2f \n' % (xns[i], yns[i], float(_fws[i])))
-            ff.close()
-            fwhm = np.median(_fws)
-        elif _catalog:
+        if _catalog:
             print '\n#### use catalog to measure the psf'
             ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img + '[0]',inwcs='world',outwcs='logical',
                               units='degrees degrees',columns='1 2',formats='%10.1f %10.1f',verbose='no')
@@ -298,6 +287,24 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
                 ff.close()
             else:
                 sys.exit('error: no catalog objects are in the field')
+        elif interactive:
+            iraf.display(img + '[0]', 1, fill=True)
+            iraf.delete('tmp.lo?', verify=False)
+            print '_' * 80
+            print '>>> Mark reference stars with "a". Then "q"'
+            print '-' * 80
+            iraf.imexamine(img, 1, wcs='logical', logfile='tmp.log', keeplog=True)
+            xyrefer = iraf.fields('tmp.log', '1,2,6,15', Stdout=1)
+            xns, yns, _fws = [], [], []
+            #############      write    file for PSF                           #########################
+            ff = open('_psf.coo', 'w')
+            for i in range(len(xyrefer)):
+                xns.append(float(xyrefer[i].split()[0]))
+                yns.append(float(xyrefer[i].split()[1]))
+                _fws.append(float(xyrefer[i].split()[3]))
+                ff.write('%10.3f %10.3f %7.2f \n' % (xns[i], yns[i], float(_fws[i])))
+            ff.close()
+            fwhm = np.median(_fws)
         else:
             ############              run  sextractor                #####################################
             xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
@@ -364,13 +371,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
         ######################################################################################
         ###################        write file of object to store in  fits table  #############
         ######################################################################################
-        if interactive:
-            xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
-            ff = open('_psf2.coo', 'w')
-            for i in range(len(xs)):
-                ff.write('%10s %10s %10s \n' % (xs[i], ys[i], fluxrad[i]))
-            ff.close()
-        elif _catalog:
+        if _catalog:
             ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img + '[0]',inwcs='world',outwcs='logical',
                               units='degrees degrees',columns='1 2',formats='%10.1f %10.1f',verbose='no')
             ddd=[i for i in ddd if i[0]!='#']
@@ -379,6 +380,12 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
             for i in ddd:
                 a,b,c = string.split(i)
                 ff.write('%10s %10s %10s \n' % (a, b, c))
+            ff.close()
+        elif interactive:
+            xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
+            ff = open('_psf2.coo', 'w')
+            for i in range(len(xs)):
+                ff.write('%10s %10s %10s \n' % (xs[i], ys[i], fluxrad[i]))
             ff.close()
         else:
             os.system('cp _psf.coo _psf2.coo')
@@ -401,7 +408,7 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, ds9, psffun='g
 
         if ds9 == 0 and (interactive or show):
             iraf.set(stdimage='imt1024')
-            iraf.display(img, 1, fill=True, Stdout=1)
+            iraf.display(img + '[0]', 1, fill=True, Stdout=1)
             iraf.tvmark(1, coords='STDIN', mark='circle', radii=15, label=True, Stdin=photmag, nxoffset=5, nyoffset=5, txsize=2)
             iraf.tvmark(1, coords='STDIN', mark='circle', radii=35, label=False, Stdin=pst, color=208)
 #            iraf.tvmark(1, coords='STDIN', mark='cross', length=35, label=False, Stdin=fitmag2, color=204)

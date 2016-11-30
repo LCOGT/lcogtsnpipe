@@ -13,15 +13,18 @@ from glob import glob
 
 def authenticate(username, password):
     '''Get the authentication token'''
-    response = requests.post('https://archive-api.lcogt.net/api-token-auth/',
+    response = requests.post('https://archive-api.lco.global/api-token-auth/',
                              data = {'username': username, 'password': password}).json()
     token = response.get('token')
-    authtoken = {'Authorization': 'Token ' + token}
+    if token is None:
+        raise Exception('Authentication failed with username ' + username)
+    else:
+        authtoken = {'Authorization': 'Token ' + token}
     return authtoken
 
 def get_metadata(authtoken={}, limit=None, **kwargs):
     '''Get the list of files meeting criteria in kwargs'''
-    url = 'https://archive-api.lcogt.net/frames/?' + '&'.join(
+    url = 'https://archive-api.lco.global/frames/?' + '&'.join(
             [key + '=' + str(val) for key, val in kwargs.items() if val is not None])
     url = url.replace('False', 'false')
     url = url.replace('True', 'true')
@@ -219,7 +222,7 @@ def fits2png(filename, zclip=5):
 if __name__ == "__main__":
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(description='Downloads LCOGT data from archive.lcogt.net')
+    parser = ArgumentParser(description='Downloads LCOGT data from archive.lco.global')
     parser.add_argument("-u", "--username")
     parser.add_argument("-p", "--password")
     parser.add_argument("-l", "--limit", type=int, help="maximum number of frames to return")

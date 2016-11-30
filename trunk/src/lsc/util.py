@@ -414,7 +414,7 @@ def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,
        import string,os
        if _z2: 
           try:
-              sss=iraf.display(img, frame, xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase,\
+              sss=iraf.display(img + '[0]', frame, xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase,\
                                    fill='yes', zscale='no', zrange='no', z1=_z1, z2=_z2,Stdout=1)
           except:
               print ''
@@ -423,7 +423,7 @@ def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,
               goon='False'                 
        else:
         try:  
-            sss=iraf.display(img, frame, xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase, fill='yes', Stdout=1)
+            sss=iraf.display(img + '[0]', frame, xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase, fill='yes', Stdout=1)
         except:
             print ''
             print '### ERROR: PROBLEM OPENING DS9'
@@ -445,7 +445,7 @@ def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,
               if not z22: z22=_z22
               else: z22=float(z22)
               print z11,z22
-              sss=iraf.display(img,frame,fill='yes', xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase,\
+              sss=iraf.display(img + '[0]',frame,fill='yes', xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase,\
                                    zrange='no', zscale='no', z1=z11, z2=z22, Stdout=1)
               answ0 = raw_input('>>> Cuts OK ? [y/n] ? [y] ')
               if not answ0: answ0='y'
@@ -734,7 +734,7 @@ def marksn2(img,fitstab,frame=1,fitstab2='',verbose=False):
       decsex2=array(column['dec0'],float)
 
    iraf.set(stdimage='imt1024')
-   iraf.display(img,frame,fill=True,Stdout=1)
+   iraf.display(img + '[0]',frame,fill=True,Stdout=1)
    vector=[]
    for i in range(0,len(rasex)):
       vector.append(str(rasex[i])+' '+str(decsex[i]))
@@ -766,6 +766,7 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    import lsc
    import re,os,string
    import numpy as np
+   import tempfile
 
    ar, hd = fits.getdata(img, header=True)
 
@@ -777,12 +778,13 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
       _tel='extdata'
 
    if _tel in ['fts','ftn']:
-      lsc.delete('new.fits')
+      temp_file0 = next(tempfile._get_candidate_names())
+      lsc.delete(temp_file0)
       out_fits = fits.PrimaryHDU(header=hd,data=ar)
       out_fits.scale('float32',bzero=0,bscale=1)
-      out_fits.writeto('new.fits', clobber=True, output_verify='fix')
-      ar = fits.getdata('new.fits')
-      lsc.delete('new.fits')
+      out_fits.writeto(temp_file0, clobber=True, output_verify='fix')
+      ar = fits.getdata(temp_file0)
+      lsc.delete(temp_file0)
       gain    = hd['GAIN']
       sat     = 35000
       rdnoise = hd['RDNOISE']

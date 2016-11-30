@@ -548,7 +548,7 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
                 _ras, _decs = lsc.myloopdef.getcoordfromref(img0, _ref, show)
 
             command = 'lscsn.py ' + _dir + img + ' ' + ii + ' ' + ss + ' ' + rr + ' -x ' + str(_xord) + ' -y ' +\
-                      str(_yord) + ' ' + _ras + ' ' + _decs + ' ' + cc + ' -b ' + str(_bkg) + '  -z ' + str(_size) +\
+                      str(_yord) + ' ' + str(_ras) + ' ' + str(_decs) + ' ' + cc + ' -b ' + str(_bkg) + '  -z ' + str(_size) +\
                       ' --datamax ' + str(dmax) + ' '+' --datamin='+str(dmin) + ' '+_ra0+' '+_dec0
             #if str(ggg[0]['filetype']) == '3':
             #    try:
@@ -687,7 +687,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
         rasn1, decsn1 = string.split(aaa)
         if _show:
             iraf.set(stdimage='imt8192')
-            iraf.display(_dir1 + re.sub('sn2.fits', 'fits', img1), 1, fill=True, Stdout=1, zsc='yes',
+            iraf.display(_dir1 + re.sub('sn2.fits', 'fits', img1) + '[0]', 1, fill=True, Stdout=1, zsc='yes',
                          zra='yes')  #,z1=0,z2=3000)
             iraf.tvmark(1, 'STDIN', Stdin=[lll], mark="cross", number='no', label='no', radii=5, nxoffse=5, nyoffse=5,
                         color=205, txsize=1)
@@ -721,7 +721,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
         print median(rra), median(ddec)
         print 'SN position on image 2 computed'
         print rasn2c, decsn2c
-        iraf.display(_dir2 + re.sub('sn2.fits', 'fits', img2), 2, fill=True, Stdout=1, zsc='yes',
+        iraf.display(_dir2 + re.sub('sn2.fits', 'fits', img2) + '[0]', 2, fill=True, Stdout=1, zsc='yes',
                      zra='yes')  #,z1=0,z2=3000)
         lll = str(rasn2c) + ' ' + str(decsn2c)
         bbb = iraf.wcsctran('STDIN', 'STDOUT', _dir2 + img2 + '[0]', Stdin=[lll], inwcs='world', units='degrees degrees',
@@ -1335,7 +1335,7 @@ def checkcosmic(imglist, database='photlco'):
             diffimg = origimg.replace('.fits', '.diff.fits')
             if os.path.isfile(origimg) and os.path.isfile(maskimg):
                 print img, photlcodict[0]['filter']
-                iraf.display(origimg, 1, fill=True, Stdout=1)
+                iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
                 iraf.display(maskimg, 2, fill=True, Stdout=1)
                 ans = raw_input('>>> good mask [[y]/n] or [b]ad quality? ')
                 if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
@@ -1383,7 +1383,7 @@ def checkdiff(imglist, database='photlco'):
             tempimg = diffimg.replace('diff', 'ref')
             if os.path.isfile(diffimg) and os.path.isfile(origimg) and os.path.isfile(tempimg):
                 print img, photlcodict[0]['filter']
-                iraf.display(origimg, 1, fill=True, Stdout=1)
+                iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
                 iraf.display(tempimg, 2, fill=True, Stdout=1)
                 iraf.display(diffimg, 3, fill=True, Stdout=1)
                 ans = raw_input('>>> good difference [[y]/n] or [b]ad quality (original image)? ')
@@ -1828,25 +1828,16 @@ def subset(xx, _avg=''):  # lista  mjd
 ##########################################################
 
 def chosecolor(allfilter, usegood=False, _field=''):
-    color = {}
-    for filt in allfilter:
-        tot = 'UBVRI' if filt in 'UBVRI' else 'ugriz'
-        for _fil in tot[tot.index(filt) + 1:]:
-            if _fil in allfilter:
-                if _fil not in color: color[_fil] = []
-                color[_fil].append(filt + _fil)
-                break
-        for _fil in tot[tot.index(filt) - 1::-1]:
-            if _fil in allfilter:
-                if _fil not in color: color[_fil] = []
-                color[_fil].append(_fil + filt)
-                break
-
+    color = {filt: [] for filt in allfilter}
+    for col in ['UB', 'BV', 'VR', 'RI', 'ug', 'gr', 'ri', 'iz']:
+        if col[0] in allfilter and col[1] in allfilter:
+            color[col[0]].append(col)
+            color[col[1]].append(col)
     if usegood:
         goodcol = {'U': 'UB', 'B': 'BV', 'V': 'VR', 'R': 'VR', 'I': 'RI',
-                    'u': 'ug', 'g': 'gr', 'r': 'ri', 'i': 'ri', 'z': 'iz'}
-        for i in color:
-            if goodcol[i] in color[i]: color[i] = [goodcol[i]]
+                   'u': 'ug', 'g': 'gr', 'r': 'ri', 'i': 'ri', 'z': 'iz'}
+        for filt in color:
+            if goodcol[filt] in color[filt]: color[filt] = [goodcol[filt]]
     return color
 
 
@@ -2170,15 +2161,13 @@ def getsky(data):
 
 def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=4, _force=False):
     import lsc
-
     direc = lsc.__path__[0]
     import os, string, glob
-
-    print _force
-    for img in imglist:
-        ggg = lsc.mysqldef.getfromdataraw(lsc.conn, database, 'filename', str(img), '*')
-        if ggg:
-            _dir = ggg[0]['filepath']
+########  SV 20161129  add multiprocess
+    for ggg in imglist:
+            _dir,img = os.path.split(ggg)
+            if _dir:
+                _dir = _dir+'/'
             print _dir + img
             if os.path.isfile(_dir + img):
                 if os.path.isfile(_dir + re.sub('.fits', '.var.fits', img)):

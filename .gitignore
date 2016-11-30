@@ -1,6 +1,7 @@
 *.fits
 *.cat
-*.py~
-*.cat~
+*.*~
 *.pyc
+.idea/
+.AppleDouble
 trunk/build

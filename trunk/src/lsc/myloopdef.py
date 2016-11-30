@@ -746,7 +746,6 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     for key in ll2.keys():
         ll1[key] = ll2[key][:]
 
-    print _difftype
     if len(_difftype) > 0:
         ww = asarray([i for i in range(len(ll1['difftype'])) if ((str(ll1['difftype'][i]) in str(_difftype)))])
         if len(ww) > 0:
@@ -2026,7 +2025,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
     os.system(command)
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype='hotpants', suffix='.diff.fits'):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype='0', suffix='.diff.fits'):
     import lsc
 
     direc = lsc.__path__[0]

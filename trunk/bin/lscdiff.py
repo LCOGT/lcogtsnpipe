@@ -366,8 +366,6 @@ if __name__ == "__main__":
                                                'MASKVAL': (1e-30, 'Value of Masked Pixels')}
                             lsc.util.updateheader(imgout, 0,  hotpants_fields)
 
-                            #update database difftype
-                            difftype = '1'
 
                         else:
                             line = ('hotpants -inim ' + imgtarg + ' -tmplim ' + imgtemp + ' -outim ' + imgout +
@@ -390,8 +388,6 @@ if __name__ == "__main__":
                             print line
                             os.system(line)
 
-                            #update database difftype
-                            difftype = '0'
 
                         # delete temporary files
                         if os.path.isfile(re.sub('.fits', '.conv.fits', imgout0)):
@@ -455,7 +451,7 @@ if __name__ == "__main__":
                         dictionary['filename'] = imgout0
                         dictionary['filepath'] = _dir
                         dictionary['filetype'] = 3
-                        dictionary['difftype'] = difftype
+                        dictionary['difftype'] = _difftype
                         if dictionary['filepath']:
                             if not os.path.isdir(dictionary['filepath']):
                                 print dictionary['filepath']

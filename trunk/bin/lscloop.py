@@ -215,15 +215,6 @@ if __name__ == "__main__":   # main program
     _psf = option.psf
 
     _difftype = option.difftype
-#    if (option.difftype == None or option.difftype == 'all') and option.stage == 'diff':
-#        _difftype = 'hotpants'
-#        _difftypenumber = 0
-#    elif (option.difftype == None or option.difftype == 'all') and option.stage != 'diff':
-#        _difftype = 'all'
-#        _difftypenumber = -1
-#    else:
-#        _difftype = option.difftype
-#        _difftypenumber = ['hotpants', 'optimal'].index(_difftype)
 
     if _xwindow:
         from stsci.tools import capable

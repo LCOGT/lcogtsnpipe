@@ -1374,11 +1374,6 @@ def checkdiff(imglist, database='photlco'):
             photlcodict = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
             _dir = photlcodict[0]['filepath']
             diffimg = _dir + img
-            if '.optimal' in diffimg:
-                origimg = diffimg.replace('.optimal.diff','')
-            else:
-                origimg = diffimg.replace('.diff', '')
-            tempimg = origimg.replace('.fits', '.ref.fits')
             origimg = re.sub('\..*diff', '', diffimg)
             tempimg = diffimg.replace('diff', 'ref')
             if os.path.isfile(diffimg) and os.path.isfile(origimg) and os.path.isfile(tempimg):

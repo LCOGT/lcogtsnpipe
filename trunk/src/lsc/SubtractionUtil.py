@@ -13,7 +13,7 @@ import logging
 
 
 def AlignImages(NewFile, RefFile):
-    '''Align reference image to new image when both images have WCS'''
+    """Align reference image to new image when both images have WCS"""
 
     TempFile = NewFile.replace('.fits', '.ref.fits')
     iraf.wregister(RefFile, NewFile, TempFile)
@@ -23,7 +23,7 @@ def AlignImages(NewFile, RefFile):
 
 
 def CleanDataIndex(Data, SatCount = None, RmBackPix = True, Significance = 1.):
-    '''Remove saturated and background pixels from dataset'''
+    """Remove saturated and background pixels from dataset"""
 
     if SatCount is not None:
         UnSatPixIndex = np.where(Data < SatCount)
@@ -40,29 +40,8 @@ def CleanDataIndex(Data, SatCount = None, RmBackPix = True, Significance = 1.):
     return GoodPixInCommon
 
 
-def ConvertWeightToVariance(image):
-    '''Convert swarp weight image to variance; taken from externaldata.py'''
-
-    # the output of swarp give the normalized weight 
-    # we want to store the variance image
-    # we invert the normalized weight and we "de-normalized" this image
-    hd = fits.getheader(image)
-    ar = fits.getdata(image)
-    hd2 = fits.getheader(image.replace('.fits', '.weight.fits'))
-    ar2 = fits.getdata(image.replace('.fits', '.weight.fits'))
-    variance = 1 / ar2
-    #  this is to take in account that the weight is normalized
-    variance *= (np.median(np.abs(ar - np.median(ar)))*1.48)**2/np.median(variance)
-    varimg = image.replace('.fits', '.var.fits')
-    _saturate = GetSaturationCount(image)
-    ar = np.where(ar2 == 0, _saturate, ar)
-
-    fits.writeto(varimg, variance, hd2, clobber=True)
-
-    # put the saturation all values where the weight is zero 
-
 def CropImages(N, R, Pn, Pr):
-    '''Open and crop images and PSFs to the same size'''
+    """Open and crop images and PSFs to the same size"""
 
     sN = N.shape
     #sR = R.shape
@@ -77,7 +56,7 @@ def CropImages(N, R, Pn, Pr):
 
 
 def ExtractPSF(Pf):
-    '''Extract PSF array from iraf PSF file'''
+    """Extract PSF array from iraf PSF file"""
 
     iraf.noao()
     iraf.digiphot()
@@ -90,7 +69,7 @@ def ExtractPSF(Pf):
 
 
 def FitB(NBackground, RBackground, Pn, Pr, sn, sr, NSaturation = None, RSaturation = None, Interactive = False):
-    '''Fit gain matching (beta) and background (gamma) parameters'''
+    """Fit gain matching (beta) and background (gamma) parameters"""
 
     center, d = NBackground.shape[0] / 2, NBackground.shape[0] / 16
     a, b = center - d, center + d
@@ -124,7 +103,7 @@ def FitB(NBackground, RBackground, Pn, Pr, sn, sr, NSaturation = None, RSaturati
 
 
 def FitNoise(Data):
-    '''Find the noise of the image by fitting the background to a gaussian'''
+    """Find the noise of the image by fitting the background to a gaussian"""
 
     Edge = 50
     xMid, yMid = Data.shape[0] / 2, Data.shape[1] / 2
@@ -138,7 +117,7 @@ def FitNoise(Data):
 
 
 def FitPSF(ImageFile, FWHM = 5., Noise = 30., Verbose = True, Show = True, MaxCount = 15000.):
-    '''Fit the PSF given an image file name'''
+    """Fit the PSF given an image file name"""
 
     if Verbose:
         verb = 'yes'
@@ -237,38 +216,15 @@ def FitPSF(ImageFile, FWHM = 5., Noise = 30., Verbose = True, Show = True, MaxCo
 
 
 def Gamma(beta, gammaPrime, sn, sr):
-    '''Convert params in fourier space to image space'''
+    """Convert params in fourier space to image space"""
 
     return gammaPrime * np.sqrt(sn ** 2 + beta ** 2 * sr ** 2)
 
 
 def Gauss(x, a, b, c):
-    '''Return a gaussian function'''
+    """Return a gaussian function"""
 
     return a * np.exp(-(x-b)**2/(2*c**2))
-
-
-def GetSaturationCount(filename):
-    '''Get pixel saturation count for a given image'''
-
-    sat = []
-    Header = fits.getheader(filename)
-    try:
-        MaxLin = Header['MAXLIN']
-        sat.append(MaxLin)
-    except KeyError:
-        pass
-    try:
-        Saturate = Header['SATURATE']
-        sat.append(Saturate)
-    except KeyError:
-        pass
-    if len(sat) < 1:
-        print 'Saturation count not found in fits header'
-        return None
-    else:
-        Saturation = min(sat)
-        return Saturation
 
 
 def InteractiveFit(N, R, Pn, Pr, sn, sr, NSaturation = None, RSaturation = None):
@@ -307,7 +263,7 @@ def InteractiveFit(N, R, Pn, Pr, sn, sr, NSaturation = None, RSaturation = None)
 
 
 def IterativeSolve(N, R, Pn, Pr, sn, sr, NSaturation = None, RSaturation = None, Interactive = False):
-    '''Solve for linear fit iteratively'''
+    """Solve for linear fit iteratively"""
 
     BetaTolerance = 1e-8
     GammaPrimeTolerance = 1e-8
@@ -371,7 +327,7 @@ def IterativeSolve(N, R, Pn, Pr, sn, sr, NSaturation = None, RSaturation = None,
 
 
     if Cov > 1000.:
-        print 'The is a poor fit. Try fitting the PSFs manually. For now, Beta = 1'
+        print 'The is a poor fit. Try fitting the PSFs manually.'
         beta = 1.
         gamma = FitNoise(N)[1] - FitNoise(R)[1]
         betaError = 1.
@@ -388,13 +344,13 @@ def IterativeSolve(N, R, Pn, Pr, sn, sr, NSaturation = None, RSaturation = None,
 
 
 def Normalize(Image):
-    '''Normalize to sum = 1'''
+    """Normalize to sum = 1"""
 
     return Image / np.sum(Image)
 
 
 def PadPSF(PSF, shape):
-    '''Pad PSF and center at (0,0)'''
+    """Pad PSF and center at (0,0)"""
 
     p = PSF.shape
     s = shape
@@ -405,50 +361,3 @@ def PadPSF(PSF, shape):
 
     return PSF_extended
 
-
-def RemoveSaturatedFromCatalog(catalog):
-    '''Remove stars with saturated pixels from catalog'''
-
-    SafeIndex = np.where(catalog[:7].flatten() == 0)
-    SafeSource = catalog[SafeIndex]
-    return SafeSource
-
-
-def SubtractBackground(data, NumStamps = 30, Border = 200):
-    '''Subtract spatially varying background'''
-
-    d = (data.shape[0] - 2 * Border) * (data.shape[1] - 2 * Border) / NumStamps ** 2
-    LeftEdge = np.linspace(Border, data.shape[0] - Border, NumStamps)
-    LeftEdge = [int(i) for i in LeftEdge]
-    TopEdge = np.linspace(Border, data.shape[1] - Border, NumStamps)
-    TopEdge = [int(i) for i in TopEdge]
-    SmallImg = np.zeros(2 * [NumStamps])
-    for iIndex, i in enumerate(TopEdge):
-        for jIndex, j in enumerate(LeftEdge):
-            #print i, i+d, j, j+d
-            Stamp = data[i: i + d, j: j + d]
-            Hist, BinEdge = np.histogram(Stamp, bins = 50)
-            x = [(BinEdge[k] + BinEdge[k+1]) / 2 for k in range(len(BinEdge) - 1)]
-            popt, cov = scipy.optimize.curve_fit(Gauss, x, Hist, p0 = [np.max(data), np.median(data), np.std(data)])
-            #print popt
-            SmallImg[jIndex, iIndex] = popt[1]
-            #plt.imshow(Stamp)
-            #plt.show()
-            #plt.plot(x, Hist, x, Gauss(x, *popt))
-            #plt.show()
-    scale = [(data.shape[0] - 2 * d) / SmallImg.shape[0], (data.shape[1] - 2 * d) / SmallImg.shape[1]]
-    print scale
-    BackImg = scipy.ndimage.zoom(SmallImg, scale)
-    s = [data.shape[0]/2 - BackImg.shape[0]/2, data.shape[1]/2 - BackImg.shape[1]/2]
-    BackImgFull = np.rot90(np.fliplr(np.pad(BackImg, ((s[0], s[0]),(s[1], s[1])), 'constant')), 1)
-#    BackImgFull = np.zeros(data.shape)
-#    BackImgFull[Border:data.shape[0]-Border, Border:data.shape[1]-Border] = BackImg
-    dataCorr = data - BackImgFull
-    fits.writeto('back.fits', BackImgFull, clobber = True)
-    fits.writeto('dataCorr.fits', dataCorr, clobber = True)
-
-    plt.imshow(BackImg, interpolation = 'none')
-    plt.show()
-    plt.imshow(dataCorr, interpolation = 'none')
-    plt.show()
-    return dataCorr

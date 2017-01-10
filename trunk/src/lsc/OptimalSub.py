@@ -10,19 +10,17 @@ import argparse
 from lsc.lscastrodef import sextractor
 import statsmodels.api as sm
 import logging
-
 from SubtractionUtil import *
-
-
 import matplotlib.pyplot as plt
 
+
 class OptimalSubtraction:
-    '''Implementation of proper image subtraction from Zackey, Ofek, Gal-Yam 2016
-       see https://arxiv.org/abs/1601.02655 for details'''
+    """Implementation of proper image subtraction from Zackey, Ofek, Gal-Yam 2016
+       see https://arxiv.org/abs/1601.02655 for details"""
 
 
     def __init__(self, Nf, Rf, ArgsDict = {}):
-        '''Take filenames and turn them into arrays and unpack arguments in ArgsDict'''
+        """Take filenames and turn them into arrays and unpack arguments in ArgsDict"""
 
         logging.basicConfig(filename = Nf.replace('.fits', '.log'))
 
@@ -41,22 +39,18 @@ class OptimalSubtraction:
         self.N, self.R, self.Pn, self.Pr = CropImages(fits.getdata(self.Nf), fits.getdata(self.Rf), self.Pn, self.Pr)
         self.CheckBackground()
 
-        # work in progress
-        #self.CheckFlatten()
-
         self.sn = self.ArgsDict['NewNoise']
         self.sr = self.ArgsDict['RefNoise']
 
         self.CheckGainMatched()
 
     def MakeDefaults(self):
-        '''Set up default optional arguments'''
+        """Set up default optional arguments"""
 
         default = {
             'Align': False, 
             'Beta': 99999., 
             'Interactive': False, 
-            'Flatten': False, 
             'Gamma': 99999., 
             'RefPSF': '', 
             'NewPSF': '', 
@@ -64,13 +58,13 @@ class OptimalSubtraction:
             'RefFWHM': 5., 
             'RefNoise': FitNoise(fits.getdata(self.Rf))[2], 
             'RefReadNoise': 0., 
-            'RefSaturation': 10e6, #GetSaturationCount(self.Rf), 
+            'RefSaturation': 10e6,
             'RefVariance': '', 
             'NewBackground': self.Nf, 
             'NewFWHM': 5., 
             'NewNoise': FitNoise(fits.getdata(self.Nf))[2],
             'NewReadNoise': 0., 
-            'NewSaturation': 10e6, #GetSaturationCount(self.Nf), 
+            'NewSaturation': 10e6,
             'NewVariance': '', 
             'PSFfromIRAF': True, 
             'SigmaX': 0.5, 
@@ -83,7 +77,7 @@ class OptimalSubtraction:
 
 
     def CheckAlign(self):
-        '''Check if images need alignment'''
+        """Check if images need alignment"""
 
         if self.ArgsDict['Align']:
             self.R = AlignImages(self.Nf, self.Rf)
@@ -101,14 +95,8 @@ class OptimalSubtraction:
             self.RBackground = self.R
 
 
-    def CheckFlatten(self):
-        if self.ArgsDict['Flatten']:
-            self.N = SubtractBackground(self.N)
-            self.R = SubtractBackground(self.R)
-
-
     def CheckGainMatched(self):
-        '''Check if the gain matching parameters have been found'''
+        """Check if the gain matching parameters have been found"""
 
         beta = self.ArgsDict['Beta']
         gamma = self.ArgsDict['Gamma']
@@ -124,7 +112,7 @@ class OptimalSubtraction:
 
 
     def CheckPSFsExist(self):
-        '''Check if user provided a psf and make one if necessary'''
+        """Check if user provided a psf and make one if necessary"""
 
         Prf = self.ArgsDict['RefPSF']
         Pnf = self.ArgsDict['NewPSF']
@@ -146,7 +134,7 @@ class OptimalSubtraction:
             
 
     def CheckPSFfromIRAF(self):
-        '''Check if user specified IRAF psf or actual psf'''
+        """Check if user specified IRAF psf or actual psf"""
 
         try:
             PSFfromIRAF = self.ArgsDict['PSFfromIRAF']
@@ -162,7 +150,7 @@ class OptimalSubtraction:
 
 
     def D(self, normalize = '', diagnostic = False):
-        '''Calculate proper subtraction image and normalize to zero point of reference or target'''
+        """Calculate proper subtraction image and normalize to zero point of reference or target"""
 
         N, R, Pn, Pr, sn, sr = self.N, self.R, self.Pn, self.Pr, self.sn, self.sr
 
@@ -216,34 +204,15 @@ class OptimalSubtraction:
 
 
     def Fd(self):
-        '''Calculate the flux based zero point of D'''
+        """Calculate the flux based zero point of D"""
 
         Fd = self.beta / np.sqrt(self.sn**2 + self.sr**2*self.beta**2)
         self.Fd_ = np.real(Fd)
         return np.real(Fd)
 
 
-    def FindTransient(self, Threshold = 3., filename = 'transients.txt'):
-        '''Write transient detections to file'''
-
-        try:
-            self.Scorr_
-        except AttributeError:
-            self.Scorr()
-        edge = 0
-        Scorr_ = self.Scorr_[edge: self.Scorr_.shape[0] - edge, edge: self.Scorr_.shape[1] - 100]
-        maxima = (Scorr_ == scipy.ndimage.maximum_filter(Scorr_, 4))
-        PeaksIndex = np.where(maxima)
-        Peaks = Scorr_[PeaksIndex]
-        Transients = np.array([Peaks, PeaksIndex[0], PeaksIndex[1]]).transpose()
-        TransientsSortIndex = np.argsort(Transients[:,0])
-        Transients = Transients[TransientsSortIndex[::-1]]
-        Transients = Transients[np.where(Transients[:,0] >= Threshold)]
-        np.savetxt(filename , Transients)
-
-
     def Flux(self, normalize = ''):
-        '''Calculate transient Flux'''
+        """Calculate transient Flux"""
 
         try:
             Flux = self.S_ / self.Fs_
@@ -254,7 +223,7 @@ class OptimalSubtraction:
 
 
     def Fs(self):
-        '''Calculate flux based zeropoint of S'''
+        """Calculate flux based zeropoint of S"""
 
         beta = self.beta
         Pr_hat = np.fft.fft2(self.Pr)
@@ -266,7 +235,7 @@ class OptimalSubtraction:
         return Fs
 
     def Kernels(self):
-        '''Calculate convolution kernels'''
+        """Calculate convolution kernels"""
 
         N, R, Pn, Pr, sn, sr = self.N, self.R, self.Pn, self.Pr, self.sn, self.sr
         N = np.subtract(N, self.gamma)
@@ -287,39 +256,8 @@ class OptimalSubtraction:
         return Kn, Kr
 
 
-    def MakeCatalog(self, SortBy = 'magnitude'):
-        '''Check for source catalog and make one if necessary'''
-
-        try:
-            cat = self.Catalog
-            return cat
-
-        except AttributeError:
-            if SortBy == 'x':
-                SortIndex = 0
-            elif SortBy == 'y':
-                SortIndex = 1
-            elif SortBy == 'fwhm':
-                SortIndex = 2
-            elif SortBy == 'flux':
-                SortIndex = 3
-            elif SortBy == 'magnitude':
-                SortIndex = 4
-            elif SortBy == 'flag':
-                SortIndex = 7
-            else:
-                SortIndex = 4
-
-            sources = np.array(sextractor(self.Nf)).transpose()
-            source_index = np.argsort(sources[:, SourceIndex])
-            source_sorted = sources[source_index]
-
-            self.Catalog = source_sorted
-            return source_sorted
-
-
     def MatchGain(self):
-        '''Call gain matching function'''
+        """Call gain matching function"""
 
         NSat = self.ArgsDict['RefSaturation']
         RSat = self.ArgsDict['NewSaturation']
@@ -330,7 +268,7 @@ class OptimalSubtraction:
 
 
     def Pd(self):
-        '''Calculate PSF of D'''
+        """Calculate PSF of D"""
 
         Pn_hat = np.fft.fft2(self.Pn)
         Pr_hat = np.fft.fft2(self.Pr)
@@ -344,7 +282,7 @@ class OptimalSubtraction:
 
 
     def S(self):
-        '''Calculate matched filter image S'''
+        """Calculate matched filter image S"""
 
         try:
             S_hat = self.Fd_ * np.fft.fft2(self.D_) * np.conj(np.fft.fft2(self.Pd_))
@@ -356,7 +294,7 @@ class OptimalSubtraction:
         return np.real(S)
 
     def SaveD(self, filename, normalize = ''):
-        '''Calculate and save proper subtraction image to database'''
+        """Calculate and save proper subtraction image to database"""
 
         self.Df = filename
         self.D(normalize)
@@ -370,7 +308,7 @@ class OptimalSubtraction:
         hdu.writeto(self.Df, clobber = True)
 
     def SaveS(self, Sf, normalize = ''):
-        '''Calculate and save S to database'''
+        """Calculate and save S to database"""
 
         self.Sf = Sf
         self.S()
@@ -379,10 +317,11 @@ class OptimalSubtraction:
         hdu.header['PHOTNORM'] = normalize
         hdu.header['BETA'] = self.beta
         hdu.header['GAMMA'] = self.gamma
+        hdu.header['CONVOL00'] = normalize
         hdu.writeto(self.Sf, clobber = True)
 
     def SaveScorr(self, Scorrf, normalize = ''):
-        '''Calculate and save S to database'''
+        """Calculate and save S to database"""
 
         self.Scorrf = Scorrf
         self.Scorr()
@@ -391,30 +330,12 @@ class OptimalSubtraction:
         hdu.header['PHOTNORM'] = normalize
         hdu.header['BETA'] = self.beta
         hdu.header['GAMMA'] = self.gamma
+        hdu.header['CONVOL00'] = normalize
         hdu.writeto(self.Scorrf, clobber = True)
-
-    def SaveScorrThreshold(self, ScorrThreshf, Thresh = 3., normalize = ''):
-        '''Save a Scorr such that pixel = 1 if > Thresh else pix = 0'''
-
-        self.ScorrThreshf = ScorrThreshf
-        self.Scorr()
-        BrightIndex = np.where(self.Scorr_ >= Thresh)
-        DarkIndex = np.where(self.Scorr_ < Thresh)
-        ScorrThresh = np.copy(self.Scorr_)
-        ScorrThresh[BrightIndex] = 1
-        ScorrThresh[DarkIndex] = 0
-        self.ScorrThresh = ScorrThresh        
-
-        hdu = fits.PrimaryHDU(np.real(self.ScorrThresh))
-        #hdu.header = fits.getheader(self.Nf)
-        hdu.header['PHOTNORM'] = normalize
-        hdu.header['BETA'] = self.beta
-        hdu.header['GAMMA'] = self.gamma
-        hdu.writeto(self.ScorrThreshf, clobber = True)
 
 
     def SaveSnoise(self, Snoisef, normalize = ''):
-        '''Calculate and save S to database'''
+        """Calculate and save S to database"""
 
         self.Snoisef = Snoisef
         self.Snoise()
@@ -426,7 +347,7 @@ class OptimalSubtraction:
         hdu.writeto(self.Snoisef, clobber = True)
 
     def SaveImageToWD(self):
-        '''Save various images to working directory (testing only)'''
+        """Save various images to working directory (testing only)"""
 
         Images = {'S.fits': self.S, 'Snoise.fits': self.Snoise, 'Scorr.fits': self.Scorr, 'D.fits': self.D, 'Flux.fits': self.Flux, 'Pd.fits': self.Pd}
 
@@ -437,7 +358,7 @@ class OptimalSubtraction:
 
 
     def Scorr(self):
-        '''Calculate Scorr'''
+        """Calculate Scorr"""
 
         try:
             Scorr = self.S_ / self.Snoise_
@@ -448,7 +369,7 @@ class OptimalSubtraction:
 
 
     def Snoise(self):
-        '''Calculate the noise image for Scorr'''
+        """Calculate the noise image for Scorr"""
 
         # this whole function needs optimization
 
@@ -518,7 +439,6 @@ if __name__ == '__main__':
     parser.add_argument('--NewBackground', dest = 'NewBackground', help = 'New image with background')
     parser.add_argument('--RefBackground', dest = 'RefBackground', help = 'Reference image with background')
     parser.add_argument('--Mode', dest = 'mode', default = 'D', help = 'Subtraction mode')
-    #parser.add_argument('--threshold', dest = 'threshold', help = 'Sigma threshold for detection')
     
     parser.add_argument('--Interactive', dest = 'interactive', action = 'store_true', default = False, help = 'Perform subtraction interactively')
     parser.add_argument('--Align', dest = 'align', action = 'store_true', default = False, help = 'Align images before subtraction')
@@ -527,13 +447,11 @@ if __name__ == '__main__':
     parser.add_argument('--Gamma', dest = 'gamma', default = 99999, help = 'Gain matching parameter gamma')
     parser.add_argument('--NewNoise', dest = 'NewNoise', default = 5, help = 'Standard deviation of new image background')
     parser.add_argument('--RefNoise', dest = 'RefNoise', default = 5, help = 'Standard deviation of ref image background')
-    parser.add_argument('--Flatten', dest = 'flatten', action = 'store_true', default = False, help = 'Fix Background locally')
     parser.add_argument('--Normalize', default = '', dest = 'normalize', help = 'Normalize to which image')
     args = parser.parse_args()
 
     d = {
         'Align': args.align, 
-        'Flatten': args.flatten, 
         'NewPSF': args.input_PSF, 
         'RefPSF': args.input_PSF, 
         'NewFWHM': args.input_FWHM, 
@@ -554,10 +472,6 @@ if __name__ == '__main__':
         OptimalSubtraction(args.input, args.template, d).SaveScorr(args.output, args.normalize)
     elif args.mode == 'S':
         OptimalSubtraction(args.input, args.template, d).SaveS(args.output, args.normalize)
-    elif args.mode == 'Thresh':
-        OptimalSubtraction(args.input, args.template, d).SaveScorrThreshold(args.output, normalize = args.normalize, Thresh = args.threshold)
-    elif args.mode == 'Find':
-        OptimalSubtraction(args.input, args.template, d).FindTransient()
     else:
         pass
 

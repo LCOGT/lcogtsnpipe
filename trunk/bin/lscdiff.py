@@ -8,7 +8,6 @@ import time
 from astropy.io import fits
 import numpy as np
 from optparse import OptionParser, OptionGroup
-from lsc.OptimalSub import OptimalSubtraction
 
 
 def crossmatchtwofiles(img1, img2, radius=3):
@@ -356,7 +355,9 @@ if __name__ == "__main__":
                             psftarg = imgtarg_path.replace('.fits','.psf.fits')
                             psftemp = imgtemp_path.replace('.fits','.psf.fits')
                             ArgsDict = {'RefPSF': psftemp, 'NewPSF': psftarg}
-                            OptimalSubtraction(imgtarg, imgtemp, ArgsDict).SaveD(imgout, normalize = normalize)
+                            target = lsc.optimalsub.ImageClass(imgtarg, psftarg)
+                            template = lsc.optimalsub.ImageClass(imgtemp, psftemp)
+                            lsc.optimalsub.calculate_difference_image(target, template, output=imgout, normalization = normalize)
 
                             # create fields in header that hotpants does
                             hotpants_fields = {'TARGET': (imgtarg_path, 'target image'),

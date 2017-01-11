@@ -53,7 +53,8 @@ def resize_psf(psf, shape):
     """resize centered (0,0) psf to given shape"""
 
     psf_extended = np.zeros(shape)
-    psf_extended[0: shape[0] - 1, 0: shape[1] - 1] = psf
+    stamp_shape = psf.shape
+    psf_extended[0: stamp_shape[0], 0: stamp_shape[1]] = psf
     return psf_extended
 
 
@@ -78,8 +79,8 @@ def solve_iteratively(science, reference):
 
     science_image_fft = np.fft.fft2(science_image)
     reference_image_fft = np.fft.fft2(reference_image)
-    science_psf_fft = np.fft.fft2(resize_psf(science.psf_data, science.image_data.shape))
-    reference_psf_fft = np.fft.fft2(resize_psf(reference.psf_data, reference.image_data.shape))
+    science_psf_fft = np.fft.fft2(resize_psf(science.psf_data, science_image.shape))
+    reference_psf_fft = np.fft.fft2(resize_psf(reference.psf_data, reference_image.shape))
 
     while abs(gain - gain0) > gain_tolerance or abs(background_fft - background_fft0) > background_fft_tolerance:
 

@@ -8,6 +8,7 @@ import time
 from astropy.io import fits
 import numpy as np
 from optparse import OptionParser, OptionGroup
+import lsc.optimalsub
 
 
 def crossmatchtwofiles(img1, img2, radius=3):

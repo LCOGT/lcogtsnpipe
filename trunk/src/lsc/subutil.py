@@ -7,24 +7,17 @@ import statsmodels.api as stats
 
 
 def center_psf(psf):
-    """center psf at (0,0)"""
+    """Center psf at (0,0)"""
 
     psf = np.roll(psf, psf.shape[0] / 2, 0)
     psf = np.roll(psf, psf.shape[1] / 2, 1)
     return psf
 
 
-def read_psf_file(psf_filename):
-    """Extract normalized psf array from iraf psf file"""
+def convert_to_background_fft(gain, background_fft, science_background_std, reference_background_std):
+    """Convert params in fourier space to image space"""
 
-    iraf.noao()
-    iraf.digiphot()
-    iraf.daophot(_doprint=0)
-    iraf.seepsf(psf_filename, 'temp.psf.fits')
-    psf = fits.open('temp.psf.fits')[0].data
-    psf /= np.sum(psf)
-    os.system('rm temp.psf.fits')
-    return psf
+    return background_fft * np.sqrt(science_background_std ** 2 + gain ** 2 * reference_background_std ** 2)
 
 
 def fit_noise(data):
@@ -47,8 +40,21 @@ def gauss(x, a, b, c):
     return a * np.exp(-(x-b)**2/(2*c**2))
 
 
+def read_psf_file(psf_filename):
+    """Extract normalized psf array from iraf psf file"""
+
+    iraf.noao()
+    iraf.digiphot()
+    iraf.daophot(_doprint=0)
+    iraf.seepsf(psf_filename, 'temp.psf.fits')
+    psf = fits.open('temp.psf.fits')[0].data
+    psf /= np.sum(psf)
+    os.system('rm temp.psf.fits')
+    return psf
+
+
 def resize_psf(psf, shape):
-    """resize centered (0,0) psf to given shape"""
+    """Resize centered (0,0) psf to given shape"""
 
     psf_extended = np.zeros(shape)
     center = [psf_extended.shape[0] / 2, psf_extended.shape[1] / 2]
@@ -128,12 +134,6 @@ def solve_iteratively(science, reference):
     return gain, background
 
 
-def convert_to_background_fft(gain, background_fft, science_background_std, reference_background_std):
-    """Convert params in fourier space to image space"""
-
-    return background_fft * np.sqrt(science_background_std ** 2 + gain ** 2 * reference_background_std ** 2)
-
-
 def remove_bad_pix(data, saturation=None, remove_background_pix=True, significance=3.):
     """Remove saturated and background pixels from dataset"""
 
@@ -150,10 +150,3 @@ def remove_bad_pix(data, saturation=None, remove_background_pix=True, significan
 
     good_pix_in_common = np.intersect1d(not_saturated_pix, signal_pix)
     return good_pix_in_common
-
-
-def save_image(image, filename):
-    """Save image for testing purposes"""
-
-    hdu = fits.PrimaryHDU(np.real(image))
-    hdu.writeto(filename, clobber=True)

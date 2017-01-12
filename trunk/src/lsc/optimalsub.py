@@ -45,19 +45,14 @@ def calculate_difference_image(science, reference, normalization='reference', ou
     difference_image_fft /= np.sqrt(denominator)
     difference_image = np.fft.ifft2(difference_image_fft)
     difference_image = normalize_difference_image(difference_image, science, reference, normalization=normalization)
-    
-    # save difference image to file
-    hdu = fits.PrimaryHDU(np.real(difference_image))
-    hdu.header = fits.getheader(science.image_filename)
-    hdu.header['PHOTNORM'] = normalization
-    hdu.header['CONVOL00'] = normalization
-    hdu.writeto(output, clobber=True)
+
+    save_difference_image_to_file(difference_image, science, normalization, output)
 
     return difference_image
 
 
 def calculate_difference_image_zero_point(science, reference):
-    """calculate the flux based zero point of the difference image"""
+    """Calculate the flux based zero point of the difference image"""
 
     zero_point_ratio = science.zero_point / reference.zero_point
     denominator = science.background_std ** 2 + reference.background_std ** 2 * zero_point_ratio ** 2
@@ -66,7 +61,7 @@ def calculate_difference_image_zero_point(science, reference):
 
 
 def normalize_difference_image(difference, science, reference, normalization='reference'):
-    """normalize to user's choice of image"""
+    """Normalize to user's choice of image"""
 
     difference_image_zero_point = calculate_difference_image_zero_point(science, reference)
     if normalization == 'reference' or normalization == 't':
@@ -76,3 +71,12 @@ def normalize_difference_image(difference, science, reference, normalization='re
     else:
         difference_image = difference
     return difference_image
+
+def save_difference_image_to_file(difference_image, science, normalization, output):
+    """Save difference image to file"""
+
+    hdu = fits.PrimaryHDU(np.real(difference_image))
+    hdu.header = fits.getheader(science.image_filename)
+    hdu.header['PHOTNORM'] = normalization
+    hdu.header['CONVOL00'] = normalization
+    hdu.writeto(output, clobber=True)

@@ -10,7 +10,7 @@ class ImageClass:
         self.image_filename = image_filename
         self.psf_filename = psf_filename
         self.image_data = fits.getdata(image_filename)
-        self.psf_data = subutil.extract_psf(psf_filename)
+        self.psf_data = subutil.read_psf_file(psf_filename)
         self.zero_point = 1.
         self.background_counts = 0.
         self.background_std = subutil.fit_noise(self.image_data)
@@ -25,11 +25,11 @@ def calculate_difference_image(science, reference, normalization='reference', ou
     reference.zero_point = 1.
     zero_point_ratio = science.zero_point / reference.zero_point
 
-    # create required arrays and scalars
+    # create required arrays
     science_image = science.image_data - science.background_counts
     reference_image = reference.image_data - reference.background_counts
-    science_psf = subutil.resize_psf(science.psf_data, science_image.shape)
-    reference_psf = subutil.resize_psf(reference.psf_data, reference_image.shape)
+    science_psf = subutil.center_psf(subutil.resize_psf(science.psf_data, science_image.shape))
+    reference_psf = subutil.center_psf(subutil.resize_psf(reference.psf_data, reference_image.shape))
 
     # do fourier transforms (fft)
     science_image_fft = np.fft.fft2(science_image)
@@ -39,7 +39,7 @@ def calculate_difference_image(science, reference, normalization='reference', ou
 
     # calculate difference image
     denominator = science.background_std ** 2 * zero_point_ratio ** 2 * abs(science_psf_fft) ** 2
-    denominator += reference.background_counts ** 2 * abs(reference_psf_fft) ** 2
+    denominator += reference.background_std ** 2 * abs(reference_psf_fft) ** 2
     difference_image_fft = reference_psf_fft * science_image_fft
     difference_image_fft -= zero_point_ratio * science_psf_fft * reference_image_fft
     difference_image_fft /= np.sqrt(denominator)

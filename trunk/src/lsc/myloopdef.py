@@ -2149,15 +2149,13 @@ def getsky(data):
 
 def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=4, _force=False):
     import lsc
-
     direc = lsc.__path__[0]
     import os, string, glob
-
-    print _force
-    for img in imglist:
-        ggg = lsc.mysqldef.getfromdataraw(lsc.conn, database, 'filename', str(img), '*')
-        if ggg:
-            _dir = ggg[0]['filepath']
+########  SV 20161129  add multiprocess
+    for ggg in imglist:
+            _dir,img = os.path.split(ggg)
+            if _dir:
+                _dir = _dir+'/'
             print _dir + img
             if os.path.isfile(_dir + img):
                 if os.path.isfile(_dir + re.sub('.fits', '.var.fits', img)):

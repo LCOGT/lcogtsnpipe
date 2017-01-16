@@ -763,6 +763,7 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    import lsc
    import re,os,string
    import numpy as np
+   import tempfile
 
    ar, hd = fits.getdata(img, header=True)
 
@@ -774,12 +775,13 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
       _tel='extdata'
 
    if _tel in ['fts','ftn']:
-      lsc.delete('new.fits')
+      temp_file0 = next(tempfile._get_candidate_names())
+      lsc.delete(temp_file0)
       out_fits = fits.PrimaryHDU(header=hd,data=ar)
       out_fits.scale('float32',bzero=0,bscale=1)
-      out_fits.writeto('new.fits', clobber=True, output_verify='fix')
-      ar = fits.getdata('new.fits')
-      lsc.delete('new.fits')
+      out_fits.writeto(temp_file0, clobber=True, output_verify='fix')
+      ar = fits.getdata(temp_file0)
+      lsc.delete(temp_file0)
       gain    = hd['GAIN']
       sat     = 35000
       rdnoise = hd['RDNOISE']

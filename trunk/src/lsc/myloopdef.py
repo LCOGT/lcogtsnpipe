@@ -140,10 +140,13 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     if _output:
         ff = open(_output, 'w')
 
-    filters = []
+    filters_used = []
     for _tel in setup:
-        filters += setup[_tel].keys()
-    filters = list(set(filters))
+        filters_used += setup[_tel].keys()
+    filters = []
+    for filt in ['U', 'B', 'V', 'R', 'I', 'up', 'gp', 'rp', 'ip', 'zs']:
+        if filt in filters_used:
+            filters.append(filt)
     for _tel in setup:
         line0 = '# %15s%15s' % ('dateobs', 'jd')
         for filt in filters:

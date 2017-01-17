@@ -4,14 +4,13 @@ import lsc
 import os
 import argparse
 
-systems = {'apass': 'queryapasscat2.py', 'sloan': 'querysloancat.py', 'landolt': None}
 gitdir = lsc.util.workdirectory + 'github/lcogtsnpipe/trunk/'
 catdir = gitdir + 'src/lsc/standard/cat/'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-F', '--force', action='store_true', help="try to download catalog even if we've tried before")
 parser.add_argument('-R', '--radius', type=float, default=20., help="query for stars within this radius of the coordinates")
-parser.add_argument('-f', '--field', nargs='+', choices=systems.keys(), default=systems.keys(), help="catalogs to check (all by default)")
+parser.add_argument('-f', '--field', nargs='+', choices=['landolt', 'apass', 'sloan'], default=['landolt', 'apass', 'sloan'], help="catalogs to check (all by default)")
 args = parser.parse_args()
 
 if args.force:
@@ -36,10 +35,12 @@ for system in args.field:
                 print 'Adding', filename, 'to database'
                 lsc.mysqldef.query(['update targets set ' + system + '_cat="' + filename + '" where id=' + tid], lsc.conn)
                 break
-        query = systems[system]
-        if not fileexists and query is not None:
+        if not fileexists and system != 'landolt':
             print 'Querying for catalog...'
-            os.system(query + ' -r {ra0} -d {dec0} -R {radius} -o '.format(radius=args.radius, **target) + filepath + filename)
+            if system == 'apass':
+                os.system('queryapasscat.py -r {ra0} -d {dec0} -R {radius} -o '.format(radius=args.radius, **target) + filepath + filename)
+            elif system == 'sloan':
+                lsc.lscabsphotdef.sloan2file(target['ra'], target['dec'], args.radius, output=filepath+filename)
             fileexists = os.path.isfile(filepath + filename)
             if fileexists:
                 print 'Adding', filename, 'to database'

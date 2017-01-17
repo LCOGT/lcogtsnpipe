@@ -40,7 +40,7 @@ for system in args.field:
             if system == 'apass':
                 os.system('queryapasscat.py -r {ra0} -d {dec0} -R {radius} -o '.format(radius=args.radius, **target) + filepath + filename)
             elif system == 'sloan':
-                lsc.lscabsphotdef.sloan2file(target['ra'], target['dec'], args.radius, output=filepath+filename)
+                lsc.lscabsphotdef.sloan2file(target['ra0'], target['dec0'], args.radius, output=filepath+filename)
             fileexists = os.path.isfile(filepath + filename)
             if fileexists:
                 print 'Adding', filename, 'to database'

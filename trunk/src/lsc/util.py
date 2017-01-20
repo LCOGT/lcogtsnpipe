@@ -1,28 +1,16 @@
-import socket
 import sys
+import os
 
-host = socket.gethostname()
-if host in ['wwwdevsba']:
-   workdirectory =  '/home/supernova/'
-   configfile = 'configure'
-elif host in ['svalenti-linux.lco.gtn','cc3.lco.gtn',\
-                 'cmccully-linux.lco.gtn','iarcavi-linux.lco.gtn','campus-055-064.ucdavis.edu','iairs-mbp']:
-   workdirectory =  '/science/supernova/'
-   configfile = 'configure'
-elif 'valenti' in host:
-   workdirectory =  '/science/supernova/'
-   configfile = 'configure'
-elif host in ['supernova.lco.gtn', 'griffin-linux.lco.gtn', 'griffin-Aspire-M5-583P']:
+workdirectory = os.getenv('LCOSNDIR')
+if workdirectory is None:
     workdirectory = '/supernova/'
-    configfile = 'configure'
-else:
-   sys.exit('ERROR: host machine not recognise, please add your machine in the util file')
+configfile = os.path.join(workdirectory, 'configure')
 
-def readpasswd(directory,_file):
+def readpasswd(configfile):
    """ read all information to connect to database from configuration file  
    """
    from numpy import genfromtxt
-   data = genfromtxt(directory+_file,str)
+   data = genfromtxt(configfile, str)
    gg= {}
    for i in data:
       try:
@@ -34,7 +22,7 @@ def readpasswd(directory,_file):
 #############################################################################################
 #   read information from configuration file
 #######################################################################################
-readpass = readpasswd(workdirectory,configfile)
+readpass = readpasswd(configfile)
 proposal = readpass['proposal']
 users = readpass['users']
 triggerpass = readpass['triggerpass']

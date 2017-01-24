@@ -1,5 +1,8 @@
 import sys
 import os
+from astropy.io import fits
+from astropy.nddata import Cutout2D
+from astropy.wcs import WCS
 
 workdirectory = os.getenv('LCOSNDIR')
 if workdirectory is None:
@@ -60,9 +63,7 @@ def ReadAscii2(ascifile):
    return vec1,vec2
 #########################################################################
 def readlist(listfile):
-#    from lsc.util import correctcard
     import string,os,sys,re,glob
-    from astropy.io import fits
     if '*' in listfile:
         imglist=glob.glob(listfile)
     elif ',' in listfile: imglist = string.split(listfile,sep=',')
@@ -86,11 +87,6 @@ def readlist(listfile):
                     except Exception as e:
                         print 'problem reading header of', ff
                         print e
-#                       try:
-#                          correctcard(ff)
-#                          hdulist= fits.open(ff)
-#                          imglist.append(ff)
-#                       except:                          pass
            except:              sys.exit('\n##### Error ###\n file '+str(listfile)+' do not  exist\n')
     if len(imglist)==0:
            sys.exit('\n##### Error ###\nIf "'+str(listfile)\
@@ -116,28 +112,31 @@ def delete(listfile):
         for _file in lista:
             try:          os.system('rm '+_file)
             except:       pass
+
+def imcopy(imgin, imgout, center=None, cutout_size=None, ext=0):
+    '''iraf.imcopy equivalent
+       center = (x, y) of center of cutout
+       cutout_size = (dy, dx) or single value for square
+       By default, the entire 0th extension is copied.'''
+    hdulist = fits.open(imgin)
+    data = hdulist[ext].data
+    hdr = hdulist[ext].header
+    if center is not None and cutout_size is not None:
+        cutout = Cutout2D(data, center, cutout_size, WCS(hdr))
+        data = cutout.data
+        hdr['CRPIX1'] = cutout.wcs.wcs.crpix[0]
+        hdr['CRPIX2'] = cutout.wcs.wcs.crpix[1]
+    fits.writeto(imgout, data, hdr)
+    hdulist.close()
+
 ###############################################################
 def readhdr(img):
-    from astropy.io.fits import getheader
     try:
-        hdr = getheader(img)
+        hdr = fits.getheader(img)
     except Exception as e:
         print "Couldn't read header of {}. Try deleting it and starting over.".format(img)
         raise e
     return hdr
-
-#def readhdr(img):
-#   from astropy.io.fits import open as popen
-#   try:    hdr=popen(img)[0].header
-#   except:
-#      from lsc.util import correctcard
-#      try: 
-#         correctcard(img)
-#      except: 
-#         import sys
-#         sys.exit('image '+str(img)+' is corrupted, delete it and start again')
-#      hdr=popen(img)[0].header
-#   return hdr
 
 def readkey3(hdr,keyword):
     from astropy.coordinates import Angle
@@ -305,75 +304,8 @@ def writeinthelog(text,logfile):
     f=open(logfile,'a')
     f.write(text)
     f.close()
-################################################
-# THESE NO LONGER WORK WITH PYFITS 3.4
-#def correctcard(img):
-#    from  fits import open as popen
-#    from numpy  import asarray
-#    import re
-#    hdulist=popen(img)
-#    a=hdulist[0]._verify('fix')    
-#    _header=hdulist[0].header
-#    for i in range(len(a)):
-#        if not a[i]:
-#            a[i]=['']
-#    ww=asarray([i for i in range(len(a)) if (re.sub(' ','',a[i][0])!='')])
-#    if len(ww)>0:
-#        newheader=[]
-#        headername=[]
-#        for j in _header.items():
-#            headername.append(j[0])
-#            newheader.append(j[1])
-#        hdulist.close()
-#        imm=popen(img,mode='update')
-#        _header=imm[0].header
-#        for i in ww:
-#            if headername[i]:
-#                try:
-##                    _header[headername[i]] = newheader[i]
-#                    _header.update(headername[i],newheader[i]) # deprecated in PyFITS 3.3
-#                except:
-##                    _header[headername[i]] = 'xxxx'
-#                    _header.update(headername[i],'xxxx') # deprecated in PyFITS 3.3
-#        imm.flush()
-#        imm.close()
-######################################################################################################
-#def updateheader(image,dimension,headerdict):
-#    from astropy.io.fits import open as opp
-#    try:
-#        imm=opp(image,mode='update')
-#        _header=imm[dimension].header
-#################################
-##   change way to update to speed up the process
-##   now get dictionary   08 12  2012
-#################################
-#        for i in headerdict.keys():
-##           _header[i] = tuple(headerdict[i])
-#           _header.update(i,headerdict[i][0],headerdict[i][1]) # deprecated in PyFITS 3.3
-####################################################
-#        imm.flush()
-#        imm.close()
-#    except:
-#        import lsc
-#        from lsc.util import correctcard
-#        print 'warning: problem to update header, try to correct header format ....'
-#        correctcard(image)
-#        try:
-#            imm=opp(image,mode='update')
-#            _header=imm[dimension].header
-####################################################
-#            for i in headerdict.keys():
-##               _header[i] = tuple(headerdict[i])
-#               _header.update(i,headerdict[i][0],headerdict[i][1]) # deprecated in PyFITS 3.3
-####################################################
-#            imm.flush()
-#            imm.close()
-#        except:
-#           print 'niente'
-##           import sys
-##            sys.exit('error: not possible update header')
+
 def updateheader(filename, dimension, headerdict):
-    from astropy.io import fits
     tupledict = {key: tuple(value) for key, value in headerdict.items()}
     try:
         hdulist = fits.open(filename, mode='update')
@@ -474,7 +406,6 @@ def readstandard(standardfile):
 #################################################################################################
 def readspectrum(img):
     from numpy import array
-    from astropy.io import fits
     import string
     fl=''
     lam=''
@@ -638,7 +569,6 @@ def correctobject(img,coordinatefile):
     scal=pi/180.
     std,rastd,decstd,magstd=readstandard(coordinatefile)
     img=re.sub('\n','',img)
-#    correctcard(img)
     hdr=readhdr(img)
     _ra=readkey3(hdr,'RA')
     _dec=readkey3(hdr,'DEC')
@@ -692,7 +622,6 @@ def limmag(img):
 ##########################################################################
 def marksn2(img,fitstab,frame=1,fitstab2='',verbose=False):
    from pyraf import iraf
-   from astropy.io import fits
    from numpy import array   #,log10
    import lsc
    iraf.noao(_doprint=0)
@@ -747,7 +676,6 @@ def marksn2(img,fitstab,frame=1,fitstab2='',verbose=False):
 def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    import time
    start=time.time()
-   from astropy.io import fits
    import lsc
    import re,os,string
    import numpy as np

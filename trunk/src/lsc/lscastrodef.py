@@ -186,8 +186,8 @@ def querycatalogue(catalogue,img,method='iraf'):
         delete('tmp.catalogue')
         delete('tmp.catalogue.pix')
         if catalogue not in ['usnoa2','usnob1','2mass','apass']:
-            if os.path.isfile(lsc.__path__[0]+'/standard/cat/'+catalogue):
-                stdcoo=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/'+catalogue)
+            if os.path.isfile(catalogue):
+                stdcoo=lsc.lscastrodef.readtxt(catalogue)
                 if len(stdcoo['ra']) == 0:
                     sys.exit('\n####  ERROR catalog empty: '+catalogue)
 
@@ -207,7 +207,7 @@ def querycatalogue(catalogue,img,method='iraf'):
                 column={'ra':1,'dec':2,'r':3}
                 print 'catalogue from user'
             else:
-                sys.exit('Error: catalogue '+str(catalogue)+'not in the list [usnob1,usnoa2,2mass]')
+                sys.exit('Error: catalogue '+str(catalogue)+' not in the list [usnob1,usnoa2,2mass]')
         else:
           if method=='iraf':
             if catalogue=='usnoa2':    lll=iraf.noao.astcat.agetcat('pars','STDOUT',catalog='usno2@noao',verbose='no',Stdout=1)
@@ -215,7 +215,7 @@ def querycatalogue(catalogue,img,method='iraf'):
             elif catalogue=='2mass':   lll=iraf.noao.astcat.agetcat('pars','STDOUT',catalog='twomass@noao',verbose='no',Stdout=1)
 #            elif catalogue=='gsc1':    lll=iraf.noao.astcat.agetcat('pars','STDOUT',catalog='gsc1@cadc',verbose='no',Stdout=1)
             else:
-                sys.exit('Error: catalogue '+str(catalogue)+'not in the list [usnob1,usnoa2,2mass]')
+                sys.exit('Error: catalogue '+str(catalogue)+' not in the list [usnob1,usnoa2,2mass]')
 ########
             indfield=[i for i in range(0,len(lll)) if 'nfields' in lll[i]]
             fields=int(lll[indfield[0]].split()[-1])
@@ -231,7 +231,7 @@ def querycatalogue(catalogue,img,method='iraf'):
 
             if catalogue in ['usnoa2','usnob1','2mass','gsc1','apass']:
                    colonne4={'usnoa2':'mag1','usnob1':'R2mag','2mass':'mag1','gsc1':'mag','apass':'mag'}
-            else:  sys.exit('Error: catalogue '+str(catalogue)+'not in the list [usnob1,usnoa2,2mass,apass]')
+            else:  sys.exit('Error: catalogue '+str(catalogue)+' not in the list [usnob1,usnoa2,2mass,apass]')
 
           elif method=='vizir':
             stdcoo=lsc.lscastrodef.vizq(_ra,_dec,catalogue,_size)

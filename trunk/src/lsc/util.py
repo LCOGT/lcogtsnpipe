@@ -3,6 +3,7 @@ import os
 from astropy.io import fits
 from astropy.nddata import Cutout2D
 from astropy.wcs import WCS
+import lsc
 
 workdirectory = os.getenv('LCOSNDIR')
 if workdirectory is None:
@@ -1131,25 +1132,28 @@ def getstatus(username,passwd,tracking_id):
 
 ####################################################################################################
 
-def getcatalog(_name,_field):
-    import lsc
-    import glob
-    import string
-    _catalog=''
-    data = lsc.mysqldef.query(['select distinct(targetid) from targetnames where name="' + str(_name) + '"'], lsc.conn)
-    if len(data) == 1:
-        _targetid = data[0]['targetid']
-        data = lsc.mysqldef.query(['select name from targetnames where targetid="' + str(_targetid) + '"'],lsc.conn)
+def getcatalog(name_or_filename, field):
+    catalog = ''
+    catalog_path = lsc.__path__[0] + '/standard/cat/' + field + '/'
+    # get the targetid from the object name or filename
+    if name_or_filename[-5:] == '.fits':
+        targetid = lsc.mysqldef.targimg(name_or_filename)
+    else:
+        targetid = lsc.mysqldef.gettargetid(name_or_filename)
+    # get the catalog from the database
+    cats = lsc.mysqldef.query(["select sloan_cat, landolt_cat, apass_cat from targets where id=" + str(targetid)], lsc.conn)
+    if cats:
+        if field + '_cat' in cats[0] and cats[0][field + '_cat']:
+            catalog = catalog_path + cats[0][field + '_cat']
+    # if not in database, search for the catalog in the directory
+    if not catalog:
+        data = lsc.mysqldef.query(['select name from targetnames where targetid=' + str(targetid)], lsc.conn)
         for targ in data:
-            #print lsc.__path__[0] + '/standard/cat/' + _field + '/' + targ['name'].replace(' ','') + '*'
-            catlist = glob.glob(lsc.__path__[0] + '/standard/cat/' + _field + '/*')
-            catlist2 = [string.split(string.split(i,'/')[-1],'_'+_field)[0].lower() for i in catlist ]
-            if targ['name'].replace(' ','').lower() in catlist2:
-               _catalog = catlist[catlist2.index(targ['name'].replace(' ','').lower())]            
-            #catlist = glob.glob(lsc.__path__[0] + '/standard/cat/' + _field + '/' + targ['name'].replace(' ','')+ '*')
-            #if len(catlist) >= 1:
-            #    _catalog = catlist[0]
-            #    break
-    return _catalog
+            catlist = os.listdir(catalog_path)
+            targetnames = [os.path.split(cat)[1].split('_' + field)[0].lower() for cat in catlist]
+            targetname = targ['name'].replace(' ', '').lower()
+            if targetname in targetnames:
+               catalog = catlist[targetnames.index(targetname)]
+    return catalog
 
 ######################################################################################################

@@ -2122,7 +2122,7 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
                     os.system('cp '+_dir + img+' '+_dir + re.sub('.fits', '.clean.fits',img))
                     ar, hd = fits.getdata(_dir + img, header=True)
                     out_fits = fits.PrimaryHDU(header=hd,data=(ar-ar).astype('uint8'))
-                    out_fits.writeto(re.sub('.fits', '.mask.fits', _dir + img), clobber=True, output_verify='fix')
+                    out_fits.writeto(re.sub('.fits', '.mask.fits', _dir + img), overwrite=True, output_verify='fix')
                 else:
                     if not os.path.isfile(_dir + img.replace('.fits', '.clean.fits')) or not os.path.isfile(_dir + img.replace('.fits', '.mask.fits')) or _force:
                         output, mask, satu = lsc.util.Docosmic(_dir + img, _sigclip, _sigfrac, _objlim)

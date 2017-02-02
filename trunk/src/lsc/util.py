@@ -696,7 +696,7 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
       lsc.delete(temp_file0)
       out_fits = fits.PrimaryHDU(header=hd,data=ar)
       out_fits.scale('float32',bzero=0,bscale=1)
-      out_fits.writeto(temp_file0, clobber=True, output_verify='fix')
+      out_fits.writeto(temp_file0, overwrite=True, output_verify='fix')
       ar = fits.getdata(temp_file0)
       lsc.delete(temp_file0)
       gain    = hd['GAIN']
@@ -746,17 +746,17 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    out3=c.getsatstars()
 
    out_fits = fits.PrimaryHDU(header=hd,data=out1)
-   out_fits.writeto(out, clobber=True, output_verify='fix')
+   out_fits.writeto(out, overwrite=True, output_verify='fix')
 
    # we are going to register the mask for the template image,
    # so it makes sense to save it as a float instead of an int
    if 'temp' in img: pixtype = 'float32'
    else:             pixtype = 'uint8'
    out_fits = fits.PrimaryHDU(header=hd,data=(out2!=0).astype(pixtype))
-   out_fits.writeto(outmask, clobber=True, output_verify='fix')
+   out_fits.writeto(outmask, overwrite=True, output_verify='fix')
 
    out_fits = fits.PrimaryHDU(header=hd,data=(out3!=0).astype('uint8'))
-   out_fits.writeto(outsat, clobber=True, output_verify='fix')
+   out_fits.writeto(outsat, overwrite=True, output_verify='fix')
 
    print 'time to do cosmic ray rejection:', time.time()-start
    return out,outmask,outsat

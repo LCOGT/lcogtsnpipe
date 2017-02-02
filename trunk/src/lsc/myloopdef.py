@@ -699,7 +699,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
     return rasn2c, decsn2c
 
 
-def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel=''):
+def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype=''):
     from numpy import array, asarray
     import string, re, os, sys
     import lsc
@@ -707,6 +707,15 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     ll1 = {}
     for key in ll2.keys():
         ll1[key] = ll2[key][:]
+
+    if len(_difftype) > 0:
+        ww = asarray([i for i in range(len(ll1['difftype'])) if ((str(ll1['difftype'][i]) in str(_difftype)))])
+        if len(ww) > 0:
+            for jj in ll1.keys():
+                ll1[jj] = array(ll1[jj])[ww]
+        else:
+            for jj in ll1.keys():
+                ll1[jj] = []
 
     if _filetype:
         if int(_filetype) in [1, 2, 3, 4]:
@@ -717,8 +726,10 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             else:
                 for jj in ll1.keys():
                     ll1[jj] = []
+
     if _bad and _bad == 'quality':
         pass
+
     else:
         ww = asarray([i for i in range(len(ll1['quality'])) if ((ll1['quality'][i] != 1))])
         if len(ww) > 0:
@@ -727,7 +738,6 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
-
     if _filter:  #filter 
         if _filter == 'sloan':
             ww = asarray([i for i in range(len(ll1['filter'])) if (
@@ -1963,7 +1973,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
     os.system(command)
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, suffix='.diff.fits'):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype='0', suffix='.diff.fits'):
     import lsc
 
     direc = lsc.__path__[0]
@@ -2007,7 +2017,7 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
         fixpix = ' --fixpix '
     else:
         fixpix = ''
-    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo + fixpix + ' --suffix ' + suffix
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo + fixpix + ' --difftype ' + _difftype + ' --suffix ' + suffix
     print command
     os.system(command)
 

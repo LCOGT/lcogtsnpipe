@@ -8,6 +8,7 @@ import time
 from astropy.io import fits
 import numpy as np
 from optparse import OptionParser, OptionGroup
+import lsc.optimalsub
 
 
 def crossmatchtwofiles(img1, img2, radius=3):
@@ -71,6 +72,7 @@ if __name__ == "__main__":
                         help='convolve direction to image [i] or template [t] \t [%default]')
     hotpants.add_option("--interpolation", dest="interpolation", default='drizzle',
                         help='interpolation algorithm  [drizzle,nearest,linear,poly3,poly5,spline3]\t [%default]')
+    parser.add_option("--difftype", type=str, default='', help='Choose hotpants or optimal subtraction; hotpants = 0, difftype = 1, both = 0,1 \t [%(default)s]')
 
     parser.add_option_group(hotpants)
     option, args = parser.parse_args()
@@ -94,6 +96,7 @@ if __name__ == "__main__":
     _force = option.force
     _show = option.show
     _fixpix = option.fixpix
+    _difftype = option.difftype
 
     #     saturation=40000
     nrxy = option.nrxy
@@ -161,7 +164,9 @@ if __name__ == "__main__":
                         imgtemp_path = imglist2[0]
                         _dirtemp, imgtemp0 = os.path.split(imgtemp_path)
                         if _dirtemp: _dirtemp += '/'
+
                         imgout0 = re.sub('.fits', option.suffix, imgtarg0)
+
                         if os.path.isfile(_dir + imgout0) and not _force:
                             print 'file', imgout0, 'already there'
                             continue
@@ -345,25 +350,46 @@ if __name__ == "__main__":
                             _afssc = ' -cmp ' + str(substamplist) + ' -afssc 1 '
                         else:
                             _afssc = ''
-                        line = ('hotpants -inim ' + imgtarg + ' -tmplim ' + imgtemp + ' -outim ' + imgout +
-                                ' -tu ' + tuthresh + ' -tuk ' + tucthresh +
-                                ' -tl ' + str(min(-pssl_temp,0)) + ' -tg ' + str(gain_temp) +
-                                ' -tr ' + str(rn_temp) + ' -tp ' + str(min(-pssl_temp,0)) +
-                                ' -tni tempnoise.fits ' +
-                                ' -iu ' + str(iuthresh) + ' -iuk ' + str(iucthresh) + 
-                                ' -il ' + str(min(-pssl_targ,0)) + ' -ig ' + str(gain_targ) +
-                                ' -ir ' + str(rn_targ) + ' -ip ' + str(min(-pssl_targ,0)) +
-                                ' -ini targnoise.fits ' +
-                                ' -r ' + str(rkernel) +
-                                ' -nrx ' + nrxy.split(',')[0] + ' -nry ' + nrxy.split(',')[1] +
-                                ' -nsx ' + nsxy.split(',')[0] + ' -nsy ' + nsxy.split(',')[1] +
-                                _afssc + ' -rss ' + str(radius) +
-                                _convolve + ' -n ' + normalize + ' ' + sconv +
-                                ' -ko ' + ko + ' -bgo ' + bgo+' -tmi tempmask.fits  -okn -ng 4 9 0.70 6 1.50 4 3.00 2 5 ')
+
+                        if _difftype == '1':
+                            #do subtraction
+                            psftarg = imgtarg_path.replace('.fits','.psf.fits')
+                            psftemp = imgtemp_path.replace('.fits','.psf.fits')
+                            ArgsDict = {'RefPSF': psftemp, 'NewPSF': psftarg}
+                            target = lsc.optimalsub.ImageClass(imgtarg, psftarg)
+                            template = lsc.optimalsub.ImageClass(imgtemp, psftemp)
+                            lsc.optimalsub.calculate_difference_image(target, template, output=imgout, normalization = normalize)
+
+                            # create fields in header that hotpants does
+                            hotpants_fields = {'TARGET': (imgtarg_path, 'target image'),
+                                               'TEMPLATE': (imgtemp_path, 'template image'),
+                                               'DIFFIM': (imgout, 'Difference Image'),
+                                               'NREGION': (1, 'Number of independent regions'),
+                                               'MASKVAL': (1e-30, 'Value of Masked Pixels')}
+                            lsc.util.updateheader(imgout, 0,  hotpants_fields)
 
 
-                        print line
-                        os.system(line)
+                        else:
+                            line = ('hotpants -inim ' + imgtarg + ' -tmplim ' + imgtemp + ' -outim ' + imgout +
+                                    ' -tu ' + tuthresh + ' -tuk ' + tucthresh +
+                                    ' -tl ' + str(min(-pssl_temp,0)) + ' -tg ' + str(gain_temp) +
+                                    ' -tr ' + str(rn_temp) + ' -tp ' + str(min(-pssl_temp,0)) +
+                                    ' -tni tempnoise.fits ' +
+                                    ' -iu ' + str(iuthresh) + ' -iuk ' + str(iucthresh) + 
+                                    ' -il ' + str(min(-pssl_targ,0)) + ' -ig ' + str(gain_targ) +
+                                    ' -ir ' + str(rn_targ) + ' -ip ' + str(min(-pssl_targ,0)) +
+                                    ' -ini targnoise.fits ' +
+                                    ' -r ' + str(rkernel) +
+                                    ' -nrx ' + nrxy.split(',')[0] + ' -nry ' + nrxy.split(',')[1] +
+                                    ' -nsx ' + nsxy.split(',')[0] + ' -nsy ' + nsxy.split(',')[1] +
+                                    _afssc + ' -rss ' + str(radius) +
+                                    _convolve + ' -n ' + normalize + ' ' + sconv +
+                                    ' -ko ' + ko + ' -bgo ' + bgo+' -tmi tempmask.fits  -okn -ng 4 9 0.70 6 1.50 4 3.00 2 5 ')
+
+
+                            print line
+                            os.system(line)
+
 
                         # delete temporary files
                         if os.path.isfile(re.sub('.fits', '.conv.fits', imgout0)):
@@ -396,6 +422,7 @@ if __name__ == "__main__":
                             #                    copy all information from target
                         hd = fits.getheader(imgout)
                         dictionary = {}
+
                         try:
                             ggg0 = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', imgtarg0, '*')
                             for voce in ggg0[0].keys():
@@ -426,6 +453,7 @@ if __name__ == "__main__":
                         dictionary['filename'] = imgout0
                         dictionary['filepath'] = _dir
                         dictionary['filetype'] = 3
+                        dictionary['difftype'] = _difftype
                         if dictionary['filepath']:
                             if not os.path.isdir(dictionary['filepath']):
                                 print dictionary['filepath']

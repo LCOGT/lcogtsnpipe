@@ -2,6 +2,7 @@
 description = ">> New automated sn measurement"
 usage = "%prog image [options] "
 
+import time
 from numpy import array,log10
 import numpy as np
 import lsc
@@ -607,6 +608,7 @@ if __name__ == "__main__":
                 else:
                     if _numiter >= 1:
                         answ0 = 'y'
+                        time.sleep(1) #to prevent iraf warning
                     else:
                         answ0 = 'n'
                 _count = 0

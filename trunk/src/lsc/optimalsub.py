@@ -79,4 +79,4 @@ def save_difference_image_to_file(difference_image, science, normalization, outp
     hdu.header = fits.getheader(science.image_filename)
     hdu.header['PHOTNORM'] = normalization
     hdu.header['CONVOL00'] = normalization
-    hdu.writeto(output, clobber=True)
+    hdu.writeto(output, overwrite=True)

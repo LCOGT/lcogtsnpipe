@@ -1139,7 +1139,7 @@ def getcatalog(name_or_filename, field):
     if name_or_filename[-5:] == '.fits':
         targetid = lsc.mysqldef.targimg(name_or_filename)
     else:
-        targetid = lsc.mysqldef.gettargetid(name_or_filename)
+        targetid = lsc.mysqldef.gettargetid(name_or_filename, '', '', lsc.conn)
     # get the catalog from the database
     cats = lsc.mysqldef.query(["select sloan_cat, landolt_cat, apass_cat from targets where id=" + str(targetid)], lsc.conn)
     if cats:

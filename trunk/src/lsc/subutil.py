@@ -24,14 +24,12 @@ def fit_noise(data):
     """Find the standard deviation of the image background by fitting the background to a gaussian"""
 
     edge = 50
-    x_middle, y_middle = data.shape[0] / 2, data.shape[1] / 2
-    trimmed_data = data[x_middle-edge: x_middle+edge, y_middle-edge: y_middle+edge]
-    trimmed_data = trimmed_data[np.where(trimmed_data < np.percentile(trimmed_data, 90))]
+    trimmed_data = data[edge:-edge, edge:-edge]
+    trimmed_data = trimmed_data[trimmed_data < np.percentile(trimmed_data, 90)]
     histogram_data = np.histogram(trimmed_data, bins=100)
     x = histogram_data[1][:-1]
     y = histogram_data[0]
-    parameters, covariance = scipy.optimize.curve_fit(gauss, x, y, p0=[1., np.median(data), np.std(data)], maxfev=1600)
-
+    parameters, covariance = scipy.optimize.curve_fit(gauss, x, y, p0=[np.max(y), np.median(trimmed_data), np.std(trimmed_data)], maxfev=1600)
     return parameters[2]
 
 

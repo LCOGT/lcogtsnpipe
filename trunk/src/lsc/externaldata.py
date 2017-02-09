@@ -243,11 +243,11 @@ def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
           frame_weight = 1 / ((dn_err_image)**2)
           new_header['SKYLEVEL']  = np.mean(sky_image)
           #  save image in count
-          fits.writeto(output2, dn_image.transpose(), new_header,clobber=True)
+          fits.writeto(output2, dn_image.transpose(), new_header,overwrite=True)
           #  save weight image
-          fits.writeto(output3, frame_weight.transpose(), new_header,clobber=True)
+          fits.writeto(output3, frame_weight.transpose(), new_header,overwrite=True)
           #  save sky image 
-          fits.writeto(output4, sky_image.transpose(), new_header,clobber=True)
+          fits.writeto(output4, sky_image.transpose(), new_header,overwrite=True)
           filevec.append(output2)
           filevec.append(output3)
        return filevec
@@ -371,7 +371,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
                 mask_data, mask_header = fits.getdata(re.sub('.wt_','.mk_',name), header=True)
                 weight_data = 1/weight_data 
                 weight_fits = fits.PrimaryHDU(header=weight_header, data=weight_data)
-                weight_fits.writeto(weightimg, output_verify='fix', clobber=True)             
+                weight_fits.writeto(weightimg, output_verify='fix', overwrite=True)
              else:
                 os.system('cp '+name+' '+weightimg)
        imglist = [j for j in imglist if (j not in wtlist) and (j not in mklist)]
@@ -414,7 +414,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     #  this is to take in account that the weight is normalized
     variance *= (np.median(np.abs(ar - np.median(ar)))*1.48)**2/np.median(variance)
     varimg = re.sub('.fits', '', output) + '.var.fits'
-    fits.writeto(varimg, variance, hd2, clobber=True)
+    fits.writeto(varimg, variance, hd2, overwrite=True)
 
     # put the saturation all values where the weight is zero 
     ar = np.where(ar2 == 0, _saturate, ar)
@@ -447,54 +447,39 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
 
     ar, hdr = northupeastleft(data=ar, header=hd)
     out_fits = fits.PrimaryHDU(header=hd, data=ar)
-    out_fits.writeto(output, clobber=True, output_verify='fix')
+    out_fits.writeto(output, overwrite=True, output_verify='fix')
     northupeastleft(filename=varimg)
     if show:
        lsc.display_image(output,2,True,'','')
     return output, varimg
 
 def northupeastleft(filename='', data=None, header=None):
-    from astropy.io.fits import getdata, PrimaryHDU
     if filename:
-        data, header = getdata(filename, header=True)
+        data, header = fits.getdata(filename, header=True)
+    else:
+        header = header.copy()
+    if abs(header['cd1_2']) > abs(header['cd1_1']):
+        data = data.T
+        header['cd1_1'], header['cd1_2'] = header['cd1_2'], header['cd1_1']
+        header['cd2_2'], header['cd2_1'] = header['cd2_1'], header['cd2_2']
+        header['crpix1'], header['crpix2'] = header['crpix2'], header['crpix1']
+        header['naxis1'], header['naxis2'] = header['naxis2'], header['naxis1']
+        header['datasec'] = '[' + ','.join(header['datasec'].strip('[]').split(',')[::-1]) + ']'
+        print 'swapping x and y axes'
     if header['cd1_1'] > 0:
-        data = np.fliplr(data)
+        data = data[:,::-1]
         header['cd1_1'] *= -1
+        header['cd2_1'] *= -1
         print 'flipping around x'
     if header['cd2_2'] < 0:
-        data = np.flipud(data)
+        data = data[::-1]
         header['cd2_2'] *= -1
+        header['cd1_2'] *= -1
         print 'flipping around y'
     if filename:
-        from os import remove
-        remove(filename)
-        out_fits = PrimaryHDU(data=data, header=header)
-        out_fits.writeto(filename, clobber=True, output_verify='fix')
+        fits.writeto(filename, data, header, overwrite=True, output_verify='fix')
     else:
         return data, header
-
-def rotateflipimage(img,rot180=False,flipx=False,flipy=False):
-   from astropy.io import fits
-   import os
-   hd = fits.getheader(img)
-   ar = fits.getdata(img)
-   new_header = hd
-   CD1_1 = hd['CD1_1']
-   CD2_2 = hd['CD2_2']
-   if rot180:
-      new_header['CD1_1']  = CD1_1*(-1)
-      new_header['CD2_2']  = CD2_2*(-1)
-      ar = np.rot90(np.rot90(ar))
-   if flipy:
-      new_header['CD2_2']  = CD2_2*(-1)
-      ar = np.flipud(ar)
-   if flipx:
-      new_header['CD1_1']  = CD1_1*(-1)
-      ar = np.fliplr(ar)
-   os.system('rm '+img)
-   out_fits = fits.PrimaryHDU(header=new_header, data=ar)
-   out_fits.writeto(img, clobber=True, output_verify='fix')
-   return img
 
 ##################################################################################
 def sloanimage(img,survey='sloan',frames=[], show=False, force=False):

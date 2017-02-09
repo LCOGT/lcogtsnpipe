@@ -1,6 +1,5 @@
 import subutil
 from astropy.io import fits
-from astropy.convolution import convolve_fft
 import numpy as np
 
 
@@ -34,19 +33,17 @@ def calculate_difference_image(science, reference,
     science_psf = subutil.center_psf(subutil.resize_psf(science.psf_data, science_image.shape))
     reference_psf = subutil.center_psf(subutil.resize_psf(reference.psf_data, reference_image.shape))
 
-    # mask bad pixels
-
     # do fourier transforms (fft)
-    #science_image_fft = np.fft.fft2(science_image)
-    #reference_image_fft = np.fft.fft2(reference_image)
+    science_image_fft = np.fft.fft2(science_image)
+    reference_image_fft = np.fft.fft2(reference_image)
     science_psf_fft = np.fft.fft2(science_psf)
     reference_psf_fft = np.fft.fft2(reference_psf)
 
     # calculate difference image
     denominator = science.background_std ** 2 * zero_point_ratio ** 2 * abs(science_psf_fft) ** 2
     denominator += reference.background_std ** 2 * abs(reference_psf_fft) ** 2
-    difference_image_fft = convolve_fft(science_image, reference_psf, return_fft=True, allow_huge=True, fftn=np.fft.fft2)
-    difference_image_fft -= zero_point_ratio * convolve_fft(reference_image, science_psf, return_fft=True, allow_huge=True, fftn=np.fft.fft2)
+    difference_image_fft = science_image_fft * reference_psf_fft
+    difference_image_fft -= zero_point_ratio * reference_image_fft, science_psf_fft
     difference_image_fft /= np.sqrt(denominator)
     difference_image = np.fft.ifft2(difference_image_fft)
 
@@ -111,7 +108,7 @@ def save_difference_image_to_file(difference_image, science, normalization, outp
     hdu.header = fits.getheader(science.image_filename)
     hdu.header['PHOTNORM'] = normalization
     hdu.header['CONVOL00'] = normalization
-    hdu.writeto(output, clobber=True)
+    hdu.writeto(output, overwrite=True)
 
 
 def save_image_to_file(image, output):
@@ -119,3 +116,5 @@ def save_image_to_file(image, output):
 
     hdu = fits.PrimaryHDU(np.real(image))
     hdu.writeto(output)
+    hdu.writeto(output, overwrite=True)
+

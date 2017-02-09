@@ -245,7 +245,7 @@ if __name__ == "__main__":
 #                        new_header['CD1_1']  = CD1_1*(-1)
 #                        new_header['CD2_2']  = CD2_2*(-1)
 #                        out_fits = fits.PrimaryHDU(header=new_header, data=ar)
-#                        out_fits.writeto('flip.fits', clobber=True, output_verify='fix')
+#                        out_fits.writeto('flip.fits', overwrite=True, output_verify='fix')
 #                        print "try flipping the template image\n cp flip.fits "+_dirtemp + imgtemp0+'\n and run again psf and cosmic'
                         #sys.exit()
 
@@ -284,7 +284,7 @@ if __name__ == "__main__":
                         tempmask_data, tempmask_header = fits.getdata(tempmask, header=True)
                         tempmask_int = (tempmask_data > 0).astype('uint8')
                         tempmask_fits = fits.PrimaryHDU(header=tempmask_header, data=tempmask_int)
-                        tempmask_fits.writeto(tempmask, clobber=True, output_verify='fix')
+                        tempmask_fits.writeto(tempmask, overwrite=True, output_verify='fix')
 
                         # create the noise images
                         median = np.median(data_targ)
@@ -293,7 +293,7 @@ if __name__ == "__main__":
                         #noiseimg = (data_targ - median)**2
                         noiseimg = data_targ + pssl_targ + rn_targ**2
                         noiseimg[targmask_data > 0] = sat_targ
-                        fits.writeto('targnoise.fits', noiseimg, output_verify='fix', clobber=True)
+                        fits.writeto('targnoise.fits', noiseimg, output_verify='fix', overwrite=True)
 
 #                        print 'variance image already there, do not create noise image'
                         if not os.path.isfile(_dirtemp +re.sub('.fits','.var.fits',imgtemp0)):                            
@@ -303,7 +303,7 @@ if __name__ == "__main__":
                             #noiseimg = (data_temp - median)**2
                             noiseimg = data_temp + pssl_temp + rn_temp**2
                             noiseimg[tempmask_data > 0] = sat_temp
-                            fits.writeto('tempnoise.fits', noiseimg, output_verify='fix', clobber=True)
+                            fits.writeto('tempnoise.fits', noiseimg, output_verify='fix', overwrite=True)
                         else:
                             pssl_temp = 0
                             print 'variance image already there, do not create noise image'

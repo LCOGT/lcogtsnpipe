@@ -30,7 +30,8 @@ def fit_noise(data):
     histogram_data = np.histogram(trimmed_data, bins=100)
     x = histogram_data[1][:-1]
     y = histogram_data[0]
-    parameters, covariance = scipy.optimize.curve_fit(gauss, x, y, p0=[1., np.median(data), 1.], maxfev=1600)
+    parameters, covariance = scipy.optimize.curve_fit(gauss, x, y, p0=[1., np.median(data), np.std(data)], maxfev=1600)
+
     return parameters[2]
 
 
@@ -38,6 +39,44 @@ def gauss(x, a, b, c):
     """Return a gaussian function"""
 
     return a * np.exp(-(x-b)**2/(2*c**2))
+
+
+def interpolate_bad_pixels(image, mask):
+    """Interpolate over bad pixels using a global median"""
+
+    interpolated_image = np.copy(image)
+    interpolated_image[mask == 1] = np.median(image)
+
+    return interpolated_image
+
+
+def get_saturation_count(image_filename):
+    """Get the saturation count from the header of an image"""
+
+    image_header = fits.getheader(image_filename)
+    try:
+        saturation_count = image_header['saturate']
+    except KeyError:
+        saturation_count = 10e9
+
+    try:
+        maxlin_count = image_header['maxlin']
+    except KeyError:
+        maxlin_count = 10e9
+
+    pixel_upper_limit = np.min([saturation_count, maxlin_count])
+
+    return pixel_upper_limit
+
+
+def make_pixel_mask(image, saturation_count):
+    """Make a mask of saturated pixels"""
+
+    pixel_mask = np.copy(image)
+    pixel_mask[image >= saturation_count] = 1
+    pixel_mask[image < saturation_count] = 0
+
+    return pixel_mask
 
 
 def read_psf_file(psf_filename):
@@ -51,6 +90,24 @@ def read_psf_file(psf_filename):
     psf /= np.sum(psf)
     os.system('rm temp.psf.fits')
     return psf
+
+
+def remove_bad_pix(data, saturation=None, remove_background_pix=True, significance=3.):
+    """Remove saturated and background pixels from dataset"""
+
+    if saturation is not None:
+        not_saturated_pix = np.where(data < saturation)
+    else:
+        not_saturated_pix = np.arange(data.size)
+
+    if remove_background_pix:
+        threshold = np.median(data) + significance * np.std(data)
+        signal_pix = np.where(data > threshold)
+    else:
+        signal_pix = np.arange(data.size)
+
+    good_pix_in_common = np.intersect1d(not_saturated_pix, signal_pix)
+    return good_pix_in_common
 
 
 def resize_psf(psf, shape):
@@ -77,12 +134,16 @@ def solve_iteratively(science, reference):
     i = 0
     max_iterations = 10
 
+    # remove staturated pixels in mask
+    science_image = interpolate_bad_pixels(science.image_data, science.bad_pixel_mask)
+    reference_image = interpolate_bad_pixels(reference.image_data, reference.bad_pixel_mask)
+
     # trim edge of image to reduce edge effects
-    center, d = science.image_data.shape[0] / 2, science.image_data.shape[0] / 16
+    center, d = science_image.shape[0] / 2, science_image.shape[0] / 16
     coords = [center - d, center + d, center - d, center + d]
 
-    science_image = science.image_data[coords[0]:coords[1], coords[2]:coords[3]]
-    reference_image = reference.image_data[coords[0]:coords[1], coords[2]:coords[3]]
+    science_image = science_image[coords[0]:coords[1], coords[2]:coords[3]]
+    reference_image = reference_image[coords[0]:coords[1], coords[2]:coords[3]]
 
     science_image_fft = np.fft.fft2(science_image)
     reference_image_fft = np.fft.fft2(reference_image)
@@ -132,21 +193,3 @@ def solve_iteratively(science, reference):
     print('Gamma = ' + str(background))
     print('Beta Variance = ' + str(covariance))
     return gain, background
-
-
-def remove_bad_pix(data, saturation=None, remove_background_pix=True, significance=3.):
-    """Remove saturated and background pixels from dataset"""
-
-    if saturation is not None:
-        not_saturated_pix = np.where(data < saturation)
-    else:
-        not_saturated_pix = np.arange(data.size)
-
-    if remove_background_pix:
-        threshold = np.median(data) + significance * np.std(data)
-        signal_pix = np.where(data > threshold)
-    else:
-        signal_pix = np.arange(data.size)
-
-    good_pix_in_common = np.intersect1d(not_saturated_pix, signal_pix)
-    return good_pix_in_common

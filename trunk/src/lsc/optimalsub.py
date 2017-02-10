@@ -43,7 +43,7 @@ def calculate_difference_image(science, reference,
     denominator = science.background_std ** 2 * zero_point_ratio ** 2 * abs(science_psf_fft) ** 2
     denominator += reference.background_std ** 2 * abs(reference_psf_fft) ** 2
     difference_image_fft = science_image_fft * reference_psf_fft
-    difference_image_fft -= zero_point_ratio * reference_image_fft, science_psf_fft
+    difference_image_fft -= zero_point_ratio * reference_image_fft * science_psf_fft
     difference_image_fft /= np.sqrt(denominator)
     difference_image = np.fft.ifft2(difference_image_fft)
 

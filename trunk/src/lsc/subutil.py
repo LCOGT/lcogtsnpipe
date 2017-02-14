@@ -43,13 +43,14 @@ def fit_psf(image_file, fwhm=5., noise=30., verbose=True, show=True, max_count=1
 
     psf_is_good = False
 
-    coords_file = image_file + '.coo'
-    mag_file = image_file + '.mag'
-    psft_file = image_file + '.pst'
-    psf_file = image_file + '.psf'
-    opst_file = image_file + '.opst'
-    group_file = image_file + '.group'
-    see_file = image_file + '.see'
+    image = image_file[:-5]
+    coords_file = image + '.coo'
+    mag_file = image + '.mag'
+    psft_file = image + '.pst'
+    psf_file = image + '.psf.fits'
+    opst_file = image + '.opst'
+    group_file = image + '.group'
+    see_file = image + '.see'
 
     while not psf_is_good:
         delete_list = [psf_file + '.fits', coords_file, mag_file, psft_file, opst_file, group_file, see_file]
@@ -124,7 +125,7 @@ def fit_psf(image_file, fwhm=5., noise=30., verbose=True, show=True, max_count=1
             else:
                 print 'Unable to fit with given parameters'
                 break
-
+    print 'Saved to {}'.format(psf_file)
     return psf_file
 
 

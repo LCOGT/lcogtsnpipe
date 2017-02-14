@@ -33,6 +33,101 @@ def fit_noise(data):
     return parameters[2]
 
 
+def fit_psf(image_file, fwhm=5., noise=30., verbose=True, show=True, max_count=15000.):
+    """Fit the PSF given an image file name"""
+
+    if verbose:
+        verb = 'yes'
+    else:
+        verb = 'no'
+
+    psf_is_good = False
+
+    coords_file = image_file + '.coo'
+    mag_file = image_file + '.mag'
+    psft_file = image_file + '.pst'
+    psf_file = image_file + '.psf'
+    opst_file = image_file + '.opst'
+    group_file = image_file + '.group'
+    see_file = image_file + '.see'
+
+    while not psf_is_good:
+        delete_list = [psf_file + '.fits', coords_file, mag_file, psft_file, opst_file, group_file, see_file]
+        for item in delete_list:
+            try:
+                os.remove(item)
+            except OSError:
+                pass
+
+        try:
+            # generate star catalog using daofind
+            iraf.noao()
+            iraf.digiphot()
+            iraf.daophot(_doprint=0)
+            iraf.datapars.datamax = max_count
+            iraf.datapars.sigma = noise
+            iraf.findpars.threshold = 5.
+            iraf.datapars.datamin = 0
+            iraf.datapars.datamax = max_count
+            iraf.datapars.fwhm = fwhm
+            iraf.daofind(image_file, output=coords_file, verify='no', display='no', verbose=verb)
+
+            # uncomment the raw_input line if daofind adds stars that do not exist in catalog
+            # this gives you time to manually remove nonexistent stars that cause a bad psf fit
+            # this is temporary until daofind works better with images coadded with swarp
+            # raw_input('Manually edit .coo file now if necessary; Press enter to continue ')
+
+            # do aperture photometry
+            a1, a2, a3, a4, = int(fwhm + 0.5), int(fwhm * 2 + 0.5), int(fwhm * 3 + 0.5), int(fwhm * 4 + 0.5)
+            iraf.photpars.apertures = '{0},{1},{2}'.format(a2, a3, a4)
+            iraf.centerpars.calgori = 'centroid'
+            iraf.fitskypars.salgori = 'mode'
+            iraf.fitskypars.annulus = 10
+            iraf.fitskypars.dannulu = 10
+            iraf.phot(image_file, coords_file, mag_file, verify='no', verbose=verb)
+
+            # select PSF stars
+            iraf.daopars.fitrad = a1
+            iraf.daopars.nclean = 4
+            iraf.daopars.varorder = 0
+            iraf.daopars.recenter = 'yes'
+            iraf.pstselect(image_file, mag_file, psft_file, maxnpsf=50, verify='no', verbose=verb)
+
+            # make PSF
+            iraf.psf(image_file, mag_file, psft_file, psf_file, opst_file, group_file,
+                     verify='no', verbose=verb, interactive='no')
+
+            # show psf to user for approval
+            if show:
+                os.system('rm {}'.format(see_file + '.fits'))
+                iraf.seepsf(psf_file, see_file)
+                iraf.surface(see_file)
+                psf_is_goodyn = raw_input('GoodPSF? y/n: ')
+                if psf_is_goodyn == 'y':
+                    psf_is_good = True
+                else:
+                    fwhmguess = raw_input('New fwhm: [{}] '.format(fwhm))
+                    noiseguess = raw_input('New noise: [{}] '.format(noise))
+                    if fwhmguess != '':
+                        fwhm = float(fwhmguess)
+                    if noiseguess != '':
+                        noise = float(noiseguess)
+
+            else:
+                break
+
+        except:
+            if show:
+                print 'PSF fitting failed; try again with different parameters'
+                fwhm = float(raw_input('New fwhm: '))
+                noise = float(raw_input('New noise: '))
+            else:
+                print 'Unable to fit with given parameters'
+                break
+
+    return psf_file
+
+
 def gauss(x, a, b, c):
     """Return a gaussian function"""
 

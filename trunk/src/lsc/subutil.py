@@ -20,17 +20,50 @@ def convert_to_background_fft(gain, background_fft, science_background_std, refe
     return background_fft * np.sqrt(science_background_std ** 2 + gain ** 2 * reference_background_std ** 2)
 
 
-def fit_noise(data):
-    """Find the standard deviation of the image background by fitting the background to a gaussian"""
+def fit_noise(data, fit_type='gaussian'):
+    """Find the standard deviation of the image background; returns standard deviation, median"""
 
-    edge = 50
-    trimmed_data = data[edge:-edge, edge:-edge]
-    trimmed_data = trimmed_data[trimmed_data < np.percentile(trimmed_data, 90)]
-    histogram_data = np.histogram(trimmed_data, bins=100)
-    x = histogram_data[1][:-1]
-    y = histogram_data[0]
-    parameters, covariance = scipy.optimize.curve_fit(gauss, x, y, p0=[np.max(y), np.median(trimmed_data), np.std(trimmed_data)], maxfev=1600)
-    return parameters[2]
+    if fit_type == 'gaussian':
+        edge = 50
+        trimmed_data = data[edge:-edge, edge:-edge]
+        trimmed_data = trimmed_data[trimmed_data < np.percentile(trimmed_data, 90)]
+        histogram_data = np.histogram(trimmed_data, bins=100)
+        x = histogram_data[1][:-1]
+        y = histogram_data[0]
+        guess =[np.max(y), np.median(trimmed_data), np.std(trimmed_data)]
+        parameters, covariance = scipy.optimize.curve_fit(gauss, x, y, p0=guess, maxfev=1600)
+        median = parameters[2] * np.ones(data.shape)
+        std = parameters[1] * np.ones(data.shape)
+
+    elif fit_type == 'simple':
+        std = np.std(data) * np.ones(data.shape)
+        median = np.median(data) * np.ones(data.shape)
+
+    elif fit_type == 'spatial':
+        median = np.zeros(data.shape)
+        std = np.zeros(data.shape)
+        for i in data.shape[0]:
+            for j in data.shape[1]:
+                width = 20
+                i_bounds = [i - width, i + width]
+                j_bounds = [j - width, j + width]
+
+                for k, bound in enumerate(i_bounds):
+                    if bound < 0:
+                        i_bounds[k] = 0
+                    elif bound > data.shape[0] - 1:
+                        i_bounds[k] = data.shape[0] - 1
+
+                for k, bound in enumerate(j_bounds):
+                    if bound < 0:
+                        i_bounds[k] = 0
+                    elif bound > data.shape[1] - 1:
+                        i_bounds[k] = data.shape[1] - 1
+
+                median[i, j] = np.median(data[i_bounds[0]: i_bounds[1], j_bounds[0]: j_bounds[1]])
+                std[i, j] = np.median(data[i_bounds[0]: i_bounds[1], j_bounds[0]: j_bounds[1]])
+
+    return std, median
 
 
 def fit_psf(image_file, fwhm=5., noise=30., verbose=True, show=True, max_count=15000.):

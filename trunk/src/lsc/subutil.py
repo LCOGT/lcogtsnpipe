@@ -39,8 +39,8 @@ def fit_noise(data, fit_type='gaussian', n_stamps=1):
                 parameters, covariance = scipy.optimize.curve_fit(gauss, x, y, p0=guess, maxfev=1600)
                 median_small[y_stamp, x_stamp] = parameters[2]
                 std_small[y_stamp, x_stamp] = parameters[1]
-        median = scipy.ndimage.zoom(median_small, [data.shape[0] / n_stamps, data.shape[1] / n_stamps])
-        std = scipy.ndimage.zoom(std_small, [data.shape[0] / n_stamps, data.shape[1] / n_stamps])
+        median = scipy.ndimage.zoom(median_small, [data.shape[0] / float(n_stamps), data.shape[1] / float(n_stamps)])
+        std = scipy.ndimage.zoom(std_small, [data.shape[0] / float(n_stamps), data.shape[1] / float(n_stamps)])
 
     elif fit_type == 'simple':
         std = np.std(data) * np.ones(data.shape)

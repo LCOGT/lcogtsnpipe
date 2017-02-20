@@ -12,8 +12,7 @@ class ImageClass:
         self.image_data = fits.getdata(image_filename)
         self.psf_data = subutil.read_psf_file(psf_filename)
         self.zero_point = 1.
-        self.background_counts = 0.
-        self.background_std = subutil.fit_noise(self.image_data)[0]
+        self.background_std, self.background_counts = subutil.fit_noise(self.image_data, n_stamps = 4)
         self.saturation_count = subutil.get_saturation_count(image_filename)
         self.bad_pixel_mask = subutil.make_pixel_mask(self.image_data, self.saturation_count)
 

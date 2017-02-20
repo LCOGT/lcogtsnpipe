@@ -20,20 +20,27 @@ def convert_to_background_fft(gain, background_fft, science_background_std, refe
     return background_fft * np.sqrt(science_background_std ** 2 + gain ** 2 * reference_background_std ** 2)
 
 
-def fit_noise(data, fit_type='gaussian'):
+def fit_noise(data, fit_type='gaussian', n_stamps=1):
     """Find the standard deviation of the image background; returns standard deviation, median"""
 
     if fit_type == 'gaussian':
-        edge = 50
-        trimmed_data = data[edge:-edge, edge:-edge]
-        trimmed_data = trimmed_data[trimmed_data < np.percentile(trimmed_data, 90)]
-        histogram_data = np.histogram(trimmed_data, bins=100)
-        x = histogram_data[1][:-1]
-        y = histogram_data[0]
-        guess =[np.max(y), np.median(trimmed_data), np.std(trimmed_data)]
-        parameters, covariance = scipy.optimize.curve_fit(gauss, x, y, p0=guess, maxfev=1600)
-        median = parameters[2] * np.ones(data.shape)
-        std = parameters[1] * np.ones(data.shape)
+        median_small = np.zeros([n_stamps, n_stamps])
+        std_small = np.zeros([n_stamps, n_stamps])
+        for y_stamp in range(n_stamps):
+            for x_stamp in range(n_stamps):
+                y_index = [y_stamp * data.shape[0] / n_stamps, (y_stamp + 1) * data.shape[0] / n_stamps]
+                x_index = [x_stamp * data.shape[1] / n_stamps, (x_stamp + 1) * data.shape[1] / n_stamps]
+                stamp_data = data[y_index[0]: y_index[1], x_index[0]: x_index[1]]
+                trimmed_stamp_data = stamp_data[stamp_data < np.percentile(stamp_data, 90)]
+                histogram_data = np.histogram(trimmed_stamp_data, bins=100)
+                x = histogram_data[1][:-1]
+                y = histogram_data[0]
+                guess = [np.max(y), np.median(trimmed_stamp_data), np.std(trimmed_stamp_data)]
+                parameters, covariance = scipy.optimize.curve_fit(gauss, x, y, p0=guess, maxfev=1600)
+                median_small[y_stamp, x_stamp] = parameters[2]
+                std_small[y_stamp, x_stamp] = parameters[1]
+        median = scipy.ndimage.zoom(median_small, [data.shape[0] / n_stamps, data.shape[1] / n_stamps])
+        std = scipy.ndimage.zoom(std_small, [data.shape[0] / n_stamps, data.shape[1] / n_stamps])
 
     elif fit_type == 'simple':
         std = np.std(data) * np.ones(data.shape)
@@ -42,8 +49,8 @@ def fit_noise(data, fit_type='gaussian'):
     elif fit_type == 'spatial':
         median = np.zeros(data.shape)
         std = np.zeros(data.shape)
-        for i in data.shape[0]:
-            for j in data.shape[1]:
+        for i in range(data.shape[0]):
+            for j in range(data.shape[1]):
                 width = 20
                 i_bounds = [i - width, i + width]
                 j_bounds = [j - width, j + width]

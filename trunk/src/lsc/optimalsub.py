@@ -9,12 +9,13 @@ class ImageClass:
     def __init__(self, image_filename, psf_filename):
         self.image_filename = image_filename
         self.psf_filename = psf_filename
-        self.image_data = fits.getdata(image_filename)
+        self.raw_image_data = fits.getdata(image_filename)
         self.psf_data = subutil.read_psf_file(psf_filename)
         self.zero_point = 1.
         self.background_std, self.background_counts = subutil.fit_noise(self.image_data, n_stamps = 4)
         self.saturation_count = subutil.get_saturation_count(image_filename)
-        self.bad_pixel_mask = subutil.make_pixel_mask(self.image_data, self.saturation_count)
+        self.pixel_mask = subutil.make_pixel_mask(self.image_data, self.saturation_count)
+        self.image_data = interpolate_bad_pixels(self.raw_image_data, self.pixel_mask)
 
 
 def calculate_difference_image(science, reference,

@@ -175,11 +175,32 @@ def gauss(x, a, b, c):
     return a * np.exp(-(x-b)**2/(2*c**2))
 
 
-def interpolate_bad_pixels(image, mask):
+def interpolate_bad_pixels(image, mask, method='median_filter', median_size=6):
     """Interpolate over bad pixels using a global median"""
 
-    interpolated_image = np.copy(image)
-    interpolated_image[mask == 1] = np.median(image)
+    if method == 'median':
+        interpolated_image = np.copy(image)
+        interpolated_image[mask == 1] = np.median(image)
+
+    elif method == 'mesh':
+        # taken from http://stackoverflow.com/questions/37662180/interpolate-missing-values-2d-python
+        image[mask == 1] = np.NaN
+        x = np.arange(0, image.shape[1])
+        y = np.arange(0, image.shape[0])
+        image = np.ma.masked_invalid(image)
+        xx, yy = np.meshgrid(x, y)
+        x1 = xx[~image.mask]
+        y1 = yy[~image.mask]
+        new_image = image[~image.mask]
+        interpolated_image = scipy.interpolate.griddata((x1, y1), new_image.ravel(), (xx, yy), method='cubic')
+
+    elif method == 'median_filter':
+        # taken from http://stackoverflow.com/questions/18951500/automatically-remove-hot-dead-pixels-from-an-image-in-python
+        pix = np.transpose(np.where(mask == 1))
+        blurred = scipy.ndimage.median_filter(image, size=median_size)
+        interpolated_image = np.copy(image)
+        for y, x in pix:
+            interpolated_image[y, x] = blurred[y, x]
 
     return interpolated_image
 
@@ -226,7 +247,7 @@ def read_psf_file(psf_filename):
     return psf
 
 
-def remove_bad_pix(data, saturation=None, remove_background_pix=True, significance=3.):
+def remove_bad_pix(data, saturation=None, remove_background_pix=True, significance=1.):
     """Remove saturated and background pixels from dataset"""
 
     if saturation is not None:
@@ -268,16 +289,12 @@ def solve_iteratively(science, reference):
     i = 0
     max_iterations = 10
 
-    # remove staturated pixels in mask
-    science_image = interpolate_bad_pixels(science.image_data, science.bad_pixel_mask)
-    reference_image = interpolate_bad_pixels(reference.image_data, reference.bad_pixel_mask)
-
     # trim edge of image to reduce edge effects
-    center, d = science_image.shape[0] / 2, science_image.shape[0] / 16
+    center, d = science.image_data.shape[0] / 2, science.image_data.shape[0] / 16
     coords = [center - d, center + d, center - d, center + d]
 
-    science_image = science_image[coords[0]:coords[1], coords[2]:coords[3]]
-    reference_image = reference_image[coords[0]:coords[1], coords[2]:coords[3]]
+    science_image = science.image_data[coords[0]:coords[1], coords[2]:coords[3]]
+    reference_image = reference.image_data[coords[0]:coords[1], coords[2]:coords[3]]
 
     science_image_fft = np.fft.fft2(science_image)
     reference_image_fft = np.fft.fft2(reference_image)

@@ -57,30 +57,6 @@ def fit_noise(data, fit_type='gaussian', n_stamps=1):
         std = np.std(data) * np.ones(data.shape)
         median = np.median(data) * np.ones(data.shape)
 
-    elif fit_type == 'spatial':
-        median = np.zeros(data.shape)
-        std = np.zeros(data.shape)
-        for i in range(data.shape[0]):
-            for j in range(data.shape[1]):
-                width = 20
-                i_bounds = [i - width, i + width]
-                j_bounds = [j - width, j + width]
-
-                for k, bound in enumerate(i_bounds):
-                    if bound < 0:
-                        i_bounds[k] = 0
-                    elif bound > data.shape[0] - 1:
-                        i_bounds[k] = data.shape[0] - 1
-
-                for k, bound in enumerate(j_bounds):
-                    if bound < 0:
-                        i_bounds[k] = 0
-                    elif bound > data.shape[1] - 1:
-                        i_bounds[k] = data.shape[1] - 1
-
-                median[i, j] = np.median(data[i_bounds[0]: i_bounds[1], j_bounds[0]: j_bounds[1]])
-                std[i, j] = np.median(data[i_bounds[0]: i_bounds[1], j_bounds[0]: j_bounds[1]])
-
     return std, median
 
 
@@ -266,7 +242,7 @@ def read_psf_file(psf_filename):
     return psf
 
 
-def remove_bad_pix(data, saturation=None, remove_background_pix=True, significance=3.):
+def remove_bad_pix(data, saturation=None, remove_background_pix=True, significance=1.):
     """Remove saturated and background pixels from dataset"""
 
     if saturation is not None:
@@ -368,7 +344,7 @@ def solve_iteratively(science, reference, n_stamps=1):
                 i += 1
                 print('Iteration {}:'.format(i))
                 stamp_background = convert_to_background_fft(gain, background_fft, science_background_std, reference_background_std)
-                print('Beta = {0}, background = {1}'.format(gain, stamp_background))
+                print('Beta = {0}, background = {1}'.format(gain, np.median(stamp_background)))
 
             #print('Fit done in {} iterations'.format(i))
 

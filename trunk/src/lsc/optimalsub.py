@@ -9,29 +9,33 @@ class ImageClass:
     def __init__(self, image_filename, psf_filename):
         self.image_filename = image_filename
         self.psf_filename = psf_filename
+
         self.raw_image_data = fits.getdata(image_filename)
-        self.psf_data = subutil.read_psf_file(psf_filename)
+        self.raw_psf_data = subutil.read_psf_file(psf_filename)
+
+        self.psf_data = subutil.center_psf(subutil.resize_psf(self.raw_psf_data, self.raw_image_data.shape))
         self.zero_point = 1.
-        self.background_std, self.background_counts = subutil.fit_noise(self.image_data, n_stamps = 4)
+        self.background_std, self.background_counts = subutil.fit_noise(self.raw_image_data, n_stamps=1)
         self.saturation_count = subutil.get_saturation_count(image_filename)
-        self.pixel_mask = subutil.make_pixel_mask(self.image_data, self.saturation_count)
-        self.image_data = interpolate_bad_pixels(self.raw_image_data, self.pixel_mask)
+        self.pixel_mask = subutil.make_pixel_mask(self.raw_image_data, self.saturation_count)
+        self.image_data = subutil.interpolate_bad_pixels(self.raw_image_data, self.pixel_mask) - self.background_counts
 
 
 def calculate_difference_image(science, reference,
-                               normalization='reference', output='output.fits', find_psf=False):
+                               normalization='reference', output='output.fits', find_psf=False, n_stamps=1):
     """Calculate the difference image using the Zackey algorithm"""
 
+    fits.writeto('science.fits', science.image_data, overwrite=True); fits.writeto('reference.fits', reference.image_data, overwrite = True)
     # match the gains
-    science.zero_point, science.background_counts = subutil.solve_iteratively(science, reference)
+    science.zero_point, background_difference = subutil.solve_iteratively(science, reference, n_stamps = n_stamps)
     reference.zero_point = 1.
     zero_point_ratio = science.zero_point / reference.zero_point
 
     # create required arrays
-    science_image = science.image_data - science.background_counts
-    reference_image = reference.image_data - reference.background_counts
-    science_psf = subutil.center_psf(subutil.resize_psf(science.psf_data, science_image.shape))
-    reference_psf = subutil.center_psf(subutil.resize_psf(reference.psf_data, reference_image.shape))
+    science_image = science.image_data - background_difference
+    reference_image = reference.image_data
+    science_psf = science.psf_data
+    reference_psf = reference.psf_data
 
     # do fourier transforms (fft)
     science_image_fft = np.fft.fft2(science_image)
@@ -108,7 +112,7 @@ def save_difference_image_to_file(difference_image, science, normalization, outp
     hdu.header = fits.getheader(science.image_filename)
     hdu.header['PHOTNORM'] = normalization
     hdu.header['CONVOL00'] = normalization
-    hdu.writeto(output, overwrite=True)
+    hdu.writeto(output, overwrite=True, output_verify='warn')
 
 
 def save_image_to_file(image, output):

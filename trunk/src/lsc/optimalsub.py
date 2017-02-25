@@ -15,7 +15,7 @@ class ImageClass:
 
         self.psf_data = subutil.center_psf(subutil.resize_psf(self.raw_psf_data, self.raw_image_data.shape))
         self.zero_point = 1.
-        self.background_std, self.background_counts = subutil.fit_noise(self.raw_image_data, n_stamps=1)
+        self.background_std, self.background_counts = subutil.fit_noise(self.raw_image_data, n_stamps=4)
         self.saturation_count = subutil.get_saturation_count(image_filename)
         self.pixel_mask = subutil.make_pixel_mask(self.raw_image_data, self.saturation_count)
         self.image_data = subutil.interpolate_bad_pixels(self.raw_image_data, self.pixel_mask) - self.background_counts
@@ -27,12 +27,12 @@ def calculate_difference_image(science, reference,
 
     fits.writeto('science.fits', science.image_data, overwrite=True); fits.writeto('reference.fits', reference.image_data, overwrite = True)
     # match the gains
-    science.zero_point, background_difference = subutil.solve_iteratively(science, reference, n_stamps = n_stamps)
+    science.zero_point = subutil.solve_iteratively(science, reference)
     reference.zero_point = 1.
     zero_point_ratio = science.zero_point / reference.zero_point
 
     # create required arrays
-    science_image = science.image_data - background_difference
+    science_image = science.image_data
     reference_image = reference.image_data
     science_psf = science.psf_data
     reference_psf = reference.psf_data

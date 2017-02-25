@@ -28,7 +28,7 @@ def convert_to_background_fft(gain, background_fft, science_background_std, refe
 
     return background_fft * np.sqrt(science_background_std ** 2 + gain ** 2 * reference_background_std ** 2)
 
-
+@profile
 def fit_noise(data, fit_type='gaussian', n_stamps=1):
     """Find the standard deviation of the image background; returns standard deviation, median"""
 
@@ -242,7 +242,7 @@ def read_psf_file(psf_filename):
     return psf
 
 
-def remove_bad_pix(data, saturation=None, remove_background_pix=True, significance=1.):
+def remove_bad_pix(data, saturation=None, remove_background_pix=True, significance=3.):
     """Remove saturated and background pixels from dataset"""
 
     if saturation is not None:
@@ -271,94 +271,60 @@ def resize_psf(psf, shape):
     psf_extended[vert_offsets[0]: vert_offsets[1] + 1, horiz_offsets[0]: horiz_offsets[1] + 1] = psf
     return psf_extended
 
-
-def solve_iteratively(science, reference, n_stamps=1):
+@profile
+def solve_iteratively(science, reference):
     """Solve for linear fit iteratively"""
 
-    shape = science.image_data.shape
-    gain_small = np.zeros([n_stamps, n_stamps])
-    background_small = np.zeros([n_stamps, n_stamps])
-
-    gain_tolerance = 1e-8
-    background_fft_tolerance = 1e-8
+    gain_tolerance = 1e-5
+    gain = 1.
+    gain0 = 10e5
+    i = 0
     max_iterations = 10
 
-    science_psf = center_psf(resize_psf(science.raw_psf_data, np.array(shape) / n_stamps))
-    reference_psf = center_psf(resize_psf(reference.raw_psf_data, np.array(shape) / n_stamps))
+    science_image = science.image_data
+    reference_image = reference.image_data
 
-    for y_stamp in range(n_stamps):
-        for x_stamp in range(n_stamps):
-            i = 0
-            gain = 1.
-            background_fft = 0.
-            gain0 = 10e5
-            background_fft0 = 10e5
+    science_image_fft = np.fft.fft2(science_image)
+    reference_image_fft = np.fft.fft2(reference_image)
+    science_psf_fft = np.fft.fft2(resize_psf(science.psf_data, science_image.shape))
+    reference_psf_fft = np.fft.fft2(resize_psf(reference.psf_data, reference_image.shape))
 
-            y_index = [y_stamp * shape[0] / n_stamps, (y_stamp + 1) * shape[0] / n_stamps]
-            x_index = [x_stamp * shape[1] / n_stamps, (x_stamp + 1) * shape[1] / n_stamps]
+    while abs(gain - gain0) > gain_tolerance:
 
-            science_image = science.image_data[y_index[0]: y_index[1], x_index[0]: x_index[1]]
-            reference_image = reference.image_data[y_index[0]: y_index[1], x_index[0]: x_index[1]]
+        denominator = science.background_std ** 2 * abs(reference_psf_fft) ** 2
+        denominator += gain ** 2 * reference.background_std ** 2 * abs(science_psf_fft) ** 2
+        science_convolved_image_fft = reference_psf_fft * science_image_fft / np.sqrt(denominator)
+        reference_convolved_image_fft = science_psf_fft * reference_image_fft / np.sqrt(denominator)
+        science_convolved_image = np.real(np.fft.ifft2(science_convolved_image_fft))
+        reference_convolved_image = np.real(np.fft.ifft2(reference_convolved_image_fft))
+        science_convolved_image_flatten = science_convolved_image.flatten()
+        reference_convolved_image_flatten = reference_convolved_image.flatten()
 
-            science_image_fft = np.fft.fft2(science_image)
-            reference_image_fft = np.fft.fft2(reference_image)
-            science_psf_fft = np.fft.fft2(science_psf)
-            reference_psf_fft = np.fft.fft2(reference_psf)
+        # remove bad pixels
+        science_good_pix = remove_bad_pix(science_convolved_image_flatten, saturation=science.saturation_count)
+        reference_good_pix = remove_bad_pix(reference_convolved_image_flatten, saturation=reference.saturation_count)
+        good_pix_in_common = np.intersect1d(science_good_pix, reference_good_pix)
+        science_convolved_image_flatten = science_convolved_image_flatten[good_pix_in_common]
+        reference_convolved_image_flatten = reference_convolved_image_flatten[good_pix_in_common]
 
-            science_background_std = science.background_std[y_index[0]: y_index[1], x_index[0]: x_index[1]]
-            reference_background_std = reference.background_std[y_index[0]: y_index[1], x_index[0]: x_index[1]]
+        gain0 = gain
 
-            while abs(gain - gain0) > gain_tolerance or abs(background_fft - background_fft0) > background_fft_tolerance:
+        x = reference_convolved_image_flatten
+        y = science_convolved_image_flatten
+        robust_fit = stats.RLM(y, x).fit()
+        parameters = robust_fit.params
+        gain = parameters[0]
 
-                denominator = science_background_std ** 2 * abs(reference_psf_fft) ** 2
-                denominator += gain ** 2 * reference_background_std ** 2 * abs(science_psf_fft) ** 2
-                science_convolved_image_fft = reference_psf_fft * science_image_fft / np.sqrt(denominator)
-                reference_convolved_image_fft = science_psf_fft * reference_image_fft / np.sqrt(denominator)
-                science_convolved_image = np.real(np.fft.ifft2(science_convolved_image_fft))
-                reference_convolved_image = np.real(np.fft.ifft2(reference_convolved_image_fft))
-                science_convolved_image_flatten = science_convolved_image.flatten()
-                reference_convolved_image_flatten = reference_convolved_image.flatten()
+        if i == max_iterations:
+            break
+        i += 1
+        print('Iteration {0}:'.format(i))
+        print('Gain = {0}'.format(gain))
 
-                # remove bad pixels
-                science_good_pix = remove_bad_pix(science_convolved_image_flatten, saturation=science.saturation_count)
-                reference_good_pix = remove_bad_pix(reference_convolved_image_flatten, saturation=reference.saturation_count)
-                good_pix_in_common = np.intersect1d(science_good_pix, reference_good_pix)
-                science_convolved_image_flatten = science_convolved_image_flatten[good_pix_in_common]
-                reference_convolved_image_flatten = reference_convolved_image_flatten[good_pix_in_common]
+    print('Fit done in {} iterations'.format(i))
 
-                #import matplotlib.pyplot as plt
-                #plt.plot(science_convolved_image_flatten, reference_convolved_image_flatten, 'bo')
-                #plt.show()
+    covariance = robust_fit.bcov_scaled[0, 0]
+    print('Gain = ' + str(gain))
+    print('Gain Variance = ' + str(covariance))
 
-                gain0, background_fft0 = gain, background_fft
-
-                x = stats.add_constant(reference_convolved_image_flatten)
-                y = science_convolved_image_flatten
-                robust_fit = stats.RLM(y, x).fit()
-                parameters = robust_fit.params
-                stamp_gain = parameters[1]
-                background_fft = parameters[0]
-
-                if i == max_iterations:
-                    break
-                i += 1
-                print('Iteration {}:'.format(i))
-                stamp_background = convert_to_background_fft(gain, background_fft, science_background_std, reference_background_std)
-                print('Beta = {0}, background = {1}'.format(gain, np.median(stamp_background)))
-
-            #print('Fit done in {} iterations'.format(i))
-
-            covariance = robust_fit.bcov_scaled[0, 0]
-            stamp_background = convert_to_background_fft(stamp_gain, background_fft, science_background_std, reference_background_std)
-
-            print('Beta = ' + str(stamp_gain))
-            print('Gamma = ' + str(np.median(stamp_background)))
-            #print('Beta Variance = ' + str(covariance))
-            gain_small[y_stamp, x_stamp] = stamp_gain
-            background_small[y_stamp, x_stamp] = np.median(stamp_background)
-
-    gain = scipy.ndimage.zoom(gain_small, [shape[0] / float(n_stamps), shape[1] / float(n_stamps)])
-    background = scipy.ndimage.zoom(background_small, [shape[0] / float(n_stamps), shape[1] / float(n_stamps)])
-
-
-    return gain, background
+    return gain

@@ -25,7 +25,6 @@ def calculate_difference_image(science, reference,
                                normalization='reference', output='output.fits', find_psf=False, n_stamps=1):
     """Calculate the difference image using the Zackey algorithm"""
 
-    fits.writeto('science.fits', science.image_data, overwrite=True); fits.writeto('reference.fits', reference.image_data, overwrite = True)
     # match the gains
     science.zero_point = subutil.solve_iteratively(science, reference)
     reference.zero_point = 1.

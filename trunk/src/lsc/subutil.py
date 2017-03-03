@@ -280,7 +280,7 @@ def solve_iteratively(science, reference):
     max_iterations = 5
 
     # trim image to speed fitting
-    edge = [science.image_data.shape[0] / 8, science.image_data.shape[1] / 8]
+    edge = [science.image_data.shape[0] / 4, science.image_data.shape[1] / 4]
     science_image = science.image_data[edge[0]: -edge[0], edge[1]: -edge[1]]
     reference_image = reference.image_data[edge[0]: -edge[0], edge[1]: -edge[1]]
     science_psf = resize_psf(center_psf(science.raw_psf_data), science_image.shape)

@@ -28,7 +28,6 @@ def convert_to_background_fft(gain, background_fft, science_background_std, refe
 
     return background_fft * np.sqrt(science_background_std ** 2 + gain ** 2 * reference_background_std ** 2)
 
-@profile
 def fit_noise(data, fit_type='gaussian', n_stamps=1):
     """Find the standard deviation of the image background; returns standard deviation, median"""
 
@@ -271,7 +270,6 @@ def resize_psf(psf, shape):
     psf_extended[vert_offsets[0]: vert_offsets[1] + 1, horiz_offsets[0]: horiz_offsets[1] + 1] = psf
     return psf_extended
 
-@profile
 def solve_iteratively(science, reference):
     """Solve for linear fit iteratively"""
 
@@ -286,8 +284,8 @@ def solve_iteratively(science, reference):
 
     science_image_fft = np.fft.fft2(science_image)
     reference_image_fft = np.fft.fft2(reference_image)
-    science_psf_fft = np.fft.fft2(resize_psf(science.psf_data, science_image.shape))
-    reference_psf_fft = np.fft.fft2(resize_psf(reference.psf_data, reference_image.shape))
+    science_psf_fft = np.fft.fft2(science.psf_data)
+    reference_psf_fft = np.fft.fft2(reference.psf_data)
 
     while abs(gain - gain0) > gain_tolerance:
 

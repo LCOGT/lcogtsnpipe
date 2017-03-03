@@ -273,24 +273,29 @@ def resize_psf(psf, shape):
 def solve_iteratively(science, reference):
     """Solve for linear fit iteratively"""
 
-    gain_tolerance = 1e-5
+    gain_tolerance = 0.001 
     gain = 1.
     gain0 = 10e5
     i = 0
-    max_iterations = 10
+    max_iterations = 5
 
-    science_image = science.image_data
-    reference_image = reference.image_data
+    # trim image to speed fitting
+    edge = [science.image_data.shape[0] / 8, science.image_data.shape[1] / 8]
+    science_image = science.image_data[edge[0]: -edge[0], edge[1]: -edge[1]]
+    reference_image = reference.image_data[edge[0]: -edge[0], edge[1]: -edge[1]]
+    science_psf = resize_psf(center_psf(science.raw_psf_data), science_image.shape)
+    reference_psf = resize_psf(center_psf(reference.raw_psf_data), reference_image.shape)
+    science_std = science.background_std[edge[0]: -edge[0], edge[1]: -edge[1]]
+    reference_std = reference.background_std[edge[0]: -edge[0], edge[1]: -edge[1]]
 
     science_image_fft = np.fft.fft2(science_image)
     reference_image_fft = np.fft.fft2(reference_image)
-    science_psf_fft = np.fft.fft2(science.psf_data)
-    reference_psf_fft = np.fft.fft2(reference.psf_data)
-
+    science_psf_fft = np.fft.fft2(science_psf)
+    reference_psf_fft = np.fft.fft2(reference_psf)
     while abs(gain - gain0) > gain_tolerance:
 
-        denominator = science.background_std ** 2 * abs(reference_psf_fft) ** 2
-        denominator += gain ** 2 * reference.background_std ** 2 * abs(science_psf_fft) ** 2
+        denominator = science_std ** 2 * abs(reference_psf_fft) ** 2
+        denominator += gain ** 2 * reference_std ** 2 * abs(science_psf_fft) ** 2
         science_convolved_image_fft = reference_psf_fft * science_image_fft / np.sqrt(denominator)
         reference_convolved_image_fft = science_psf_fft * reference_image_fft / np.sqrt(denominator)
         science_convolved_image = np.real(np.fft.ifft2(science_convolved_image_fft))

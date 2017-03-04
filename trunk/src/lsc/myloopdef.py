@@ -1443,6 +1443,7 @@ def checkquality(imglist, database='photlco'):
 
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
+    iraf.set(stdimage='imt1024')
     for img in imglist:
         status = checkstage(img, 'checkquality')
         if status == -4:

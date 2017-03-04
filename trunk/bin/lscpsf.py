@@ -202,7 +202,7 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax=45000, psffun='gauss'
     iraf.daopars.recenter = 'yes'
     iraf.daopars.varorder = varord
 
-    if interactive:
+    if interactive: # not possible to run pstselect or psf interactively on 64-bit linux (Error 851)
         shutil.copyfile('_psf.mag', '_psf.pst')
         print '_' * 80
         print '>>> Mark good stars with "a" or "d"-elete. Then "f"-it,' + \

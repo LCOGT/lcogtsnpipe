@@ -147,9 +147,6 @@ if __name__ == "__main__":
         _astromet = lsc.readkey3(hdr, 'ASTROMET')
         if _astromet and float(_astromet.split()[0]) < 99. and float(_astromet.split()[1]) < 99.:
             WCSERR = 0
-            if float(_astromet.split()[0]) > 2. or float(_astromet.split()[1]) > 2.:
-                print 'RMS too high, setting to bad quality'
-                lsc.mysqldef.updatevalue('photlco', 'quality', 1, img.split('/')[-1])
         else:
             WCSERR = 9999
         if 'WCS_ERR' in hdr and 'WCSERR' not in hdr:
@@ -162,6 +159,11 @@ if __name__ == "__main__":
         lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, string.split(img, '/')[-1] + '.fits')
         lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, string.split(img, '/')[-1] + '.fits')
         lsc.mysqldef.updatevalue('photlco', 'mag', 9999, string.split(img, '/')[-1] + '.fits')
+        if WCSERR == 9999 or float(_astromet.split()[0]) > 2. or float(_astromet.split()[1]) > 2.:
+            if WCSERR != 9999:
+                print 'RMS too high'
+            print 'setting to bad quality'
+            lsc.mysqldef.updatevalue('photlco', 'quality', 1, img.split('/')[-1])
     _stop = time.time()
     print '\n###time to run ' + str((_stop - _start) / 60.)
 #################################################################################

@@ -1076,6 +1076,7 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
 
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
+    iraf.set(stdimage='imt1024')
     print force
     print _z1, _z2
     for img in imglist:

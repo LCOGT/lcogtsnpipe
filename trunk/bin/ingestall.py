@@ -30,7 +30,7 @@ frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=0, public=False)        # all FTS spectra SNEx is a co-I
 frames += get_metadata(authtoken, start=start, end=end, PROPID='OGG_calib', RLEVEL=0)                   # FTN standard star spectra
 frames += get_metadata(authtoken, start=start, end=end, PROPID='COJ_calib', RLEVEL=0)                   # FTS standard star spectra
-frames += get_metadata(authtoken, start=start, end=end, PROPID='LCOEPO2016B-001')                       # supernova tracker images
+frames += get_metadata(authtoken, start=start, end=end, PROPID='LCOEPO2016B-001', RLEVEL=91)            # supernova tracker images
 
 print 'Total number of frames:', len(frames)
 

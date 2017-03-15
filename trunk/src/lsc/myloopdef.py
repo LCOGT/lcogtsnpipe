@@ -1370,40 +1370,39 @@ def checkdiff(imglist, database='photlco'):
             print 'status ' + str(status) + ': unknown status'
 
 def checkmag(imglist, database='photlco'):
-    import lsc
-    import os, string  #MySQLdb,
-    #     import  mysqldef #import updatevalue
-    direc = lsc.__path__[0]
-    from pyraf import iraf
-
-    iraf.digiphot(_doprint=0)
-    iraf.daophot(_doprint=0)
+    plt.ion()
+    fig = plt.figure()
     for img in imglist:
         status = checkstage(img, 'checkmag')
         if status >= 1:
-            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
-            _dir = ggg[0]['filepath']
-            if os.path.isfile(_dir + re.sub('.fits', '.og.fits', img)) and os.path.isfile(
-                            _dir + re.sub('.fits', '.rs.fits', img)):
-                aaa = iraf.display(_dir + re.sub('.fits', '.og.fits', img), 1, fill=True, Stdout=1)
-                print aaa
-                iraf.display(_dir + re.sub('.fits', '.rs.fits', img), 2, fill=True, Stdout=1)
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
+            ogfile = ggg[0]['filepath'] + img.replace('.fits', '.og.fits')
+            rsfile = ggg[0]['filepath'] + img.replace('.fits', '.rs.fits')
+            if os.path.isfile(ogfile) and os.path.isfile(rsfile):
+                ogdata = fits.getdata(ogfile)
+                rsdata = fits.getdata(rsfile)
+                fig.clear()
+                axL = fig.add_subplot(1, 2, 1, adjustable='box-forced')
+                axR = fig.add_subplot(1, 2, 2, sharex=axL, sharey=axL, adjustable='box-forced')
+                vmax = np.percentile(ogdata, 95)
+                im = axL.imshow(ogdata, vmin=0, vmax=vmax)
+                axR.imshow(rsdata, vmin=0, vmax=vmax)
+                i_sat, j_sat = np.where(ogdata > 25000)
+                if len(i_sat):
+                    axL.plot(i_sat, j_sat, 'rx', label=str(len(i_sat)) + ' pixels > 25000 ADU')
+                    axL.legend()
+                fig.colorbar(im, ax=[axL, axR], orientation='horizontal')
+                fig.text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
                 aa = raw_input('>>>good mag [[y]/n] or [b] bad quality ? ')
-                if not aa:
-                    aa = 'y'
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
-                    print 'updatestatus bad'
-                    lsc.mysqldef.updatevalue(database, 'psfmag', 9999, string.split(img, '/')[-1])
-                    lsc.mysqldef.updatevalue(database, 'mag', 9999, string.split(img, '/')[-1])
-                    if os.path.isfile(_dir + re.sub('.fits', '.og.fits', img)):
-                        print 'rm ' + _dir + re.sub('.fits', '.og.fits', img)
-                        os.system('rm ' + _dir + re.sub('.fits', '.og.fits', img))
-                    if os.path.isfile(_dir + re.sub('.fits', '.rs.fits', img)):
-                        print 'rm ' + _dir + re.sub('.fits', '.rs.fits', img)
-                        os.system('rm ' + _dir + re.sub('.fits', '.rs.fits', img))
+                    print 'update status: bad psfmag & mag'
+                    lsc.mysqldef.updatevalue(database, 'psfmag', 9999, img)
+                    lsc.mysqldef.updatevalue(database, 'mag', 9999, img)
+                    os.system('rm -v ' + ogfile)
+                    os.system('rm -v ' + rsfile)
                 if aa in ['bad', 'b', 'B']:
-                    print 'updatestatus bad quality'
-                    lsc.mysqldef.updatevalue(database, 'quality', 1, string.split(img, '/')[-1])
+                    print 'update status: bad quality'
+                    lsc.mysqldef.updatevalue(database, 'quality', 1, img)
         elif status == 0:
             print 'status ' + str(status) + ': WCS stage not done'
         elif status == -1:

@@ -13,14 +13,6 @@ import numpy as np
 description = "> Fast astrometry of lsc and sofi images "
 usage = "%prog  listfile"
 
-
-def xpa(arg):
-    import subprocess
-
-    subproc = subprocess.Popen('xpaset -p ds9 ' + arg, shell=True)
-    subproc.communicate()
-
-
 if __name__ == "__main__":
     parser = OptionParser(usage=usage, description=description)
     parser.add_option("-f", "--fit", dest="fitgeo", default='rxyscale', type="str",

@@ -346,7 +346,7 @@ if __name__ == "__main__":   # main program
             elif _stage == 'checkpsf':
                 lsc.myloopdef.checkpsf(ll['filename'])
             elif _stage == 'checkmag':
-                lsc.myloopdef.checkmag(ll['filename'])
+                lsc.myloopdef.checkmag(ll['filename'], _dmax)
             elif _stage == 'checkwcs':
                 lsc.myloopdef.checkwcs(ll['filename'], _redo, 'photlco', _z1, _z2)
             elif _stage == 'checkfast':

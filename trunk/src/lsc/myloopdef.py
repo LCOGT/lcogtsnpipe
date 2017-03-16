@@ -1369,13 +1369,13 @@ def checkdiff(imglist, database='photlco'):
         else:
             print 'status ' + str(status) + ': unknown status'
 
-def checkmag(imglist, database='photlco'):
+def checkmag(imglist, datamax):
     plt.ion()
     fig = plt.figure()
     for img in imglist:
         status = checkstage(img, 'checkmag')
         if status >= 1:
-            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
+            ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', img, '*')
             ogfile = ggg[0]['filepath'] + img.replace('.fits', '.og.fits')
             rsfile = ggg[0]['filepath'] + img.replace('.fits', '.rs.fits')
             if os.path.isfile(ogfile) and os.path.isfile(rsfile):
@@ -1387,9 +1387,9 @@ def checkmag(imglist, database='photlco'):
                 vmax = np.percentile(ogdata, 95)
                 im = axL.imshow(ogdata, vmin=0, vmax=vmax)
                 axR.imshow(rsdata, vmin=0, vmax=vmax)
-                i_sat, j_sat = np.where(ogdata > 25000)
+                i_sat, j_sat = np.where(ogdata > datamax)
                 if len(i_sat):
-                    axL.plot(i_sat, j_sat, 'rx', label=str(len(i_sat)) + ' pixels > 25000 ADU')
+                    axL.plot(i_sat, j_sat, 'rx', label='{:d} pixels > {:.0f} ADU'.format(len(i_sat), datamax))
                     axL.legend()
                 fig.colorbar(im, ax=[axL, axR], orientation='horizontal')
                 fig.text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')

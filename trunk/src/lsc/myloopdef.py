@@ -154,12 +154,12 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                 line0 += '%12s%12s ' % (str(filt), str(filt) + 'err')
         for _fil in setup[_tel]:
             for j in range(0, len(setup[_tel][_fil]['mjd'])):
-                line = '  %10s %12.12s ' % (str(setup[_tel][_fil]['date'][j]), str(setup[_tel][_fil]['jd'][j]))
+                line = '  %10s %12.4f ' % (str(setup[_tel][_fil]['date'][j]), setup[_tel][_fil]['jd'][j])
                 for filt in filters:
                     if filt == _fil:
-                        line += '%12.7s %12.6s ' % (str(setup[_tel][_fil]['mag'][j]), str(setup[_tel][_fil]['dmag'][j]))
+                        line += '%12.4f %12.4f ' % (setup[_tel][_fil]['mag'][j], setup[_tel][_fil]['dmag'][j])
                     else:
-                        line += '%12.7s %12.6s ' % ('9999', '0.0')
+                        line += '%12s %12s ' % ('9999', '0.0')
                 line += '%6s %2s\n' % (_tel, _fil)
                 linetot[setup[_tel][_fil]['mjd'][j]] = line
     aaa = linetot.keys()
@@ -1369,30 +1369,34 @@ def checkdiff(imglist, database='photlco'):
         else:
             print 'status ' + str(status) + ': unknown status'
 
+def display_psf_fit(img, datamax=None):
+    if datamax is None:
+        datamax = 51000
+    ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', img, '*')
+    ogfile = ggg[0]['filepath'] + img.replace('.fits', '.og.fits')
+    rsfile = ggg[0]['filepath'] + img.replace('.fits', '.rs.fits')
+    if os.path.isfile(ogfile) and os.path.isfile(rsfile):
+        ogdata = fits.getdata(ogfile)
+        rsdata = fits.getdata(rsfile)
+        plt.clf()
+        axL = plt.subplot(1, 2, 1, adjustable='box-forced')
+        axR = plt.subplot(1, 2, 2, sharex=axL, sharey=axL, adjustable='box-forced')
+        vmax = np.percentile(ogdata, 95)
+        im = axL.imshow(ogdata, vmin=0, vmax=vmax)
+        axR.imshow(rsdata, vmin=0, vmax=vmax)
+        i_sat, j_sat = np.where(ogdata > datamax)
+        if len(i_sat):
+            axL.plot(i_sat, j_sat, 'rx', label='{:d} pixels > {:.0f} ADU'.format(len(i_sat), datamax))
+            axL.legend()
+        plt.colorbar(im, ax=[axL, axR], orientation='horizontal')
+        plt.gcf().text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
+
 def checkmag(imglist, datamax):
     plt.ion()
-    fig = plt.figure()
     for img in imglist:
         status = checkstage(img, 'checkmag')
         if status >= 1:
-            ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', img, '*')
-            ogfile = ggg[0]['filepath'] + img.replace('.fits', '.og.fits')
-            rsfile = ggg[0]['filepath'] + img.replace('.fits', '.rs.fits')
-            if os.path.isfile(ogfile) and os.path.isfile(rsfile):
-                ogdata = fits.getdata(ogfile)
-                rsdata = fits.getdata(rsfile)
-                fig.clear()
-                axL = fig.add_subplot(1, 2, 1, adjustable='box-forced')
-                axR = fig.add_subplot(1, 2, 2, sharex=axL, sharey=axL, adjustable='box-forced')
-                vmax = np.percentile(ogdata, 95)
-                im = axL.imshow(ogdata, vmin=0, vmax=vmax)
-                axR.imshow(rsdata, vmin=0, vmax=vmax)
-                i_sat, j_sat = np.where(ogdata > datamax)
-                if len(i_sat):
-                    axL.plot(i_sat, j_sat, 'rx', label='{:d} pixels > {:.0f} ADU'.format(len(i_sat), datamax))
-                    axL.legend()
-                fig.colorbar(im, ax=[axL, axR], orientation='horizontal')
-                fig.text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
+                display_psf_fit(img, datamax)
                 aa = raw_input('>>>good mag [[y]/n] or [b] bad quality ? ')
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                     print 'update status: bad psfmag & mag'
@@ -1649,13 +1653,8 @@ def plotfast2(setup):
         print 'mjd = {:.2f}\tmag = {:.2f} ({:+d} shift on plot)'.format(mjds[i], mags[i], shifts[i])
         dbrow = mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, mjd, mag')[0]
         print 'mjd = {:.2f}\tmag = {:.2f} (from database)'.format(dbrow['mjd'], dbrow['mag'])
-        og_file = dbrow['filepath'] + filenames[i].replace('.fits', '.og.fits')
-        rs_file = dbrow['filepath'] + filenames[i].replace('.fits', '.rs.fits')
-        if os.path.isfile(og_file) and os.path.isfile(rs_file):
-            iraf.digiphot(_doprint=0)
-            iraf.daophot(_doprint=0)
-            iraf.display(og_file, 1, fill=True, Stdout=1)
-            iraf.display(rs_file, 2, fill=True, Stdout=1)
+        plt.figure(2)
+        display_psf_fit(filenames[i])
 
     def delete_hook(i):
         lsc.mysqldef.updatevalue('photlco', 'mag', 9999, filenames[i])

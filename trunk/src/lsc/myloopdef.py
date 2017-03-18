@@ -598,7 +598,7 @@ def checkstage(img, stage, database='photlco'):
         else:
             status = 2
     elif stage == 'checkmag' and status >= 0 and ggg[0]['psf'] != 'X' and ggg[0]['wcs'] == 0:
-        if ggg[0]['psfmag'] == 9999 or ggg[0]['psfmag'] == 9999:
+        if ggg[0]['psfmag'] == 9999:
             status = 1
         else:
             status = 2
@@ -1390,23 +1390,26 @@ def display_psf_fit(img, datamax=None):
             axL.legend()
         plt.colorbar(im, ax=[axL, axR], orientation='horizontal')
         plt.gcf().text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
+    return ogfile, rsfile
 
 def checkmag(imglist, datamax):
     plt.ion()
     for img in imglist:
         status = checkstage(img, 'checkmag')
-        if status >= 1:
-                display_psf_fit(img, datamax)
-                aa = raw_input('>>>good mag [[y]/n] or [b] bad quality ? ')
-                if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
-                    print 'update status: bad psfmag & mag'
-                    lsc.mysqldef.updatevalue(database, 'psfmag', 9999, img)
-                    lsc.mysqldef.updatevalue(database, 'mag', 9999, img)
-                    os.system('rm -v ' + ogfile)
-                    os.system('rm -v ' + rsfile)
-                if aa in ['bad', 'b', 'B']:
-                    print 'update status: bad quality'
-                    lsc.mysqldef.updatevalue(database, 'quality', 1, img)
+        if status > 1:
+            ogfile, rsfile = display_psf_fit(img, datamax)
+            aa = raw_input('>>>good mag [[y]/n] or [b] bad quality ? ')
+            if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
+                print 'update status: bad psfmag & mag'
+                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, img)
+                lsc.mysqldef.updatevalue('photlco', 'mag', 9999, img)
+                os.system('rm -v ' + ogfile)
+                os.system('rm -v ' + rsfile)
+            if aa in ['bad', 'b', 'B']:
+                print 'update status: bad quality'
+                lsc.mysqldef.updatevalue('photlco', 'quality', 1, img)
+        elif status == 1:
+            print 'status ' + str(status) + ': psfmag stage not done'
         elif status == 0:
             print 'status ' + str(status) + ': WCS stage not done'
         elif status == -1:
@@ -1751,8 +1754,7 @@ def plotfast(setup, output='', database='photlco'):  #,band,color,fissa=''):
         raw_input('press d to mark. Return to exit ...\n')
         plt.close()
     else:
-        plt.savefig(output + '.png', format='png')
-        os.system('chmod 777 ' + output + '.png')
+        plt.savefig(output.replace('.txt', '.png'), format='png')
 
 
 ################################################################

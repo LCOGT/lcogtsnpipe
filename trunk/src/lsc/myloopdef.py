@@ -1641,6 +1641,7 @@ def plotfast2(setup):
             shifts += [_shift[_filter]] * len(setup[_telescope][_filter]['mag'])
 
     def plot_hook():
+        plt.figure(1)
         plt.gca().invert_yaxis()
         plt.xlabel('MJD')
         plt.ylabel('Magnitude')

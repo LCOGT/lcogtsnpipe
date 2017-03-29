@@ -255,8 +255,8 @@ def readkey3(hdr,keyword):
        useful_keys = {'object'    : 'OBJECT',\
                       'RA'        : 'RA',\
                       'DEC'       : 'DEC',\
-                      'CAT-RA'    : 'CAT-RA',\
-                      'CAT-DEC'   : 'CAT-DEC',\
+                      'CAT-RA'    : 'RA',\
+                      'CAT-DEC'   : 'DEC',\
                       'ron'       : 'RDNOISE',\
                       'date-obs'  : 'DATE-OBS',\
                       'date-night': 'DAY-OBS',\

@@ -38,20 +38,20 @@ for frame in frames:
     try:
         filepath, filename = download_frame(frame)
     except Exception as e:
+        print '!!! FAILED TO DOWNLOAD ' + frame['filename']
         sys.stderr.write(e)
-        sys.stderr.write('!!! FAILED TO DOWNLOAD ' + frame['filename'])
         continue
     try:
         db_ingest(filepath, filename)
     except Exception as e:
+        print '!!! FAILED TO INGEST ' + filename
         sys.stderr.write(e)
-        sys.stderr.write('!!! FAILED TO INGEST ' + filename)
         continue
     if '-en0' in filename and '-e00.fits' in filename and not os.path.isfile(filepath + filename.replace('.fits', '.png')):
         try:
             fits2png(filepath + filename)
         except Exception as e:
+            print '!!! FAILED TO MAKE PNG FOR ' + filename
             sys.stderr.write(e)
-            sys.stderr.write('!!! FAILED TO MAKE PNG FOR ' + filename)
 
 os.system('lscingestredudata.py -e ' + daterange) # ingest new data into photlco

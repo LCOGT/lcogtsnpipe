@@ -8,7 +8,7 @@ import time
 from astropy.io import fits
 import numpy as np
 from optparse import OptionParser, OptionGroup
-import lsc.optimalsub
+import PyZOGY.run_subtraction
 
 
 def crossmatchtwofiles(img1, img2, radius=3):
@@ -355,10 +355,14 @@ if __name__ == "__main__":
                             #do subtraction
                             psftarg = imgtarg_path.replace('.fits','.psf.fits')
                             psftemp = imgtemp_path.replace('.fits','.psf.fits')
-                            ArgsDict = {'RefPSF': psftemp, 'NewPSF': psftarg}
-                            target = lsc.optimalsub.ImageClass(imgtarg, psftarg)
-                            template = lsc.optimalsub.ImageClass(imgtemp, psftemp)
-                            lsc.optimalsub.calculate_difference_image(target, template, output=imgout, normalization = normalize)
+                            PyZOGY.run_subtraction(target, template, psftarg, psftemp,
+                                                           science_mask='targmask.fits',
+                                                           reference_mask='tempmask.fits',
+                                                           science_saturation=sat_targ,
+                                                           reference_saturation=sat_temp,
+                                                           n_stamps=4,
+                                                           output=imgout,
+                                                           normalization = normalize)
 
                             # create fields in header that hotpants does
                             hotpants_fields = {'TARGET': (imgtarg_path, 'target image'),

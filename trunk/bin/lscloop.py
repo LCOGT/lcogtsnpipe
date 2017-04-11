@@ -326,15 +326,15 @@ if __name__ == "__main__":   # main program
             elif _stage == 'apmag':
                 lsc.myloopdef.run_apmag(ll['filename'], 'photlco')
             elif _stage == 'cosmic':
-#############   SV 20161129 add multicore 
                 listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
-                p = Pool(_multicore)
-                inp = [([i], 'photlco', 4.5, 0.2, 4,_redo) for i in listfile]
-                p.map(multi_run_cosmic, inp)
-                p.close()
-                p.join()
-#                lsc.myloopdef.run_cosmic(ll['filename'], 'photlco', 4.5, 0.2, 4, _redo)
-
+                if _multicore > 1:
+                    p = Pool(_multicore)
+                    inp = [([i], 'photlco', 4.5, 0.2, 4,_redo) for i in listfile]
+                    p.map(multi_run_cosmic, inp)
+                    p.close()
+                    p.join()
+                else:
+                    lsc.myloopdef.run_cosmic(listfile, 'photlco', 4.5, 0.2, 4, _redo)
             elif _stage == 'ingestsloan':
                 listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                 lsc.myloopdef.run_ingestsloan(listfile, 'sloan', show=_show, force=_redo)

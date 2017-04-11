@@ -281,13 +281,11 @@ def readkey3(hdr,keyword):
           elif keyword=='JD':       
              value=value+0.5
           elif keyword=='instrume':      value=value.lower()
-          elif keyword=='filter':      
-             value1=hdr.get('FILTER2')
-             value2=hdr.get('FILTER1')
-             value3=hdr.get('FILTER3')
-             values=[a for a in [value,value1,value2,value3] if 'air' not in a]
-             if not values: value='air'
-             else: value=values[0]
+          elif keyword=='filter' and value in [None, 'air']:
+             for key in ['FILTER2', 'FILTER1', 'FILTER3']:
+                if hdr.get(key) not in [None, 'air']:
+                   value = hdr[key]
+                   break
           elif keyword in ['RA', 'CAT-RA'] and type(value) == str and ':' in value:
              value = Angle(value, u.hourangle).deg
           elif keyword in ['RA', 'CAT-RA', 'DEC', 'CAT-DEC']:

@@ -296,6 +296,10 @@ def readkey3(hdr,keyword):
        value=''
     if type(value) == str:
        value = value.replace('\#', '')
+    if value == 'ftn':
+      value = '2m0-01'
+    elif value == 'fts':
+      value = '2m0-02'
     return value
 
 #######################################################
@@ -693,7 +697,11 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
       temp_file0 = next(tempfile._get_candidate_names())
       lsc.delete(temp_file0)
       out_fits = fits.PrimaryHDU(header=hd,data=ar)
-      out_fits.scale('float32',bzero=0,bscale=1)
+      try:
+         out_fits.scale('float32',bzero=0,bscale=1)
+      except TypeError as e:
+         print "FITS rescaling failed (but it probably doesn't matter). See Astropy Issue #5955."
+         print e
       out_fits.writeto(temp_file0, overwrite=True, output_verify='fix')
       ar = fits.getdata(temp_file0)
       lsc.delete(temp_file0)

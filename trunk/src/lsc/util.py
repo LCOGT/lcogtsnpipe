@@ -210,8 +210,8 @@ def readkey3(hdr,keyword):
                          'DEC'       : 'DEC',\
                          'CAT-RA'    : 'CAT-RA',\
                          'CAT-DEC'   : 'CAT-DEC',\
-                         'datamin'   : -100,\
-                         'datamax'   : 60000,\
+                         'datamin'   : -100.0,\
+                         'datamax'   : 60000.0,\
                          'wcserr'    : 'WCS_ERR',\
                          'observer'  : 'OBSERVER',\
                          'exptime'   : 'EXPTIME',\

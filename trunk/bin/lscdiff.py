@@ -259,13 +259,13 @@ if __name__ == "__main__":
 
                         data_targ, head_targ = fits.getdata(imgtarg, header=True)
                         exp_targ  = lsc.util.readkey3(head_targ, 'exptime')
-                        sat_targ = lsc.util.readkey3(head_targ, 'saturate')
+                        sat_targ = lsc.util.readkey3(head_targ, 'datamax')
                         gain_targ = lsc.util.readkey3(head_targ, 'gain')
                         rn_targ = lsc.readkey3(head_targ,'ron')
 
                         data_temp, head_temp = fits.getdata(imgtemp, header=True)
                         exp_temp = lsc.util.readkey3(head_temp, 'exptime')
-                        sat_temp = lsc.util.readkey3(head_temp, 'saturate')
+                        sat_temp = lsc.util.readkey3(head_temp, 'datamax')
                         gain_temp = lsc.util.readkey3(head_temp, 'gain')
 
                         if 'rdnoise' in head_temp:

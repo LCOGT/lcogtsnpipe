@@ -140,27 +140,25 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     if _output:
         ff = open(_output, 'w')
 
-    filters_used = []
-    for _tel in setup:
-        filters_used += setup[_tel].keys()
+    filters_used = sum([[lsc.sites.filterst1[filt] for filt in setup[_tel].keys()] for _tel in setup], [])
     filters = []
-    for filt in ['U', 'B', 'V', 'R', 'I', 'up', 'gp', 'rp', 'ip', 'zs']:
+    for filt in 'UBVRIugriz':
         if filt in filters_used:
             filters.append(filt)
     for _tel in setup:
         line0 = '# %15s%15s' % ('dateobs', 'jd')
         for filt in filters:
-            if filt in setup[_tel].keys():
+            if filt in [lsc.sites.filterst1[key] for key in setup[_tel]]:
                 line0 += '%12s%12s ' % (str(filt), str(filt) + 'err')
         for _fil in setup[_tel]:
             for j in range(0, len(setup[_tel][_fil]['mjd'])):
                 line = '  %10s %12.4f ' % (str(setup[_tel][_fil]['date'][j]), setup[_tel][_fil]['jd'][j])
                 for filt in filters:
-                    if filt == _fil:
+                    if _fil in lsc.sites.filterst[filt]:
                         line += '%12.4f %12.4f ' % (setup[_tel][_fil]['mag'][j], setup[_tel][_fil]['dmag'][j])
                     else:
                         line += '%12s %12s ' % ('9999', '0.0')
-                line += '%6s %2s\n' % (_tel, _fil)
+                line += '%6s %2s\n' % (_tel, lsc.sites.filterst1[_fil])
                 linetot[setup[_tel][_fil]['mjd'][j]] = line
     aaa = linetot.keys()
     if _output:
@@ -749,9 +747,6 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             ww = asarray([i for i in range(len(ll1['filter']))
                           if ((ll1['filter'][i] in ['B', 'V', 'Bessell-B','Bessell-V', 'gp', 'ip', 'rp', 'SDSS-G',
                                                     'SDSS-R', 'SDSS-I']))])
-        elif _filter in ['zs', 'up', 'gp', 'ip', 'rp', 'U', 'B', 'V', 'R', 'I', 'SDSS-G', 'SDSS-R', 'SDSS-I',
-                         'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']:
-            ww = asarray([i for i in range(len(ll1['filter'])) if ((ll1['filter'][i] in [_filter]))])
         else:
             lista = []
             for fil in string.split(_filter, ','):
@@ -1626,9 +1621,9 @@ class PickablePlot():
 
 def plotfast2(setup):
     _symbol = 'sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*sdo+34<>^*'
-    _color = {'up': '#2c0080', 'gp': '#00ccff', 'rp': '#ff7d00', 'ip': '#90002c', 'zs': '#000000',
-                'U': '#3c0072', 'B': '#0057ff', 'V': '#79ff00', 'R': '#ff7000', 'I': '#80000d'}
-    _shift = {'U': -3, 'B': -2, 'V': -1, 'R': 0, 'I': 1, 'up': -2, 'gp': -1, 'rp': 0, 'ip': 1, 'zs': 2}
+    _color = {'u': '#2c0080', 'g': '#00ccff', 'r': '#ff7d00', 'i': '#90002c', 'z': '#000000',
+              'U': '#3c0072', 'B': '#0057ff', 'V': '#79ff00', 'R': '#ff7000', 'I': '#80000d'}
+    _shift = {'U': -3, 'B': -2, 'V': -1, 'R': 0, 'I': 1, 'u': -2, 'g': -1, 'r': 0, 'i': 1, 'z': 2}
 
     filenames = []
     mjds = []
@@ -1639,7 +1634,7 @@ def plotfast2(setup):
             filenames += setup[_telescope][_filter]['filename']
             mjds += setup[_telescope][_filter]['mjd']
             mags += setup[_telescope][_filter]['mag']
-            shifts += [_shift[_filter]] * len(setup[_telescope][_filter]['mag'])
+            shifts += [_shift[lsc.sites.filterst1[_filter]]] * len(setup[_telescope][_filter]['mag'])
 
     def plot_hook():
         plt.figure(1)
@@ -1648,6 +1643,7 @@ def plotfast2(setup):
         plt.ylabel('Magnitude')
         for _tel, mark in zip(setup.keys(), _symbol):
             for _fil, data_dict in setup[_tel].items():
+                _fil = lsc.sites.filterst1[_fil]
                 plt.errorbar(data_dict['mjd'], np.array(data_dict['mag']) + _shift[_fil], data_dict['dmag'],
                             ls='none', color=_color[_fil], marker=mark, label=_tel+' '+_fil+'{:+.0f}'.format(_shift[_fil]))
         plt.legend(loc='best', fontsize='small', numpoints=1)

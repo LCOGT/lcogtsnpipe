@@ -264,7 +264,7 @@ def readkey3(hdr,keyword):
                       'ron'       : 'RDNOISE',\
                       'date-obs'  : 'DATE-OBS',\
                       'date-night': 'DAY-OBS',\
-}
+                      'datamax'   : 'SATURATE'}
     if keyword in useful_keys:
        if type(useful_keys[keyword])==float:
           value=useful_keys[keyword]

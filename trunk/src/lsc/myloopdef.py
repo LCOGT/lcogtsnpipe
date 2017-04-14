@@ -1030,7 +1030,7 @@ def checkpsf(imglist, database='photlco'):
             iraf.delete('_psf.psf.fits', verify=False)
             if os.path.isfile(_dir + re.sub('.fits', '.psf.fits', img)):
                 print img
-                lsc.util.marksn2(_dir + img, _dir + re.sub('fits', 'sn2.fits', img), 1, '', True)
+                lsc.util.marksn2(_dir + img, _dir + re.sub('fits', 'sn2.fits', img))
                 iraf.seepsf(_dir + re.sub('.fits', '.psf.fits', img), '_psf.psf')
                 iraf.surface('_psf.psf')
                 aa = raw_input('>>>good psf [[y]/n] or [b] bad quality ? ')

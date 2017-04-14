@@ -1103,7 +1103,7 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
                 if _catalogue:
                     catvec = lsc.lscastrodef.readtxt(_catalogue)
                     bbb = [ra + ' ' + dec for ra, dec in zip(catvec['ra'], catvec['dec'])]
-                    aaa = iraf.wcsctran('STDIN', 'STDOUT', _dir + img + '[0]', Stdin=bbb, inwcs='world', units='degrees degrees'
+                    aaa = iraf.wcsctran('STDIN', 'STDOUT', _dir + img + '[0]', Stdin=bbb, inwcs='world', units='degrees degrees',
                                         outwcs='logical', columns='1 2', formats='%10.5f %10.5f', Stdout=1)
                     iraf.tvmark(1, 'STDIN', Stdin=list(aaa), mark="cross", number='yes', label='no', radii=1, nxoffse=5,
                                 nyoffse=5, color=204, txsize=1)

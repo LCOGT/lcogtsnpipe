@@ -574,6 +574,8 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
     _instrume=readkey3(hdr,'instrume')
     _date=readkey3(hdr,'date-night')
     _object=readkey3(hdr,'object')
+    _datamax = readkey3(hdr, 'datamax')
+    _datamin = readkey3(hdr, 'datamin')
     _siteid = hdr['SITEID']
     if _siteid in lsc.sites.extinction:
         kk = lsc.sites.extinction[_siteid]
@@ -754,8 +756,8 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
         iraf.noao.digiphot.daophot.photpars.apertures = fwhm0*3
         iraf.noao.digiphot.daophot.datapars.readnoi = readkey3(hdr,'ron')
         iraf.noao.digiphot.daophot.datapars.epadu = readkey3(hdr,'gain')
-        iraf.noao.digiphot.daophot.datapars.datamin = -1000
-        iraf.noao.digiphot.daophot.datapars.datamax = 45000
+        iraf.noao.digiphot.daophot.datapars.datamin = _datamin
+        iraf.noao.digiphot.daophot.datapars.datamax = _datamax
         iraf.noao.digiphot.daophot.datapars.exposure = 'EXPTIME'
         iraf.noao.digiphot.daophot.datapars.airmass =  'AIRMASS'
         iraf.noao.digiphot.daophot.datapars.filter =   'filter2'

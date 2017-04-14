@@ -465,35 +465,37 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
     direc = lsc.__path__[0]
 
     if interactive:
-        ii = '-i'
+        ii = ' -i'
     else:
         ii = ''
     if _recenter:
-        cc = '-c'
+        cc = ' -c'
     else:
         cc = ''
     if show:
-        ss = '-s'
+        ss = ' -s'
     else:
         ss = ''
     if redo:
-        rr = '-r'
+        rr = ' -r'
     else:
         rr = ''
     if _ras:
-        _ras = '-R ' + str(_ras)
+        _ras = ' -R ' + str(_ras)
     if _decs:
-        _decs = '-D ' + str(_decs)
+        _decs = ' -D ' + str(_decs)
     if _ra0:
-        _ra0 =  '--RA0 ' + str(_ra0)
+        _ra0 =  ' --RA0 ' + str(_ra0)
     if _dec0:
-        _dec0 = '--DEC0 '+ str(_dec0)
-
-    # different defaults for run_fit and run_psf
-    if dmax is None:
-        dmax = 51000
-    if dmin is None:
-        dmin = -500
+        _dec0 = ' --DEC0 ' + str(_dec0)
+    if dmax is not None:
+        _dmax = ' --datamax ' + str(dmax)
+    else:
+        _dmax = ''
+    if dmin is not None:
+        _dmin = ' --datamin ' + str(dmin)
+    else:
+        _dmin = ''
 
     for img in imglist:
         status = checkstage(img, 'psfmag')
@@ -507,9 +509,8 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
                 print img0, _ref, show
                 _ras, _decs = lsc.myloopdef.getcoordfromref(img0, _ref, show)
 
-            command = 'lscsn.py ' + _dir + img + ' ' + ii + ' ' + ss + ' ' + rr + ' -x ' + str(_xord) + ' -y ' +\
-                      str(_yord) + ' ' + str(_ras) + ' ' + str(_decs) + ' ' + cc + ' -b ' + str(_bkg) + '  -z ' + str(_size) +\
-                      ' --datamax ' + str(dmax) + ' '+' --datamin='+str(dmin) + ' '+_ra0+' '+_dec0
+            command = 'lscsn.py ' + _dir + img + ii + ss + rr + cc + ' -x ' + str(_xord) + ' -y ' + str(_yord) + \
+                      _ras + _decs + _ra0 + _dec0 + ' -b ' + str(_bkg) + ' -z ' + str(_size) + _dmax + _dmin
             #if str(ggg[0]['filetype']) == '3':
             #    try:
             #        img2 = fits.getheader(_dir + img)['PSF']
@@ -1097,24 +1098,16 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
                 iraf.tvmark(1, 'STDIN', Stdin=list(ccc), mark="circle", number='yes', label='no', radii=15, nxoffse=5,
                             nyoffse=5, color=206, txsize=3)
 
-                _catalogue = glob.glob(lsc.__path__[0] + '/standard/cat/landolt/' + _SN0 + '*')
-                if not _catalogue:
-                    _catalogue = glob.glob(lsc.__path__[0] + '/standard/cat/sloan/' + _SN0 + '*')
-                if not _catalogue:
-                    _catalogue = glob.glob(lsc.__path__[0] + '/standard/cat/apass/' + _SN0 + '*')
-            else:
-                _catalogue = ''
-            if len(_catalogue) >= 1:
-                catvec = lsc.lscastrodef.readtxt(_catalogue[0])
-                bbb = []
-                for i in range(0, len(catvec['ra'])):
-                    bbb.append(catvec['ra'][i] + ' ' + catvec['dec'][i])
-                aaa = iraf.wcsctran('STDIN', 'STDOUT', _dir + img + '[0]', Stdin=list(bbb), inwcs='world',
-                                    units='degrees degrees', outwcs='logical', columns='1 2', formats='%10.5f %10.5f',
-                                    Stdout=1)
-                iraf.tvmark(1, 'STDIN', Stdin=list(aaa), mark="cross", number='yes', label='no', radii=1, nxoffse=5,
-                            nyoffse=5, color=204, txsize=1)
-
+            for field in ['sloan', 'apass', 'landolt']:
+                _catalogue = lsc.util.getcatalog(_dir + img, field)
+                if _catalogue:
+                    catvec = lsc.lscastrodef.readtxt(_catalogue)
+                    bbb = [ra + ' ' + dec for ra, dec in zip(catvec['ra'], catvec['dec'])]
+                    aaa = iraf.wcsctran('STDIN', 'STDOUT', _dir + img + '[0]', Stdin=bbb, inwcs='world', units='degrees degrees'
+                                        outwcs='logical', columns='1 2', formats='%10.5f %10.5f', Stdout=1)
+                    iraf.tvmark(1, 'STDIN', Stdin=list(aaa), mark="cross", number='yes', label='no', radii=1, nxoffse=5,
+                                nyoffse=5, color=204, txsize=1)
+                    break
             else:
                 catvec = lsc.lscastrodef.querycatalogue('usnoa2', _dir + img, 'vizir')
                 apix1 = catvec['pix']
@@ -1365,14 +1358,14 @@ def checkdiff(imglist, database='photlco'):
             print 'status ' + str(status) + ': unknown status'
 
 def display_psf_fit(img, datamax=None):
-    if datamax is None:
-        datamax = 51000
     ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', img, '*')
     ogfile = ggg[0]['filepath'] + img.replace('.fits', '.og.fits')
     rsfile = ggg[0]['filepath'] + img.replace('.fits', '.rs.fits')
     if os.path.isfile(ogfile) and os.path.isfile(rsfile):
-        ogdata = fits.getdata(ogfile)
+        ogdata, hdr = fits.getdata(ogfile, header=True)
         rsdata = fits.getdata(rsfile)
+        if datamax is None:
+            datamax = lsc.util.readkey3(hdr, 'datamax')
         plt.clf()
         axL = plt.subplot(1, 2, 1, adjustable='box-forced')
         axR = plt.subplot(1, 2, 2, sharex=axL, sharey=axL, adjustable='box-forced')
@@ -1388,7 +1381,7 @@ def display_psf_fit(img, datamax=None):
         plt.gcf().text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
     return ogfile, rsfile
 
-def checkmag(imglist, datamax):
+def checkmag(imglist, datamax=None):
     plt.ion()
     for img in imglist:
         status = checkstage(img, 'checkmag')

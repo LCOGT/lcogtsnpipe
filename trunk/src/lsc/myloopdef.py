@@ -1,12 +1,8 @@
 import os
-import string
-import re
-import sys
-import glob
-import string
 import lsc
 import numpy as np
-import math
+import matplotlib.pyplot as plt
+from pyraf import iraf
 from astropy.io import fits
 
 def weighted_avg_and_std(values, weights):
@@ -17,32 +13,25 @@ def weighted_avg_and_std(values, weights):
     """
     average = np.average(values, weights=weights)
     variance = np.average((values-average)**2, weights=weights)  # Fast and numerically precise
-    return (average, math.sqrt(variance))
+    return average, np.sqrt(variance)
 
 try:
-    import mysqldef
-    hostname, username, passwd, database = mysqldef.getconnection('lcogt2')
-    conn = mysqldef.dbConnect(hostname, username, passwd, database)
+    hostname, username, passwd, database = lsc.mysqldef.getconnection('lcogt2')
+    conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
 except ImportError as e:
     print e
     print 'try running one of these:'
     print 'pip install mysql-python'
     print 'conda install mysql-python'
-except:
+except Exception as e:
+    print e
     print '### warning: problem connecting to the database'
 
 def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10, magtype='mag', database='photlco'):
-    import lsc
-    import datetime
-    import mysqldef
-    from numpy import array, compress, abs, mean, asarray, std, take, argsort, sort, sqrt
-    import os, string, glob, re, sys
-
     if len(imglist)==0:
         print 'error: no images selected'
         return
 
-    direc = lsc.__path__[0]
     if magtype == 'mag':
         mtype = 'mag'
         mtypeerr = 'dmag'
@@ -58,9 +47,9 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     z1, z2 = [], []
     magtype = []
     for img in imglist:
-        ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+        ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
         if ggg[0][mtype]:
-            if abs(ggg[0][mtype]) <= 99:
+            if np.abs(ggg[0][mtype]) <= 99:
                 mag.append(ggg[0][mtype])
                 dmag.append(ggg[0][mtypeerr])
                 mjd.append(ggg[0]['mjd'])
@@ -76,33 +65,33 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
 
     for _tel in setup:
         for _fil in setup[_tel]:
-            mjd0 = compress((array(filt) == _fil) & (array(tel) == _tel), array(mjd))
-            mag0 = compress((array(filt) == _fil) & (array(tel) == _tel), array(mag))
-            dmag0 = compress((array(filt) == _fil) & (array(tel) == _tel), array(dmag))
-            date0 = compress((array(filt) == _fil) & (array(tel) == _tel), array(date))
-            filename0 = compress((array(filt) == _fil) & (array(tel) == _tel), array(filename))
-            z10 = compress((array(filt) == _fil) & (array(tel) == _tel), array(z1))
-            z20 = compress((array(filt) == _fil) & (array(tel) == _tel), array(z2))
-            magtype0 = compress((array(filt) == _fil) & (array(tel) == _tel), array(magtype))
-            inds = argsort(mjd0)
-            mag0 = take(mag0, inds)
-            dmag0 = take(dmag0, inds)
-            date0 = take(date0, inds)
-            filename0 = take(filename0, inds)
-            mjd0 = take(mjd0, inds)
-            z10 = take(z10, inds)
-            z20 = take(z20, inds)
-            magtype0 = take(magtype0, inds)
+            mjd0 = np.compress((np.array(filt) == _fil) & (np.array(tel) == _tel), np.array(mjd))
+            mag0 = np.compress((np.array(filt) == _fil) & (np.array(tel) == _tel), np.array(mag))
+            dmag0 = np.compress((np.array(filt) == _fil) & (np.array(tel) == _tel), np.array(dmag))
+            date0 = np.compress((np.array(filt) == _fil) & (np.array(tel) == _tel), np.array(date))
+            filename0 = np.compress((np.array(filt) == _fil) & (np.array(tel) == _tel), np.array(filename))
+            z10 = np.compress((np.array(filt) == _fil) & (np.array(tel) == _tel), np.array(z1))
+            z20 = np.compress((np.array(filt) == _fil) & (np.array(tel) == _tel), np.array(z2))
+            magtype0 = np.compress((np.array(filt) == _fil) & (np.array(tel) == _tel), np.array(magtype))
+            inds = np.argsort(mjd0)
+            mag0 = np.take(mag0, inds)
+            dmag0 = np.take(dmag0, inds)
+            date0 = np.take(date0, inds)
+            filename0 = np.take(filename0, inds)
+            mjd0 = np.take(mjd0, inds)
+            z10 = np.take(z10, inds)
+            z20 = np.take(z20, inds)
+            magtype0 = np.take(magtype0, inds)
             # z3= 
             magtype1, mag1, dmag1, mjd1, date1, filename1 = [], [], [], [], [], []
             done = []
             for i in range(0, len(mjd0)):
                 if i not in done:
-                    ww = asarray([j for j in range(len(mjd0)) if (mjd0[j] - mjd0[i]) < _bin and (
-                    mjd0[j] - mjd0[i]) >= 0.0])  # abs(jd0[j]-jd0[i])<bin])
+                    ww = np.array([j for j in range(len(mjd0)) if (mjd0[j] - mjd0[i]) < _bin and (
+                    mjd0[j] - mjd0[i]) >= 0.0])  # np.abs(jd0[j]-jd0[i])<bin])
                     for jj in ww: done.append(jj)
                     if len(ww) >= 2:
-                        mjd1.append(mean(mjd0[ww]))
+                        mjd1.append(np.mean(mjd0[ww]))
 
                         av,st=weighted_avg_and_std(mag0[ww], 1/(dmag0[ww])**2)
                         print av,st
@@ -113,9 +102,9 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                             #dmag1.append(st)
                         except:
                             dmag1.append(0.0)
-                        magtype1.append(std(magtype0[ww]))
+                        magtype1.append(np.std(magtype0[ww]))
                         filename1.append(filename0[ww])
-                        date1.append(date0[ww][0] + datetime.timedelta(mean(mjd0[ww]) - mjd0[ww][0]))
+                        date1.append(min(date0[ww]) + (max(date0[ww]) - min(date0[ww])) / 2)
                     elif len(ww) == 1:
                         mjd1.append(mjd0[ww][0])
                         mag1.append(mag0[ww][0])
@@ -126,8 +115,8 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
             setup[_tel][_fil]['mag'] = mag1
             setup[_tel][_fil]['magtype'] = magtype1
             setup[_tel][_fil]['dmag'] = dmag1
-            setup[_tel][_fil]['mjd'] = list(array(mjd1))
-            setup[_tel][_fil]['jd'] = list(array(mjd1) + 2400000.5)
+            setup[_tel][_fil]['mjd'] = list(np.array(mjd1))
+            setup[_tel][_fil]['jd'] = list(np.array(mjd1) + 2400000.5)
             setup[_tel][_fil]['date'] = date1
             setup[_tel][_fil]['filename'] = filename1
 
@@ -162,22 +151,15 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                 linetot[setup[_tel][_fil]['mjd'][j]] = line
     aaa = linetot.keys()
     if _output:
-        for gg in sort(aaa):
+        for gg in np.sort(aaa):
             ff.write(linetot[gg])
     else:
-        for gg in sort(aaa):
+        for gg in np.sort(aaa):
             print linetot[gg]
     if _output:
         ff.close()
 
 def run_cat(imglist, extlist, _interactive=False, mode=1, _type='fit', _fix=False, database='photlco', _field='slaon'):
-    import lsc
-
-    direc = lsc.__path__[0]
-    from numpy import where, array
-    import mysqldef
-    import os, string, glob  # MySQLdb,
-
     status = []
     if mode == 1:
         _mode = 'lsccatalogue.py'
@@ -187,25 +169,25 @@ def run_cat(imglist, extlist, _interactive=False, mode=1, _type='fit', _fix=Fals
         stat = 'mag'
     if len(extlist) > 0:
         for img in extlist:  status.append(checkstage(img, stat))
-        extlist = extlist[where(array(status) > 0)]
-        status = array(status)[where(array(status) > 0)]
+        extlist = extlist[np.where(np.array(status) > 0)]
+        status = np.array(status)[np.where(np.array(status) > 0)]
         f = open('_tmpext.list', 'w')
         for img in extlist:
-            ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
-            f.write(_dir + re.sub('fits', 'sn2.fits', img) + '\n')
+            f.write(_dir + img.replace('fits', 'sn2.fits') + '\n')
         f.close()
     else:
         for img in imglist:
             status.append(checkstage(img, stat))
-        imglist = imglist[where(array(status) > 0)]
-        status = array(status)[where(array(status) > 0)]
+        imglist = imglist[np.where(np.array(status) > 0)]
+        status = np.array(status)[np.where(np.array(status) > 0)]
 
     f = open('_tmp.list', 'w')
     for img in imglist:
-        ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+        ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
         _dir = ggg[0]['filepath']
-        f.write(_dir + re.sub('fits', 'sn2.fits', img) + '\n')
+        f.write(_dir + img.replace('fits', 'sn2.fits') + '\n')
     f.close()
     if _interactive:
         ii = ' -i '
@@ -275,10 +257,6 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
 
 def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=False, redo=False, show=False, _cutmag=99,
              database='photlco', _calib='', zcatnew=False):
-    import lsc
-    import os, string, glob  # MySQLdb,
-
-    direc = lsc.__path__[0]
     for img in imglist:
         if interactive:
             ii = '-i'
@@ -311,7 +289,7 @@ def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=Fal
         status = checkstage(img, 'zcat')
         if status == 1: rr = '-r'
         if status >= 1:
-            ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
             if catalogue:
                 cc = '-c ' + catalogue
@@ -323,7 +301,7 @@ def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=Fal
                     cc = ''
             if zcatnew: zcn = '--zcatnew'
             else: zcn = ''
-            command = ' '.join(['lscabsphot.py', _dir+re.sub('fits', 'sn2.fits',img), ii, rr, ff, cc, '-t', _type, ss, dd, hh, ll, '--cutmag', str(_cutmag), zcn])
+            command = ' '.join(['lscabsphot.py', _dir+img.replace('.fits', '.sn2.fits'), ii, rr, ff, cc, '-t', _type, ss, dd, hh, ll, '--cutmag', str(_cutmag), zcn])
             print '_'*100
             print command
             os.system(command)
@@ -341,12 +319,6 @@ def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=Fal
 
 def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, xwindow='',\
             fix=True, catalog='', database='photlco', use_sextractor=False, datamax=None, nstars=6):
-    import lsc
-    import os
-    import  string
-    import sys
-
-    direc = lsc.__path__[0]
     for img in imglist:
         if interactive:
             ii = '-i'
@@ -387,7 +359,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
         if status == 1:
             rr = '-r'
         if status >= 1:
-            ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             print ggg
             if str(ggg[0]['filetype']) == '3':
                 ##################################################################################
@@ -395,7 +367,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                 _dir = ggg[0]['filepath']
                 hdrdiff=lsc.util.readhdr(_dir+img)
                 if 'PSF' not in hdrdiff:
-                    sys.exit('\n### warning PSF file not defined')
+                    raise Exception('PSF file not defined')
                 else:
                     imgpsf=hdrdiff['PSF']
                     print '\n### psf file for difference image: '+imgpsf
@@ -403,19 +375,19 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                     print statuspsf
                     if statuspsf == 2:
                         print 'psf file for difference image found'
-                        gggpsf = mysqldef.getfromdataraw(conn, database, 'filename', str(imgpsf), '*')
+                        gggpsf = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(imgpsf), '*')
                         _dirpsf = gggpsf[0]['filepath']
-                        os.system('cp '+_dirpsf+re.sub('.fits', '.psf.fits', imgpsf)+' '+_dir+
-                                  re.sub('.fits', '.psf.fits', img))
-                        lsc.mysqldef.updatevalue('photlco', 'psf', re.sub('.fits', '.psf.fits', img),
-                                             string.split(img, '/')[-1])
-                        print '\n ### copy '+re.sub('.fits', '.psf.fits', imgpsf)+' in '+re.sub('.fits', '.psf.fits', img)
+                        os.system('cp '+_dirpsf+imgpsf.replace('.fits', '.psf.fits')+' '+_dir+
+                                  img.replace('.fits', '.psf.fits'))
+                        lsc.mysqldef.updatevalue('photlco', 'psf', img.replace('.fits', '.psf.fits'),
+                                             os.path.basename(img))
+                        print '\n ### copy '+imgpsf.replace('.fits', '.psf.fits')+' in '+img.replace('.fits', '.psf.fits')
 
                     else:
                         print '\n### ERROR: PSF file not found \n please run psf file on image: '+imgpsf
                 #####################################################################################
                 if 'PHOTNORM' not in hdrdiff:
-                    sys.exit('\n ### warning PHOTNORM file not defined')
+                    raise Exception('PHOTNORM file not defined')
                 else:
                     photnorm=hdrdiff['PHOTNORM']
                     if photnorm=='t':
@@ -426,16 +398,16 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                         print '\n ### zero point done with target'
                         imgtable = hdrdiff['TARGET']
 
-                    sntable = re.sub('.fits','.sn2.fits',imgtable)
+                    sntable = imgtable.replace('.fits','.sn2.fits')
                     gggtable = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(imgtable), '*')
                     dirtable = gggtable[0]['filepath']
 
                     if os.path.isfile(dirtable+sntable):
                         print '\n ### fits table found '
-                        print 'cp ' + dirtable + sntable + ' ' + _dir + re.sub('.fits', '.sn2.fits', img)
-                        os.system('cp ' + dirtable + sntable + ' ' + _dir + re.sub('.fits', '.sn2.fits', img))
+                        print 'cp ' + dirtable + sntable + ' ' + _dir + img.replace('.fits', '.sn2.fits')
+                        os.system('cp ' + dirtable + sntable + ' ' + _dir + img.replace('.fits', '.sn2.fits'))
                     else:
-                        sys.exit('ERROR: fits table not there, run psf for ' + sntable)
+                        raise Exception('fits table not there, run psf for ' + sntable)
             else:
                 _dir = ggg[0]['filepath']
                 img0 = img
@@ -458,12 +430,6 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
 
 def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _recenter=False, _ref='', interactive=False,
             show=False, redo=False, dmax=None, dmin=None, database='photlco', _ra0='', _dec0=''):
-    import lsc
-    import os, string
-    from astropy.io import fits
-
-    direc = lsc.__path__[0]
-
     if interactive:
         ii = ' -i'
     else:
@@ -501,9 +467,9 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
         status = checkstage(img, 'psfmag')
         print status
         if status >= 1:
-            ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
-            img0 = re.sub('.fits', '.sn2.fits', img)
+            img0 = img.replace('.fits', '.sn2.fits')
 
             if _ref:
                 print img0, _ref, show
@@ -514,9 +480,9 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
             #if str(ggg[0]['filetype']) == '3':
             #    try:
             #        img2 = fits.getheader(_dir + img)['PSF']
-            #        ggg2 = mysqldef.getfromdataraw(conn, database, 'filename', str(img2), '*')
+            #        ggg2 = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img2), '*')
             #        _dir2 = ggg2[0]['filepath']
-            #        pp = ' -p ' + _dir2 + re.sub('.fits', '.psf.fits', img2) + ' '
+            #        pp = ' -p ' + _dir2 + img2.replace('.fits', '.psf.fits') + ' '
             #        command = command + pp
             #    except:
             #        command = ''
@@ -545,11 +511,8 @@ def checkstage(img, stage, database='photlco'):
     #   1  not done and possible since previous stage done
     #   2  done and possible to do again
     #   3  local sequence catalogue available  
-    import mysqldef
-    import os
-
     status = 0
-    ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+    ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
     if not ggg:
         status = -3  # not in the redo table
     else:
@@ -559,7 +522,7 @@ def checkstage(img, stage, database='photlco'):
         else:
             if not os.path.isfile(_dir + img):
                 status = -2  # fits image not in working dir
-            elif not os.path.isfile(_dir + re.sub('fits', 'sn2.fits', img)):
+            elif not os.path.isfile(_dir + img.replace('.fits', '.sn2.fits')):
                 status = -1  # sn2 table not in working dir
     if stage == 'wcs' and status >= -1:
         if ggg[0]['wcs'] != 0:
@@ -607,18 +570,13 @@ def checkstage(img, stage, database='photlco'):
 
 
 # ###################################################################################
-def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2  import pyraf outside
-    import lsc
-    from astropy.io import fits
-    from numpy import zeros, array, median, compress
-    from pyraf import iraf
-
+def getcoordfromref(img2, img1, _show, database='photlco'):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
-    ggg1 = mysqldef.getfromdataraw(conn, database, 'filename', re.sub('sn2.fits', 'fits', img1), '*')
+    ggg1 = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img1.replace('sn2.fits', 'fits'), '*')
     _dir1 = ggg1[0]['filepath']
 
-    ggg2 = mysqldef.getfromdataraw(conn, database, 'filename', re.sub('sn2.fits', 'fits', img2), '*')
+    ggg2 = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img2.replace('sn2.fits', 'fits'), '*')
     _dir2 = ggg2[0]['filepath']
 
     print _dir1, _dir2, img1, img2
@@ -645,83 +603,77 @@ def getcoordfromref(img2, img1, _show, database='photlco'):  #img1.sn2  img2.sn2
         lll = str(psfx1) + ' ' + str(psfy1)
         aaa = iraf.wcsctran('STDIN', 'STDOUT', _dir1 + img1 + '[0]', Stdin=[lll], inwcs='logical', units='degrees degrees',
                             outwcs='world', columns='1 2', formats='%10.5f %10.5f', Stdout=1)[3]
-        rasn1, decsn1 = string.split(aaa)
+        rasn1, decsn1 = aaa.split()
         if _show:
             iraf.set(stdimage='imt8192')
-            iraf.display(_dir1 + re.sub('sn2.fits', 'fits', img1) + '[0]', 1, fill=True, Stdout=1, zsc='yes',
+            iraf.display(_dir1 + img1.replace('sn2.fits', 'fits') + '[0]', 1, fill=True, Stdout=1, zsc='yes',
                          zra='yes')  #,z1=0,z2=3000)
             iraf.tvmark(1, 'STDIN', Stdin=[lll], mark="cross", number='no', label='no', radii=5, nxoffse=5, nyoffse=5,
                         color=205, txsize=1)
 
-        #    ra01,dec01,ra02,dec02=array(ra01,float),array(dec01,float),array(ra02,float),array(dec02,float)
+        #    ra01,dec01,ra02,dec02=np.array(ra01,float),np.array(dec01,float),np.array(ra02,float),np.array(dec02,float)
     distvec, pos1, pos2 = lsc.lscastrodef.crossmatch(list(ra01), list(dec01), list(ra02), list(dec02), 5)
-    #    from pylab import ion,plot
-    #    ion()
-    #    plot(ra01,dec01,'or')
-    #    plot(ra02,dec02,'xb',markersize=10)
-    #    plot(array(ra01)[pos1],array(dec01)[pos1],'3g',markersize=20)
-    #    plot(array(ra02)[pos2],array(dec02)[pos2],'*m',markersize=10)
+    #    plt.ion()
+    #    plt.plot(ra01,dec01,'or')
+    #    plt.plot(ra02,dec02,'xb',markersize=10)
+    #    plt.plot(np.array(ra01)[pos1],np.array(dec01)[pos1],'3g',markersize=20)
+    #    plt.plot(np.array(ra02)[pos2],np.array(dec02)[pos2],'*m',markersize=10)
     #    raw_input('ddd')
     rra = ra01[pos1] - ra02[pos2]
     ddec = dec01[pos1] - dec02[pos2]
-    rracut = compress((abs(array(ra02[pos2]) - float(rasn1)) < .05) & (abs(array(dec02[pos2]) - float(decsn1)) < .05),
-                      array(rra))
-    ddeccut = compress((abs(array(ra02[pos2]) - float(rasn1)) < .05) & (abs(array(dec02[pos2]) - float(decsn1)) < .05),
-                       array(ddec))
+    rracut = np.compress((np.abs(np.array(ra02[pos2]) - float(rasn1)) < .05) & (np.abs(np.array(dec02[pos2]) - float(decsn1)) < .05),
+                      np.array(rra))
+    ddeccut = np.compress((np.abs(np.array(ra02[pos2]) - float(rasn1)) < .05) & (np.abs(np.array(dec02[pos2]) - float(decsn1)) < .05),
+                       np.array(ddec))
 
     if len(rracut) > 10:
-        rasn2c = float(rasn1) - median(rracut)
-        decsn2c = float(decsn1) - median(ddeccut)
+        rasn2c = float(rasn1) - np.median(rracut)
+        decsn2c = float(decsn1) - np.median(ddeccut)
     else:
-        rasn2c = float(rasn1) - median(rra)
-        decsn2c = float(decsn1) - median(ddec)
+        rasn2c = float(rasn1) - np.median(rra)
+        decsn2c = float(decsn1) - np.median(ddec)
 
     if _show:
         print 'shift in arcsec (ra dec)'
         print len(pos1), len(ra01)
-        print median(rra), median(ddec)
+        print np.median(rra), np.median(ddec)
         print 'SN position on image 2 computed'
         print rasn2c, decsn2c
-        iraf.display(_dir2 + re.sub('sn2.fits', 'fits', img2) + '[0]', 2, fill=True, Stdout=1, zsc='yes',
+        iraf.display(_dir2 + img2.replace('sn2.fits', 'fits') + '[0]', 2, fill=True, Stdout=1, zsc='yes',
                      zra='yes')  #,z1=0,z2=3000)
         lll = str(rasn2c) + ' ' + str(decsn2c)
         bbb = iraf.wcsctran('STDIN', 'STDOUT', _dir2 + img2 + '[0]', Stdin=[lll], inwcs='world', units='degrees degrees',
                             outwcs='logical', columns='1 2', formats='%10.5f %10.5f', Stdout=1)[3]
         iraf.tvmark(2, 'STDIN', Stdin=[bbb], mark="cross", number='no', label='no', radii=5, nxoffse=5, nyoffse=5,
                     color=206, txsize=1)
-        from pylab import ion, plot
 
-        ion()
-        plot(rra, ddec, 'or')
-        plot(rracut, ddeccut, 'xb')
+        plt.ion()
+        plt.plot(rra, ddec, 'or')
+        plt.plot(rracut, ddeccut, 'xb')
 
     return rasn2c, decsn2c
 
 
 def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype=''):
-    from numpy import array, asarray
-    import string, re, os, sys
-    import lsc
-
     ll1 = {}
     for key in ll2.keys():
         ll1[key] = ll2[key][:]
 
     if len(_difftype) > 0:
-        ww = asarray([i for i in range(len(ll1['difftype'])) if ((str(ll1['difftype'][i]) in str(_difftype)))])
+        ww = np.array([i for i in range(len(ll1['difftype'])) if ((str(ll1['difftype'][i]) in str(_difftype)))])
         if len(ww) > 0:
             for jj in ll1.keys():
-                ll1[jj] = array(ll1[jj])[ww]
+                ll1[jj] = np.array(ll1[jj])[ww]
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
 
     if _filetype:
         if int(_filetype) in [1, 2, 3, 4]:
-            ww = asarray([i for i in range(len(ll1['filetype'])) if ((ll1['filetype'][i] == str(_filetype)))])
+            ww = np.array([i for i in range(len(ll1['filetype'])) if ((ll1['filetype'][i] == str(_filetype)))])
             if len(ww) > 0:
                 for jj in ll1.keys():
-                    ll1[jj] = array(ll1[jj])[ww]
+                    ll1[jj] = np.array(ll1[jj])[ww]
             else:
                 for jj in ll1.keys():
                     ll1[jj] = []
@@ -730,27 +682,27 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
         pass
 
     else:
-        ww = asarray([i for i in range(len(ll1['quality'])) if ((ll1['quality'][i] != 1))])
+        ww = np.array([i for i in range(len(ll1['quality'])) if ((ll1['quality'][i] != 1))])
         if len(ww) > 0:
             for jj in ll1.keys():
-                ll1[jj] = array(ll1[jj])[ww]
+                ll1[jj] = np.array(ll1[jj])[ww]
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
     if _filter:  #filter 
         if _filter == 'sloan':
-            ww = asarray([i for i in range(len(ll1['filter'])) if (
+            ww = np.array([i for i in range(len(ll1['filter'])) if (
             (ll1['filter'][i] in ['zs', 'up', 'gp', 'ip', 'rp', 'SDSS-G', 'SDSS-R', 'SDSS-I', 'Pan-Starrs-Z']))])
         elif _filter == 'landolt':
-            ww = asarray([i for i in range(len(ll1['filter'])) if (
+            ww = np.array([i for i in range(len(ll1['filter'])) if (
             (ll1['filter'][i] in ['U', 'B', 'V', 'R', 'I', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']))])
         elif _filter == 'apass':
-            ww = asarray([i for i in range(len(ll1['filter']))
+            ww = np.array([i for i in range(len(ll1['filter']))
                           if ((ll1['filter'][i] in ['B', 'V', 'Bessell-B','Bessell-V', 'gp', 'ip', 'rp', 'SDSS-G',
                                                     'SDSS-R', 'SDSS-I']))])
         else:
             lista = []
-            for fil in string.split(_filter, ','):
+            for fil in _filter.split(','):
                 print fil
                 if fil in lsc.sites.filterst:
                     lista += lsc.sites.filterst[fil]
@@ -758,22 +710,22 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                              'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']:
                     lista.append(fil)
             print lista
-            ww = asarray([i for i in range(len(ll1['filter'])) if ((ll1['filter'][i] in lista))])
+            ww = np.array([i for i in range(len(ll1['filter'])) if ((ll1['filter'][i] in lista))])
         if len(ww) > 0:
             for jj in ll1.keys():
-                ll1[jj] = array(ll1[jj])[ww]
+                ll1[jj] = np.array(ll1[jj])[ww]
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
     if _id:  # ID
         try:
             xx = '0000'[len(_id):] + _id
-            ww = asarray([i for i in range(len(ll1['filter'])) if ((_id in string.split(ll1['filename'][i], '-')[3]))])
+            ww = np.array([i for i in range(len(ll1['filter'])) if ((_id in ll1['filename'][i].split('-')[3]))])
         except:
-            ww = asarray([i for i in range(len(ll1['filter'])) if (_id in ll1['filename'][i])])
+            ww = np.array([i for i in range(len(ll1['filter'])) if (_id in ll1['filename'][i])])
         if len(ww) > 0:
             for jj in ll1.keys():
-                ll1[jj] = array(ll1[jj])[ww]
+                ll1[jj] = np.array(ll1[jj])[ww]
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
@@ -781,33 +733,31 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
         _targetid = lsc.mysqldef.gettargetid(_name, '', '', conn, 0.01, False)
         if _targetid:
             print _targetid
-            ww = asarray([i for i in range(len(ll1['filter'])) if ((_targetid == ll1['targetid'][i]))])
+            ww = np.array([i for i in range(len(ll1['filter'])) if ((_targetid == ll1['targetid'][i]))])
         else:
-            ww = asarray([i for i in range(len(ll1['filter'])) if ((_name in ll1['objname'][i]))])
+            ww = np.array([i for i in range(len(ll1['filter'])) if ((_name in ll1['objname'][i]))])
 
         if len(ww) > 0:
             for jj in ll1.keys():
-                ll1[jj] = array(ll1[jj])[ww]
+                ll1[jj] = np.array(ll1[jj])[ww]
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
     if _groupid:
-        ww = asarray([i for i in range(len(ll1['filter'])) if ((ll1['groupidcode'][i] != _groupid))])
+        ww = np.array([i for i in range(len(ll1['filter'])) if ((ll1['groupidcode'][i] != _groupid))])
         if len(ww) > 0:
             for jj in ll1.keys():
-                ll1[jj] = array(ll1[jj])[ww]
+                ll1[jj] = np.array(ll1[jj])[ww]
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
 
     if _ra and _dec:
-        from numpy import abs
-
-        ww = asarray([i for i in range(len(ll1['ra'])) if
-                      ( abs(float(ll1['ra'][i]) - float(_ra)) < .5 and abs(float(ll1['dec'][i]) - float(_dec)) < .5 )])
+        ww = np.array([i for i in range(len(ll1['ra'])) if
+                      ( np.abs(float(ll1['ra'][i]) - float(_ra)) < .5 and np.abs(float(ll1['dec'][i]) - float(_dec)) < .5 )])
         if len(ww) > 0:
             for jj in ll1.keys():
-                ll1[jj] = array(ll1[jj])[ww]
+                ll1[jj] = np.array(ll1[jj])[ww]
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
@@ -815,10 +765,10 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     #    add filter using instrument
     if _instrument:
         print _instrument
-        ww = asarray([i for i in range(len(ll1['instrument'])) if (ll1['instrument'][i] == _instrument)])
+        ww = np.array([i for i in range(len(ll1['instrument'])) if (ll1['instrument'][i] == _instrument)])
         if len(ww) > 0:
             for jj in ll1.keys():
-                ll1[jj] = array(ll1[jj])[ww]
+                ll1[jj] = np.array(ll1[jj])[ww]
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
@@ -826,20 +776,20 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     if _filetype == 3 and _temptel:
         temptels = np.array([fn.split('.')[1] if fn.count('.') == 3 else inst[0:2] for fn, inst in zip(ll1['filename'], ll1['instrument'])], dtype=str)
         for jj in ll1:
-            ll1[jj] = array(ll1[jj])[temptels == _temptel]
+            ll1[jj] = np.array(ll1[jj])[temptels == _temptel]
 
 ######################
     if _bad:
         if _bad == 'wcs':
-            ww = asarray([i for i in range(len(ll1[_bad])) if (ll1[_bad][i] != 0)])
+            ww = np.array([i for i in range(len(ll1[_bad])) if (ll1[_bad][i] != 0)])
         elif _bad == 'zcat' or _bad == 'abscat':
-            ww = asarray([i for i in range(len(ll1[_bad])) if (ll1[_bad][i] == 'X' )])
+            ww = np.array([i for i in range(len(ll1[_bad])) if (ll1[_bad][i] == 'X' )])
         elif _bad == 'goodcat':
-            ww = asarray([i for i in range(len(ll1['abscat'])) if (ll1['abscat'][i] != 'X' )])
+            ww = np.array([i for i in range(len(ll1['abscat'])) if (ll1['abscat'][i] != 'X' )])
         elif _bad == 'psf':
-            ww = asarray([i for i in range(len(ll1['psf'])) if (ll1['psf'][i] == 'X' )])
+            ww = np.array([i for i in range(len(ll1['psf'])) if (ll1['psf'][i] == 'X' )])
         elif _bad == 'quality':
-            ww = asarray([i for i in range(len(ll1['quality'])) if ((ll1['quality'][i] == 1))])
+            ww = np.array([i for i in range(len(ll1['quality'])) if ((ll1['quality'][i] == 1))])
         elif _bad == 'cosmic':
             maskexists = [os.path.isfile(filepath+filename.replace('.fits', '.mask.fits'))
                             for filepath, filename in zip(ll1['filepath'], ll1['filename'])]
@@ -849,27 +799,27 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                             for filepath, filename in zip(ll1['filepath'], ll1['filename'])]
             ww = np.flatnonzero(np.logical_not(np.array(maskexists)))
         elif _bad == 'mag':
-            ww = asarray([i for i in range(len(ll1['mag'])) if (ll1['mag'][i] >= 1000 or ll1[_bad][i] < 0)])
+            ww = np.array([i for i in range(len(ll1['mag'])) if (ll1['mag'][i] >= 1000 or ll1[_bad][i] < 0)])
         else:
-            ww = asarray([i for i in range(len(ll1[_bad])) if (ll1[_bad][i] >= 1000)])
+            ww = np.array([i for i in range(len(ll1[_bad])) if (ll1[_bad][i] >= 1000)])
         if len(ww) > 0:
-            for jj in ll1.keys(): ll1[jj] = array(ll1[jj])[ww]
+            for jj in ll1.keys(): ll1[jj] = np.array(ll1[jj])[ww]
         else:
             for jj in ll1.keys(): ll1[jj] = []
 
         if _bad == 'psfmag':  # do not consider standard field as bad psfmag files
-            ww = asarray([i for i in range(len(ll1['objname'])) if (
+            ww = np.array([i for i in range(len(ll1['objname'])) if (
             (ll1['objname'][i]) not in ['L104', 'L105', 'L95', 'L92', 'L106', 'L113', 'L101', 'L107', 'L110', 'MarkA',
                                         's82_00420020', 's82_01030111', 'Ru152'])])
             if len(ww) > 0:
-                for jj in ll1.keys(): ll1[jj] = array(ll1[jj])[ww]
+                for jj in ll1.keys(): ll1[jj] = np.array(ll1[jj])[ww]
             else:
                 for jj in ll1.keys(): ll1[jj] = []
             #          if _bad in ['goodcat']:
             #          else:
-            #               ww=asarray([i for i in range(len(ll1[_bad])) if ((ll1['quality'][i]!=1))])
+            #               ww=np.array([i for i in range(len(ll1[_bad])) if ((ll1['quality'][i]!=1))])
             #          if len(ww)>0:
-            #               for jj in ll1.keys(): ll1[jj]=array(ll1[jj])[ww]
+            #               for jj in ll1.keys(): ll1[jj]=np.array(ll1[jj])[ww]
             #          else:  
             #               for jj in ll1.keys(): ll1[jj]=[]
 
@@ -878,18 +828,13 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
 
 #########################################################################
 def run_local(imglist, _field, _interactive=False, database='photlco'):
-    import lsc
-
-    direc = lsc.__path__[0]
-    import os, string, glob  #MySQLdb,
-
     ff = open('_tmpcat.list', 'w')
     for img in imglist:
-        ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+        ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
         if ggg:
             _dir = ggg[0]['filepath']
             if ggg[0]['abscat'] != 'X':
-                ff.write(_dir + re.sub('.fits', '.cat', img) + '\n')
+                ff.write(_dir + img.replace('.fits', '.cat') + '\n')
     ff.close()
     if _interactive:
         ii = ' -i '
@@ -906,11 +851,6 @@ def run_local(imglist, _field, _interactive=False, database='photlco'):
 
 ##########################################################################
 def position(imglist, ra1, dec1, show=False):
-    import lsc
-    from pyraf import iraf
-    from astropy.io import fits
-    from numpy import array, zeros, median, argmin, cos, abs, pi, mean
-
     iraf.imcoords(_doprint=0)
     ra, dec = [], []
     if not ra1 and not dec1:
@@ -925,8 +865,8 @@ def position(imglist, ra1, dec1, show=False):
                 aaa = iraf.wcsctran('STDIN', 'STDOUT', img + '[0]', Stdin=[lll], inwcs='logical', units='degrees degrees',
                                     outwcs='world', columns='1 2', formats='%10.5f %10.5f', Stdout=1)[3]
                 try:
-                    ra.append(float(string.split(aaa)[0]))
-                    dec.append(float(string.split(aaa)[1]))
+                    ra.append(float(aaa.split()[0]))
+                    dec.append(float(aaa.split()[1]))
                 except:
                     pass
     else:
@@ -936,38 +876,36 @@ def position(imglist, ra1, dec1, show=False):
                 for j in dicti[i].keys():
                     ra0 = dicti[i][j]['ra']
                     dec0 = dicti[i][j]['dec']
-                    ra00 = zeros(len(ra0))
-                    dec00 = zeros(len(ra0))
+                    ra00 = np.zeros(len(ra0))
+                    dec00 = np.zeros(len(ra0))
                     for i in range(0, len(ra0)):
                         ra00[i] = float(iraf.real(ra0[i])) * 15
                         dec00[i] = float(iraf.real(dec0[i]))
-                    distvec, pos0, pos1 = lsc.lscastrodef.crossmatch(array([float(ra1)]), array([float(dec1)]),
-                                                                     array(ra00, float), array(dec00, float), 5)
+                    distvec, pos0, pos1 = lsc.lscastrodef.crossmatch(np.array([float(ra1)]), np.array([float(dec1)]),
+                                                                     np.array(ra00, float), np.array(dec00, float), 5)
                     if len(pos1) >= 1:
-                        ra.append(ra00[pos1[argmin(distvec)]])
-                        dec.append(dec00[pos1[argmin(distvec)]])
-                        print i, j, ra00[pos1[argmin(distvec)]], dec00[pos1[argmin(distvec)]]
-                    #                        iraf.display(re.sub('.sn2.','.',j),1,fill=True,Stdout=1)
-                    #                        lll=str(ra00[pos1[argmin(distvec)]])+' '+str(dec00[pos1[argmin(distvec)]])
+                        ra.append(ra00[pos1[np.argmin(distvec)]])
+                        dec.append(dec00[pos1[np.argmin(distvec)]])
+                        print i, j, ra00[pos1[np.argmin(distvec)]], dec00[pos1[np.argmin(distvec)]]
+                    #                        iraf.display(j.replace('.sn2.fits','.fits'),1,fill=True,Stdout=1)
+                    #                        lll=str(ra00[pos1[np.argmin(distvec)]])+' '+str(dec00[pos1[np.argmin(distvec)]])
                     #                        aaa=iraf.wcsctran('STDIN','STDOUT',j,Stdin=[lll],inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.5f %10.5f',Stdout=1)[3]
                     #                        iraf.tvmark(1,'STDIN',Stdin=list([aaa]),mark="circle",number='yes',label='no',radii=20,nxoffse=5,nyoffse=5,color=205,txsize=2)
                     #                        raw_input('ddd')
     if show:
-        from pylab import ion, plot, xlim, ylim, xlabel, ylabel, getp, setp, legend, gca
-
-        ion()
-        xlabel('ra (arcsec)')
-        ylabel('dec (arcsec)')
-        yticklabels = getp(gca(), 'yticklabels')
-        xticklabels = getp(gca(), 'xticklabels')
-        setp(xticklabels, fontsize='20')
-        setp(yticklabels, fontsize='20')
-        legend(numpoints=1, markerscale=1.5)
-        print median(dec)
-        plot(((ra - median(ra)) * 3600) * cos(median(dec) * pi / 180.), (dec - median(dec)) * 3600, 'or',
+        plt.ion()
+        plt.xlabel('ra (arcsec)')
+        plt.ylabel('dec (arcsec)')
+        yticklabels = plt.getp(plt.gca(), 'yticklabels')
+        xticklabels = plt.getp(plt.gca(), 'xticklabels')
+        plt.setp(xticklabels, fontsize='20')
+        plt.setp(yticklabels, fontsize='20')
+        plt.legend(numpoints=1, markerscale=1.5)
+        print np.median(dec)
+        plt.plot(((ra - np.median(ra)) * 3600) * np.cos(np.median(dec) * np.pi / 180.), (dec - np.median(dec)) * 3600, 'or',
              label='position')
     try:
-        ra, dec = mean(ra), mean(dec)
+        ra, dec = np.mean(ra), np.mean(dec)
     except:
         ra = ''
         dec = ''
@@ -976,14 +914,11 @@ def position(imglist, ra1, dec1, show=False):
 
 #########################################################################
 def checkcat(imglist, database='photlco'):
-    import lsc
-    import os, string  #MySQLdb,
-
     for img in imglist:
         status = checkstage(img, 'checkpsf')
         #print img,status
         if status >= 1:
-            ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), 'filepath, abscat')
             _dir = ggg[0]['filepath']
             print _dir, img
             if os.path.isfile(_dir + re.sub('.fits', '.cat', img)):
@@ -1012,42 +947,35 @@ def checkcat(imglist, database='photlco'):
 
 
 def checkpsf(imglist, database='photlco'):
-    import lsc
-    import os, string  #MySQLdb,
-    import mysqldef
-
-    direc = lsc.__path__[0]
-    from pyraf import iraf
-
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
     for img in imglist:
         status = checkstage(img, 'checkpsf')
         print img, status
         if status >= 1:
-            ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
             iraf.delete('_psf.psf.fits', verify=False)
-            if os.path.isfile(_dir + re.sub('.fits', '.psf.fits', img)):
+            if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
                 print img
-                lsc.util.marksn2(_dir + img, _dir + re.sub('fits', 'sn2.fits', img))
-                iraf.seepsf(_dir + re.sub('.fits', '.psf.fits', img), '_psf.psf')
+                lsc.util.marksn2(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
+                iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
                 iraf.surface('_psf.psf')
                 aa = raw_input('>>>good psf [[y]/n] or [b] bad quality ? ')
                 if not aa: aa = 'y'
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                     print 'updatestatus bad'
-                    mysqldef.updatevalue(database, 'psf', 'X', string.split(img, '/')[-1])
-                    mysqldef.updatevalue(database, 'psfmag', 9999, string.split(img, '/')[-1])
-                    if os.path.isfile(_dir + re.sub('.fits', '.psf.fits', img)):
-                        print 'rm ' + _dir + re.sub('.fits', '.psf.fits', img)
-                        os.system('rm ' + _dir + re.sub('.fits', '.psf.fits', img))
-                    if os.path.isfile(_dir + re.sub('.fits', '.sn2.fits', img)):
-                        print 'rm ' + _dir + re.sub('.fits', '.sn2.fits', img)
-                        os.system('rm ' + _dir + re.sub('.fits', '.sn2.fits', img))
+                    lsc.mysqldef.updatevalue(database, 'psf', 'X', os.path.basename(img))
+                    lsc.mysqldef.updatevalue(database, 'psfmag', 9999, os.path.basename(img))
+                    if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
+                        print 'rm ' + _dir + img.replace('.fits', '.psf.fits')
+                        os.system('rm ' + _dir + img.replace('.fits', '.psf.fits'))
+                    if os.path.isfile(_dir + img.replace('.fits', '.sn2.fits')):
+                        print 'rm ' + _dir + img.replace('.fits', '.sn2.fits')
+                        os.system('rm ' + _dir + img.replace('.fits', '.sn2.fits'))
                     if aa in ['bad', 'b', 'B']:
                         print 'updatestatus bad quality'
-                        mysqldef.updatevalue(database, 'quality', 1, string.split(img, '/')[-1])
+                        lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
         elif status == 0:
             print 'status ' + str(status) + ': WCS stage not done'
         elif status == -1:
@@ -1063,13 +991,6 @@ def checkpsf(imglist, database='photlco'):
 
 
 def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
-    import lsc
-    import os, string  #MySQLdb,
-    import mysqldef  #import updatevalue
-
-    direc = lsc.__path__[0]
-    from pyraf import iraf
-
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
     iraf.set(stdimage='imt1024')
@@ -1078,7 +999,7 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
     for img in imglist:
         status = checkstage(img, 'wcs')
         if status >= 0 or force == False:
-            ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
             _filter = ggg[0]['filter']
             _exptime = ggg[0]['exptime']
@@ -1118,23 +1039,23 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
                 aa = 'y'
             if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                 print 'updatestatus bad'
-                mysqldef.updatevalue(database, 'wcs', 9999, string.split(img, '/')[-1])
-                mysqldef.updatevalue(database, 'psf', 'X', string.split(img, '/')[-1])
-                mysqldef.updatevalue(database, 'psfmag', 9999, string.split(img, '/')[-1])
-                if os.path.isfile(_dir + re.sub('.fits', '.psf.fits', img)):
-                    print 'rm ' + _dir + re.sub('.fits', '.psf.fits', img)
-                    os.system('rm ' + _dir + re.sub('.fits', '.psf.fits', img))
-                if os.path.isfile(_dir + re.sub('.fits', '.sn2.fits', img)):
-                    print 'rm ' + _dir + re.sub('.fits', '.sn2.fits', img)
-                    os.system('rm ' + _dir + re.sub('.fits', '.sn2.fits', img))
+                lsc.mysqldef.updatevalue(database, 'wcs', 9999, os.path.basename(img))
+                lsc.mysqldef.updatevalue(database, 'psf', 'X', os.path.basename(img))
+                lsc.mysqldef.updatevalue(database, 'psfmag', 9999, os.path.basename(img))
+                if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
+                    print 'rm ' + _dir + img.replace('.fits', '.psf.fits')
+                    os.system('rm ' + _dir + img.replace('.fits', '.psf.fits'))
+                if os.path.isfile(_dir + img.replace('.fits', '.sn2.fits')):
+                    print 'rm ' + _dir + img.replace('.fits', '.sn2.fits')
+                    os.system('rm ' + _dir + img.replace('.fits', '.sn2.fits'))
                 if aa in ['bad', 'b', 'B']:
                     print 'updatestatus bad quality'
-                    mysqldef.updatevalue(database, 'quality', 1, string.split(img, '/')[-1])
+                    lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
             elif aa in ['c', 'C', 'cancel']:
                 print 'remove from database'
                 os.system('rm ' + _dir + img)
-                lsc.mysqldef.deleteredufromarchive(string.split(img, '/')[-1], 'photlco', 'filename')
-                lsc.mysqldef.deleteredufromarchive(string.split(img, '/')[-1], 'photpairing', 'nameout')
+                lsc.mysqldef.deleteredufromarchive(os.path.basename(img), 'photlco', 'filename')
+                lsc.mysqldef.deleteredufromarchive(os.path.basename(img), 'photpairing', 'nameout')
             #          elif status==0: print 'status '+str(status)+': WCS stage not done' 
         elif status == -1:
             print 'status ' + str(status) + ': sn2.fits file not found'
@@ -1151,20 +1072,13 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
 #############################################################################
 
 def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, redo=False, _output=''):
-    import lsc
-    import os, string
-    from astropy.io import fits
-    import numpy as np
-    import pylab as plt
-    from astropy.wcs import WCS
-
     for img in imglist:
         _targetid = ''
         status = lsc.checkstage(img, 'wcs')
         if status >= 0:  # or force==False:
             ggg = lsc.mysqldef.getfromdataraw(lsc.conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
-            _output = re.sub('.fits', '.png', _dir + '/' + img)
+            _output = _dir + img.replace('.fits', '.png')
             if os.path.isfile(_output):
                 if redo:
                     os.remove(_output)
@@ -1226,39 +1140,33 @@ def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, re
 
 
 def checkfast(imglist, force=True, database='photlco'):
-    import lsc
-    import os, string  #MySQLdb,
-    #     import  mysqldef #import updatevalue
-    direc = lsc.__path__[0]
-    from pyraf import iraf
-
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
     print force
     for img in imglist:
         status = checkstage(img, 'wcs')
         if status >= 0 or force == False:
-            ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
             iraf.display(_dir + img + '[0]', 1, fill=True, Stdout=1)
             ###########################################
             aa = raw_input('>>>good or bad quality [[g]/b]? ')
             if not aa: aa = 'g'
             if aa in ['bad', 'b', 'B']:
-                lsc.mysqldef.updatevalue(database, 'wcs', 9999, string.split(img, '/')[-1])
-                lsc.mysqldef.updatevalue(database, 'psf', 'X', string.split(img, '/')[-1])
-                lsc.mysqldef.updatevalue(database, 'psfmag', 9999, string.split(img, '/')[-1])
-                if os.path.isfile(_dir + re.sub('.fits', '.psf.fits', img)):
-                    print 'rm ' + _dir + re.sub('.fits', '.psf.fits', img)
-                    os.system('rm ' + _dir + re.sub('.fits', '.psf.fits', img))
-                if os.path.isfile(_dir + re.sub('.fits', '.sn2.fits', img)):
-                    print 'rm ' + _dir + re.sub('.fits', '.sn2.fits', img)
-                    os.system('rm ' + _dir + re.sub('.fits', '.sn2.fits', img))
+                lsc.mysqldef.updatevalue(database, 'wcs', 9999, os.path.basename(img))
+                lsc.mysqldef.updatevalue(database, 'psf', 'X', os.path.basename(img))
+                lsc.mysqldef.updatevalue(database, 'psfmag', 9999, os.path.basename(img))
+                if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
+                    print 'rm ' + _dir + img.replace('.fits', '.psf.fits')
+                    os.system('rm ' + _dir + img.replace('.fits', '.psf.fits'))
+                if os.path.isfile(_dir + img.replace('.fits', '.sn2.fits')):
+                    print 'rm ' + _dir + img.replace('.fits', '.sn2.fits')
+                    os.system('rm ' + _dir + img.replace('.fits', '.sn2.fits'))
                 print 'updatestatus bad quality'
-                lsc.mysqldef.updatevalue(database, 'quality', 1, string.split(img, '/')[-1])
+                lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
             else:
                 print 'updatestatus quality good'
-                lsc.mysqldef.updatevalue(database, 'quality', 127, string.split(img, '/')[-1])
+                lsc.mysqldef.updatevalue(database, 'quality', 127, os.path.basename(img))
             #          elif status==0: print 'status '+str(status)+': WCS stage not done' 
         elif status == -1:
             print 'status ' + str(status) + ': sn2.fits file not found'
@@ -1271,8 +1179,6 @@ def checkfast(imglist, force=True, database='photlco'):
 
     ##################################################################
 def checkcosmic(imglist, database='photlco'):
-    import lsc, os
-    from pyraf import iraf
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
     for img in imglist:
@@ -1315,8 +1221,6 @@ def checkcosmic(imglist, database='photlco'):
             print 'status ' + str(status) + ': unknown status'
 
 def checkdiff(imglist, database='photlco'):
-    import lsc, os
-    from pyraf import iraf
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
     iraf.set(stdimage='imt1024')
@@ -1326,7 +1230,7 @@ def checkdiff(imglist, database='photlco'):
             photlcodict = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
             _dir = photlcodict[0]['filepath']
             diffimg = _dir + img
-            origimg = re.sub('\..*diff', '', diffimg)
+            origimg = diffimg.split('.')[0] + '.' + diffimg.split('.')[-1]
             tempimg = diffimg.replace('diff', 'ref')
             if os.path.isfile(diffimg) and os.path.isfile(origimg) and os.path.isfile(tempimg):
                 print img, photlcodict[0]['filter']
@@ -1412,17 +1316,14 @@ def checkmag(imglist, datamax=None):
 
 
 def checkpos(imglist, _ra, _dec, database='photlco'):
-    import lsc
-    import os, string  #,MySQLdb
-    #     import  mysqldef #import updatevalue
     imglist2 = []
     for img in imglist:
         status = checkstage(img, 'checkmag')
         if status >= 1:
-            ggg = mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
-            if os.path.isfile(_dir + re.sub('fits', 'sn2.fits', img)):  imglist2.append(
-                _dir + re.sub('fits', 'sn2.fits', img))
+            if os.path.isfile(_dir + img.replace('.fits', '.sn2.fits')):  imglist2.append(
+                _dir + img.replace('.fits', '.sn2.fits'))
     print imglist2, _ra, _dec
     ra, dec = lsc.myloopdef.position(imglist2, _ra, _dec, show=True)
     print '######## mean ra and dec position  ############'
@@ -1432,12 +1333,6 @@ def checkpos(imglist, _ra, _dec, database='photlco'):
 
 
 def checkquality(imglist, database='photlco'):
-    import lsc
-    import os, string  #MySQLdb
-    #     import  mysqldef #import updatevalue
-    direc = lsc.__path__[0]
-    from pyraf import iraf
-
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
     iraf.set(stdimage='imt1024')
@@ -1457,55 +1352,48 @@ def checkquality(imglist, database='photlco'):
                         print 'status bad'
                     else:
                         print 'updatestatus good'
-                        lsc.mysqldef.updatevalue(database, 'quality', 127, string.split(img, '/')[-1])
-                        #updatevalue('photlco','psfmag',9999,string.split(img,'/')[-1])
-                        #if os.path.isfile(_dir+re.sub('.fits','.psf.fits',img)):
-                        #print 'rm '+_dir+re.sub('.fits','.psf.fits',img)
-                        #os.system('rm '+_dir+re.sub('.fits','.psf.fits',img))
-                        #if os.path.isfile(_dir+re.sub('.fits','.sn2.fits',img)):
-                        #print 'rm '+_dir+re.sub('.fits','.sn2.fits',img)
-                        #os.system('rm '+_dir+re.sub('.fits','.sn2.fits',img))
+                        lsc.mysqldef.updatevalue(database, 'quality', 127, os.path.basename(img))
+                        #lsc.mysqldef.updatevalue('photlco','psfmag',9999,os.path.basename(img))
+                        #if os.path.isfile(_dir+img.replace('.fits', '.psf.fits')):
+                        #print 'rm '+_dir+img.replace('.fits', '.psf.fits')
+                        #os.system('rm '+_dir+img.replace('.fits', '.psf.fits'))
+                        #if os.path.isfile(_dir+img.replace('.fits', '.sn2.fits')):
+                        #print 'rm '+_dir+img.replace('.fits', '.sn2.fits')
+                        #os.system('rm '+_dir+img.replace('.fits', '.sn2.fits'))
                         #else: print 'status: quality good '
 
 
 ##################################################################
 
 def onkeypress2(event):
-    import matplotlib.pyplot as plt
-    from numpy import argmin, sqrt, mean, array, std, median
-    import lsc, os, re
-
     global idd, _mjd, _mag, _setup, _filename, shift, _database
     xdata, ydata = event.xdata, event.ydata
-    dist = sqrt((xdata - _mjd) ** 2 + (ydata - _mag) ** 2)
-    ii = argmin(dist)
+    dist = np.sqrt((xdata - _mjd) ** 2 + (ydata - _mag) ** 2)
+    ii = np.argmin(dist)
     if ii in idd: idd.remove(ii)
     print _filename[ii]
     print _mag[ii]
-    import os, string  #, MySQLdb,
-    #    import  mysqldef #import updatevalue,getvaluefromarchive
-    _dir = mysqldef.getvaluefromarchive(_database, 'filename', _filename[ii], 'filepath')
+    _dir = lsc.mysqldef.getvaluefromarchive(_database, 'filename', _filename[ii], 'filepath')
     if 'filepath' in _dir[0]:
         _dir = _dir[0]['filepath']
     else:
         _dir = ''
     if _dir:
-        if os.path.isfile(_dir + re.sub('.fits', '.og.fits', _filename[ii])) and os.path.isfile(
-                        _dir + re.sub('.fits', '.rs.fits', _filename[ii])):
-            from pyraf import iraf
+        if os.path.isfile(_dir + _filename[ii].replace('.fits', '.og.fits')) and os.path.isfile(
+                        _dir + _filename[ii].replace('.fits', '.rs.fits')):
 
             iraf.digiphot(_doprint=0)
             iraf.daophot(_doprint=0)
-            iraf.display(_dir + re.sub('.fits', '.og.fits', _filename[ii]), 1, fill=True, Stdout=1)
-            iraf.display(_dir + re.sub('.fits', '.rs.fits', _filename[ii]), 2, fill=True, Stdout=1)
+            iraf.display(_dir + _filename[ii].replace('.fits', '.og.fits'), 1, fill=True, Stdout=1)
+            iraf.display(_dir + _filename[ii].replace('.fits', '.rs.fits'), 2, fill=True, Stdout=1)
     if event.key in ['d']:
         lsc.mysqldef.updatevalue(_database, 'mag', 9999, _filename[ii])
         lsc.mysqldef.updatevalue(_database, 'psfmag', 9999, _filename[ii])
         lsc.mysqldef.updatevalue(_database, 'apmag', 9999, _filename[ii])
         if _dir:
-            lsc.util.updateheader(_dir + re.sub('.fits', '.sn2.fits', _filename[ii]), 0,
+            lsc.util.updateheader(_dir + _filename[ii].replace('.fits', '.sn2.fits'), 0,
                                   {'PSFMAG1': [9999, 'psf magnitude']})
-            lsc.util.updateheader(_dir + re.sub('.fits', '.sn2.fits', _filename[ii]), 0,
+            lsc.util.updateheader(_dir + _filename[ii].replace('.fits', '.sn2.fits'), 0,
                                   {'APMAG1': [9999, 'ap magnitude']})
     elif event.key in ['u']:
         lsc.mysqldef.updatevalue(_database, 'magtype', -1, _filename[ii])
@@ -1532,9 +1420,9 @@ def onkeypress2(event):
         for _fil in _setup[_tel]:
             shift = _shift[_fil]
             col = _color[_fil]
-            plt.plot(array(_setup[_tel][_fil]['mjd']), array(_setup[_tel][_fil]['mag']) + shift, _symbol[ii], color=col,
+            plt.plot(np.array(_setup[_tel][_fil]['mjd']), np.array(_setup[_tel][_fil]['mag']) + shift, _symbol[ii], color=col,
                      markersize=10)
-            mag = list(mag) + list(array(_setup[_tel][_fil]['mag']) + shift)
+            mag = list(mag) + list(np.array(_setup[_tel][_fil]['mag']) + shift)
             mjd = list(mjd) + list(_setup[_tel][_fil]['mjd'])
             ii = ii + 1
 
@@ -1542,8 +1430,8 @@ def onkeypress2(event):
     plt.ylabel('magnitude')
     _mag = mag[:]
     _mjd = mjd[:]
-    _mjd = array(_mjd)
-    _mag = array(_mag)
+    _mjd = np.array(_mjd)
+    _mag = np.array(_mag)
     idd = range(len(_mjd))
 
     yticklabels = plt.getp(plt.gca(), 'yticklabels')
@@ -1559,9 +1447,6 @@ def onkeypress2(event):
     plt.plot(_mjd[nonincl], _mag[nonincl], 'ow')
 
 ##################################################################
-
-import matplotlib.pyplot as plt
-import numpy as np
 
 class PickablePlot():
     def __init__(self, x, y, mainmenu='', selectedmenu='', hooks={}):
@@ -1580,7 +1465,8 @@ class PickablePlot():
         axlims = None
         while True:
             fig.clf()
-            hooks['plot']()
+            if 'plot' in hooks:
+                hooks['plot']()
             plt.plot(self.x, self.y, 'k,', picker=5)
             plt.plot(self.xdel, self.ydel, 'kx', ms=10)
             if axlims is not None:
@@ -1642,10 +1528,9 @@ def plotfast2(setup):
         plt.legend(loc='best', fontsize='small', numpoints=1)
 
     def click_hook(i):
-        from pyraf import iraf
         print filenames[i], 'selected'
         print 'mjd = {:.2f}\tmag = {:.2f} ({:+d} shift on plot)'.format(mjds[i], mags[i], shifts[i])
-        dbrow = mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, mjd, mag')[0]
+        dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, mjd, mag')[0]
         print 'mjd = {:.2f}\tmag = {:.2f} (from database)'.format(dbrow['mjd'], dbrow['mag'])
         plt.figure(2)
         display_psf_fit(filenames[i])
@@ -1654,7 +1539,7 @@ def plotfast2(setup):
         lsc.mysqldef.updatevalue('photlco', 'mag', 9999, filenames[i])
         lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, filenames[i])
         lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, filenames[i])
-        _dir = mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath')[0]['filepath']
+        _dir = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath')[0]['filepath']
         if _dir:
             lsc.util.updateheader(_dir + filenames[i].replace('.fits', '.sn2.fits'), 0,
                                   {'PSFMAG1': [9999, 'psf magnitude'], 'APMAG1': [9999, 'ap magnitude']})
@@ -1675,9 +1560,6 @@ def plotfast2(setup):
 
 ##############################################################################
 def plotfast(setup, output='', database='photlco'):  #,band,color,fissa=''):
-    import matplotlib.pyplot as plt
-    from numpy import argmin, sqrt, mean, array, std, median, compress
-
     global idd, _mjd, _mag, _setup, _filename, shift, _database  #,testo,lines,pol,sss,f,fixcol,sigmaa,sigmab,aa,bb
     if not output:   
         plt.ion()
@@ -1701,18 +1583,18 @@ def plotfast(setup, output='', database='photlco'):  #,band,color,fissa=''):
             shift = _shift[_fil]
             col = _color[_fil]
             print _tel, _fil
-            jj = array(_setup[_tel][_fil][
-                'mjd'])  #compress(array(_setup[_tel][_fil]['magtype'])>=1,array(_setup[_tel][_fil]['jd']))
-            mm = array(_setup[_tel][_fil][
-                'mag'])  #compress(array(_setup[_tel][_fil]['magtype'])>=1,array(_setup[_tel][_fil]['mag']))
+            jj = np.array(_setup[_tel][_fil][
+                'mjd'])  #np.compress(np.array(_setup[_tel][_fil]['magtype'])>=1,np.array(_setup[_tel][_fil]['jd']))
+            mm = np.array(_setup[_tel][_fil][
+                'mag'])  #np.compress(np.array(_setup[_tel][_fil]['magtype'])>=1,np.array(_setup[_tel][_fil]['mag']))
             plt.plot(jj, mm + shift, _symbol[ii], color=col, label=_tel + ' ' + _fil + ' ' + str(shift), markersize=10)
 
-            jj1 = compress(array(_setup[_tel][_fil]['magtype']) < 0, array(_setup[_tel][_fil]['mjd']))
-            mm1 = compress(array(_setup[_tel][_fil]['magtype']) < 0, array(_setup[_tel][_fil]['mag']))
+            jj1 = np.compress(np.array(_setup[_tel][_fil]['magtype']) < 0, np.array(_setup[_tel][_fil]['mjd']))
+            mm1 = np.compress(np.array(_setup[_tel][_fil]['magtype']) < 0, np.array(_setup[_tel][_fil]['mag']))
             if len(mm1) > 0:
                 plt.errorbar(jj1, mm1, mm1 / 100, lolims=True, fmt=None, ecolor='k')
 
-            mag = list(mag) + list(array(_setup[_tel][_fil]['mag']) + _shift[_fil])
+            mag = list(mag) + list(np.array(_setup[_tel][_fil]['mag']) + _shift[_fil])
             mjd = list(mjd) + list(_setup[_tel][_fil]['mjd'])
             filename = list(filename) + list(_setup[_tel][_fil]['filename'])
             ii = ii + 1
@@ -1733,8 +1615,8 @@ def plotfast(setup, output='', database='photlco'):  #,band,color,fissa=''):
     _mag = mag[:]
     _mjd = mjd[:]
     _filename = filename[:]
-    _mjd = array(_mjd)
-    _mag = array(_mag)
+    _mjd = np.array(_mjd)
+    _mag = np.array(_mag)
     idd = range(len(_mjd))
     plt.plot(_mjd, _mag, 'ok', markersize=1)
     kid = fig.canvas.mpl_connect('key_press_event', onkeypress2)
@@ -1751,8 +1633,6 @@ def plotfast(setup, output='', database='photlco'):  #,band,color,fissa=''):
 ################################################################
 
 def subset(xx, _avg=''):  # lista  mjd
-    from numpy import array
-
     diff = [xx[i + 1] - xx[i] for i in range(len(xx) - 1)]
     if _avg:
         avg = float(_avg)
@@ -1795,20 +1675,11 @@ def chosecolor(allfilter, usegood=False, _field=''):
 ###########################################################################
 def get_list(epoch, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
              filetype=1):
-    from numpy import argsort, take
-    import string, re, sys
-    import lsc
-    #     from lsc.mysqldef import getlistfromraw
-    import datetime
-
     if '-' not in str(epoch):
-        epoch0 = re.sub('-', '', str(datetime.date(int(epoch[0:4]), int(epoch[4:6]), int(epoch[6:8]))))
-        lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, database, 'dayobs', str(epoch0), '', '*', _telescope)
+        lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epoch0, '', '*', _telescope)
     else:
-        epoch1, epoch2 = string.split(epoch, '-')
-        start = re.sub('-', '', str(datetime.date(int(epoch1[0:4]), int(epoch1[4:6]), int(epoch1[6:8]))))
-        stop = re.sub('-', '', str(datetime.date(int(epoch2[0:4]), int(epoch2[4:6]), int(epoch2[6:8]))))
-        lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, database, 'dayobs', str(start), str(stop), '*',
+        epoch1, epoch2 = epoch.split('-')
+        lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epoch1, epoch2, '*',
                                             _telescope)
     if lista:
         ll0 = {}
@@ -1816,16 +1687,16 @@ def get_list(epoch, _telescope='all', _filter='', _bad='', _name='', _id='', _ra
         for i in range(0, len(lista)):
             for jj in lista[0].keys(): ll0[jj].append(lista[i][jj])
 
-        inds = argsort(ll0['mjd'])  #  sort by mjd
+        inds = np.argsort(ll0['mjd'])  #  sort by mjd
         for i in ll0.keys():
-            ll0[i] = take(ll0[i], inds)
+            ll0[i] = np.take(ll0[i], inds)
 
         ll0['ra'] = []
         ll0['dec'] = []
         if 'ra0' not in ll0.keys():
             for i in ll0['filename']:
                 print i
-                ggg = lsc.mysqldef.getfromdataraw(lsc.myloopdef.conn, 'photlcoraw', 'filename', i, '*')
+                ggg = lsc.mysqldef.getfromdataraw(conn, 'photlcoraw', 'filename', i, '*')
                 ll0['ra'].append(ggg[0]['ra0'])
                 ll0['dec'].append(ggg[0]['dec0'])
         else:
@@ -1840,16 +1711,10 @@ def get_list(epoch, _telescope='all', _filter='', _bad='', _name='', _id='', _ra
 ######
 
 def check_missing(lista, database='photlco'):
-    import mysqldef  #import getlistfromraw,getfromdataraw
-    from numpy import argsort, take
-    import string, re, sys, os
-    import lsc
-    import datetime
-
     if len(lista) > 0:
         for i in lista:
-            xx = mysqldef.getfromdataraw(lsc.myloopdef.conn, 'photlcoraw', 'filename', str(i), column2='filepath')
-            yy = mysqldef.getfromdataraw(lsc.myloopdef.conn, database, 'filename', str(i), column2='filepath')
+            xx = lsc.mysqldef.getfromdataraw(conn, 'photlcoraw', 'filename', str(i), column2='filepath')
+            yy = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(i), column2='filepath')
             xx, yy = xx[0]['filepath'], yy[0]['filepath']
             if not os.path.isfile(yy + i):
                 os.system('cp ' + xx + i + ' ' + yy + i)
@@ -1857,14 +1722,10 @@ def check_missing(lista, database='photlco'):
 
 
 def checkfilevsdatabase(lista, database='photlco'):
-    #     import  mysqldef #import getlistfromraw,getfromdataraw
-    import lsc
-    import os, string, re, sys
-
     if lista:
         if len(lista['filename']) > 0:
             for i in range(0, len(lista['filename'])):
-                imgsn = re.sub('.fits', '.sn2.fits', lista['filepath'][i] + lista['filename'][i])
+                imgsn = lista['filepath'][i] + lista['filename'].replace('.fits', '.sn2.fits')
                 if os.path.isfile(imgsn):
                     hdr1 = lsc.util.readhdr(imgsn)
                     _filter = lsc.util.readkey3(hdr1, 'filter')
@@ -1920,21 +1781,14 @@ def checkfilevsdatabase(lista, database='photlco'):
 
 #########################################################################################
 def run_merge(imglist, _redu=False):
-    import lsc
-
-    direc = lsc.__path__[0]
-    from numpy import where, array
-    import mysqldef
-    import os, string, glob  #, MySQLdb,
-
     status = []
     stat = 'psf'
     for img in imglist:
-        status.append(checkstage(string.split(img, '/')[-1], stat))
+        status.append(checkstage(os.path.basename(img), stat))
     print imglist
     print status
-    imglist = imglist[where(array(status) > 0)]
-    status = array(status)[where(array(status) > 0)]
+    imglist = imglist[np.where(np.array(status) > 0)]
+    status = np.array(status)[np.where(np.array(status) > 0)]
 
     f = open('_tmp.list', 'w')
     for jj in range(0, len(imglist)):
@@ -1968,19 +1822,12 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
 
 #####################################################################
 def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype='0', suffix='.diff.fits'):
-    import lsc
-
-    direc = lsc.__path__[0]
-    from numpy import where, array
-    import mysqldef
-    import os, string, glob
-
     status = []
     stat = 'psf'
     for img in listtar:
-        status.append(checkstage(string.split(img, '/')[-1], stat))
-    listtar = listtar[where(array(status) > 0)]
-    status = array(status)[where(array(status) > 0)]
+        status.append(checkstage(os.path.basename(img), stat))
+    listtar = listtar[np.where(np.array(status) > 0)]
+    status = np.array(status)[np.where(np.array(status) > 0)]
 
     f = open('_tar.list', 'w')
     for jj in range(0, len(listtar)):
@@ -2019,18 +1866,11 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
 ######################################################################3
 
 def run_template(listtemp, show=False, _force=False, _interactive=False, _ra=None, _dec=None, _psf=None, _mag=0, _clean=True, _subtract_mag_from_header=False):
-    import lsc
-
-    direc = lsc.__path__[0]
-    from numpy import where, array
-    import mysqldef
-    import os, string, glob
-
     status = []
     stat = 'psf'
-    for img in listtemp:  status.append(checkstage(string.split(img, '/')[-1], stat))
-    listtemp = listtemp[where(array(status) > 0)]
-    status = array(status)[where(array(status) > 0)]
+    for img in listtemp:  status.append(checkstage(os.path.basename(img), stat))
+    listtemp = listtemp[np.where(np.array(status) > 0)]
+    status = np.array(status)[np.where(np.array(status) > 0)]
 
     f = open('_temp.list', 'w')
     for jj in range(0, len(listtemp)):
@@ -2066,7 +1906,6 @@ def getsky(data):
 
   data -- array holding the image data
   """
-    from numpy import random
     # maximum number of interations for mean,std loop
     maxiter = 30
 
@@ -2083,8 +1922,8 @@ def getsky(data):
         nsample = data.size
 
     # create sample indicies
-    xs = random.uniform(low=0, high=nx, size=nsample).astype('L')
-    ys = random.uniform(low=0, high=ny, size=nsample).astype('L')
+    xs = np.random.uniform(low=0, high=nx, size=nsample).astype('L')
+    ys = np.random.uniform(low=0, high=ny, size=nsample).astype('L')
 
     # sample the data
     sample = data[ys, xs].copy()
@@ -2111,9 +1950,6 @@ def getsky(data):
 ###################################################################
 
 def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=4, _force=False):
-    import lsc
-    direc = lsc.__path__[0]
-    import os, string, glob
 ########  SV 20161129  add multiprocess
     for ggg in imglist:
             _dir,img = os.path.split(ggg)
@@ -2121,12 +1957,12 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
                 _dir = _dir+'/'
             print _dir + img
             if os.path.isfile(_dir + img):
-                if os.path.isfile(_dir + re.sub('.fits', '.var.fits', img)):
+                if os.path.isfile(_dir + img.replace('.fits', '.var.fits')):
                     print 'variance image found'
-                    os.system('cp '+_dir + img+' '+_dir + re.sub('.fits', '.clean.fits',img))
+                    os.system('cp '+_dir + img+' '+_dir + img.replace('.fits', '.clean.fits'))
                     ar, hd = fits.getdata(_dir + img, header=True)
                     out_fits = fits.PrimaryHDU(header=hd,data=(ar-ar).astype('uint8'))
-                    out_fits.writeto(re.sub('.fits', '.mask.fits', _dir + img), overwrite=True, output_verify='fix')
+                    out_fits.writeto(_dir + img.replace('.fits', '.mask.fits'), overwrite=True, output_verify='fix')
                 else:
                     if not os.path.isfile(_dir + img.replace('.fits', '.clean.fits')) or not os.path.isfile(_dir + img.replace('.fits', '.mask.fits')) or _force:
                         output, mask, satu = lsc.util.Docosmic(_dir + img, _sigclip, _sigfrac, _objlim)
@@ -2145,16 +1981,11 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
 ###################################################################
 
 def run_apmag(imglist, database='photlco'):
-    import lsc
-
-    direc = lsc.__path__[0]
-    import os, string, glob
-
     for img in imglist:
         ggg = lsc.mysqldef.getfromdataraw(lsc.conn, database, 'filename', str(img), '*')
         if ggg:
             _dir = ggg[0]['filepath']
-            img1 = re.sub('.fits', '.sn2.fits', img)
+            img1 = img.replace('.fits', '.sn2.fits')
             print _dir + img1
             if os.path.isfile(_dir + img1):
                 command = 'lscnewcalib.py ' + _dir + img1

@@ -70,28 +70,6 @@ coomandsn = {'LSQ12fxd': '-c -x 3 -y 3 --bkg 3 --size 6',
              'SN 2016bkv': '-c -x 3 -y 3 --RAS 154.58051,154.58255 --DECS 41.427596,41.42898 --RA0 154.58144 --DEC0 41.428297',
 }
 
-# ##########################################################
-
-def zerostandard(standard, epoch, field, telescope):
-    import os, glob
-    import lsc
-
-    catalogue = glob.glob(lsc.__path__[0] + '/' + 'standard/cat/' + field + '/' + standard + '*')
-    try:
-        if len(catalogue) >= 1:
-            aa = re.sub(lsc.__path__[0] + '/' + 'standard/cat/', '', catalogue[0])
-            print '\nlscloop.py --type ph -b zcat -F -e ' + epoch + ' -n ' + standard + ' -f ' + field + \
-                  ' -s zcat --catalogue ' + aa + ' --cutmag -6 -T ' + telescope
-            os.system('lscloop.py --type ph -b zcat -F -e ' + epoch + ' -n ' + standard + ' -f ' + field +
-                      ' -s zcat --catalogue ' + aa + ' --cutmag -6 -T ' + telescope)
-        else:
-            print '\nlscloop.py --type ph -b zcat -F -e ' + epoch + ' -n ' + standard + ' -f ' + field + \
-                  ' -s zcat --cutmag -6 -T ' + telescope
-            os.system('lscloop.py --type ph -b zcat -F -e ' + epoch + ' -n ' + standard + ' -f ' + field +
-                      ' -s zcat --cutmag -6 -T ' + telescope)
-    except:
-        print 'problem with zeropoint'
-
 ###########################################################
 if __name__ == "__main__":
     parser = OptionParser(usage=usage, description=description, version="%prog lsc")
@@ -247,18 +225,27 @@ if __name__ == "__main__":
         if field == 'sloan':
             listacampi = standard + sloancal
         for _standard in listacampi:
-            zerostandard(_standard, epoch, field, _telescope)
+            cmd = 'lscloop.py --type ph -b zcat -F -e ' + epoch + ' -n ' + _standard + ' -f ' + field + \
+                  ' -s zcat --cutmag -6 -T ' + _telescope
+            print cmd
+            os.system(cmd)
 
     #    compute zeropoint for apass field not in landolt or sloan
     for field in fil:
         if field == 'landolt':
             for _name in apasscal:
                 if _name not in landoltcal:
-                    zerostandard(_name, epoch, 'apass', _telescope)
+                    cmd = 'lscloop.py --type ph -b zcat -F -e ' + epoch + ' -n ' + _name + ' -f apass' + \
+                          ' -s zcat --cutmag -6 -T ' + _telescope
+                    print cmd
+                    os.system(cmd)
         if field == 'sloan':
             for _name in apasscal:
                 if _name not in sloancal:
-                    zerostandard(_name, epoch, 'apass', _telescope)
+                    cmd = 'lscloop.py --type ph -b zcat -F -e ' + epoch + ' -n ' + _name + ' -f apass' + \
+                          ' -s zcat --cutmag -6 -T ' + _telescope
+                    print cmd
+                    os.system(cmd)
 
     #               compute catalogues for SN fields
     for field in fil:

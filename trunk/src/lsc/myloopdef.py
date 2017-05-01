@@ -3,7 +3,11 @@ import lsc
 import numpy as np
 import matplotlib.pyplot as plt
 from pyraf import iraf
+import astropy.units as u
 from astropy.io import fits
+from astropy.wcs import WCS
+from astropy.table import Table
+from astropy.coordinates import SkyCoord
 
 def weighted_avg_and_std(values, weights):
     """
@@ -914,6 +918,8 @@ def position(imglist, ra1, dec1, show=False):
 
 #########################################################################
 def checkcat(imglist, database='photlco'):
+    plt.ion()
+    plt.figure(figsize=(6, 6))
     for img in imglist:
         status = checkstage(img, 'checkpsf')
         #print img,status
@@ -921,19 +927,36 @@ def checkcat(imglist, database='photlco'):
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), 'filepath, abscat')
             _dir = ggg[0]['filepath']
             print _dir, img
-            if os.path.isfile(_dir + re.sub('.fits', '.cat', img)):
-                aa = raw_input('>>>good catalogue [[y]/n] or [b] bad quality ? ')
-                if not aa: aa = 'y'
+            catfile = _dir + img.replace('.fits', '.cat')
+            if os.path.isfile(catfile):
+                with open(catfile) as f:
+                    lines = f.readlines()
+                print len(lines) - 2, 'stars in catalog'
+                if len(lines) > 2:
+                    data, hdr = fits.getdata(_dir + img, header=True)
+                    vmin = np.percentile(data, 0.1)
+                    vmax = np.percentile(data, 99.9)
+                    plt.clf()
+                    plt.imshow(data, vmin=vmin, vmax=vmax)
+                    plt.tight_layout()
+                    wcs = WCS(hdr)
+                    cat = Table.read(catfile, format='ascii.commented_header', header_start=1, delimiter='\s')
+                    coords = SkyCoord(cat['ra'], cat['dec'], unit=(u.hourangle, u.deg))
+                    i, j = wcs.wcs_world2pix(coords.ra, coords.dec, 0)
+                    plt.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
+                    aa = raw_input('>>>good catalogue [[y]/n] or [b] bad quality ? ')
+                    if not aa: aa = 'y'
+                else: # automatically delete the file if is is only a header
+                    aa = 'n'
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                     print 'updatestatus bad catalogue'
-                    lsc.mysqldef.updatevalue(database, 'abscat', 'X', string.split(img, '/')[-1])
-                    lsc.util.delete(_dir + re.sub('.fits', '.cat', img))
-                    if aa in ['bad', 'b', 'B']:
-                        print 'updatestatus bad quality'
-                        lsc.mysqldef.updatevalue(database, 'quality', 1, string.split(img, '/')[-1])
-                        lsc.util.delete(_dir + re.sub('.fits', '.cat', img))
-            else:
-                lsc.mysqldef.updatevalue(database, 'abscat', 'X', string.split(img, '/')[-1])
+                    lsc.mysqldef.updatevalue(database, 'abscat', 'X', os.path.basename(img))
+                    lsc.util.delete(_dir + img.replace('.fits', '.cat'))
+                if aa in ['bad', 'b', 'B']:
+                    print 'updatestatus bad quality'
+                    lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
+            elif ggg[0]['abscat'] != 'X':
+                lsc.mysqldef.updatevalue(database, 'abscat', 'X', os.path.basename(img))
         elif status == 0:
             print 'status ' + str(status) + ': WCS stage not done'
         elif status == -1:

@@ -833,7 +833,6 @@ def targimg(img='', hdrt=None):
     from lsc.mysqldef import getfromcoordinate
     from lsc import conn
     import string
-    proposalgroup = lsc.util.proposalgroup
     _targetid=''
     _group=''
     if hdrt is None:

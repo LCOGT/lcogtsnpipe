@@ -35,8 +35,6 @@ skipobjects = readpass['skipobjects']
 proposalingestion = readpass['proposalingestion']
 #############################################################################################
 
-proposalgroup = {}
-proposalgroup['CON2014B-005'] = 5
 # no longer up to date (only used for old ingestion)
 instrument0={'sbig':['kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79'],\
              'sinistro':['fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10'],\

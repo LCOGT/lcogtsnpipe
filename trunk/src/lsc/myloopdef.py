@@ -163,7 +163,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     if _output:
         ff.close()
 
-def run_cat(imglist, extlist, _interactive=False, mode=1, _type='fit', _fix=False, database='photlco', _field='slaon'):
+def run_cat(imglist, extlist, _interactive=False, mode=1, _type='fit', _fix=False, database='photlco'):
     status = []
     if mode == 1:
         _mode = 'lsccatalogue.py'
@@ -202,17 +202,11 @@ def run_cat(imglist, extlist, _interactive=False, mode=1, _type='fit', _fix=Fals
     else:
         ff = ''
     tt = ' -t ' + _type + ' '
-    if _field:
-        ss = ' -s ' + _field
-    else:
-        ss = ''
-    # catalogue doesn't want to specify the system (sloan.landolt,apass)
-    if mode == 1: ss = ''
 
     if len(extlist) > 0:
-        command = _mode + ' _tmp.list -e _tmpext.list ' + ii + tt + ff + ss
+        command = _mode + ' _tmp.list -e _tmpext.list ' + ii + tt + ff
     else:
-        command = _mode + ' _tmp.list ' + ii + tt + ff + ss
+        command = _mode + ' _tmp.list ' + ii + tt + ff
     print command
     os.system(command)
 
@@ -321,7 +315,7 @@ def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=Fal
             print 'status ' + str(status) + ': unknown status'
 
 
-def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, xwindow='',\
+def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False,
             fix=True, catalog='', database='photlco', use_sextractor=False, datamax=None, nstars=6):
     for img in imglist:
         if interactive:
@@ -416,7 +410,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                 _dir = ggg[0]['filepath']
                 img0 = img
                 command = 'lscpsf.py ' + _dir + img0 + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
-                    treshold) + xwindow + gg + cc + xx + dm + pp
+                    treshold) + gg + cc + xx + dm + pp
                 print command
                 os.system(command)
         elif status == 0:
@@ -696,23 +690,16 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     if _filter:  #filter 
         if _filter == 'sloan':
             ww = np.array([i for i in range(len(ll1['filter'])) if (
-            (ll1['filter'][i] in ['zs', 'up', 'gp', 'ip', 'rp', 'SDSS-G', 'SDSS-R', 'SDSS-I', 'Pan-Starrs-Z']))])
+            (ll1['filter'][i] in ['zs', 'up', 'gp', 'ip', 'rp', 'SDSS-U', 'SDSS-G', 'SDSS-R', 'SDSS-I', 'Pan-Starrs-Z']))])
         elif _filter == 'landolt':
             ww = np.array([i for i in range(len(ll1['filter'])) if (
-            (ll1['filter'][i] in ['U', 'B', 'V', 'R', 'I', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']))])
+            (ll1['filter'][i] in ['U', 'B', 'V', 'R', 'I', 'Bessell-U', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']))])
         elif _filter == 'apass':
             ww = np.array([i for i in range(len(ll1['filter']))
                           if ((ll1['filter'][i] in ['B', 'V', 'Bessell-B','Bessell-V', 'gp', 'ip', 'rp', 'SDSS-G',
                                                     'SDSS-R', 'SDSS-I']))])
         else:
-            lista = []
-            for fil in _filter.split(','):
-                print fil
-                if fil in lsc.sites.filterst:
-                    lista += lsc.sites.filterst[fil]
-                elif fil in ['zs', 'up', 'gp', 'ip', 'rp', 'U', 'B', 'V', 'R', 'I', 'SDSS-G', 'SDSS-R', 'SDSS-I',
-                             'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']:
-                    lista.append(fil)
+            lista = sum([lsc.sites.filterst[fil] for fil in _filter.split(',')], [])
             print lista
             ww = np.array([i for i in range(len(ll1['filter'])) if ((ll1['filter'][i] in lista))])
         if len(ww) > 0:

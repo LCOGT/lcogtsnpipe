@@ -35,8 +35,6 @@ skipobjects = readpass['skipobjects']
 proposalingestion = readpass['proposalingestion']
 #############################################################################################
 
-proposalgroup = {}
-proposalgroup['CON2014B-005'] = 5
 # no longer up to date (only used for old ingestion)
 instrument0={'sbig':['kb05','kb70','kb71','kb73','kb74','kb75','kb76','kb77','kb78','kb79'],\
              'sinistro':['fl02','fl03','fl04','fl05','fl06','fl07','fl08','fl09','fl10'],\
@@ -1145,25 +1143,22 @@ def getstatus(username,passwd,tracking_id):
 def getcatalog(name_or_filename, field):
     catalog = ''
     catalog_path = lsc.__path__[0] + '/standard/cat/' + field + '/'
-    # get the targetid from the object name or filename
-    if name_or_filename[-5:] == '.fits':
-        targetid = lsc.mysqldef.targimg(name_or_filename)
-    else:
-        targetid = lsc.mysqldef.gettargetid(name_or_filename, '', '', lsc.conn)
     # get the catalog from the database
-    cats = lsc.mysqldef.query(["select sloan_cat, landolt_cat, apass_cat from targets where id=" + str(targetid)], lsc.conn)
-    if cats:
-        if field + '_cat' in cats[0] and cats[0][field + '_cat']:
-            catalog = catalog_path + cats[0][field + '_cat']
+    entries = lsc.mysqldef.query(['''select name, sloan_cat, landolt_cat, apass_cat
+                                     from targets, targetnames, photlco
+                                     where targets.id=targetnames.targetid and targets.id=photlco.targetid
+                                     and (name="{0}" or filename="{0}")'''.format(os.path.basename(name_or_filename))], lsc.conn)
+    if entries:
+        if field + '_cat' in entries[0] and entries[0][field + '_cat']:
+            catalog = catalog_path + entries[0][field + '_cat']
     # if not in database, search for the catalog in the directory
     if not catalog:
-        data = lsc.mysqldef.query(['select name from targetnames where targetid=' + str(targetid)], lsc.conn)
-        for targ in data:
+        for entry in entries:
             catlist = os.listdir(catalog_path)
-            targetnames = [os.path.split(cat)[1].split('_' + field)[0].lower() for cat in catlist]
-            targetname = targ['name'].replace(' ', '').lower()
+            targetnames = [os.path.basename(cat).split('_' + field)[0].lower() for cat in catlist]
+            targetname = entry['name'].replace(' ', '').lower()
             if targetname in targetnames:
-               catalog = catlist[targetnames.index(targetname)]
+               catalog = catalog_path + catlist[targetnames.index(targetname)]
     return catalog
 
 ######################################################################################################

@@ -728,7 +728,7 @@ def fitcol3(colors, deltas, dcolors=None, ddeltas=None, fixedC=None, filt='', co
     if interactive:
         global keep, Z, dZ, C, dC
         plt.cla()
-    if fixedC is None:
+    if fixedC is None: # color term is not fixed
         # fit Theil-Sen line and find outliers
         C, Z, _, _ = stats.theilslopes(deltas, colors) # delta = calibrated mag - instrumental mag
         zeros = deltas - C*colors # zeros are the "zero points" for individual stars
@@ -739,7 +739,7 @@ def fitcol3(colors, deltas, dcolors=None, ddeltas=None, fixedC=None, filt='', co
             if filt=='g': fixedC = 0.1
             else:         fixedC = 0
             print 'Not enough points (after rejection). Defaulting to C = {:.2f}.'.format(fixedC)
-    if fixedC is not None:
+    if fixedC is not None: # color term is fixed
         C = fixedC
         zeros = deltas - C*colors
         dzeros = (ddeltas**2 + (C*dcolors)**2)**0.5

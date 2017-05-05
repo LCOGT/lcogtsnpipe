@@ -163,7 +163,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     if _output:
         ff.close()
 
-def run_cat(imglist, extlist, _interactive=False, mode=1, _type='fit', _fix=False, database='photlco', _field='slaon'):
+def run_cat(imglist, extlist, _interactive=False, mode=1, _type='fit', _fix=False, database='photlco'):
     status = []
     if mode == 1:
         _mode = 'lsccatalogue.py'
@@ -202,17 +202,11 @@ def run_cat(imglist, extlist, _interactive=False, mode=1, _type='fit', _fix=Fals
     else:
         ff = ''
     tt = ' -t ' + _type + ' '
-    if _field:
-        ss = ' -s ' + _field
-    else:
-        ss = ''
-    # catalogue doesn't want to specify the system (sloan.landolt,apass)
-    if mode == 1: ss = ''
 
     if len(extlist) > 0:
-        command = _mode + ' _tmp.list -e _tmpext.list ' + ii + tt + ff + ss
+        command = _mode + ' _tmp.list -e _tmpext.list ' + ii + tt + ff
     else:
-        command = _mode + ' _tmp.list ' + ii + tt + ff + ss
+        command = _mode + ' _tmp.list ' + ii + tt + ff
     print command
     os.system(command)
 

@@ -439,12 +439,11 @@ if __name__ == "__main__":   # main program
                                            str(mm['wcs'][i]), str(mm['psf'][i]),
                                            str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
                                            str(mm['abscat'][i]))
-                                lsc.myloopdef.run_cat(ll3['filename'], mm['filename'], _interactive, 1, _type, _fix,
-                                                      'photlco', _field)
+                                lsc.myloopdef.run_cat(ll3['filename'], mm['filename'], _interactive, 1, _type, _fix, 'photlco')
                             else:
                                 print '\n### warning : standard not found for this night ' + str(epo)
                         else:
-                            lsc.myloopdef.run_cat(ll3['filename'], '', _interactive, 1, _type, _fix, 'photlco', _field)
+                            lsc.myloopdef.run_cat(ll3['filename'], '', _interactive, 1, _type, _fix, 'photlco')
                     elif _stage == 'mag':  #    compute final magnitude using:   mag1  mag2  Z1  Z2  C1  C2
                         if _standard:
                             mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument, _difftype)
@@ -455,12 +454,11 @@ if __name__ == "__main__":   # main program
                                            str(mm['wcs'][i]), str(mm['psf'][i]),
                                            str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
                                            str(mm['abscat'][i]))
-                                lsc.myloopdef.run_cat(ll3['filename'], mm['filename'], _interactive, 2, _type, False,
-                                                      'photlco', _field)
+                                lsc.myloopdef.run_cat(ll3['filename'], mm['filename'], _interactive, 2, _type, False, 'photlco')
                             else:
                                 print '\n### error: standard not found for this night' + str(epo)
                         else:
-                            lsc.myloopdef.run_cat(ll3['filename'], '', _interactive, 2, _type, False, 'photlco', _field)
+                            lsc.myloopdef.run_cat(ll3['filename'], '', _interactive, 2, _type, False, 'photlco')
                     elif _stage == 'merge':  #    merge images using lacos and swarp
                         listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                         lsc.myloopdef.run_merge(array(listfile), _redo)

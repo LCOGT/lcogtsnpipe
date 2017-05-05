@@ -22,6 +22,7 @@ filterst = {
 'z': ['zs', 'Pan-Starrs', 'Pan-Starrs-Z'],
 'landolt': ['landolt'],
 'sloan': ['sloan'],
+'apass': ['apass']
 }
 
 filterst1 = dict()

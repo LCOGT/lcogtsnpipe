@@ -696,23 +696,16 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     if _filter:  #filter 
         if _filter == 'sloan':
             ww = np.array([i for i in range(len(ll1['filter'])) if (
-            (ll1['filter'][i] in ['zs', 'up', 'gp', 'ip', 'rp', 'SDSS-G', 'SDSS-R', 'SDSS-I', 'Pan-Starrs-Z']))])
+            (ll1['filter'][i] in ['zs', 'up', 'gp', 'ip', 'rp', 'SDSS-U', 'SDSS-G', 'SDSS-R', 'SDSS-I', 'Pan-Starrs-Z']))])
         elif _filter == 'landolt':
             ww = np.array([i for i in range(len(ll1['filter'])) if (
-            (ll1['filter'][i] in ['U', 'B', 'V', 'R', 'I', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']))])
+            (ll1['filter'][i] in ['U', 'B', 'V', 'R', 'I', 'Bessell-U', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']))])
         elif _filter == 'apass':
             ww = np.array([i for i in range(len(ll1['filter']))
                           if ((ll1['filter'][i] in ['B', 'V', 'Bessell-B','Bessell-V', 'gp', 'ip', 'rp', 'SDSS-G',
                                                     'SDSS-R', 'SDSS-I']))])
         else:
-            lista = []
-            for fil in _filter.split(','):
-                print fil
-                if fil in lsc.sites.filterst:
-                    lista += lsc.sites.filterst[fil]
-                elif fil in ['zs', 'up', 'gp', 'ip', 'rp', 'U', 'B', 'V', 'R', 'I', 'SDSS-G', 'SDSS-R', 'SDSS-I',
-                             'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']:
-                    lista.append(fil)
+            lista = sum([lsc.sites.filterst[fil] for fil in _filter.split(',')], [])
             print lista
             ww = np.array([i for i in range(len(ll1['filter'])) if ((ll1['filter'][i] in lista))])
         if len(ww) > 0:
@@ -769,7 +762,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     #    add filter using instrument
     if _instrument:
         print _instrument
-        ww = np.array([i for i in range(len(ll1['instrument'])) if (ll1['instrument'][i] == _instrument)])
+        ww = np.array([i for i in range(len(ll1['instrument'])) if (_instrument in ll1['instrument'][i])])
         if len(ww) > 0:
             for jj in ll1.keys():
                 ll1[jj] = np.array(ll1[jj])[ww]

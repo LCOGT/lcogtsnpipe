@@ -111,8 +111,6 @@ if __name__ == "__main__":   # main program
                       help='--normalize image [i], template [t] \t hotpants parameter  \t [%default]')
     parser.add_option("--convolve", dest="convolve", default='', type="str",
                       help='--convolve force convolution with image [i], template [t] \t hotpants parameter  \t [%default]')
-    parser.add_option("-X", "--xwindow", action="store_true",
-                      dest='xwindow', default=False, help='xwindow \t\t\t [%default]')
     parser.add_option("--z1", dest="z1", default=None, type="int",
                       help='z1 \t [%default]')
     parser.add_option("--z2", dest="z2", default=None, type="int",
@@ -198,7 +196,6 @@ if __name__ == "__main__":   # main program
     _standard = option.standard
     _threshold = option.threshold
     _interactive = option.interactive
-    _xwindow = option.xwindow
     _show = option.show
     _fix = option.fix
     _catalogue = option.catalogue
@@ -223,17 +220,6 @@ if __name__ == "__main__":   # main program
     _psf = option.psf
 
     _difftype = option.difftype
-
-    if _xwindow:
-        from stsci.tools import capable
-
-        capable.OF_GRAPHICS = False
-        import matplotlib
-
-        matplotlib.use('Agg')
-        XX = ' -X '
-    else:
-        XX = ''
 
     if _filter not in ['landolt', 'sloan', 'apass', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I',
                        'SDSS-I', 'SDSS-G', 'SDSS-R', 'Pan-Starrs-Z', 'Bessell-B', 'Bessell-V',
@@ -315,7 +301,7 @@ if __name__ == "__main__":   # main program
             elif _stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], _output, _interactive, _show, _bin, _type)
             elif _stage == 'psf':
-                lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, XX, _fix, _catalogue, 'photlco', option.use_sextractor, _dmax, option.nstars)
+                lsc.myloopdef.run_psf(ll['filename'], _threshold, _interactive, _fwhm, _show, _redo, _fix, _catalogue, 'photlco', option.use_sextractor, _dmax, option.nstars)
             elif _stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], _ras, _decs, _xord, _yord, _bkg, _size, _recenter, _ref,
                                       _interactive, _show, _redo, _dmax,_dmin,'photlco',_ra0,_dec0)

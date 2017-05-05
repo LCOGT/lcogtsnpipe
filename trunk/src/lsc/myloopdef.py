@@ -321,7 +321,7 @@ def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=Fal
             print 'status ' + str(status) + ': unknown status'
 
 
-def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, xwindow='',\
+def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False,
             fix=True, catalog='', database='photlco', use_sextractor=False, datamax=None, nstars=6):
     for img in imglist:
         if interactive:
@@ -416,7 +416,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                 _dir = ggg[0]['filepath']
                 img0 = img
                 command = 'lscpsf.py ' + _dir + img0 + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
-                    treshold) + xwindow + gg + cc + xx + dm + pp
+                    treshold) + gg + cc + xx + dm + pp
                 print command
                 os.system(command)
         elif status == 0:

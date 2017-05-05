@@ -184,11 +184,11 @@ if __name__ == "__main__":   # main program
                                    str(mm['wcs'][i]), str(mm['psf'][i]),
                                    str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
                                    str(mm['abscat'][i]))
-                        lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, 1, args.type, 'photlco', field, args.force)
+                        lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, 1, args.type, 'photlco', args.force)
                     else:
                         print '\n### warning : standard not found for this night ' + str(epo)
                 else:
-                    lsc.myloopdef.run_cat(ll['filename'], '', args.interactive, 1, args.type, 'photlco', field, args.force)
+                    lsc.myloopdef.run_cat(ll['filename'], '', args.interactive, 1, args.type, 'photlco', args.force)
             elif args.stage == 'diff':  #    difference images using hotpants
                 _difftypelist = args.difftype.split(',')
                 for difftype in _difftypelist:
@@ -335,11 +335,11 @@ if __name__ == "__main__":   # main program
                                            str(mm['wcs'][i]), str(mm['psf'][i]),
                                            str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
                                            str(mm['abscat'][i]))
-                                lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, 2, args.type, 'photlco', field)
+                                lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, 2, args.type, 'photlco')
                             else:
                                 print '\n### error: standard not found for this night' + str(epo)
                         else:
-                            lsc.myloopdef.run_cat(ll['filename'], '', args.interactive, 2, args.type, 'photlco', field)
+                            lsc.myloopdef.run_cat(ll['filename'], '', args.interactive, 2, args.type, 'photlco')
                     elif args.stage == 'merge':  #    merge images using lacos and swarp
                         listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                         lsc.myloopdef.run_merge(np.array(listfile), args.force)

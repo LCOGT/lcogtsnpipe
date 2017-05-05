@@ -57,8 +57,6 @@ if __name__ == "__main__":
                       type='str', help='mysql table where stroe reduction info \t\t %default')
     parser.add_option("--calib", dest="calibration", default='sloan',
                       type='str', help='calibration to  (sloan,sloanprime,natural,apass) \t\t %default')
-    parser.add_option("-s", "--system", dest="field", default='',
-                      type='str', help='photometric system [sloan, landolt] \t\t %default')
 
     option, args = parser.parse_args()
     if len(args) < 1: sys.argv.append('--help')
@@ -72,7 +70,6 @@ if __name__ == "__main__":
     _datatable = option.datatable
     _exzp = option.exzp
     _calib = option.calibration
-    _field = option.field
     _interactive = option.interactive
     typemag = 'PSFMAG1'
     typemagerr = 'PSFDMAG1'
@@ -90,12 +87,8 @@ if __name__ == "__main__":
         allfilters = ''
         for fil in dicti:     allfilters = allfilters + filterst1[fil]
         if _interactive:  print allfilters
-        if _field == 'apass' or _calib == 'apass':
-            queste0 = lsc.myloopdef.chosecolor(allfilters, False, 'apass')
-            queste1 = lsc.myloopdef.chosecolor(allfilters, True, 'apass')
-        else:
-            queste0 = lsc.myloopdef.chosecolor(allfilters, False)
-            queste1 = lsc.myloopdef.chosecolor(allfilters, True)
+        queste0 = lsc.myloopdef.chosecolor(allfilters, False)
+        queste1 = lsc.myloopdef.chosecolor(allfilters, True)
         if _exzp:
             lista2 = lsc.util.readlist(_exzp)
             dicti2 = makecatalogue(lista2)

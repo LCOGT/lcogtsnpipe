@@ -4,7 +4,8 @@ description = ">> make catalogue from table"
 import os
 from argparse import ArgumentParser
 import lsc
-import numpy as np
+import numpy.ma as np
+from numpy import pi
 import astropy.units as u
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
@@ -46,7 +47,7 @@ def average_in_flux(mag, dmag, axis=None):
     dflux = np.log(10) / 2.5 * flux * dmag
     avg_dflux = np.sum(dflux**-2, axis)**-0.5
     avg_flux = np.sum(flux * dflux**-2, axis) * avg_dflux**2
-    avg_mag = -2.5 * np.ma.log10(avg_flux)
+    avg_mag = -2.5 * np.log10(avg_flux)
     avg_dmag = 2.5 / np.log(10) * avg_dflux / avg_flux
     return avg_mag, avg_dmag
 
@@ -64,8 +65,8 @@ def combine_nights(combined_catalog, filterlist):
                     names=['ra', 'dec', 'id'], meta={'comments': header}, masked=True)
     for filt in filterlist:
         mags = combined_catalog['mag'][combined_catalog['filter'] == filt]
-        catalog[filt] = np.ma.median(mags, axis=0)
-        catalog[filt+'err'] = np.ma.median(np.abs(mags - catalog[filt]), axis=0) * np.sqrt(np.pi / 2)
+        catalog[filt] = np.median(mags, axis=0)
+        catalog[filt+'err'] = np.median(np.abs(mags - catalog[filt]), axis=0) * np.sqrt(pi / 2)
     return catalog
 
 if __name__ == "__main__":
@@ -144,7 +145,7 @@ if __name__ == "__main__":
                 targets['dc2'] = 0.
 
     # generate average colors for each night at each site
-    extinction = np.array([lsc.sites.extinction[row['shortname'].split()[0].lower()][row['filter']] for row in targets])
+    extinction = [lsc.sites.extinction[row['shortname'].split()[0].lower()][row['filter']] for row in targets]
     targets['instmag_amcorr'] = targets['instmag'] - np.atleast_2d(extinction * targets['airmass']).T
     targets = targets.group_by(['dayobs', 'shortname'])
     for filters in colors_to_calculate:
@@ -168,21 +169,23 @@ if __name__ == "__main__":
             else:
                 dc1 = 0.
                 c1 = np.mean(group['c2'][f1])
-            color = (m0 - m1 + z0 - z1) / (1 - c0 + c1)
+            color = np.atleast_2d((m0 - m1 + z0 - z1) / (1 - c0 + c1))
             dcolor = np.abs(color) * np.sqrt((dm0**2 + dm1**2 + dz0**2 + dz1**2) / (m0 - m1 + z0 - z1)**2 +
                                              (dc0**2 + dc1**2) / (1 - c0 + c1)**2)
-            colors.append(np.tile(color.data, (len(group), 1)))
-            dcolors.append(np.tile(dcolor.data, (len(group), 1)))
-        targets[filters] = np.ma.vstack(colors)
-        targets['d'+filters] = np.ma.vstack(dcolors)
+            colors.append(np.repeat(color, len(group), axis=0))
+            dcolors.append(np.repeat(dcolor, len(group), axis=0))
+        targets[filters] = np.vstack(colors)
+        targets['d'+filters] = np.vstack(dcolors)
 
     # calibrate all the catalogs
-    zeropoint = np.array([row['z1'] if row['zcol1'] == color_to_use[row['filter']][0] else row['z2'] for row in targets])
-    dzeropoint = np.array([row['dz1'] if row['zcol1'] == color_to_use[row['filter']][0] else row['dz2'] for row in targets])
-    colorterm = np.array([row['c1'] if row['zcol1'] == color_to_use[row['filter']][0] else row['c2'] for row in targets])
-    dcolorterm = np.array([row['dc1'] if row['zcol1'] == color_to_use[row['filter']][0] else row['dc2'] for row in targets])
-    color_used = np.array([row[color_to_use[row['filter']][0]] for row in targets]).T
-    dcolor_used = np.array([row['d'+color_to_use[row['filter']][0]] for row in targets]).T
+    zcol = [color_to_use[row['filter']][0] for row in targets]
+    zeropoint = np.choose(zcol == targets['zcol1'], [targets['z2'], targets['z1']])
+    dzeropoint = np.choose(zcol == targets['zcol1'], [targets['dz2'], targets['dz1']])
+    colorterm = np.choose(zcol == targets['zcol1'], [targets['c2'], targets['c1']])
+    dcolorterm = np.choose(zcol == targets['zcol1'], [targets['dc2'], targets['dc1']])
+    uzcol, izcol = np.unique(zcol, return_inverse=True)
+    color_used = np.choose(izcol, [targets[col].T for col in uzcol])
+    dcolor_used = np.choose(izcol, [targets['d'+col].T for col in uzcol])
     targets['mag'] = (targets['instmag_amcorr'].T + zeropoint + colorterm * color_used).T
     targets['dmag'] = np.sqrt(targets['dinstmag'].T**2 + dzeropoint**2 + dcolorterm**2 * color_used**2 + colorterm**2 + dcolor_used**2).T
     
@@ -235,9 +238,9 @@ if __name__ == "__main__":
                 nightly_by_filter['offset from APASS'] = nightly_by_filter['mag'] - refcat[filt].T
             ax2.axhline(0., color='k')
             ax2.plot(nightly_by_filter['offset'], label='individual stars', color='k', alpha=0.5, marker='_', ls='none')
-            ax2.plot(np.ma.median(nightly_by_filter['offset'], axis=1), label='median offset', marker='o', ls='none')
+            ax2.plot(np.median(nightly_by_filter['offset'], axis=1), label='median offset', marker='o', ls='none')
             if filt in refcat.colnames:
-                ax2.plot(np.ma.median(nightly_by_filter['offset from APASS'], axis=1), label='offset from APASS', marker='o', mfc='none', ls='none')
+                ax2.plot(np.median(nightly_by_filter['offset from APASS'], axis=1), label='offset from APASS', marker='o', mfc='none', ls='none')
             ax2.set_xticks(range(len(nightly_by_filter)))
             ax2.set_xticklabels(nightly_by_filter['filename'], rotation='vertical', size='xx-small')
             ax2.set_ylabel('Offset from Median (mag)')
@@ -252,7 +255,7 @@ if __name__ == "__main__":
                 ax3 = plt.subplot(111)
                 ax3.axhline(0., color='k')
                 diffs = (catalog[filt] - refcat[filt][catalog['id'] - 1]).data
-                median_diff = np.ma.median(diffs)
+                median_diff = np.median(diffs)
                 ax3.plot(catalog[filt], diffs, label='individual stars', marker='o', ls='none')
                 ax3.axhline(median_diff, label='median: {:.2f} mag'.format(median_diff), ls='--')
                 ax3.set_title('Filter: ' + filt)

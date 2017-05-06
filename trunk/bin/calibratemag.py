@@ -224,27 +224,27 @@ if __name__ == "__main__":
             ax1 = fig.add_subplot(211)
             ax2 = fig.add_subplot(212)
             ax1.set_title('Filter: ' + filt)
-            ax1.plot(catalog['id'], nightly_by_filter['mag'].data.T, color='k', alpha=0.5, marker='_', ls='none')
-            ax1.errorbar(catalog['id'], catalog[filt], catalog[filt+'err'], label='output (median of images)', marker='o', ls='none')
+            p0 = ax1.plot(catalog['id'], nightly_by_filter['mag'].data.T, color='k', alpha=0.5, marker='_', ls='none')[0]
+            p1 = ax1.errorbar(catalog['id'], catalog[filt], catalog[filt+'err'], marker='o', ls='none')
             if filt in refcat.colnames:
-                ax1.plot(refcat['id'], refcat[filt], label='APASS', marker='o', mfc='none', ls='none', zorder=10)
+                p2 = ax1.plot(refcat['id'], refcat[filt], marker='o', mfc='none', ls='none', zorder=10)[0]
             ax1.invert_yaxis()
             ax1.set_xlabel('Star ID in APASS Catalog')
             ax1.set_ylabel('Apparent Magnitude')
-            ax1.legend(loc='best')
+            ax1.legend([p0, p1, p2], ['individual images', 'output (median of images)', 'APASS'], loc='best')
 
             nightly_by_filter['offset'] = nightly_by_filter['mag'] - catalog[filt].T
             if filt in refcat.colnames:
                 nightly_by_filter['offset from APASS'] = nightly_by_filter['mag'] - refcat[filt].T
             ax2.axhline(0., color='k')
-            ax2.plot(nightly_by_filter['offset'], label='individual stars', color='k', alpha=0.5, marker='_', ls='none')
-            ax2.plot(np.median(nightly_by_filter['offset'], axis=1), label='median offset', marker='o', ls='none')
+            p0 = ax2.plot(nightly_by_filter['offset'], color='k', alpha=0.5, marker='_', ls='none')[0]
+            p1 = ax2.plot(np.median(nightly_by_filter['offset'], axis=1), marker='o', ls='none')[0]
             if filt in refcat.colnames:
-                ax2.plot(np.median(nightly_by_filter['offset from APASS'], axis=1), label='offset from APASS', marker='o', mfc='none', ls='none')
+                p2 = ax2.plot(np.median(nightly_by_filter['offset from APASS'], axis=1), marker='o', mfc='none', ls='none')[0]
             ax2.set_xticks(range(len(nightly_by_filter)))
             ax2.set_xticklabels(nightly_by_filter['filename'], rotation='vertical', size='xx-small')
             ax2.set_ylabel('Offset from Median (mag)')
-            ax2.legend(loc='best')
+            ax2.legend([p0, p1, p2], ['individual stars', 'median offset', 'offset from APASS'], loc='best')
             fig.set_tight_layout(True)
             fig.subplots_adjust(bottom=0.28, hspace=0.33)
             fig.canvas.draw_idle()

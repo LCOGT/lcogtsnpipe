@@ -531,8 +531,6 @@ if __name__ == "__main__":
                       help='Interactive \t\t\t [%default]')
     parser.add_option("-s", "--show", dest="show", action='store_true',
                       default=False, help='Show PSF output \t\t [%default]')
-    parser.add_option("-X", "--xwindow", action="store_true", dest='xwindow', default=False,
-                      help='xwindow \t\t\t [%default]')
     parser.add_option("--use-sextractor", action="store_true", help="use souces from sextractor instead of catalog")
     parser.add_option("-c", "--catalog", dest="catalog", default='', type='str',
                       help='use input catalog  \t\t %default')
@@ -546,18 +544,12 @@ if __name__ == "__main__":
         sys.argv.append('--help')
     option, args = parser.parse_args()
     imglist = lsc.util.readlist(args[0])
-    _xwindow = option.xwindow
     _catalog = option.catalog
     fixaperture = option.fixaperture
     psffun = option.psffun
     if psffun not in ['gauss', 'auto', 'lorentz', 'moffat15', 'moffat25', 'penny1', 'penny2']:
         sys.argv.append('--help')
     option, args = parser.parse_args()
-
-    if _xwindow:
-        from stsci.tools import capable
-
-        capable.OF_GRAPHICS = False
 
     for img in imglist:
         if not option.use_sextractor and not _catalog:

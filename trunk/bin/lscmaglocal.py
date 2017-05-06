@@ -13,7 +13,7 @@ from astropy.io import ascii
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 
-def read_all_catalogs(lista, ref_coords=None):
+def read_all_catalogs(lista, refcoords=None):
     print 'Cross-matching {} catalogs. This may take a while...'.format(len(lista))
     combined = Table()
     for filename in lista:
@@ -26,10 +26,10 @@ def read_all_catalogs(lista, ref_coords=None):
         cat.rename_column(filt, 'mag')
         cat.rename_column('d'+filt, 'dmag')
         coords = SkyCoord(cat['ra'], cat['dec'], unit=(u.hourangle, u.deg))
-        if ref_coords is None:
-            ref_coords = coords
-        i0, sep, _ = coords.match_to_catalog_sky(ref_coords)
-        cat['id'] = i0 + 1 # to match ID in APASS catalog (1-indexed)
+        if refcoords is None:
+            refcoords = coords
+        i0, sep, _ = coords.match_to_catalog_sky(refcoords)
+        cat['id'] = i0 + 1 # to match ID in reference catalog (1-indexed)
         combined = vstack([combined, cat[sep.arcsec < 3.5]])
     return combined
 
@@ -39,9 +39,10 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--interactive", action="store_true")
     parser.add_argument("-f", "--field", default='landolt', choices=['landolt', 'sloan', 'apass'],
                         help='Landolt (UBVRI), Sloan (ugriz), or APASS (BVgri) filters?')
+    parser.add_argument("-c", "--catalog", help="use only stars that match this reference catalog")
     parser.add_argument("-o", "--output",  default='{SN}_{field}_{datenow}.cat', help='output filename')
-
     args = parser.parse_args()
+    
     with open(args.catlist) as ff:
         lista = ff.read().splitlines()
     if args.field == 'landolt':
@@ -51,13 +52,12 @@ if __name__ == "__main__":
     elif args.field == 'apass':
         filterlist = ['B', 'V', 'g', 'r', 'i']
     
-    # read APASS catalog and find matching stars in our catalogs
-    apass_path = lsc.util.getcatalog(lista[0].replace('.cat', '.fits'), 'apass')
-    apass = Table.read(apass_path, format='ascii', names=['ra', 'dec', 'id', 'B', 'Berr',
-                       'V', 'Verr', 'g', 'gerr', 'r', 'rerr', 'i', 'ierr'],
-                       fill_values=[('9999.000', '0')])
-    ref_coords = SkyCoord(apass['ra'], apass['dec'], unit=u.deg)
-    combined_catalog = read_all_catalogs(lista, ref_coords)
+    # read reference catalog and find matching stars in our catalogs
+    refcat = Table.read(args.catalog, format='ascii', names=['ra', 'dec', 'id', 'B', 'Berr',
+                        'V', 'Verr', 'g', 'gerr', 'r', 'rerr', 'i', 'ierr'],
+                        fill_values=[('9999.000', '0')])
+    refcoords = SkyCoord(refcat['ra'], refcat['dec'], unit=u.deg)
+    combined_catalog = read_all_catalogs(lista, refcoords)
     
     # initialize catalog with IRAF astrometry file header
     header = ['BEGIN CATALOG HEADER',
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     grouped_by_star.remove_columns(['ra', 'dec', 'filename'])
     for star_group in grouped_by_star.groups:
         starid = star_group['id'][0]
-        row = {'ra': ref_coords[starid-1].ra, 'dec': ref_coords[starid-1].dec, 'id': starid}
+        row = {'ra': refcoords[starid-1].ra, 'dec': refcoords[starid-1].dec, 'id': starid}
         for filt in filterlist:
             if filt in star_group['filter']:
                 mags = star_group['mag'][star_group['filter'] == filt]
@@ -99,16 +99,16 @@ if __name__ == "__main__":
             ax1.set_title('Filter: ' + filt)
             ax1.plot(nightly_by_filter['id'], nightly_by_filter['mag'], label='individual images', color='k', alpha=0.5, marker='_', ls='none')
             ax1.errorbar(catalog['id'], catalog[filt], catalog[filt+'err'], label='output (median of images)', marker='o', ls='none')
-            if filt in apass.colnames:
-                ax1.plot(apass['id'], apass[filt], label='APASS', marker='o', mfc='none', ls='none', zorder=10)
+            if filt in refcat.colnames:
+                ax1.plot(refcat['id'], refcat[filt], label='APASS', marker='o', mfc='none', ls='none', zorder=10)
             ax1.invert_yaxis()
             ax1.set_xlabel('Star ID in APASS Catalog')
             ax1.set_ylabel('Apparent Magnitude')
             ax1.legend(loc='best')
 
             nightly_by_filter['offset'] = nightly_by_filter['mag'] - nightly_by_filter[filt]
-            if filt in apass.colnames:
-                nightly_by_filter['offset from APASS'] = nightly_by_filter['mag'] - apass[filt][nightly_by_filter['id'] - 1]
+            if filt in refcat.colnames:
+                nightly_by_filter['offset from APASS'] = nightly_by_filter['mag'] - refcat[filt][nightly_by_filter['id'] - 1]
             nightly_by_filter.remove_columns(['ra', 'dec', 'mag', 'dmag', 'filter', 'id'])
             offsets_by_file = nightly_by_filter.group_by('filename')
             filestats = offsets_by_file.groups.aggregate(np.median)
@@ -116,7 +116,7 @@ if __name__ == "__main__":
             ax2.axhline(0., color='k')
             ax2.plot(filenums, nightly_by_filter['offset'], label='individual stars', color='k', alpha=0.5, marker='_', ls='none')
             ax2.plot(filestats['offset'], label='median offset', marker='o', ls='none')
-            if filt in apass.colnames:
+            if filt in refcat.colnames:
                 ax2.plot(filestats['offset from APASS'], marker='o', mfc='none', ls='none')
             ax2.set_xticks(range(len(filenames)))
             ax2.set_xticklabels(filenames, rotation='vertical', size='xx-small')
@@ -126,12 +126,12 @@ if __name__ == "__main__":
             fig.subplots_adjust(bottom=0.28, hspace=0.33)
             fig.canvas.draw_idle()
             
-            if filt in apass.colnames:
+            if filt in refcat.colnames:
                 plt.figure(2)
                 plt.clf()
                 ax3 = plt.subplot(111)
                 ax3.axhline(0., color='k')
-                diffs = (catalog[filt] - apass[filt][catalog['id'] - 1]).data
+                diffs = (catalog[filt] - refcat[filt][catalog['id'] - 1]).data
                 median_diff = np.median(diffs)
                 ax3.plot(catalog[filt], diffs, label='individual stars', marker='o', ls='none')
                 ax3.axhline(median_diff, label='median: {:.2f} mag'.format(median_diff), ls='--')
@@ -144,8 +144,8 @@ if __name__ == "__main__":
             raw_input('Press enter to continue.')
 
     # write catalog to file
-    filename = args.output.format(SN=os.path.basename(apass_path).split('_')[0],
-                                  field=args.field,
+    snname = os.path.basename(args.catalog).split('_')[0] if args.catalog else 'catalog'
+    filename = args.output.format(SN=snname, field=args.field,
                                   datenow=datetime.now().strftime('%Y%m%d_%H_%M'))
     catalog['ra'].format = '%10.6f'
     catalog['dec'].format = '%10.6f'

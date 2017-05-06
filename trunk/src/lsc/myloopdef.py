@@ -163,50 +163,31 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     if _output:
         ff.close()
 
-def run_cat(imglist, extlist, _interactive=False, mode=1, _type='fit', database='photlco', force=False):
-    status = []
-    if mode == 1:
-        _mode = 'lsccatalogue.py'
-        stat = 'abscat'
-    elif mode == 2:
-        _mode = 'lscmag.py'
-        stat = 'mag'
+def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit', database='photlco', field=None, refcat=None, force=False):
     if len(extlist) > 0:
-        for img in extlist:  status.append(checkstage(img, stat))
-        extlist = extlist[np.where(np.array(status) > 0)]
-        status = np.array(status)[np.where(np.array(status) > 0)]
         f = open('_tmpext.list', 'w')
         for img in extlist:
-            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
-            _dir = ggg[0]['filepath']
-            f.write(_dir + img.replace('fits', 'sn2.fits') + '\n')
+            if checkstage(img, stage):
+                ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
+                f.write(ggg[0]['filepath'] + img.replace('fits', 'sn2.fits') + '\n')
         f.close()
-    else:
-        for img in imglist:
-            status.append(checkstage(img, stat))
-        imglist = imglist[np.where(np.array(status) > 0)]
-        status = np.array(status)[np.where(np.array(status) > 0)]
 
     f = open('_tmp.list', 'w')
     for img in imglist:
-        ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
-        _dir = ggg[0]['filepath']
-        f.write(_dir + img.replace('fits', 'sn2.fits') + '\n')
+        if checkstage(img, stage):
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
+            f.write(ggg[0]['filepath'] + img.replace('fits', 'sn2.fits') + '\n')
     f.close()
+    
+    command = 'calibratemag.py _tmp.list -s {} -t {} -f {}'.format(stage, magtype, field)
+    if extlist:
+        command += ' -e _tmpext.list'
     if _interactive:
-        ii = ' -i '
-    else:
-        ii = ''
-    tt = ' -t ' + _type + ' '
-    if mode == 1 and force:
-        ff = ' -F'
-    else:
-        ff = ''
-
-    if len(extlist) > 0:
-        command = _mode + ' _tmp.list -e _tmpext.list ' + ii + tt + ff
-    else:
-        command = _mode + ' _tmp.list ' + ii + tt + ff
+        command += ' -i'
+    if force:
+        command += ' -F'
+    if refcat:
+        command += ' -c ' + refcat
     print command
     os.system(command)
 

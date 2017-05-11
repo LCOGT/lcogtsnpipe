@@ -1685,12 +1685,8 @@ def chosecolor(allfilter, usegood=False, _field=''):
 ###########################################################################
 def get_list(epoch, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
              filetype=1):
-    if '-' not in str(epoch):
-        lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epoch0, '', '*', _telescope)
-    else:
-        epoch1, epoch2 = epoch.split('-')
-        lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epoch1, epoch2, '*',
-                                            _telescope)
+    epochs = epoch.split('-')
+    lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epochs[0], epochs[-1], '*', _telescope)
     if lista:
         ll0 = {}
         for jj in lista[0].keys(): ll0[jj] = []

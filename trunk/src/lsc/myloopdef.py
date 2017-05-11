@@ -180,7 +180,7 @@ def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit',
     f.close()
     
     command = 'calibratemag.py _tmp.list -s {} -t {} -f {}'.format(stage, magtype, field)
-    if extlist:
+    if len(extlist):
         command += ' -e _tmpext.list'
     if _interactive:
         command += ' -i'

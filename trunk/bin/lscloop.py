@@ -184,14 +184,14 @@ if __name__ == "__main__":   # main program
                 if args.standard:
                     mm = lsc.myloopdef.filtralist(ll0, args.filter, '', args.standard, '', '', '', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
                     extlist = mm['filename']
+                    if not len(extlist):
+                        raise Exception('no standard fields found')
                     for i in range(len(extlist)):
                         print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
                               (str(mm['filename'][i]), str(mm['objname'][i]), str(mm['filter'][i]),
                                str(mm['wcs'][i]), str(mm['psf'][i]),
                                str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
                                str(mm['abscat'][i]))
-                    else:
-                        raise Exception('no standard fields found')
                 else:
                     extlist = []
                 lsc.myloopdef.run_cat(ll['filename'], extlist, args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force)

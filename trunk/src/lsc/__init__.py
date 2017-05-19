@@ -1,3 +1,4 @@
+from mysqldef import *
 from util import *
 from lscastrodef import *
 from lscabsphotdef import *

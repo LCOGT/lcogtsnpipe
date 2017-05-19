@@ -272,7 +272,7 @@ def readasci(ascifile):
             dmag.append(line.split()[3])
         else:
             if 'ra' in line:
-                _filter = line.split()[2]
+                _filter = line[1:].split()[2]
     return ra, dec, mag, dmag, _filter
 
 

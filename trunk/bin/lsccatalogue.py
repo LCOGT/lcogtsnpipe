@@ -11,6 +11,7 @@ import time
 import lsc
 from lsc.sites import filterst1
 import numpy as np
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -170,61 +171,60 @@ if __name__ == "__main__":
                                                                                            racut[ww], deccut[ww]
 
                 if _interactive:
-                    from pylab import *
-
-                    ion()
-                    clf()
-                    plot(ra1, dec1, 'xb')
-                    plot(ra0, dec0, 'xr')
-                    plot(ra0cut, dec0cut, 'xg')
+                    plt.ion()
+                    plt.clf()
+                    plt.plot(ra1, dec1, 'xb')
+                    plt.plot(ra0, dec0, 'xr')
+                    plt.plot(ra0cut, dec0cut, 'xg')
+                    raw_input('go on')
 
                 output = re.sub('sn2.fits', 'cat', img)
-                f = open(output, 'w')
-                f.write('#daophot+standardfield\n#ra   dec   ' + filterst1[_filter] + '   d' + filterst1[_filter] + '\n')
-                if filterst1[_filter].upper() == col[0]:
-                    Z1 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[1])
-                    C1 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[2])
-                    Z2 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[1])
-                    C2 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[2])
-                    DZ1 = 0.0
-                    DZ2 = 0.0
-                    M1, M2 = lsc.lscabsphotdef.finalmag(Z1, Z2, C1, C2, mag0cut, mag1cut)
-                    dc1, dc2, dz1, dz2, dm1, dm2 = lsc.lscabsphotdef.erroremag(Z1, Z2, M1, M2, C1, C2, 0)
-                    DM11 = np.sqrt((dm1 * dmag0cut) ** 2 + (dz1 * DZ1) ** 2 + (dm2 * dmag1cut) ** 2 + (dz2 * DZ2) ** 2)
+                if len(racut):
+                    f = open(output, 'w')
+                    f.write('#daophot+standardfield\n#ra   dec   ' + filterst1[_filter] + '   d' + filterst1[_filter] + '\n')
+                    if filterst1[_filter].upper() == col[0]:
+                        Z1 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[1])
+                        C1 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[2])
+                        Z2 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[1])
+                        C2 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[2])
+                        DZ1 = 0.0
+                        DZ2 = 0.0
+                        M1, M2 = lsc.lscabsphotdef.finalmag(Z1, Z2, C1, C2, mag0cut, mag1cut)
+                        dc1, dc2, dz1, dz2, dm1, dm2 = lsc.lscabsphotdef.erroremag(Z1, Z2, M1, M2, C1, C2, 0)
+                        DM11 = np.sqrt((dm1 * dmag0cut) ** 2 + (dz1 * DZ1) ** 2 + (dm2 * dmag1cut) ** 2 + (dz2 * DZ2) ** 2)
 
-                    if _interactive:
-                        print '\n####  example computation '
-                        print 'Z1  Z1  C1   C2   mag1    mag 2'
-                        print 'M1   M2 '
-                        for gg in range(0, len(mag0cut)):
-                            print racut[gg], deccut[gg], Z1, Z2, C1, C2, mag0cut[gg], mag1cut[gg], M1[gg], M2[gg]
+                        if _interactive:
+                            print '\n####  example computation '
+                            print 'Z1  Z1  C1   C2   mag1    mag 2'
+                            print 'M1   M2 '
+                            for gg in range(0, len(mag0cut)):
+                                print racut[gg], deccut[gg], Z1, Z2, C1, C2, mag0cut[gg], mag1cut[gg], M1[gg], M2[gg]
 
-                    for i in range(0, len(ra0cut)):
-                        f.write('%15s \t%15s \t%s\t%s\n' % (racut[i], deccut[i], M1[i], dmag0cut[i]))
-                else:
-                    Z2 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[1])
-                    C2 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[2])
-                    Z1 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[1])
-                    C1 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[2])
-                    M1, M2 = lsc.lscabsphotdef.finalmag(Z1, Z2, C1, C2, mag1cut, mag0cut)
-                    DZ1 = 0.0
-                    DZ2 = 0.0
-                    dc1, dc2, dz1, dz2, dm1, dm2 = lsc.lscabsphotdef.erroremag(Z1, Z2, mag0cut, mag1cut, C1, C2, 1)
-                    DM22 = np.sqrt((dm1 * dmag0cut) ** 2 + (dz1 * DZ1) ** 2 + (dm2 * dmag1cut) ** 2 + (dz2 * DZ2) ** 2)
+                        for i in range(0, len(ra0cut)):
+                            f.write('%15s \t%15s \t%s\t%s\n' % (racut[i], deccut[i], M1[i], dmag0cut[i]))
+                    else:
+                        Z2 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[1])
+                        C2 = float(string.split(dicti[_filter][img]['ZP' + filterst1[_filter].upper() + col.upper()])[2])
+                        Z1 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[1])
+                        C1 = float(string.split(dicti[_filter2][img2]['ZP' + filterst1[_filter2].upper() + col.upper()])[2])
+                        M1, M2 = lsc.lscabsphotdef.finalmag(Z1, Z2, C1, C2, mag1cut, mag0cut)
+                        DZ1 = 0.0
+                        DZ2 = 0.0
+                        dc1, dc2, dz1, dz2, dm1, dm2 = lsc.lscabsphotdef.erroremag(Z1, Z2, mag0cut, mag1cut, C1, C2, 1)
+                        DM22 = np.sqrt((dm1 * dmag0cut) ** 2 + (dz1 * DZ1) ** 2 + (dm2 * dmag1cut) ** 2 + (dz2 * DZ2) ** 2)
 
-                    if _interactive:
-                        print '\n####  example computation '
-                        print 'Z1  Z1  C1   C2   mag1    mag 2'
-                        print 'M1   M2 '
-                        for gg in range(0, len(mag0cut)):
-                            print racut[gg], deccut[gg], Z1, Z2, C1, C2, mag0cut[gg], mag1cut[gg], M1[gg], M2[gg]
+                        if _interactive:
+                            print '\n####  example computation '
+                            print 'Z1  Z1  C1   C2   mag1    mag 2'
+                            print 'M1   M2 '
+                            for gg in range(0, len(mag0cut)):
+                                print racut[gg], deccut[gg], Z1, Z2, C1, C2, mag0cut[gg], mag1cut[gg], M1[gg], M2[gg]
 
-                    for i in range(0, len(ra0cut)):
-                        f.write('%15s \t%15s \t%s\t%s\n' % (racut[i], deccut[i], M2[i], dmag0cut[i]))
-                f.close()
+                        for i in range(0, len(racut)):
+                            f.write('%15s \t%15s \t%s\t%s\n' % (racut[i], deccut[i], M2[i], dmag0cut[i]))
+                    f.close()
 
-                if _interactive:    raw_input('go on')
-                if os.path.isfile(re.sub('sn2.fits', 'cat', img)):
+                if os.path.isfile(output):
                     lsc.mysqldef.updatevalue('photlco', 'abscat', string.split(output, '/')[-1],
                                              re.sub('sn2.fits', 'fits', string.split(img, '/')[-1]))
                 else:

@@ -9,7 +9,8 @@ from astropy.io import fits
 import numpy as np
 from optparse import OptionParser, OptionGroup
 from PyZOGY.subtract import run_subtraction
-
+from pyraf import iraf
+import os
 
 def crossmatchtwofiles(img1, img2, radius=3):
     ''' This module is crossmatch two images:
@@ -353,8 +354,14 @@ if __name__ == "__main__":
 
                         if _difftype == '1':
                             #do subtraction
-                            psftarg = imgtarg_path.replace('.fits','.psf.fits')
-                            psftemp = imgtemp_path.replace('.fits','.psf.fits')
+                            iraf.noao()
+                            iraf.digiphot()
+                            iraf.daophot(_doprint=0)
+                            psftarg = '_targpsf.fits'
+                            psftemp = '_temppsf.fits'
+                            os.system('rm {0} {1}'.format(psftarg, psftemp))
+                            iraf.seepsf(imgtarg_path.replace('.fits','.psf.fits'), psftarg)
+                            iraf.seepsf(imgtemp_path.replace('.fits','.psf.fits'), psftemp)
                             run_subtraction(imgtarg, imgtemp, psftarg, psftemp,
                                                            science_mask='_targmask.fits',
                                                            reference_mask='_tempmask.fits',

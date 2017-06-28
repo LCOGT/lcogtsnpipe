@@ -179,10 +179,10 @@ if __name__ == "__main__":
 
     # generate average colors for each night at each site
     extinction = [lsc.sites.extinction[row['shortname'].split()[0].lower()][row['filter']] for row in targets]
-    targets['instmag_amcorr'] = targets['instmag'] - np.atleast_2d(extinction * targets['airmass']).T
+    targets['instmag_amcorr'] = (targets['instmag'].T - extinction * targets['airmass']).T
     targets = targets.group_by(['dayobs', 'shortname'])
     for filters in colors_to_calculate:
-        colors, dcolors = [], []
+        colors, dcolors = np.array([]), np.array([])
         for group in targets.groups:
             f0 = group['filter'] == filters[0]
             f1 = group['filter'] == filters[1]
@@ -202,15 +202,16 @@ if __name__ == "__main__":
             else:
                 dc1 = 0.
                 c1 = np.mean(group['c2'][f1])
-            color = np.atleast_2d(np.divide(m0 - m1 + z0 - z1, 1 - c0 + c1))
+            color = np.divide(m0 - m1 + z0 - z1, 1 - c0 + c1)
             dcolor = np.abs(color) * np.sqrt(
                         np.divide(dm0**2 + dm1**2 + dz0**2 + dz1**2, (m0 - m1 + z0 - z1)**2)
                         + np.divide(dc0**2 + dc1**2, (1 - c0 + c1)**2)
                                             )
-            colors.append(np.repeat(color, len(group), axis=0))
-            dcolors.append(np.repeat(dcolor, len(group), axis=0))
-        targets[filters] = np.vstack(colors)
-        targets['d'+filters] = np.vstack(dcolors)
+            for row in group:
+                colors = np.append(colors, color)
+                dcolors = np.append(dcolors, dcolor)
+        targets[filters] = colors
+        targets['d'+filters] = colors
 
     # calibrate all the catalogs
     zcol = [color_to_use[row['filter']][0] for row in targets]

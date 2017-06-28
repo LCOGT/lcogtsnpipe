@@ -62,7 +62,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--combine", default=1e-10, type=float, help='range to combine (in days)')
     parser.add_argument("--datamax", type=int, help='data max for saturation (counts)')
     parser.add_argument("--datamin", type=int, help='data min for saturation (counts)')
-    parser.add_argument("--filetype", choices=[1, 2, 3], default=1, type=int, help='filetype 1 [single], 2 [merge], 3 [difference]')
+    parser.add_argument("--filetype", choices=[1, 2, 3, 4], default=1, type=int, help='filetype 1 [single], 2 [merge], 3 [difference]')
     parser.add_argument("-o", "--output", default='', help='output file')
     parser.add_argument("--tempdate", default='19990101-20080101', help='template date')
     parser.add_argument("--temptel", default='', help='--temptel  template instrument')
@@ -148,7 +148,7 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type)
             elif args.stage == 'psf':
-                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.xwindow, args.fix, args.catalogue, 'photlco', args.use_sextractor, args.datamax, args.nstars)
+                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue, 'photlco', args.use_sextractor, args.datamax, args.nstars)
             elif args.stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], args.RAS, args.DECS, args.xord, args.yord, args.bkg, args.size, args.recenter, args.ref,
                                       args.interactive, args.show, args.force, args.datamax,args.datamin,'photlco',args.RA0,args.DEC0)

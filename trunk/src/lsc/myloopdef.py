@@ -1864,7 +1864,11 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
         fixpix = ' --fixpix '
     else:
         fixpix = ''
-    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo + fixpix + ' --difftype ' + _difftype + ' --suffix ' + suffix
+    if _difftype:
+        difftype = ' --difftype ' + _difftype
+    else:
+        difftype = ''
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix
     print command
     os.system(command)
 

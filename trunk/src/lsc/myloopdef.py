@@ -3,6 +3,7 @@ import lsc
 import numpy as np
 import matplotlib.pyplot as plt
 from pyraf import iraf
+from glob import glob
 import astropy.units as u
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -765,11 +766,11 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
         elif _bad == 'cosmic':
             maskexists = [os.path.isfile(filepath+filename.replace('.fits', '.mask.fits'))
                             for filepath, filename in zip(ll1['filepath'], ll1['filename'])]
-            ww = np.flatnonzero(np.logical_not(np.array(maskexists)))
+            ww = np.flatnonzero(np.logical_not(maskexists))
         elif _bad == 'diff':
-            maskexists = [os.path.isfile(filepath+filename.replace('.fits', '.diff.fits'))
+            maskexists = [glob(filepath+filename.replace('.fits', '*.diff.fits'))
                             for filepath, filename in zip(ll1['filepath'], ll1['filename'])]
-            ww = np.flatnonzero(np.logical_not(np.array(maskexists)))
+            ww = np.flatnonzero(np.logical_not(maskexists))
         elif _bad == 'mag':
             ww = np.array([i for i in range(len(ll1['mag'])) if (ll1['mag'][i] >= 1000 or ll1[_bad][i] < 0)])
         else:

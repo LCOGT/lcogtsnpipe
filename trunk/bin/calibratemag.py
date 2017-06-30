@@ -88,7 +88,7 @@ def combine_nights(combined_catalog, filterlist, refcat):
         header.append('    {}    {:2d} 0 r INDEF %6.3f'.format(filt, len(header) - 1))
         header.append('    {}err {:2d} 0 r INDEF %6.3f'.format(filt, len(header) - 1))
     header += ['END CATALOG HEADER', '']
-    catalog = Table(refcat[['ra', 'dec', 'id']], meta={'comments': header}, masked=True)
+    catalog = Table([refcat['ra'], refcat['dec'], refcat['id']], meta={'comments': header}, masked=True)
     for filt in filterlist:
         mags = combined_catalog['mag'][combined_catalog['filter'] == filt]
         median = np.median(mags, axis=0)
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     if args.stage == 'abscat' and args.catalog is not None:
         try:
             refcat = Table.read(args.catalog, format='ascii', fill_values=[('9999.000', '0')])
-            colnames = [row.split()[0] for row in refcat.meta['comments'][2:-2]]
+            colnames = [row.split()[0] for row in refcat.meta['comments'] if len(row.split()) == 6]
             for old, new in zip(refcat.colnames, colnames):
                 refcat.rename_column(old, new)
         except ascii.core.InconsistentTableError: # real Landolt catalogs are different
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     targets['instmag_amcorr'] = (targets['instmag'].T - extinction * targets['airmass']).T
     targets = targets.group_by(['dayobs', 'shortname'])
     for filters in colors_to_calculate:
-        colors, dcolors = np.array([]), np.array([])
+        colors, dcolors = [], []
         for group in targets.groups:
             f0 = group['filter'] == filters[0]
             f1 = group['filter'] == filters[1]
@@ -208,24 +208,34 @@ if __name__ == "__main__":
                         + np.divide(dc0**2 + dc1**2, (1 - c0 + c1)**2)
                                             )
             for row in group:
-                colors = np.append(colors, color)
-                dcolors = np.append(dcolors, dcolor)
-        targets[filters] = colors
-        targets['d'+filters] = colors
+                colors.append(color)
+                dcolors.append(dcolor)
+        targets[filters] = np.array(colors)
+        targets['d'+filters] = np.array(dcolors)
 
-    # calibrate all the catalogs
+    # calibrate all the instrumental magnitudes
     zcol = [color_to_use[row['filter']][0] for row in targets]
     zeropoint = np.choose(zcol == targets['zcol1'], [targets['z2'], targets['z1']])
     dzeropoint = np.choose(zcol == targets['zcol1'], [targets['dz2'], targets['dz1']])
     colorterm = np.choose(zcol == targets['zcol1'], [targets['c2'], targets['c1']])
     dcolorterm = np.choose(zcol == targets['zcol1'], [targets['dc2'], targets['dc1']])
     uzcol, izcol = np.unique(zcol, return_inverse=True)
-    color_used = np.choose(izcol, [targets[col].T for col in uzcol])
-    dcolor_used = np.choose(izcol, [targets['d'+col].T for col in uzcol])
+    color_used = np.choose(izcol, [targets[col].T for col in uzcol]).filled(0.) # if no other filter, skip color correction
+    dcolor_used = np.choose(izcol, [targets['d'+col].T for col in uzcol]).filled(0.)
     targets['mag'] = (targets['instmag_amcorr'].T + zeropoint + colorterm * color_used).T
     targets['dmag'] = np.sqrt(targets['dinstmag'].T**2 + dzeropoint**2 + dcolorterm**2 * color_used**2 + colorterm**2 + dcolor_used**2).T
-    
-    if args.stage == 'abscat': # write all the catalogs to files & put filename in database
+
+    if args.stage == 'mag':
+        # write mag & dmag to database
+        for row in targets:
+            if row['mag'] < 999.: # keeps out nan, masked, & 9999.
+                lsc.mysqldef.updatevalue('photlco', 'mag', row['mag'], row['filename'])
+                lsc.mysqldef.updatevalue('photlco', 'dmag', row['dmag'], row['filename'])
+            else:
+                lsc.mysqldef.updatevalue('photlco', 'mag', 9999., row['filename'])
+                lsc.mysqldef.updatevalue('photlco', 'dmag', 9999., row['filename'])
+    if args.stage == 'abscat': 
+       # write all the catalogs to files & put filename in database
         for row in targets:
             good = ~row['mag'].mask
             if not np.any(good):
@@ -242,79 +252,74 @@ if __name__ == "__main__":
                 lsc.mysqldef.updatevalue('photlco', 'abscat', outfile, row['filename'])
             except IOError as e:
                 print e, '-- use -F to overwrite'
-    else: # write mag & dmag to database (unless masked)
-        for row in targets:
-            if row['mag']:
-                lsc.mysqldef.updatevalue('photlco', 'mag', row['mag'], row['filename'])
-                lsc.mysqldef.updatevalue('photlco', 'dmag', row['dmag'], row['filename'])
-    
-    catalog = combine_nights(targets, filterlist, refcat)
-    if args.interactive:
-        plt.ion()
-        fig = plt.figure(1, figsize=(11, 8.5))
+        
+        # make master catalog and write to file
+        catalog = combine_nights(targets, filterlist, refcat)
         catfile = os.path.basename(args.catalog)
-        for filt in filterlist:
-            if filt not in targets['filter']:
-                continue
-            nightly_by_filter = targets[(targets['filter'] == filt) & ~np.all(targets['mag'].mask, axis=1)]
-            fig.clear()
-            ax1 = fig.add_subplot(211)
-            ax2 = fig.add_subplot(212)
-            ax1.set_title('Filter: ' + filt)
-            lgd_handle = ax1.plot(nightly_by_filter['mag'].data.T, color='k', alpha=0.5, marker='_', ls='none')[:1]
-            lgd_handle.append(ax1.errorbar(range(len(catalog)), catalog[filt], yerr=catalog[filt+'err'], marker='o', ls='none'))
-            lgd_label = ['individual images', 'output (median of images)']
-            if filt in refcat.colnames:
-                lgd_handle += ax1.plot(refcat[filt], marker='o', mfc='none', ls='none', zorder=10)
-                lgd_label.append(catfile)
-            ax1.invert_yaxis()
-            ax1.set_xlabel('Star ID in {} (line number)'.format(catfile))
-            ax1.set_ylabel('Apparent Magnitude')
-            ax1.legend(lgd_handle, lgd_label, loc='best')
+        if args.interactive:
+            plt.ion()
+            fig = plt.figure(1, figsize=(11, 8.5))
+            for filt in filterlist:
+                if filt not in targets['filter']:
+                    continue
+                nightly_by_filter = targets[(targets['filter'] == filt) & ~np.all(targets['mag'].mask, axis=1)]
+                fig.clear()
+                ax1 = fig.add_subplot(211)
+                ax2 = fig.add_subplot(212)
+                ax1.set_title('Filter: ' + filt)
+                lgd_handle = ax1.plot(nightly_by_filter['mag'].data.T, color='k', alpha=0.5, marker='_', ls='none')[:1]
+                lgd_handle.append(ax1.errorbar(range(len(catalog)), catalog[filt], yerr=catalog[filt+'err'], marker='o', ls='none'))
+                lgd_label = ['individual images', 'output (median of images)']
+                if filt in refcat.colnames:
+                    lgd_handle += ax1.plot(refcat[filt], marker='o', mfc='none', ls='none', zorder=10)
+                    lgd_label.append(catfile)
+                ax1.invert_yaxis()
+                ax1.set_xlabel('Star ID in {} (line number)'.format(catfile))
+                ax1.set_ylabel('Apparent Magnitude')
+                ax1.legend(lgd_handle, lgd_label, loc='best')
 
-            nightly_by_filter['offset'] = nightly_by_filter['mag'] - catalog[filt].T
-            if filt in refcat.colnames:
-                nightly_by_filter['offset from refcat'] = nightly_by_filter['mag'] - refcat[filt].T
-            ax2.axhline(0., color='k')
-            lgd_handle = ax2.plot(nightly_by_filter['offset'], color='k', alpha=0.5, marker='_', ls='none')[:1]
-            lgd_handle += ax2.plot(np.median(nightly_by_filter['offset'], axis=1), marker='o', ls='none')
-            lgd_label = ['individual stars', 'median offset']
-            if filt in refcat.colnames:
-                lgd_handle += ax2.plot(np.median(nightly_by_filter['offset from refcat'], axis=1), marker='o', mfc='none', ls='none')
-                lgd_label.append('offset from ' + catfile)
-            ax2.set_xticks(range(len(nightly_by_filter)))
-            ax2.set_xticklabels(nightly_by_filter['filename'], rotation='vertical', size='xx-small')
-            ax2.set_ylabel('Offset from Median (mag)')
-            ax2.legend(lgd_handle, lgd_label, loc='best')
-            fig.set_tight_layout(True)
-            fig.subplots_adjust(bottom=0.28, hspace=0.33)
-            fig.canvas.draw_idle()
-            
-            if filt in refcat.colnames:
-                plt.figure(2)
-                plt.clf()
-                ax3 = plt.subplot(111)
-                ax3.axhline(0., color='k')
-                diffs = (catalog[filt] - refcat[filt]).data
-                median_diff = np.median(diffs)
-                ax3.plot(catalog[filt], diffs, label='individual stars', marker='o', ls='none')
-                ax3.axhline(median_diff, label='median: {:.3f} mag'.format(median_diff), ls='--')
-                ax3.set_title('Filter: ' + filt)
-                ax3.set_xlabel('Apparent Magnitude in Output Catalog')
-                ax3.set_ylabel('Output - {} (mag)'.format(catfile))
-                ax3.legend(loc='best')
-                plt.draw()
-            
-            raw_input('Press enter to continue.')
+                nightly_by_filter['offset'] = nightly_by_filter['mag'] - catalog[filt].T
+                if filt in refcat.colnames:
+                    nightly_by_filter['offset from refcat'] = nightly_by_filter['mag'] - refcat[filt].T
+                ax2.axhline(0., color='k')
+                lgd_handle = ax2.plot(nightly_by_filter['offset'], color='k', alpha=0.5, marker='_', ls='none')[:1]
+                lgd_handle += ax2.plot(np.median(nightly_by_filter['offset'], axis=1), marker='o', ls='none')
+                lgd_label = ['individual stars', 'median offset']
+                if filt in refcat.colnames:
+                    lgd_handle += ax2.plot(np.median(nightly_by_filter['offset from refcat'], axis=1), marker='o', mfc='none', ls='none')
+                    lgd_label.append('offset from ' + catfile)
+                ax2.set_xticks(range(len(nightly_by_filter)))
+                ax2.set_xticklabels(nightly_by_filter['filename'], rotation='vertical', size='xx-small')
+                ax2.set_ylabel('Offset from Median (mag)')
+                ax2.legend(lgd_handle, lgd_label, loc='best')
+                fig.set_tight_layout(True)
+                fig.subplots_adjust(bottom=0.28, hspace=0.33)
+                fig.canvas.draw_idle()
+                
+                if filt in refcat.colnames:
+                    plt.figure(2)
+                    plt.clf()
+                    ax3 = plt.subplot(111)
+                    ax3.axhline(0., color='k')
+                    diffs = (catalog[filt] - refcat[filt]).data
+                    median_diff = np.median(diffs)
+                    ax3.plot(catalog[filt], diffs, label='individual stars', marker='o', ls='none')
+                    ax3.axhline(median_diff, label='median: {:.3f} mag'.format(median_diff), ls='--')
+                    ax3.set_title('Filter: ' + filt)
+                    ax3.set_xlabel('Apparent Magnitude in Output Catalog')
+                    ax3.set_ylabel('Output - {} (mag)'.format(catfile))
+                    ax3.legend(loc='best')
+                    plt.draw()
+                
+                raw_input('Press enter to continue.')
 
-    # write catalog to file
-    snname = os.path.basename(catfile).split('_')[0] if args.catalog else 'catalog'
-    filename = args.output.format(SN=snname, field=args.field,
-                                  datenow=datetime.now().strftime('%Y%m%d_%H_%M'))
-    catalog['ra'].format = '%10.6f'
-    catalog['dec'].format = '%10.6f'
-    for col in catalog.colnames[3:]:
-        catalog[col].format = '%6.3f'
-    catalog.write(filename, format='ascii.fixed_width_no_header', delimiter='',
-                  fill_values=[(ascii.masked, '9999.0')])
-    print 'catalog written to', filename
+        snname = os.path.basename(catfile).split('_')[0] if args.catalog else 'catalog'
+        filename = args.output.format(SN=snname, field=args.field,
+                                      datenow=datetime.now().strftime('%Y%m%d_%H_%M'))
+        catalog['ra'].format = '%10.6f'
+        catalog['dec'].format = '%10.6f'
+        for col in catalog.colnames[3:]:
+            catalog[col].format = '%6.3f'
+        catalog.write(filename, format='ascii.fixed_width_no_header', delimiter='',
+                      fill_values=[(ascii.masked, '9999.0')])
+        print 'catalog written to', filename

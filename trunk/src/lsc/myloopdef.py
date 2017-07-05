@@ -3,6 +3,7 @@ import lsc
 import numpy as np
 import matplotlib.pyplot as plt
 from pyraf import iraf
+import datetime
 import astropy.units as u
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -1683,9 +1684,15 @@ def chosecolor(allfilter, usegood=False, _field=''):
 
 
 ###########################################################################
-def get_list(epoch, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
-             filetype=1):
-    epochs = epoch.split('-')
+def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
+             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype=''):
+             
+    if epoch is None:
+        d = datetime.date.today() + datetime.timedelta(1)
+        g = d - datetime.timedelta(4)
+        epochs = [g.strftime("%Y%m%d"), d.strftime("%Y%m%d")]
+    else:
+        epochs = epoch.split('-')
     lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epochs[0], epochs[-1], '*', _telescope)
     if lista:
         ll0 = {}
@@ -1708,7 +1715,8 @@ def get_list(epoch, _telescope='all', _filter='', _bad='', _name='', _id='', _ra
         else:
             ll0['ra'] = ll0['ra0']
             ll0['dec'] = ll0['dec0']
-        ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad)
+        ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad,
+             filetype, _groupid, _instrument, _temptel, _difftype)
     else:
         ll = ''
     return ll

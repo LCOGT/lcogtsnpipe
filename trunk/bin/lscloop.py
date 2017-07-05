@@ -8,7 +8,7 @@ import re
 import sys
 import glob
 import string
-from numpy import take, argsort, asarray, array
+from numpy import take, argsort, asarray, array, unique
 from optparse import OptionParser
 import datetime
 import lsc
@@ -22,7 +22,7 @@ def multi_run_cosmic(args):
 
 if __name__ == "__main__":   # main program
     parser = OptionParser(usage=usage, description=description, version="%prog 1.0")
-    parser.add_option("-e", "--epoch", dest="epoch", default='20121212', type="str",
+    parser.add_option("-e", "--epoch", dest="epoch", type="str",
                       help='epoch to reduce  \t [%default]')
     parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str")
     parser.add_option("--instrument", dest="instrument", default='', type="str",
@@ -67,7 +67,7 @@ if __name__ == "__main__":   # main program
     parser.add_option("--show", action="store_true",
                       dest='show', default=False, help='show psf fit \t\t\t [%default]')
     parser.add_option("-c", "--center", action="store_false",
-                      dest='recenter', default=True, help='recenter \t\t\t [%default]')
+                      dest='recenter', default=True, help='do not recenter \t\t\t [%default]')
     parser.add_option("--unfix", action="store_false",
                       dest='fix', default=True, help='use a variable color term')
     parser.add_option("--cutmag", dest="cutmag", default=99., type="float",
@@ -105,7 +105,7 @@ if __name__ == "__main__":   # main program
                       help='--output  write magnitude in the output file \t [%default]')
     parser.add_option("--tempdate", dest="tempdate", default='', type="str",
                       help='--tempdate  template date \t [%default]')
-    parser.add_option("--temptel", dest="temptel", default='', type="str",
+    parser.add_option("--temptel", dest="temptel", default='19990101-20080101', type="str",
                       help='--temptel  template instrument \t [%default]')
     parser.add_option("--normalize", dest="normalize", default='i', type="str",
                       help='--normalize image [i], template [t] \t hotpants parameter  \t [%default]')
@@ -150,14 +150,11 @@ if __name__ == "__main__":   # main program
         _groupid=''
     _normalize = option.normalize
     _convolve = option.convolve
+    _recenter = option.recenter
     if option.force == None:
         _redo = False
     else:
         _redo = True
-    if option.recenter == False:
-        _recenter = True
-    else:
-        _recenter = False
     if _type not in ['fit', 'ph', 'mag']:
         sys.argv.append('--help')
     if _normalize not in ['i', 't']:
@@ -245,39 +242,11 @@ if __name__ == "__main__":   # main program
 
     option, args = parser.parse_args()
     epoch = option.epoch
-    if '-' not in str(epoch):
-        epoch0 = datetime.date(int(epoch[0:4]), int(epoch[4:6]), int(epoch[6:8]))
-        listepoch = [re.sub('-', '', str(epoch0))]
-    else:
-        epoch1, epoch2 = string.split(epoch, '-')
-        start = datetime.date(int(epoch1[0:4]), int(epoch1[4:6]), int(epoch1[6:8]))
-        stop = datetime.date(int(epoch2[0:4]), int(epoch2[4:6]), int(epoch2[6:8]))
-        listepoch = [re.sub('-', '', str(i)) for i in [start + datetime.timedelta(days=x)
-                                                       for x in range(0, 1 + (stop - start).days)]]
 
     if not _stage or _stage in ['local', 'getmag', 'wcs', 'psf', 'psfmag', 'makestamp', 'cosmic', 'apmag', 'ingestsloan', 'ingestps1',
             'checkwcs', 'checkpsf', 'checkmag', 'checkquality', 'checkpos', 'checkcat', 'checkmissing', 'checkfvd', 'checkcosmic', 'checkdiff']:
-        if len(listepoch) == 1:
-            lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', str(listepoch[0]), '', '*',
-                                                _telescope)
-        else:
-            lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', str(listepoch[0]),
-                                                str(listepoch[-1]), '*', _telescope)
-        if lista:
-            ll0 = {}
-            for jj in lista[0].keys():
-                ll0[jj] = []
-            for i in range(0, len(lista)):
-                for jj in lista[0].keys():
-                    ll0[jj].append(lista[i][jj])
-            inds = argsort(ll0['mjd'])  # sort by mjd
-            for i in ll0.keys():
-                ll0[i] = take(ll0[i], inds)
-
-            ll0['ra'] = ll0['ra0'][:]
-            ll0['dec'] = ll0['dec0'][:]
-
-            ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype, _groupid, _instrument, _temptel, _difftype)
+        ll = lsc.myloopdef.get_list(epoch, _telescope, _filter, _bad, _name, _id, _ra, _dec, 'photlco', _filetype, _groupid, _instrument, _temptel, _difftype)
+        if ll:
             print '##' * 50
             print '# IMAGE                                    OBJECT           FILTER           WCS            ' \
                   ' PSF           PSFMAG    APMAG       ZCAT          MAG      ABSCAT'
@@ -355,169 +324,138 @@ if __name__ == "__main__":   # main program
             print '\n### no data selected'
     # ################################################
     else:
-        for epo in listepoch:
+        if _stage == 'diff':
+            ll0 = lsc.myloopdef.get_list(epoch, _telescope, _filter, _bad, _name, _id, _ra, _dec, 'photlco', _filetype, _groupid, _instrument, _temptel)
+        else:
+            ll0 = lsc.myloopdef.get_list(epoch, _telescope, _filter, _bad, _name, _id, _ra, _dec, 'photlco', _filetype, _groupid, _instrument, _temptel, _difftype)
+        for epo in unique(ll['dayobs']):
             print '\n#### ' + str(epo)
-            lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', str(epo), '', '*', _telescope)
-            if lista:
-                ll0 = {}
-                for jj in lista[0].keys():
-                    ll0[jj] = []
-                for i in range(0, len(lista)):
-                    for jj in lista[0].keys():
-                        ll0[jj].append(lista[i][jj])
-
-                inds = argsort(ll0['mjd'])  # sort by mjd
-                for i in ll0.keys():
-                    ll0[i] = take(ll0[i], inds)
-                ll0['ra'] = ll0['ra0'][:]
-                ll0['dec'] = ll0['dec0'][:]
-                print _filter, _id, _name, _ra, _dec
-                if _stage == 'diff':
-                    ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype, _groupid, _instrument, _temptel)
-                else:
-                    ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, _filetype, _groupid, _instrument, _temptel, _difftype)
-                if len(ll['filename']) > 0:
-                    # print '##'*50
-                    #                 print '# IMAGE                                    OBJECT           FILTER           WCS             PSF           PSFMAG          ZCAT          MAG      ABSCAT'
-                    for i in range(0, len(ll['filename'])):
-                        print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
-                              (str(ll['filename'][i]), str(ll['objname'][i]), str(ll['filter'][i]), str(ll['wcs'][i]),
-                               str(ll['psf'][i]),
-                               str(ll['psfmag'][i]), str(ll['zcat'][i]), str(ll['mag'][i]), str(ll['abscat'][i]))
-                    print '\n###  total number = ' + str(len(ll['filename']))
-                if _stage and len(ll['filename']) > 0:
-                    print '##' * 50
-                    print _stage
-                    ll3 = {}
-                    for ii in ll.keys():       ll3[ii] = ll[ii]
-                    if _stage == 'zcat':
-                        if not _field:
-                            if _filter in ['U', 'B', 'V', 'R', 'I', 'landolt']:
-                                _field = 'landolt'
-                            elif _filter in ['u', 'g', 'r', 'i', 'z', 'sloan']:
-                                _field = 'sloan'
-                            elif _filter in ['apass']:
-                                _field = 'apass'
-                            else:
-                                _field = 'sloan'
-
-                        if not _name:
-                            sys.exit('''name not selected, if you want to do zeropoint,
-                                        you need to specify the name of the object''')
+            ll = {key: val[ll['dayobs'] == epo] for key, val in ll0.items()}
+            if len(ll['filename']) > 0:
+                # print '##'*50
+                #                 print '# IMAGE                                    OBJECT           FILTER           WCS             PSF           PSFMAG          ZCAT          MAG      ABSCAT'
+                for i in range(0, len(ll['filename'])):
+                    print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
+                          (str(ll['filename'][i]), str(ll['objname'][i]), str(ll['filter'][i]), str(ll['wcs'][i]),
+                           str(ll['psf'][i]),
+                           str(ll['psfmag'][i]), str(ll['zcat'][i]), str(ll['mag'][i]), str(ll['abscat'][i]))
+                print '\n###  total number = ' + str(len(ll['filename']))
+            if _stage and len(ll['filename']) > 0:
+                print '##' * 50
+                print _stage
+                ll3 = {}
+                for ii in ll.keys():       ll3[ii] = ll[ii]
+                if _stage == 'zcat':
+                    if not _field:
+                        if _filter in ['U', 'B', 'V', 'R', 'I', 'landolt']:
+                            _field = 'landolt'
+                        elif _filter in ['u', 'g', 'r', 'i', 'z', 'sloan']:
+                            _field = 'sloan'
+                        elif _filter in ['apass']:
+                            _field = 'apass'
                         else:
-                            if not _catalogue:
-                                data = lsc.mysqldef.query(['''select {}_cat from targets, targetnames
-                                                              where name like "%{}"
-                                                              and targets.id=targetnames.targetid'''.format(_field, _name.replace(' ', '%'))],
-                                                           lsc.conn)
-                                if data and data[0][_field + '_cat']: # if target is found and catalog is not an empty string
-                                    _catalogue = lsc.__path__[0] + '/standard/cat/' + _field + '/' + data[0][_field + '_cat']
-                        if _field == 'apass':
-                            filters_in_field = set('BVgri')
-                        elif _field == 'landolt':
-                            filters_in_field = set('UBVRI')
-                        elif _field == 'sloan':
-                            filters_in_field = set('ugriz')
-                        else:
-                            print 'warning: field not defined, zeropoint not computed'
+                            _field = 'sloan'
 
-                        filenames = [fn for fn, filt in zip(ll3['filename'], ll3['filter']) if lsc.sites.filterst1[filt] in filters_in_field]
-                        filters_in_images = {lsc.sites.filterst1[filt] for filt in ll3['filter']}
-                        _color = ''.join(filters_in_images & filters_in_field)
-                        if _color:
-                            lsc.myloopdef.run_zero(filenames, _fix, _type, _field, _catalogue, _color, _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
-                        else:
-                            print 'none of your filters ({}) match the chosen catalog ({})'.format(''.join(filters_in_images), ''.join(filters_in_field))
-
-                    elif _stage == 'abscat':  #    compute magnitudes for sequence stars > img.cat
-                        if _standard:
-                            mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument, _difftype)
-                            if len(mm['filename']) > 0:
-                                for i in range(0, len(mm['filename'])):
-                                    print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
-                                          (str(mm['filename'][i]), str(mm['objname'][i]), str(mm['filter'][i]),
-                                           str(mm['wcs'][i]), str(mm['psf'][i]),
-                                           str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
-                                           str(mm['abscat'][i]))
-                                lsc.myloopdef.run_cat(ll3['filename'], mm['filename'], _interactive, 1, _type, _fix, 'photlco')
-                            else:
-                                print '\n### warning : standard not found for this night ' + str(epo)
-                        else:
-                            lsc.myloopdef.run_cat(ll3['filename'], '', _interactive, 1, _type, _fix, 'photlco')
-                    elif _stage == 'mag':  #    compute final magnitude using:   mag1  mag2  Z1  Z2  C1  C2
-                        if _standard:
-                            mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument, _difftype)
-                            if len(mm['filename']) > 0:
-                                for i in range(0, len(mm['filename'])):
-                                    print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
-                                          (str(mm['filename'][i]), str(mm['objname'][i]), str(mm['filter'][i]),
-                                           str(mm['wcs'][i]), str(mm['psf'][i]),
-                                           str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
-                                           str(mm['abscat'][i]))
-                                lsc.myloopdef.run_cat(ll3['filename'], mm['filename'], _interactive, 2, _type, False, 'photlco')
-                            else:
-                                print '\n### error: standard not found for this night' + str(epo)
-                        else:
-                            lsc.myloopdef.run_cat(ll3['filename'], '', _interactive, 2, _type, False, 'photlco')
-                    elif _stage == 'merge':  #    merge images using lacos and swarp
-                        listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
-                        lsc.myloopdef.run_merge(array(listfile), _redo)
-                    elif _stage == 'diff':  #    difference images using hotpants
-                        _difftypelist = _difftype.split(',')
-                        for difftype in _difftypelist:
-                            if not _name:
-                                sys.exit('you need to select one object: use option -n/--name')
-                            if _telescope=='all':
-                                sys.exit('you need to select one type of instrument -T [fs, fl ,kb]')
-                            if _tempdate:
-                                startdate = _tempdate.split('-')[0]
-                                enddate   = _tempdate.split('-')[-1]
-                            else:
-                                startdate = '19990101'
-                                enddate   = '20080101'
-
-                            if difftype == '1':
-                                suffix = '.optimal.{}.diff.fits'.format(_temptel).replace('..', '.')
-                            else:
-                                suffix = '.{}.diff.fits'.format(_temptel).replace('..', '.')
-
-                            if _temptel.upper() in ['SDSS', 'PS1']:
-                                if _telescope == 'kb':
-                                    fake_temptel = 'sbig'
-                                elif _telescope == 'fs':
-                                    fake_temptel = 'spectral'
-                                elif _telescope == 'fl':
-                                    fake_temptel = 'sinistro'
-                            elif _temptel:
-                                fake_temptel = _temptel
-                            else:
-                                fake_temptel = _telescope
-
-                            lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', fake_temptel)
-                            if lista:
-                                ll00 = {}
-                                for jj in lista[0].keys():
-                                    ll00[jj] = []
-                                for i in range(0, len(lista)):
-                                    for jj in lista[0].keys():
-                                        ll00[jj].append(lista[i][jj])
-                                inds = argsort(ll00['mjd'])  #  sort by mjd
-                                for i in ll00.keys():
-                                    ll00[i] = take(ll00[i], inds)
-                                lltemp = lsc.myloopdef.filtralist(ll00, _filter, '', _name, _ra, _dec, '', 4, _groupid, '')
-
-                            if not lista or not lltemp:
-                                sys.exit('template not found')
-
-                            listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
-                            listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
-
-                            lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, difftype, suffix)
-
-                    elif _stage == 'template':  #    merge images using lacos and swarp
-                        listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
-                        lsc.myloopdef.run_template(array(listfile), _show, _redo, _interactive, _ra, _dec, _psf, _mag, _clean, _subtract_mag_from_header)
+                    if not _name:
+                        sys.exit('''name not selected, if you want to do zeropoint,
+                                    you need to specify the name of the object''')
                     else:
-                        print _stage + ' not defined'
+                        if not _catalogue:
+                            data = lsc.mysqldef.query(['''select {}_cat from targets, targetnames
+                                                          where name like "%{}"
+                                                          and targets.id=targetnames.targetid'''.format(_field, _name.replace(' ', '%'))],
+                                                       lsc.conn)
+                            if data and data[0][_field + '_cat']: # if target is found and catalog is not an empty string
+                                _catalogue = lsc.__path__[0] + '/standard/cat/' + _field + '/' + data[0][_field + '_cat']
+                    if _field == 'apass':
+                        filters_in_field = set('BVgri')
+                    elif _field == 'landolt':
+                        filters_in_field = set('UBVRI')
+                    elif _field == 'sloan':
+                        filters_in_field = set('ugriz')
+                    else:
+                        print 'warning: field not defined, zeropoint not computed'
+
+                    filenames = [fn for fn, filt in zip(ll3['filename'], ll3['filter']) if lsc.sites.filterst1[filt] in filters_in_field]
+                    filters_in_images = {lsc.sites.filterst1[filt] for filt in ll3['filter']}
+                    _color = ''.join(filters_in_images & filters_in_field)
+                    if _color:
+                        lsc.myloopdef.run_zero(filenames, _fix, _type, _field, _catalogue, _color, _interactive, _redo, _show, _cutmag, 'photlco', _calib, zcatnew)
+                    else:
+                        print 'none of your filters ({}) match the chosen catalog ({})'.format(''.join(filters_in_images), ''.join(filters_in_field))
+
+                elif _stage == 'abscat':  #    compute magnitudes for sequence stars > img.cat
+                    if _standard:
+                        mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument, _difftype)
+                        if len(mm['filename']) > 0:
+                            for i in range(0, len(mm['filename'])):
+                                print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
+                                      (str(mm['filename'][i]), str(mm['objname'][i]), str(mm['filter'][i]),
+                                       str(mm['wcs'][i]), str(mm['psf'][i]),
+                                       str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
+                                       str(mm['abscat'][i]))
+                            lsc.myloopdef.run_cat(ll3['filename'], mm['filename'], _interactive, 1, _type, _fix, 'photlco')
+                        else:
+                            print '\n### warning : standard not found for this night ' + str(epo)
+                    else:
+                        lsc.myloopdef.run_cat(ll3['filename'], '', _interactive, 1, _type, _fix, 'photlco')
+                elif _stage == 'mag':  #    compute final magnitude using:   mag1  mag2  Z1  Z2  C1  C2
+                    if _standard:
+                        mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument, _difftype)
+                        if len(mm['filename']) > 0:
+                            for i in range(0, len(mm['filename'])):
+                                print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
+                                      (str(mm['filename'][i]), str(mm['objname'][i]), str(mm['filter'][i]),
+                                       str(mm['wcs'][i]), str(mm['psf'][i]),
+                                       str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
+                                       str(mm['abscat'][i]))
+                            lsc.myloopdef.run_cat(ll3['filename'], mm['filename'], _interactive, 2, _type, False, 'photlco')
+                        else:
+                            print '\n### error: standard not found for this night' + str(epo)
+                    else:
+                        lsc.myloopdef.run_cat(ll3['filename'], '', _interactive, 2, _type, False, 'photlco')
+                elif _stage == 'merge':  #    merge images using lacos and swarp
+                    listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
+                    lsc.myloopdef.run_merge(array(listfile), _redo)
+                elif _stage == 'diff':  #    difference images using hotpants
+                    _difftypelist = _difftype.split(',')
+                    for difftype in _difftypelist:
+                        if not _name:
+                            sys.exit('you need to select one object: use option -n/--name')
+                        if _telescope=='all':
+                            sys.exit('you need to select one type of instrument -T [fs, fl ,kb]')
+
+                        if difftype == '1':
+                            suffix = '.optimal.{}.diff.fits'.format(_temptel).replace('..', '.')
+                        else:
+                            suffix = '.{}.diff.fits'.format(_temptel).replace('..', '.')
+
+                        if _temptel.upper() in ['SDSS', 'PS1']:
+                            if _telescope == 'kb':
+                                fake_temptel = 'sbig'
+                            elif _telescope == 'fs':
+                                fake_temptel = 'spectral'
+                            elif _telescope == 'fl':
+                                fake_temptel = 'sinistro'
+                        elif _temptel:
+                            fake_temptel = _temptel
+                        else:
+                            fake_temptel = _telescope
+
+                        lltemp = lsc.myloopdef.get_list(_tempdate, fake_temptel, _filter, '', _name, '', _ra, _dec, 'photlco', 4, _groupid)
+
+                        if not lista or not lltemp:
+                            sys.exit('template not found')
+
+                        listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
+                        listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
+
+                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, difftype, suffix)
+
+                elif _stage == 'template':  #    merge images using lacos and swarp
+                    listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
+                    lsc.myloopdef.run_template(array(listfile), _show, _redo, _interactive, _ra, _dec, _psf, _mag, _clean, _subtract_mag_from_header)
                 else:
-                    print '\n### no data selected'
+                    print _stage + ' not defined'
+            else:
+                print '\n### no data selected'

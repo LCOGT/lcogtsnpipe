@@ -800,7 +800,9 @@ def checksndb(img,table):
    if not _targetid:
        _RA,_DEC,_SN,_type='','','',''
    else:
-        command=['select t.ra0, t.dec0, r.name, t.classification from targets as t join targetnames as r where t.id=r.targetid and t.id='+str(_targetid)+' ']
+        command=['''select t.ra0, t.dec0, r.name, c.name as classification
+                    from targets as t, targetnames as r, classifications as c
+                    where t.id=r.targetid and t.classificationid=c.id and t.id='''+str(_targetid)]
         aa=query(command,conn)
 #   aa=getfromcoordinate(conn, table, _ra, _dec,.5)
         if len(aa)>=1:

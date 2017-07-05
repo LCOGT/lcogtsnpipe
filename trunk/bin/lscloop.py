@@ -328,9 +328,9 @@ if __name__ == "__main__":   # main program
             ll0 = lsc.myloopdef.get_list(epoch, _telescope, _filter, _bad, _name, _id, _ra, _dec, 'photlco', _filetype, _groupid, _instrument, _temptel)
         else:
             ll0 = lsc.myloopdef.get_list(epoch, _telescope, _filter, _bad, _name, _id, _ra, _dec, 'photlco', _filetype, _groupid, _instrument, _temptel, _difftype)
-        for epo in unique(ll['dayobs']):
+        for epo in unique(ll0['dayobs']):
             print '\n#### ' + str(epo)
-            ll = {key: val[ll['dayobs'] == epo] for key, val in ll0.items()}
+            ll = {key: val[ll0['dayobs'] == epo] for key, val in ll0.items()}
             if len(ll['filename']) > 0:
                 # print '##'*50
                 #                 print '# IMAGE                                    OBJECT           FILTER           WCS             PSF           PSFMAG          ZCAT          MAG      ABSCAT'

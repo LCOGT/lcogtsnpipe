@@ -84,6 +84,8 @@ if __name__ == "__main__":
     parser.add_argument("-T", "--telescope", default='all')
     parser.add_argument("-e", "--epoch")
     parser.add_argument("--field", nargs='+', default=['landolt', 'sloan'], choices=['landolt', 'sloan'])
+    parser.add_argument("-t", "--timeout", type=float, default=3600.,
+                        help="maximum time for each lscloop.py command in seconds")
     args = parser.parse_args()
     
     basecmd = 'lscloop.py'
@@ -100,13 +102,13 @@ if __name__ == "__main__":
     
     logfile = open('lsc.log', 'w')
     #  compute astrometry, when missing, with astrometry.net
-    run_cmd(basecmd_tel + ' -b wcs -s wcs --mode astrometry', logfile)
+    run_cmd(basecmd_tel + ' -b wcs -s wcs --mode astrometry', logfile, args.timeout)
     #  try again with SV astrometry or set to bad image
-    run_cmd(basecmd_tel + ' -b wcs -s wcs --xshift 1 --yshift 1', logfile)
+    run_cmd(basecmd_tel + ' -b wcs -s wcs --xshift 1 --yshift 1', logfile, args.timeout)
     # compute  psf, when missing, with catalog
-    run_cmd(basecmd_tel + ' -b psf -s psf', logfile)
+    run_cmd(basecmd_tel + ' -b psf -s psf', logfile, args.timeout)
     # compute  psf, when missing, with sextractor
-    run_cmd(basecmd_tel + ' -b psf -s psf --use-sextractor', logfile)
+    run_cmd(basecmd_tel + ' -b psf -s psf --use-sextractor', logfile, args.timeout)
 
     #############################################################################
 
@@ -127,16 +129,16 @@ if __name__ == "__main__":
         for obj in lista:
             for field in args.field:
                 # compute zeropoint
-                run_cmd(basecmd + ' -b zcat -s zcat -F --cutmag 6 --field ' + field + ' -n ' + obj + ' -T ' + tel, logfile)
+                run_cmd(basecmd + ' -b zcat -s zcat -F --cutmag 6 --field ' + field + ' -n ' + obj + ' -T ' + tel, logfile, args.timeout)
                 # produce catalogs
                 for std in standard:
-                    run_cmd(basecmd + ' -b abscat -s abscat -F -n ' + obj + ' --field ' + field + ' -T ' + tel + ' --standard ' + std, logfile)
+                    run_cmd(basecmd + ' -b abscat -s abscat -F -n ' + obj + ' --field ' + field + ' -T ' + tel + ' --standard ' + std, logfile, args.timeout)
             # compute zeropoint with apass if not in landolt/sloan
-            run_cmd(basecmd + ' -b zcat -s zcat -F --cutmag 6 --field apass -n ' + obj + ' -T ' + tel, logfile)
+            run_cmd(basecmd + ' -b zcat -s zcat -F --cutmag 6 --field apass -n ' + obj + ' -T ' + tel, logfile, args.timeout)
             if obj not in standard:
                 # compute psf & apparent magnitudes
-                run_cmd(basecmd_tel + ' -b psfmag -s psfmag -n ' + obj + commandsn.get(obj, ''), logfile)
-                run_cmd(basecmd + ' -b mag -s mag -n ' + obj + ' -T ' + tel, logfile)
+                run_cmd(basecmd_tel + ' -b psfmag -s psfmag -n ' + obj + commandsn.get(obj, ''), logfile, args.timeout)
+                run_cmd(basecmd + ' -b mag -s mag -n ' + obj + ' -T ' + tel, logfile, args.timeout)
                 
     logfile.close()
     stop = time.time()

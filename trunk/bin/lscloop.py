@@ -103,9 +103,9 @@ if __name__ == "__main__":   # main program
                       help='filetype  1 [single], 2 [merge], 3 differences \t [%default]')
     parser.add_option("-o", "--output", dest="output", default='', type="str",
                       help='--output  write magnitude in the output file \t [%default]')
-    parser.add_option("--tempdate", dest="tempdate", default='', type="str",
+    parser.add_option("--tempdate", dest="tempdate", default='19990101-20080101', type="str",
                       help='--tempdate  template date \t [%default]')
-    parser.add_option("--temptel", dest="temptel", default='19990101-20080101', type="str",
+    parser.add_option("--temptel", dest="temptel", default='', type="str",
                       help='--temptel  template instrument \t [%default]')
     parser.add_option("--normalize", dest="normalize", default='i', type="str",
                       help='--normalize image [i], template [t] \t hotpants parameter  \t [%default]')

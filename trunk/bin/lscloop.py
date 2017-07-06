@@ -444,13 +444,12 @@ if __name__ == "__main__":   # main program
 
                         lltemp = lsc.myloopdef.get_list(_tempdate, fake_temptel, _filter, '', _name, '', _ra, _dec, 'photlco', 4, _groupid)
 
-                        if not lista or not lltemp:
-                            sys.exit('template not found')
-
-                        listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
-                        listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
-
-                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, difftype, suffix)
+                        if lltemp:
+                            listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
+                            listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
+                            lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, difftype, suffix)
+                        else:
+                            print 'template not found'
 
                 elif _stage == 'template':  #    merge images using lacos and swarp
                     listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]

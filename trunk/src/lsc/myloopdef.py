@@ -787,7 +787,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                             for filepath, filename in zip(ll1['filepath'], ll1['filename'])]
             ww = np.flatnonzero(np.logical_not(np.array(maskexists)))
         elif _bad == 'diff':
-            maskexists = [os.path.isfile(filepath+filename.replace('.fits', '.diff.fits'))
+            maskexists = [os.path.isfile(filepath+filename.replace('.fits', '.{}.diff.fits'.format(_temptel).replace('..', '')))
                             for filepath, filename in zip(ll1['filepath'], ll1['filename'])]
             ww = np.flatnonzero(np.logical_not(np.array(maskexists)))
         elif _bad == 'mag':

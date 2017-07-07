@@ -113,7 +113,7 @@ if __name__ == "__main__":
     #############################################################################
 
     for tel in telescopes:
-        logfile.write('\n####  starting reduction for ' + tel)
+        logfile.write('####  starting reduction for ' + tel + '\n')
         logfile.flush()
         ll = lsc.myloopdef.get_list(args.epoch, tel)
         lista = set(ll['objname'])
@@ -123,7 +123,7 @@ if __name__ == "__main__":
             _, _, objname, objtype = lsc.util.checksndb(img, 'targets')
             if objtype.upper() == 'STD':
                 standard.append(obj)
-        logfile.write('\n####  standard fields: ' + str(standard))
+        logfile.write('####  standard fields: ' + str(standard) + '\n')
         logfile.flush()
 
         for obj in lista:
@@ -140,6 +140,6 @@ if __name__ == "__main__":
                 run_cmd(basecmd_tel + ' -b psfmag -s psfmag -n ' + obj + commandsn.get(obj, ''), logfile, args.timeout)
                 run_cmd(basecmd + ' -b mag -s mag -n ' + obj + ' -T ' + tel, logfile, args.timeout)
                 
-    logfile.close()
     stop = time.time()
-    print 'time to process all data ', stop - start
+    logfile.write('####  time to process all data: ' + str(stop - start) + ' seconds\n')
+    logfile.close()

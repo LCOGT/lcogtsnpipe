@@ -319,17 +319,20 @@ if __name__ == "__main__":
                         fits.writeto('tempmask.fits',mask.astype('i'))
 
                         if _fixpix:
-                            iraf.flpr(); iraf.flpr()
-                            iraf.unlearn(iraf.fixpix)
-                            cwd = os.getcwd()
-                            iraf.fixpix(os.path.join(cwd, imgtarg),
-                                        os.path.join(cwd, targmask), verbose='yes')
-                            iraf.flpr(); iraf.flpr()
-                            iraf.unlearn(iraf.fixpix)
-                            iraf.fixpix(os.path.join(cwd, imgtemp),
-                                        os.path.join(cwd, tempmask), verbose='yes')
-                            iraf.flpr(); iraf.flpr()
-                            iraf.unlearn(iraf.fixpix)
+                            try:
+                                iraf.flpr(); iraf.flpr()
+                                iraf.unlearn(iraf.fixpix)
+                                cwd = os.getcwd()
+                                iraf.fixpix(os.path.join(cwd, imgtarg),
+                                            os.path.join(cwd, targmask), verbose='yes')
+                                iraf.flpr(); iraf.flpr()
+                                iraf.unlearn(iraf.fixpix)
+                                iraf.fixpix(os.path.join(cwd, imgtemp),
+                                            os.path.join(cwd, tempmask), verbose='yes')
+                                iraf.flpr(); iraf.flpr()
+                                iraf.unlearn(iraf.fixpix)
+                            except:
+                                print 'FIXPIX ERROR, continuing without fixpix'
                         # hotpants parameters
                         iuthresh = str(sat_targ)                        # upper valid data count, image
                         iucthresh = str(0.95*sat_targ)                   # upper valid data count for kernel, image

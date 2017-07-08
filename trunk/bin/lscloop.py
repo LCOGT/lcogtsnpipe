@@ -25,7 +25,7 @@ if __name__ == "__main__":   # main program
     parser.add_option("-e", "--epoch", dest="epoch", type="str",
                       help='epoch to reduce  \t [%default]')
     parser.add_option("-T", "--telescope", dest="telescope", default='all', type="str")
-    parser.add_option("--instrument", dest="instrument", default='', type="str",
+    parser.add_option("-I", "--instrument", dest="instrument", default='', type="str",
                       help='--instrument ' + ' kb, fl, fs, sinistro, sbig \t [%default]')
     parser.add_option("-R", "--RA", dest="ra", default='', type="str",
                       help='-R  ra    \t [%default]')
@@ -103,9 +103,9 @@ if __name__ == "__main__":   # main program
                       help='filetype  1 [single], 2 [merge], 3 differences \t [%default]')
     parser.add_option("-o", "--output", dest="output", default='', type="str",
                       help='--output  write magnitude in the output file \t [%default]')
-    parser.add_option("--tempdate", dest="tempdate", default='', type="str",
+    parser.add_option("--tempdate", dest="tempdate", default='19990101-20080101', type="str",
                       help='--tempdate  template date \t [%default]')
-    parser.add_option("--temptel", dest="temptel", default='19990101-20080101', type="str",
+    parser.add_option("--temptel", dest="temptel", default='', type="str",
                       help='--temptel  template instrument \t [%default]')
     parser.add_option("--normalize", dest="normalize", default='i', type="str",
                       help='--normalize image [i], template [t] \t hotpants parameter  \t [%default]')
@@ -422,8 +422,6 @@ if __name__ == "__main__":   # main program
                     for difftype in _difftypelist:
                         if not _name:
                             sys.exit('you need to select one object: use option -n/--name')
-                        if _telescope=='all':
-                            sys.exit('you need to select one type of instrument -T [fs, fl ,kb]')
 
                         if difftype == '1':
                             suffix = '.optimal.{}.diff.fits'.format(_temptel).replace('..', '.')
@@ -439,18 +437,21 @@ if __name__ == "__main__":   # main program
                                 fake_temptel = 'sinistro'
                         elif _temptel:
                             fake_temptel = _temptel
-                        else:
+                        elif _instrument:
+                            fake_temptel = _instrument
+                        elif _telescope != 'all':
                             fake_temptel = _telescope
+                        else:
+                            sys.exit('you need to select one type of instrument -T [fs, fl ,kb]')
 
                         lltemp = lsc.myloopdef.get_list(_tempdate, fake_temptel, _filter, '', _name, '', _ra, _dec, 'photlco', 4, _groupid)
 
-                        if not lista or not lltemp:
-                            sys.exit('template not found')
-
-                        listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
-                        listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
-
-                        lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, difftype, suffix)
+                        if lltemp:
+                            listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
+                            listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
+                            lsc.myloopdef.run_diff(array(listtar), array(listtemp), _show, _redo, _normalize, _convolve, _bgo, _fixpix, difftype, suffix)
+                        else:
+                            print 'template not found'
 
                 elif _stage == 'template':  #    merge images using lacos and swarp
                     listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]

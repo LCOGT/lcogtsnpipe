@@ -84,7 +84,7 @@ if __name__ == "__main__":
     parser.add_argument("-T", "--telescope", default='all')
     parser.add_argument("-e", "--epoch")
     parser.add_argument("--field", nargs='+', default=['landolt', 'sloan'], choices=['landolt', 'sloan'])
-    parser.add_argument("-t", "--timeout", type=float, default=3600.,
+    parser.add_argument("-t", "--timeout", type=float, default=86400.,
                         help="maximum time for each lscloop.py command in seconds")
     args = parser.parse_args()
     

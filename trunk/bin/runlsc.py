@@ -116,6 +116,8 @@ if __name__ == "__main__":
         logfile.write('####  starting reduction for ' + tel + '\n')
         logfile.flush()
         ll = lsc.myloopdef.get_list(args.epoch, tel)
+        if not ll:
+            continue
         lista = set(ll['objname'])
         standard = []
         for obj in lista:

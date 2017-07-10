@@ -386,7 +386,10 @@ if __name__ == "__main__":   # main program
 
                 elif _stage == 'abscat':  #    compute magnitudes for sequence stars > img.cat
                     if _standard:
-                        mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument, _difftype)
+                        if _standard == 'all':
+                            mm = lsc.myloopdef.get_list(epo, _telescope, _filter, _instrument=_instrument, classid=1)
+                        else:
+                            mm = lsc.myloopdef.get_list(epo, _telescope, _filter, _instrument=_instrument, _name=_name)
                         if len(mm['filename']) > 0:
                             for i in range(0, len(mm['filename'])):
                                 print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
@@ -401,7 +404,10 @@ if __name__ == "__main__":   # main program
                         lsc.myloopdef.run_cat(ll3['filename'], '', _interactive, 1, _type, _fix, 'photlco')
                 elif _stage == 'mag':  #    compute final magnitude using:   mag1  mag2  Z1  Z2  C1  C2
                     if _standard:
-                        mm = lsc.myloopdef.filtralist(ll0, _filter, '', _standard, '', '', '', _filetype,_groupid, _instrument, _difftype)
+                        if _standard == 'all':
+                            mm = lsc.myloopdef.get_list(epo, _telescope, _filter, _instrument=_instrument, classid=1)
+                        else:
+                            mm = lsc.myloopdef.get_list(epo, _telescope, _filter, _instrument=_instrument, _name=_name)
                         if len(mm['filename']) > 0:
                             for i in range(0, len(mm['filename'])):
                                 print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \

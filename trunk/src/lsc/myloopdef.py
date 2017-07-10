@@ -657,7 +657,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):
     return rasn2c, decsn2c
 
 
-def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype=''):
+def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype='', classid=None):
     ll1 = {}
     for key in ll2.keys():
         ll1[key] = ll2[key][:]
@@ -773,6 +773,13 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
         temptels = np.array([fn.split('.')[1] if fn.count('.') == 3 else inst[0:2] for fn, inst in zip(ll1['filename'], ll1['instrument'])], dtype=str)
         for jj in ll1:
             ll1[jj] = np.array(ll1[jj])[temptels == _temptel]
+    
+    if classid is not None:
+        standards = lsc.mysqldef.query(['select id from targets where classificationid='+str(classid)], lsc.conn)
+        standard_ids = [row['id'] for row in standards]
+        isstd = np.array([targetid in standard_ids for targetid in ll1['targetid']])
+        for jj in ll1:
+            ll1[jj] = np.array(ll1[jj])[isstd]
 
 ######################
     if _bad:
@@ -1688,7 +1695,7 @@ def chosecolor(allfilter, usegood=False, _field=''):
 
 ###########################################################################
 def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
-             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype=''):
+             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype='', classid=None):
              
     if epoch is None:
         d = datetime.date.today() + datetime.timedelta(1)
@@ -1719,7 +1726,7 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
             ll0['ra'] = ll0['ra0']
             ll0['dec'] = ll0['dec0']
         ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad,
-             filetype, _groupid, _instrument, _temptel, _difftype)
+             filetype, _groupid, _instrument, _temptel, _difftype, classid)
     else:
         ll = ''
     return ll

@@ -92,10 +92,10 @@ if __name__ == "__main__":
             _ron = lsc.util.readkey3(hdr0, 'ron')
             _instrume = lsc.util.readkey3(hdr0, 'instrume')
 
-            _ra, _dec, _SN0 = lsc.util.checksnlist(img, 'supernovaelist.txt')
+            _ra, _dec, _ = lsc.util.checksnlist(img, 'supernovaelist.txt')
             _tt = ''
-            if not _ra and not _dec:  _ra, _dec, _SN0, _tt = lsc.util.checksndb(img, 'targets')
-            if _tt == 'STD':
+            if not _ra and not _dec:  _ra, _dec, _tt = lsc.util.checksndb(img)
+            if _tt == 1: # standard field
                 _ra = ''
                 _dec = ''
 

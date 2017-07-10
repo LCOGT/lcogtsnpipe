@@ -204,12 +204,10 @@ if __name__ == "__main__":
                 if not _ra0 and not _dec0:
                     try:
                         print 'no box coordinate from input, take coordinate from database'
-                        _ra0, _dec0, _SN0, _tt = lsc.util.checksndb(img + '.fits', 'targets')
+                        _ra0, _dec0, _ = lsc.util.checksndb(img + '.fits')
                     except:
                         print 'no coordinate from database'
-                        _ra0,_dec0,_SN0='','',''
-                    if _SN0:
-                        print '\n###  SN in our list ' + _SN0
+                        _ra0, _dec0 = '', ''
                 if not _ra[0] and not _dec[0]:
                     print 'no sn coordinate from input'
                     if _ra0:

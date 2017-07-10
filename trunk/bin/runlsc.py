@@ -122,8 +122,8 @@ if __name__ == "__main__":
         standard = []
         for obj in lista:
             img = ll['filepath'][ll['objname'] == obj][0] + ll['filename'][ll['objname'] == obj][0]
-            _, _, objname, objtype = lsc.util.checksndb(img, 'targets')
-            if objtype.upper() == 'STD':
+            _, _, _, objtype = lsc.util.checksndb(img)
+            if objtype == 1:
                 standard.append(obj)
         logfile.write('####  standard fields: ' + str(standard) + '\n')
         logfile.flush()

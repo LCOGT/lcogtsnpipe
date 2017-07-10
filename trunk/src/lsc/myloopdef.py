@@ -1021,9 +1021,8 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
                 ###########################################
             _ra0, _dec0, _SN0 = lsc.util.checksnlist(_dir + img, 'supernovaelist.txt')
             if not _SN0:    _ra0, _dec0, _SN0 = lsc.util.checksnlist(_dir + img, 'standardlist.txt')
-            if not _SN0:    _ra0, _dec0, _SN0, _tt = lsc.util.checksndb(_dir + img, 'targets')
-            print _ra0, _dec0, _SN0, img, _filter, _exptime
-            if _SN0:
+            if not _SN0:    _ra0, _dec0, _ = lsc.util.checksndb(img)
+            if _ra0 and _dec0:
                 ccc = iraf.wcsctran('STDIN', 'STDOUT', _dir + img + '[0]', Stdin=[str(_ra0) + ' ' + str(_dec0)], inwcs='world',
                                     units='degrees degrees', outwcs='logical', \
                                     columns='1 2', formats='%10.5f %10.5f', Stdout=1)
@@ -1101,8 +1100,8 @@ def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, re
             X = hdr[0].data
             header = hdr[0].header
             wcs = WCS(header)
-            _ra0, _dec0, _SN0, _tt = lsc.util.checksndb(_dir + img, 'targets')
-            if _SN0:
+            _ra0, _dec0, _ = lsc.util.checksndb(img)
+            if _ra0 and _dec0:
                 [[xPix, yPix]] = wcs.wcs_world2pix([(_ra0, _dec0)], 1)
                 if (xPix > 0 and xPix <= header.get('NAXIS1')) and (yPix <= header.get('NAXIS2') and yPix > 0):
                     xmin, xmax = xPix - 300, xPix + 300
@@ -1127,7 +1126,7 @@ def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, re
                 plt.xlim(float(xPix) - 200, float(xPix) + 200)
                 plt.ylim(float(yPix) + 200, float(yPix) - 200)
                 plt.plot([float(xPix)], [float(yPix)], marker='o', mfc='none', markersize=25, markeredgewidth=2,
-                         markeredgecolor='r', label=str(_SN0))
+                         markeredgecolor='r')
                 if _interactive:
                     plt.show()
                 else:

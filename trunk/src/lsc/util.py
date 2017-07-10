@@ -787,29 +787,16 @@ def checksnlist(img,listfile):
     return _RA,_DEC,_SN
 
 ##########################################################################################################
-def checksndb(img,table):
-   from lsc.util import readkey3,readhdr
-   from lsc.mysqldef import getfromcoordinate, gettargetid,query
-   from lsc import conn
-   hdrt=readhdr(img)
-   _ra=readkey3(hdrt,'CAT-RA')
-   _dec=readkey3(hdrt,'CAT-DEC')
-   _targetid=gettargetid('',_ra,_dec,conn,.01,False)
-   if not _targetid:
-       _targetid=gettargetid('',_ra,_dec,conn,.02,False)
-   if not _targetid:
-       _RA,_DEC,_SN,_type='','','',''
-   else:
-        command=['''select t.ra0, t.dec0, r.name, c.name as classification
-                    from targets as t, targetnames as r, classifications as c
-                    where t.id=r.targetid and t.classificationid=c.id and t.id='''+str(_targetid)]
-        aa=query(command,conn)
-#   aa=getfromcoordinate(conn, table, _ra, _dec,.5)
-        if len(aa)>=1:
-             _RA,_DEC,_SN,_type=aa[0]['ra0'],aa[0]['dec0'],aa[0]['name'],aa[0]['classification']
-        else:
-            _RA,_DEC,_SN,_type='','','',''
-   return _RA,_DEC,_SN,_type
+def checksndb(img):
+    filename = os.path.basename(img)
+    command = '''select targets.ra0, targets.dec0, classificationid
+                 from targets, photlcoraw
+                 where targetid=targets.id and filename="{}"'''.format(filename)
+    target = lsc.mysqldef.query([command], lsc.conn)
+    if target:
+        return target[0]['ra0'], target[0]['dec0'], target[0]['classificationid']
+    else:
+        return '', '', ''
 ##################################################################3
 
 def getcatalog(name_or_filename, field):

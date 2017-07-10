@@ -316,8 +316,8 @@ def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=Fal
             print 'status ' + str(status) + ': unknown status'
 
 
-def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False,
-            fix=True, catalog='', database='photlco', use_sextractor=False, datamax=None, nstars=6):
+def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, fix=True,
+            catalog='', database='photlco', use_sextractor=False, datamin=None, datamax=None, nstars=6):
     for img in imglist:
         if interactive:
             ii = '-i'
@@ -347,10 +347,14 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
             xx = ' --use-sextractor '
         else:
             xx = ''
-        if datamax is not None:
-            dm = ' --datamax ' + str(datamax) + ' '
+        if datamin is not None:
+            dmin = ' --datamin ' + str(datamin) + ' '
         else:
-            dm = ' '
+            dmin = ' '
+        if datamax is not None:
+            dmax = ' --datamax ' + str(datamax) + ' '
+        else:
+            dmax = ' '
         pp = ' -p ' + str(nstars) + ' '
 
         status = checkstage(img, 'psf')
@@ -411,7 +415,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                 _dir = ggg[0]['filepath']
                 img0 = img
                 command = 'lscpsf.py ' + _dir + img0 + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
-                    treshold) + gg + cc + xx + dm + pp
+                    treshold) + gg + cc + xx + dmin + dmax + pp
                 print command
                 os.system(command)
         elif status == 0:

@@ -131,7 +131,8 @@ if __name__ == "__main__":
         for obj in lista:
             for field in args.field:
                 # compute zeropoint
-                run_cmd(basecmd + ' -b zcat -s zcat -F --cutmag 6 --field ' + field + ' -n ' + obj + ' -T ' + tel, logfile, args.timeout)
+                if lsc.util.getcatalog(obj, field):
+                    run_cmd(basecmd + ' -b zcat -s zcat -F --cutmag 6 --field ' + field + ' -n ' + obj + ' -T ' + tel, logfile, args.timeout)
                 # produce catalogs
                 for std in standard:
                     run_cmd(basecmd + ' -b abscat -s abscat -F -n ' + obj + ' --field ' + field + ' -T ' + tel + ' --standard ' + std, logfile, args.timeout)

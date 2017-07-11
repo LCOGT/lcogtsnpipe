@@ -100,7 +100,7 @@ if __name__ == "__main__":   # main program
     else:
         field = 'apass'        
 
-    if not _stage or _stage in ['local', 'getmag', 'wcs', 'psf', 'psfmag', 'makestamp', 'cosmic', 'apmag', 'ingestsloan', 'ingestps1',
+    if args.stage in ['', 'local', 'getmag', 'wcs', 'psf', 'psfmag', 'makestamp', 'cosmic', 'apmag', 'ingestsloan', 'ingestps1', 'abscat', 'mag', 'diff', 'template',
             'checkwcs', 'checkpsf', 'checkmag', 'checkquality', 'checkpos', 'checkcat', 'checkmissing', 'checkfvd', 'checkcosmic', 'checkdiff']:
         ll = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, args.bad, args.name, args.id, args.RA, args.DEC, 
                                     'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
@@ -162,7 +162,10 @@ if __name__ == "__main__":   # main program
                 else:
                     catalogue = lsc.util.getcatalog(args.name, 'apass')
                 if args.standard:
-                    mm = lsc.myloopdef.filtralist(ll0, args.filter, '', args.standard, '', '', '', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
+                    if args.standard == 'all':
+                        mm = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, _instrument=args.instrument, classid=1)
+                    else:
+                        mm = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, _instrument=args.instrument, _name=args.name)
                     extlist = mm['filename']
                     if not len(extlist):
                         raise Exception('no standard fields found')
@@ -252,13 +255,13 @@ if __name__ == "__main__":   # main program
             print '\n### no data selected'
     # ################################################
     else:
-        if _stage == 'diff':
+        if args.stage == 'diff':
             ll0 = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, args.bad, args.name, args.id, args.RA, args.DEC,
                                          'photlco', filetype, args.groupidcode, args.instrument, args.temptel)
         else:
             ll0 = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, args.bad, args.name, args.id, args.RA, args.DEC,
                                          'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
-        for epo in unique(ll0['dayobs']):
+        for epo in np.unique(ll0['dayobs']):
             print '\n#### ' + str(epo)
             ll = {key: val[ll0['dayobs'] == epo] for key, val in ll0.items()}
             if len(ll['filename']) > 0:
@@ -300,6 +303,6 @@ if __name__ == "__main__":   # main program
                     listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                     lsc.myloopdef.run_merge(np.array(listfile), args.force)
                 else:
-                    print _stage + ' not defined'
+                    print args.stage + ' not defined'
             else:
                 print '\n### no data selected'

@@ -125,7 +125,7 @@ if __name__ == "__main__":
                     _xpos, _ypos = string.split(xytargets[0])[0], string.split(xytargets[0])[1]
                 elif not _ra or not _dec:
                     print 'use ra and dec from input database !!! '
-                    _ra, _dec, _SN0, _type = lsc.util.checksndb(img0, 'targets')
+                    _ra, _dec, _ = lsc.util.checksndb(img0)
 
                 if _ra and _dec:
                     print 'convert RA, dec to xpos, ypos using header'

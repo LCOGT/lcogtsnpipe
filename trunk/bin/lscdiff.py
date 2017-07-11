@@ -9,7 +9,8 @@ from astropy.io import fits
 import numpy as np
 from optparse import OptionParser, OptionGroup
 from PyZOGY.subtract import run_subtraction
-
+from pyraf import iraf
+import os
 
 def crossmatchtwofiles(img1, img2, radius=3):
     ''' This module is crossmatch two images:
@@ -318,17 +319,20 @@ if __name__ == "__main__":
                         fits.writeto('tempmask.fits',mask.astype('i'))
 
                         if _fixpix:
-                            iraf.flpr(); iraf.flpr()
-                            iraf.unlearn(iraf.fixpix)
-                            cwd = os.getcwd()
-                            iraf.fixpix(os.path.join(cwd, imgtarg),
-                                        os.path.join(cwd, targmask), verbose='yes')
-                            iraf.flpr(); iraf.flpr()
-                            iraf.unlearn(iraf.fixpix)
-                            iraf.fixpix(os.path.join(cwd, imgtemp),
-                                        os.path.join(cwd, tempmask), verbose='yes')
-                            iraf.flpr(); iraf.flpr()
-                            iraf.unlearn(iraf.fixpix)
+                            try:
+                                iraf.flpr(); iraf.flpr()
+                                iraf.unlearn(iraf.fixpix)
+                                cwd = os.getcwd()
+                                iraf.fixpix(os.path.join(cwd, imgtarg),
+                                            os.path.join(cwd, targmask), verbose='yes')
+                                iraf.flpr(); iraf.flpr()
+                                iraf.unlearn(iraf.fixpix)
+                                iraf.fixpix(os.path.join(cwd, imgtemp),
+                                            os.path.join(cwd, tempmask), verbose='yes')
+                                iraf.flpr(); iraf.flpr()
+                                iraf.unlearn(iraf.fixpix)
+                            except:
+                                print 'FIXPIX ERROR, continuing without fixpix'
                         # hotpants parameters
                         iuthresh = str(sat_targ)                        # upper valid data count, image
                         iucthresh = str(0.95*sat_targ)                   # upper valid data count for kernel, image
@@ -353,8 +357,14 @@ if __name__ == "__main__":
 
                         if _difftype == '1':
                             #do subtraction
-                            psftarg = imgtarg_path.replace('.fits','.psf.fits')
-                            psftemp = imgtemp_path.replace('.fits','.psf.fits')
+                            iraf.noao()
+                            iraf.digiphot()
+                            iraf.daophot(_doprint=0)
+                            psftarg = '_targpsf.fits'
+                            psftemp = '_temppsf.fits'
+                            os.system('rm {0} {1}'.format(psftarg, psftemp))
+                            iraf.seepsf(imgtarg_path.replace('.fits','.psf.fits'), psftarg)
+                            iraf.seepsf(imgtemp_path.replace('.fits','.psf.fits'), psftemp)
                             run_subtraction(imgtarg, imgtemp, psftarg, psftemp,
                                                            science_mask='_targmask.fits',
                                                            reference_mask='_tempmask.fits',

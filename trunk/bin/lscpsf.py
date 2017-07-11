@@ -80,7 +80,7 @@ def runsex(img, fwhm, thresh, pix_scale):  ## run_sextractor  fwhm in pixel
            np.array(classstar), np.array(fluxrad), np.array(bkg)
 
 
-def psffit2(img, fwhm, psfstars, hdr, _datamax, psffun='gauss',  fixaperture=False):
+def psffit2(img, fwhm, psfstars, hdr, _datamin, _datamax, psffun='gauss',  fixaperture=False):
     ''' 
     giving an image, a psffile,  calculate the magnitudes of strs in the file _psf.coo
     '''
@@ -111,7 +111,7 @@ def psffit2(img, fwhm, psfstars, hdr, _datamax, psffun='gauss',  fixaperture=Fal
     iraf.fitskypars.annulus = a4
     iraf.fitskypars.salgori = 'mean'  #mode,mean,gaussian
     iraf.photpars.apertures = '%d,%d,%d' % (a2, a3, a4)
-    iraf.datapars.datamin = -100
+    iraf.datapars.datamin = _datamin
     iraf.datapars.datamax = _datamax
     iraf.datapars.readnoise = _ron
     iraf.datapars.epadu = _gain
@@ -141,7 +141,7 @@ def psffit2(img, fwhm, psfstars, hdr, _datamax, psffun='gauss',  fixaperture=Fal
     return photmag, fitmag
 
 
-def psffit(img, fwhm, psfstars, hdr, interactive, _datamax, psffun='gauss', fixaperture=False):
+def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='gauss', fixaperture=False):
     ''' 
     giving an image, a psffile compute the psf using the file _psf.coo
     '''
@@ -172,7 +172,7 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax, psffun='gauss', fixa
     iraf.fitskypars.annulus = a4
     iraf.fitskypars.salgori = 'mean'  #mode,mean,gaussian
     iraf.photpars.apertures = '%d,%d,%d' % (a2, a3, a4)
-    iraf.datapars.datamin = -100
+    iraf.datapars.datamin = _datamin
     iraf.datapars.datamax = _datamax
     iraf.datapars.readnoise = _ron
     iraf.datapars.epadu = _gain
@@ -222,7 +222,7 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamax, psffun='gauss', fixa
     return photmag, pst, fitmag
 
 
-def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, psffun='gauss', fixaperture=False, _catalog='', _datamax=None, show=False):
+def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, psffun='gauss', fixaperture=False, _catalog='', _datamin=None, _datamax=None, show=False):
     try:
         import lsc, string
 
@@ -392,9 +392,9 @@ def ecpsf(img, ofwhm, threshold, psfstars, distance, interactive, psffun='gauss'
 #################################################################################################################
 
         print 80 * "#"
-        photmag, pst, fitmag = psffit(img, fwhm, psfstars, hdr, interactive, _datamax, psffun, fixaperture)
+        photmag, pst, fitmag = psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun, fixaperture)
 
-        photmag2, fitmag2 = psffit2(img, fwhm, psfstars, hdr, _datamax, psffun, fixaperture)
+        photmag2, fitmag2 = psffit2(img, fwhm, psfstars, hdr, _datamin, _datamax, psffun, fixaperture)
 
         radec = iraf.wcsctran(input='STDIN', output='STDOUT', Stdin=photmag,
                               Stdout=1, image=img + '[0]', inwcs='logical', outwcs='world', columns="1 2",
@@ -536,6 +536,8 @@ if __name__ == "__main__":
                       help='use input catalog  \t\t %default')
     parser.add_option("--fix", action="store_true", dest='fixaperture', default=False,
                       help='fixaperture \t\t\t [%default]')
+    parser.add_option("--datamin", type=int, default=-100,
+                      help="value below which pixels are considered bad")
     parser.add_option("--datamax", type=int,
                       help="value above which pixels are considered saturated (default = SATURATE in header)")
 
@@ -564,8 +566,8 @@ if __name__ == "__main__":
             fwhm0 = option.fwhm
             while True:
                 result, fwhm = ecpsf(img, fwhm0, option.threshold, option.psfstars,
-                                     option.distance, option.interactive, psffun,
-                                     fixaperture, _catalog, option.datamax, option.show)
+                                     option.distance, option.interactive, psffun, fixaperture,
+                                     _catalog, option.datamin, option.datamax, option.show)
                 print '\n### ' + str(result)
                 if option.show:
 #                    lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')

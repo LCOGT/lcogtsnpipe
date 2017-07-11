@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pyraf import iraf
 from glob import glob
+import datetime
 import astropy.units as u
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -297,8 +298,8 @@ def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=Fal
             print 'status ' + str(status) + ': unknown status'
 
 
-def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False,
-            fix=True, catalog='', database='photlco', use_sextractor=False, datamax=None, nstars=6):
+def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, fix=True,
+            catalog='', database='photlco', use_sextractor=False, datamin=None, datamax=None, nstars=6):
     for img in imglist:
         if interactive:
             ii = '-i'
@@ -328,10 +329,14 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
             xx = ' --use-sextractor '
         else:
             xx = ''
-        if datamax is not None:
-            dm = ' --datamax ' + str(datamax) + ' '
+        if datamin is not None:
+            dmin = ' --datamin ' + str(datamin) + ' '
         else:
-            dm = ' '
+            dmin = ' '
+        if datamax is not None:
+            dmax = ' --datamax ' + str(datamax) + ' '
+        else:
+            dmax = ' '
         pp = ' -p ' + str(nstars) + ' '
 
         status = checkstage(img, 'psf')
@@ -392,7 +397,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                 _dir = ggg[0]['filepath']
                 img0 = img
                 command = 'lscpsf.py ' + _dir + img0 + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
-                    treshold) + gg + cc + xx + dm + pp
+                    treshold) + gg + cc + xx + dmin + dmax + pp
                 print command
                 os.system(command)
         elif status == 0:
@@ -634,7 +639,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):
     return rasn2c, decsn2c
 
 
-def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype=''):
+def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype='', classid=None):
     ll1 = {}
     for key in ll2.keys():
         ll1[key] = ll2[key][:]
@@ -750,6 +755,13 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
         temptels = np.array([fn.split('.')[1] if fn.count('.') == 3 else inst[0:2] for fn, inst in zip(ll1['filename'], ll1['instrument'])], dtype=str)
         for jj in ll1:
             ll1[jj] = np.array(ll1[jj])[temptels == _temptel]
+    
+    if classid is not None:
+        standards = lsc.mysqldef.query(['select id from targets where classificationid='+str(classid)], lsc.conn)
+        standard_ids = [row['id'] for row in standards]
+        isstd = np.array([targetid in standard_ids for targetid in ll1['targetid']])
+        for jj in ll1:
+            ll1[jj] = np.array(ll1[jj])[isstd]
 
 ######################
     if _bad:
@@ -1002,9 +1014,8 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
                 ###########################################
             _ra0, _dec0, _SN0 = lsc.util.checksnlist(_dir + img, 'supernovaelist.txt')
             if not _SN0:    _ra0, _dec0, _SN0 = lsc.util.checksnlist(_dir + img, 'standardlist.txt')
-            if not _SN0:    _ra0, _dec0, _SN0, _tt = lsc.util.checksndb(_dir + img, 'targets')
-            print _ra0, _dec0, _SN0, img, _filter, _exptime
-            if _SN0:
+            if not _SN0:    _ra0, _dec0, _ = lsc.util.checksndb(img)
+            if _ra0 and _dec0:
                 ccc = iraf.wcsctran('STDIN', 'STDOUT', _dir + img + '[0]', Stdin=[str(_ra0) + ' ' + str(_dec0)], inwcs='world',
                                     units='degrees degrees', outwcs='logical', \
                                     columns='1 2', formats='%10.5f %10.5f', Stdout=1)
@@ -1082,8 +1093,8 @@ def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, re
             X = hdr[0].data
             header = hdr[0].header
             wcs = WCS(header)
-            _ra0, _dec0, _SN0, _tt = lsc.util.checksndb(_dir + img, 'targets')
-            if _SN0:
+            _ra0, _dec0, _ = lsc.util.checksndb(img)
+            if _ra0 and _dec0:
                 [[xPix, yPix]] = wcs.wcs_world2pix([(_ra0, _dec0)], 1)
                 if (xPix > 0 and xPix <= header.get('NAXIS1')) and (yPix <= header.get('NAXIS2') and yPix > 0):
                     xmin, xmax = xPix - 300, xPix + 300
@@ -1108,7 +1119,7 @@ def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, re
                 plt.xlim(float(xPix) - 200, float(xPix) + 200)
                 plt.ylim(float(yPix) + 200, float(yPix) - 200)
                 plt.plot([float(xPix)], [float(yPix)], marker='o', mfc='none', markersize=25, markeredgewidth=2,
-                         markeredgecolor='r', label=str(_SN0))
+                         markeredgecolor='r')
                 if _interactive:
                     plt.show()
                 else:
@@ -1665,14 +1676,16 @@ def chosecolor(allfilter, usegood=False, _field=''):
 
 
 ###########################################################################
-def get_list(epoch, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
-             filetype=1):
-    if '-' not in str(epoch):
-        lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epoch0, '', '*', _telescope)
+def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
+             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype='', classid=None):
+             
+    if epoch is None:
+        d = datetime.date.today() + datetime.timedelta(1)
+        g = d - datetime.timedelta(4)
+        epochs = [g.strftime("%Y%m%d"), d.strftime("%Y%m%d")]
     else:
-        epoch1, epoch2 = epoch.split('-')
-        lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epoch1, epoch2, '*',
-                                            _telescope)
+        epochs = epoch.split('-')
+    lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epochs[0], epochs[-1], '*', _telescope)
     if lista:
         ll0 = {}
         for jj in lista[0].keys(): ll0[jj] = []
@@ -1694,7 +1707,8 @@ def get_list(epoch, _telescope='all', _filter='', _bad='', _name='', _id='', _ra
         else:
             ll0['ra'] = ll0['ra0']
             ll0['dec'] = ll0['dec0']
-        ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad)
+        ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad,
+             filetype, _groupid, _instrument, _temptel, _difftype, classid)
     else:
         ll = ''
     return ll
@@ -1850,7 +1864,11 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
         fixpix = ' --fixpix '
     else:
         fixpix = ''
-    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize+_convolve+_bgo + fixpix + ' --difftype ' + _difftype + ' --suffix ' + suffix
+    if _difftype:
+        difftype = ' --difftype ' + _difftype
+    else:
+        difftype = ''
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix
     print command
     os.system(command)
 

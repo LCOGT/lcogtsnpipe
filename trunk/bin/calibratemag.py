@@ -31,7 +31,7 @@ def crossmatch(cat0, cat1, threshold=1., racol0='ra', deccol0='dec', racol1='ra'
     
 def get_image_data(lista, magcol=None, errcol=None, refcat=None):
     filename_equals = ['filename="{}"'.format(os.path.basename(fn).replace('.sn2.fits', '.fits')) for fn in lista]
-    t = Table(lsc.mysqldef.query(['''select filter, filepath, filename, airmass, shortname, dayobs,
+    t = Table(lsc.mysqldef.query(['''select filter, filepath, filename, airmass, shortname, dayobs, substring(instrument, 1, 2) as instclass,
                                      zcol1, z1, c1, dz1, dc1, zcol2, z2, c2, dz2, dc2, psfmag, psfdmag, apmag, dapmag
                                      from photlco, telescopes where photlco.telescopeid=telescopes.id and (''' + 
                                      ' or '.join(filename_equals) + ')'], lsc.conn), masked=True)
@@ -152,10 +152,11 @@ if __name__ == "__main__":
         with open(args.exzp) as f:
             lista2 = f.read().splitlines()
         standards = get_image_data(lista2)
-        standards = standards.group_by(['dayobs', 'shortname', 'filter', 'zcol1', 'zcol2'])
+        standards = standards.group_by(['dayobs', 'shortname', 'instclass', 'filter', 'zcol1', 'zcol2'])
         targets[['zcol1', 'z1', 'dz1', 'c1', 'dc1', 'zcol2', 'z2', 'dz2', 'c2', 'dc2']].mask = True
         for group in standards.groups:
-            matches_in_targets = (targets['dayobs'] == group['dayobs'][0]) & (targets['shortname'] == group['shortname'][0]) & (targets['filter'] == group['filter'][0])
+            matches_in_targets = ((targets['dayobs'] == group['dayobs'][0]) & (targets['shortname'] == group['shortname'][0])
+                                   & (targets['instclass'] == group['instclass']) & (targets['filter'] == group['filter'][0]))
             if not np.any(matches_in_targets):
                 continue
             targets['zcol1'][matches_in_targets] = group['zcol1'][0]

@@ -31,7 +31,7 @@ def crossmatch(cat0, cat1, threshold=1., racol0='ra', deccol0='dec', racol1='ra'
     
 def get_image_data(lista, magcol=None, errcol=None, refcat=None):
     filename_equals = ['filename="{}"'.format(os.path.basename(fn).replace('.sn2.fits', '.fits')) for fn in lista]
-    t = Table(lsc.mysqldef.query(['''select filter, filepath, filename, airmass, shortname, dayobs, substring(instrument, 1, 2) as instclass,
+    t = Table(lsc.mysqldef.query(['''select filter, filepath, filename, airmass, shortname, dayobs, instrument,
                                      zcol1, z1, c1, dz1, dc1, zcol2, z2, c2, dz2, dc2, psfmag, psfdmag, apmag, dapmag
                                      from photlco, telescopes where photlco.telescopeid=telescopes.id and (''' + 
                                      ' or '.join(filename_equals) + ')'], lsc.conn), masked=True)
@@ -111,6 +111,7 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--field", default='landolt', choices=['landolt', 'sloan', 'apass'],
                         help='Landolt (UBVRI), Sloan (ugriz), or APASS (BVgri) filters?')
     parser.add_argument("-c", "--catalog", help="use only stars that match this reference catalog")
+    parser.add_argument("--minstars", default=0, type=int, help="minimum number of catalog matches for inclusion")
     parser.add_argument("-o", "--output", default='{SN}_{field}_{datenow}.cat', help='output filename')
     args = parser.parse_args()
     
@@ -152,11 +153,11 @@ if __name__ == "__main__":
         with open(args.exzp) as f:
             lista2 = f.read().splitlines()
         standards = get_image_data(lista2)
-        standards = standards.group_by(['dayobs', 'shortname', 'instclass', 'filter', 'zcol1', 'zcol2'])
+        standards = standards.group_by(['dayobs', 'shortname', 'instrument', 'filter', 'zcol1', 'zcol2'])
         targets[['zcol1', 'z1', 'dz1', 'c1', 'dc1', 'zcol2', 'z2', 'dz2', 'c2', 'dc2']].mask = True
         for group in standards.groups:
             matches_in_targets = ((targets['dayobs'] == group['dayobs'][0]) & (targets['shortname'] == group['shortname'][0])
-                                   & (targets['instclass'] == group['instclass'][0]) & (targets['filter'] == group['filter'][0]))
+                                   & (targets['instrument'] == group['instrument'][0]) & (targets['filter'] == group['filter'][0]))
             if not np.any(matches_in_targets):
                 continue
             targets['zcol1'][matches_in_targets] = group['zcol1'][0]
@@ -261,7 +262,7 @@ if __name__ == "__main__":
             plt.ion()
             fig = plt.figure(1, figsize=(11, 8.5))
             for filt in filterlist:
-                nightly_by_filter = targets[(targets['filter'] == filt) & ~np.all(targets['mag'].mask, axis=1)]
+                nightly_by_filter = targets[(targets['filter'] == filt) & (np.sum(~targets['mag'].mask, axis=1) > args.minstars)]
                 if not nightly_by_filter:
                     print 'no calibrated stars in', filt
                     continue
@@ -283,7 +284,7 @@ if __name__ == "__main__":
                 nightly_by_filter['offset'] = nightly_by_filter['mag'] - catalog[filt].T
                 if filt in refcat.colnames:
                     nightly_by_filter['offset from refcat'] = nightly_by_filter['mag'] - refcat[filt].T
-                ax2.axhline(0., color='k')
+                ax2.axhline(0., color='k', lw=1)
                 lgd_handle = ax2.plot(nightly_by_filter['offset'], color='k', alpha=0.5, marker='_', ls='none')[:1]
                 lgd_handle += ax2.plot(np.median(nightly_by_filter['offset'], axis=1), marker='o', ls='none')
                 lgd_label = ['individual stars', 'median offset']
@@ -302,11 +303,11 @@ if __name__ == "__main__":
                     plt.figure(2)
                     plt.clf()
                     ax3 = plt.subplot(111)
-                    ax3.axhline(0., color='k')
+                    ax3.axhline(0., color='k', lw=1)
                     diffs = (catalog[filt] - refcat[filt]).data
                     median_diff = np.median(diffs)
                     ax3.plot(catalog[filt], diffs, label='individual stars', marker='o', ls='none')
-                    ax3.axhline(median_diff, label='median: {:.3f} mag'.format(median_diff), ls='--')
+                    ax3.axhline(median_diff, label='median: {:.3f} mag'.format(median_diff), ls='--', lw=1)
                     ax3.set_title('Filter: ' + filt)
                     ax3.set_xlabel('Apparent Magnitude in Output Catalog')
                     ax3.set_ylabel('Output - {} (mag)'.format(catfile))

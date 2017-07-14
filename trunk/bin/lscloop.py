@@ -80,6 +80,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--subtract-mag-from-header", action='store_true', help='automatically subtract mag from header of template image')
     parser.add_argument("--fixpix", action="store_true", help='Run fixpix on the images before doing image subtraction')
     parser.add_argument("--nstars", type=int, default=6, help="number of stars used to make the PSF")
+    parser.add_argument("--minstars", type=int, default=0, help="minimum number of stars matching catalog (-s abscat/local)")
     parser.add_argument("--difftype", default='', choices=['0', '1', '0,1'], help='Choose hotpants or optimal subtraction; hotpants = 0, difftype = 1, both = 0,1')
     parser.add_argument("--multicore", default=8, type=int, help='numbers of cores')
     args = parser.parse_args()
@@ -174,7 +175,7 @@ if __name__ == "__main__":   # main program
                     catalogue = args.catalogue
                 else:
                     catalogue = lsc.util.getcatalog(args.name, 'apass')
-                lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force)
+                lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force, args.minstars)
             elif args.stage == 'diff':  #    difference images using hotpants
                 _difftypelist = args.difftype.split(',')
                 for difftype in _difftypelist:

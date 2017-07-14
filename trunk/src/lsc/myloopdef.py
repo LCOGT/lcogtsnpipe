@@ -165,7 +165,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     if _output:
         ff.close()
 
-def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit', database='photlco', field=None, refcat=None, force=False):
+def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit', database='photlco', field=None, refcat=None, force=False, minstars=0):
     if len(extlist) > 0:
         f = open('_tmpext.list', 'w')
         for img in extlist:
@@ -190,6 +190,8 @@ def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit',
         command += ' -F'
     if refcat:
         command += ' -c ' + refcat
+    if minstars:
+        command += ' --minstars ' + str(minstars)
     print command
     os.system(command)
 

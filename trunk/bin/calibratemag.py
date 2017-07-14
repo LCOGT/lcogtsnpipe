@@ -104,7 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--interactive", action="store_true")
     parser.add_argument("-F", "--force", action="store_true", help="overwrite existing catalogs")
     parser.add_argument("-e", "--exzp", help='filename for external zero point from different field')
-    parser.add_argument("-s", "--stage", default='abscat', choices=['abscat', 'mag'],
+    parser.add_argument("-s", "--stage", default='abscat', choices=['mag', 'abscat', 'local'],
                         help='calibrate the local sequence (abscat) or the supernova (mag)?')
     parser.add_argument("-t", "--typemag", default='fit', choices=['fit', 'ph'], 
                         help='PSF photometry (fit) or aperture photometry (ph)?')
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     with open(args.imglist) as f:
         lista = f.read().splitlines()
 
-    if args.stage == 'abscat' and args.catalog is not None:
+    if args.stage in ['abscat', 'local'] and args.catalog is not None:
         try:
             refcat = Table.read(args.catalog, format='ascii', fill_values=[('9999.000', '0')])
             colnames = [row.split()[0] for row in refcat.meta['comments'] if len(row.split()) == 6]
@@ -135,15 +135,15 @@ if __name__ == "__main__":
                                 'vary', 'Uerr', 'Berr', 'Verr', 'Rerr', 'Ierr', 'col13', 'col14', 'col15', 'col16', 'col17'],
                                 fill_values=[('99.999', '0'), ('9.9999', '0')])
 
-    if args.typemag == 'fit' and args.stage == 'abscat': # PSF photometry for local sequence
-        targets = get_image_data(lista, 'smagf', 'smagerrf', refcat)
-    elif args.typemag == 'ph' and args.stage == 'abscat': # aperture photometry for local sequence
-        targets = get_image_data(lista, 'magp3', 'merrp3', refcat)
-    elif args.typemag == 'fit': # PSF photometry for supernova
+    if args.typemag == 'fit' and args.stage == 'mag': # PSF photometry for supernova
         targets = get_image_data(lista, 'psfmag', 'psfdmag')
-    elif args.typemag == 'ph': # aperture photometry for supernova
+    elif args.typemag == 'ph' and args.stage == 'mag': # aperture photometry for supernova
         targets = get_image_data(lista, 'apmag', 'dapmag')
-
+    elif args.typemag == 'fit': # PSF photometry for local sequence
+        targets = get_image_data(lista, 'smagf', 'smagerrf', refcat)
+    elif args.typemag == 'ph': # aperture photometry for local sequence
+        targets = get_image_data(lista, 'magp3', 'merrp3', refcat)
+        
     color_to_use = lsc.myloopdef.chosecolor(targets['filter'], True)
     colors_to_calculate = set(sum(color_to_use.values(), []))
 
@@ -156,7 +156,7 @@ if __name__ == "__main__":
         targets[['zcol1', 'z1', 'dz1', 'c1', 'dc1', 'zcol2', 'z2', 'dz2', 'c2', 'dc2']].mask = True
         for group in standards.groups:
             matches_in_targets = ((targets['dayobs'] == group['dayobs'][0]) & (targets['shortname'] == group['shortname'][0])
-                                   & (targets['instclass'] == group['instclass']) & (targets['filter'] == group['filter'][0]))
+                                   & (targets['instclass'] == group['instclass'][0]) & (targets['filter'] == group['filter'][0]))
             if not np.any(matches_in_targets):
                 continue
             targets['zcol1'][matches_in_targets] = group['zcol1'][0]
@@ -235,7 +235,7 @@ if __name__ == "__main__":
             else:
                 lsc.mysqldef.updatevalue('photlco', 'mag', 9999., row['filename'])
                 lsc.mysqldef.updatevalue('photlco', 'dmag', 9999., row['filename'])
-    if args.stage == 'abscat': 
+    elif args.stage == 'abscat': 
        # write all the catalogs to files & put filename in database
         for row in targets:
             good = ~row['mag'].mask
@@ -253,7 +253,7 @@ if __name__ == "__main__":
                 lsc.mysqldef.updatevalue('photlco', 'abscat', outfile, row['filename'])
             except IOError as e:
                 print e, '-- use -F to overwrite'
-        
+    elif args.stage == 'local':
         # make master catalog and write to file
         catalog = combine_nights(targets, filterlist, refcat)
         catfile = os.path.basename(args.catalog)
@@ -261,9 +261,10 @@ if __name__ == "__main__":
             plt.ion()
             fig = plt.figure(1, figsize=(11, 8.5))
             for filt in filterlist:
-                if filt not in targets['filter']:
-                    continue
                 nightly_by_filter = targets[(targets['filter'] == filt) & ~np.all(targets['mag'].mask, axis=1)]
+                if not nightly_by_filter:
+                    print 'no calibrated stars in', filt
+                    continue
                 fig.clear()
                 ax1 = fig.add_subplot(211)
                 ax2 = fig.add_subplot(212)

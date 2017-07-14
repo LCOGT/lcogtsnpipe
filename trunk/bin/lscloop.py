@@ -122,10 +122,24 @@ if __name__ == "__main__":   # main program
                            str(ll['psfmag'][i]), str(ll['apmag'][i]), ll['zcat'][i].replace('.cat', ''),
                            str(ll['mag'][i]), ll['abscat'][i])
             print '\n###  total number = ' + str(len(ll['filename']))
+            if args.standard:
+                if args.standard == 'all':
+                    mm = lsc.myloopdef.get_standards(args.epoch, args.name, args.filter)
+                else:
+                    mm = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, _instrument=args.instrument, _name=args.standard)
+                for i in range(len(mm['filename'])):
+                    print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
+                          (str(mm['filename'][i]), str(mm['objname'][i]), str(mm['filter'][i]),
+                           str(mm['wcs'][i]), str(mm['psf'][i]),
+                           str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
+                           str(mm['abscat'][i]))
+                print '\n###  total number = ' + str(len(mm['filename']))
+                if args.stage not in ['mag', 'abscat', 'local']:
+                    ll = mm
+            else:
+                mm = {'filename': []}
             # ####################################
-            if args.stage == 'local':  # calibrate local sequence from .cat files
-                lsc.myloopdef.run_local(ll['filename'], field, args.interactive)
-            elif args.stage == 'getmag':  # get final magnitude from mysql
+            if args.stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type)
             elif args.stage == 'psf':
                 lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,
@@ -155,30 +169,12 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'ingestps1':
                 listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                 lsc.myloopdef.run_ingestsloan(listfile, 'ps1', args.ps1frames, show=args.show, force=args.force)
-            elif args.stage in ['abscat', 'mag']:  # compute magnitudes for sequence stars or supernova
-                if args.stage == 'mag':
-                    catalogue = None
-                elif args.catalogue:
+            elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
+                if args.catalogue:
                     catalogue = args.catalogue
                 else:
                     catalogue = lsc.util.getcatalog(args.name, 'apass')
-                if args.standard:
-                    if args.standard == 'all':
-                        mm = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, _instrument=args.instrument, classid=1)
-                    else:
-                        mm = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, _instrument=args.instrument, _name=args.name)
-                    extlist = mm['filename']
-                    if not len(extlist):
-                        raise Exception('no standard fields found')
-                    for i in range(len(extlist)):
-                        print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
-                              (str(mm['filename'][i]), str(mm['objname'][i]), str(mm['filter'][i]),
-                               str(mm['wcs'][i]), str(mm['psf'][i]),
-                               str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
-                               str(mm['abscat'][i]))
-                else:
-                    extlist = []
-                lsc.myloopdef.run_cat(ll['filename'], extlist, args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force)
+                lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force)
             elif args.stage == 'diff':  #    difference images using hotpants
                 _difftypelist = args.difftype.split(',')
                 for difftype in _difftypelist:

@@ -169,14 +169,14 @@ def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit',
     if len(extlist) > 0:
         f = open('_tmpext.list', 'w')
         for img in extlist:
-            if checkstage(img, stage):
+            if checkstage(img, 'zcat'):
                 ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
                 f.write(ggg[0]['filepath'] + img.replace('fits', 'sn2.fits') + '\n')
         f.close()
 
     f = open('_tmp.list', 'w')
     for img in imglist:
-        if checkstage(img, stage):
+        if checkstage(img, 'psf'):
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
             f.write(ggg[0]['filepath'] + img.replace('fits', 'sn2.fits') + '\n')
     f.close()
@@ -675,20 +675,9 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             for jj in ll1.keys():
                 ll1[jj] = []
     if _filter:  #filter 
-        if _filter == 'sloan':
-            ww = np.array([i for i in range(len(ll1['filter'])) if (
-            (ll1['filter'][i] in ['zs', 'up', 'gp', 'ip', 'rp', 'SDSS-U', 'SDSS-G', 'SDSS-R', 'SDSS-I', 'Pan-Starrs-Z']))])
-        elif _filter == 'landolt':
-            ww = np.array([i for i in range(len(ll1['filter'])) if (
-            (ll1['filter'][i] in ['U', 'B', 'V', 'R', 'I', 'Bessell-U', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']))])
-        elif _filter == 'apass':
-            ww = np.array([i for i in range(len(ll1['filter']))
-                          if ((ll1['filter'][i] in ['B', 'V', 'Bessell-B','Bessell-V', 'gp', 'ip', 'rp', 'SDSS-G',
-                                                    'SDSS-R', 'SDSS-I']))])
-        else:
-            lista = sum([lsc.sites.filterst[fil] for fil in _filter.split(',')], [])
-            print lista
-            ww = np.array([i for i in range(len(ll1['filter'])) if ((ll1['filter'][i] in lista))])
+        lista = sum([lsc.sites.filterst[fil] for fil in _filter.split(',')], [])
+        print lista
+        ww = np.array([i for i in range(len(ll1['filter'])) if ll1['filter'][i] in lista])
         if len(ww) > 0:
             for jj in ll1.keys():
                 ll1[jj] = np.array(ll1[jj])[ww]
@@ -809,30 +798,6 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             #               for jj in ll1.keys(): ll1[jj]=[]
 
     return ll1
-
-
-#########################################################################
-def run_local(imglist, _field, _interactive=False, database='photlco'):
-    ff = open('_tmpcat.list', 'w')
-    for img in imglist:
-        ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
-        if ggg:
-            _dir = ggg[0]['filepath']
-            if ggg[0]['abscat'] != 'X':
-                ff.write(_dir + img.replace('.fits', '.cat') + '\n')
-    ff.close()
-    if _interactive:
-        ii = ' -i '
-    else:
-        ii = ''
-    if _field:
-        _field = ' -f ' + _field
-    else:
-        _field = ''
-    command = 'lscmaglocal.py _tmpcat.list ' + ii + ' ' + _field
-    print command
-    os.system(command)
-
 
 ##########################################################################
 def position(imglist, ra1, dec1, show=False):
@@ -1713,7 +1678,44 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
         ll = ''
     return ll
 
-
+def get_standards(epoch, name, filters):
+    epoch1 = epoch.split('-')[0]
+    epoch2 = epoch.split('-')[-1]
+    query = '''SELECT DISTINCT std.filename, std.objname, std.filter,
+               std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat
+               FROM
+               photlco AS obj,
+               photlco AS std,
+               targetnames AS targobj,
+               targets AS targstd,
+               telescopes AS telobj,
+               telescopes AS telstd,
+               instruments AS instobj,
+               instruments AS inststd
+               WHERE obj.telescopeid = telobj.id
+               AND std.telescopeid = telstd.id
+               AND obj.instrumentid = instobj.id
+               AND std.instrumentid = inststd.id
+               AND telobj.shortname = telstd.shortname
+               AND instobj.type = inststd.type
+               AND obj.targetid = targobj.targetid
+               AND std.targetid = targstd.id
+               AND targstd.classificationid = 1
+               AND obj.filter = std.filter
+               AND obj.dayobs = std.dayobs
+               AND obj.quality = 127
+               AND std.quality = 127
+               AND obj.dayobs >= {epoch1}
+               AND obj.dayobs <= {epoch2}
+               AND targobj.name = "{name}"
+               '''.format(epoch1=epoch1, epoch2=epoch2, name=name)
+    if filters:
+        query += 'AND (obj.filter="' + '" OR obj.filter="'.join(lsc.sites.filterst[filters]) + '")'
+    print 'Searching for corresponding standard fields. This may take a minute...'
+    matching_stds = lsc.mysqldef.query([query], lsc.conn)
+    final_list = {col: [ll[col] for ll in matching_stds] for col in matching_stds[0]}
+    return final_list
+        
 ######
 
 def check_missing(lista, database='photlco'):

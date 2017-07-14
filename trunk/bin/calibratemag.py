@@ -229,19 +229,19 @@ if __name__ == "__main__":
 
     if args.stage == 'mag':
         # write mag & dmag to database
-        for row in targets:
-            if row['mag'] < 999.: # keeps out nan, masked, & 9999.
-                lsc.mysqldef.updatevalue('photlco', 'mag', row['mag'], row['filename'])
-                lsc.mysqldef.updatevalue('photlco', 'dmag', row['dmag'], row['filename'])
-            else:
-                lsc.mysqldef.updatevalue('photlco', 'mag', 9999., row['filename'])
-                lsc.mysqldef.updatevalue('photlco', 'dmag', 9999., row['filename'])
+        targets['dmag'].mask = targets['mag'].mask
+        query = 'INSERT INTO photlco (filename, mag, dmag) VALUES\n'
+        query += ',\n'.join(['("{}", {}, {})'.format(row['filename'], row['mag'], row['dmag']) for row in targets.filled(9999.)])
+        query += '\nON DUPLICATE KEY UPDATE mag=VALUES(mag), dmag=VALUES(dmag)'
+        print query
+        lsc.mysqldef.query([query], lsc.conn)
     elif args.stage == 'abscat': 
        # write all the catalogs to files & put filename in database
         for row in targets:
             good = ~row['mag'].mask
             if not np.any(good):
                 print 'no good magnitudes for', row['filename']
+                lsc.mysqldef.updatevalue('photlco', 'abscat', 'X', row['filename'])
                 continue
             outtab = Table([row['ra'][good].T, row['dec'][good].T, row['mag'][good].T, row['dmag'][good].T],
                            meta={'comments': ['daophot+standardfield', '         ra           dec       {0}     d{0}'.format(row['filter'])]})

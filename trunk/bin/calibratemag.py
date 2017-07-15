@@ -216,14 +216,14 @@ if __name__ == "__main__":
         targets['d'+filters] = np.array(dcolors)
 
     # calibrate all the instrumental magnitudes
-    zcol = [color_to_use[row['filter']][0] for row in targets]
+    zcol = [color_to_use[row['filter']][0] if color_to_use[row['filter']] else row['filter']*2 for row in targets]
     zeropoint = np.choose(zcol == targets['zcol1'], [targets['z2'], targets['z1']])
     dzeropoint = np.choose(zcol == targets['zcol1'], [targets['dz2'], targets['dz1']])
     colorterm = np.choose(zcol == targets['zcol1'], [targets['c2'], targets['c1']])
     dcolorterm = np.choose(zcol == targets['zcol1'], [targets['dc2'], targets['dc1']])
     uzcol, izcol = np.unique(zcol, return_inverse=True)
-    color_used = np.choose(izcol, [targets[col].T for col in uzcol]).filled(0.) # if no other filter, skip color correction
-    dcolor_used = np.choose(izcol, [targets['d'+col].T for col in uzcol]).filled(0.)
+    color_used = np.choose(izcol, [targets[col].T if col in targets.colnames else 0. for col in uzcol]).filled(0.) # if no other filter, skip color correction
+    dcolor_used = np.choose(izcol, [targets['d'+col].T if col in targets.colnames else 0. for col in uzcol]).filled(0.)
     targets['mag'] = (targets['instmag_amcorr'].T + zeropoint + colorterm * color_used).T
     targets['dmag'] = np.sqrt(targets['dinstmag'].T**2 + dzeropoint**2 + dcolorterm**2 * color_used**2 + colorterm**2 + dcolor_used**2).T
 

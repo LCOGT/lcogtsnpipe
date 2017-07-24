@@ -1190,38 +1190,54 @@ def checkcosmic(imglist, database='photlco'):
         else:
             print 'status ' + str(status) + ': unknown status'
 
+def display_subtraction(img):
+    ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', img, '*')
+    diffimg = ggg[0]['filepath'] + img
+    origimg = diffimg.split('.')[0] + '.' + diffimg.split('.')[-1]
+    tempimg = diffimg.replace('diff', 'ref')
+    if os.path.isfile(diffimg) and os.path.isfile(origimg) and os.path.isfile(tempimg):
+        diffdata = fits.getdata(diffimg)
+        origdata = fits.getdata(origimg)
+        tempdata = fits.getdata(tempimg)
+        plt.clf()
+        ax1 = plt.subplot(2, 2, 1, adjustable='box-forced')
+        ax2 = plt.subplot(2, 2, 2, sharex=ax1, sharey=ax1, adjustable='box-forced')
+        ax3 = plt.subplot(2, 2, 3, sharex=ax1, sharey=ax1, adjustable='box-forced')
+        pmin, pmax = 1, 99
+        ax1.imshow(origdata, vmin=np.percentile(origdata, pmin), vmax=np.percentile(origdata, pmax))
+        ax2.imshow(tempdata, vmin=np.percentile(tempdata, pmin), vmax=np.percentile(tempdata, pmax))
+        ax3.imshow(diffdata, vmin=np.percentile(diffdata, pmin), vmax=np.percentile(diffdata, pmax))
+        ax1.set_title(os.path.basename(origimg))
+        ax2.set_title(os.path.basename(tempimg))
+        ax3.set_title(os.path.basename(diffimg))
+        plt.xlim(origdata.shape[0] / 2 - 500, origdata.shape[0] / 2 + 500)
+        plt.ylim(origdata.shape[1] / 2 - 500, origdata.shape[1] / 2 + 500)
+        plt.gcf().text(0.75, 0.25, 'filter = {filter}\npsfmag = {psfmag:.2f} mag\nmag = {mag:.2f} mag'.format(**ggg[0]), va='center', ha='center')
+        plt.tight_layout()
+    else:
+        for f in [origimg, tempimg, diffimg]:
+            if not os.path.isfile(f): print f, 'not found'
+    return diffimg, origimg, tempimg
+
 def checkdiff(imglist, database='photlco'):
-    iraf.digiphot(_doprint=0)
-    iraf.daophot(_doprint=0)
-    iraf.set(stdimage='imt1024')
+    plt.ion()
+    plt.figure(figsize=(8, 8))
     for img in imglist:
         status = checkstage(img, 'wcs')
         if status >= 0:
-            photlcodict = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
-            _dir = photlcodict[0]['filepath']
-            diffimg = _dir + img
-            origimg = diffimg.split('.')[0] + '.' + diffimg.split('.')[-1]
-            tempimg = diffimg.replace('diff', 'ref')
-            if os.path.isfile(diffimg) and os.path.isfile(origimg) and os.path.isfile(tempimg):
-                print img, photlcodict[0]['filter']
-                iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
-                iraf.display(tempimg, 2, fill=True, Stdout=1)
-                iraf.display(diffimg, 3, fill=True, Stdout=1)
-                ans = raw_input('>>> good difference [[y]/n] or [b]ad quality (original image)? ')
-                if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
-                    print 'updatestatus bad'
-                    print 'rm', diffimg.replace('.fits', '*')
-                    os.system('rm ' + diffimg.replace('.fits', '*'))
-                    print 'rm', tempimg
-                    os.system('rm ' + tempimg)
-                    print 'delete', img, 'from database'
-                    lsc.mysqldef.deleteredufromarchive(img, 'photlco', 'filename')
-                if ans in ['bad', 'b', 'B']:
-                    print 'updatestatus bad quality'
-                    lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(origimg))
-            else:
-                for f in [origimg, tempimg, diffimg]:
-                    if not os.path.isfile(f): print f, 'not found'
+            diffimg, origimg, tempimg = display_subtraction(img)
+            ans = raw_input('>>> good difference [[y]/n] or [b]ad quality (original image)? ')
+            if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
+                print 'updatestatus bad'
+                print 'rm', diffimg.replace('.fits', '*')
+                os.system('rm ' + diffimg.replace('.fits', '*'))
+                print 'rm', tempimg
+                os.system('rm ' + tempimg)
+                print 'delete', img, 'from database'
+                lsc.mysqldef.deleteredufromarchive(img, 'photlco', 'filename')
+            if ans in ['bad', 'b', 'B']:
+                print 'updatestatus bad quality'
+                lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(origimg))
         elif status == -1:
             print 'status ' + str(status) + ': sn2.fits file not found'
         elif status == -2:
@@ -1252,7 +1268,7 @@ def display_psf_fit(img, datamax=None):
             axL.plot(i_sat, j_sat, 'rx', label='{:d} pixels > {:.0f} ADU'.format(len(i_sat), datamax))
             axL.legend()
         plt.colorbar(im, ax=[axL, axR], orientation='horizontal')
-        plt.gcf().text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
+        plt.gcf().text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag\nmag = {mag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
     return ogfile, rsfile
 
 def checkmag(imglist, datamax=None):
@@ -1450,7 +1466,7 @@ class PickablePlot():
                 self.delete_current()
                 self.i_active = None
             plt.draw()
-            axlims = plt.axis()
+            axlims = fig.gca().axis()
         
     def onclick(self, event):
         print # to get off the raw_input line
@@ -1500,10 +1516,13 @@ def plotfast2(setup):
     def click_hook(i):
         print filenames[i], 'selected'
         print 'mjd = {:.2f}\tmag = {:.2f} ({:+d} shift on plot)'.format(mjds[i], mags[i], shifts[i])
-        dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, mjd, mag')[0]
+        dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, mjd, mag, filetype')[0]
         print 'mjd = {:.2f}\tmag = {:.2f} (from database)'.format(dbrow['mjd'], dbrow['mag'])
         plt.figure(2)
         display_psf_fit(filenames[i])
+        if dbrow['filetype'] == '3':
+            plt.figure(3, figsize=(8, 8))
+            display_subtraction(filenames[i])
 
     def delete_hook(i):
         lsc.mysqldef.updatevalue('photlco', 'mag', 9999, filenames[i])
@@ -1516,8 +1535,15 @@ def plotfast2(setup):
         print 'deleted', filenames[i]
 
     def bad_hook(i):
-        lsc.mysqldef.updatevalue('photlco', 'magtype', -1, filenames[i])
-        print 'marked', filenames[i], 'as bad'
+        dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, filetype')[0]
+        if dbrow['filetype'] == '3':
+            os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.fits', '*'))
+            os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.diff', '.ref'))
+            lsc.mysqldef.deleteredufromarchive(filenames[i], 'photlco', 'filename')
+            print 'delete difference image', filenames[i]
+        else:
+            lsc.mysqldef.updatevalue('photlco', 'magtype', -1, filenames[i])
+            print 'marked', filenames[i], 'as bad'
 
     def limit_hook(i):
         lsc.mysqldef.updatevalue('photlco', 'quality', 1, filenames[i])

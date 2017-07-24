@@ -73,7 +73,7 @@ if __name__ == "__main__":
                         help='convolve direction to image [i] or template [t] \t [%default]')
     hotpants.add_option("--interpolation", dest="interpolation", default='drizzle',
                         help='interpolation algorithm  [drizzle,nearest,linear,poly3,poly5,spline3]\t [%default]')
-    parser.add_option("--difftype", type=str, default='', help='Choose hotpants or optimal subtraction; hotpants = 0, difftype = 1, both = 0,1 \t [%(default)s]')
+    parser.add_option("--difftype", type=str, default='0', help='Choose hotpants (0) or optimal (1) subtraction \t [%(default)s]')
 
     parser.add_option_group(hotpants)
     option, args = parser.parse_args()
@@ -424,7 +424,8 @@ if __name__ == "__main__":
                                                'exptarg': [exp_targ,'exposure time terget']})
 
                         if normalize == 't':
-                            lsc.util.updateheader(imgout, 0, {'EXPTIME': [exp_temp, '[s] Exposure length']})
+                            lsc.util.updateheader(imgout, 0, {'EXPTIME': [exp_temp, '[s] Exposure length'],
+                                                              'SATURATE': [sat_temp, '[ADU] Saturation level used']})
 
                         if hd['CONVOL00'] == 'TEMPLATE':
                             print '\n ### image to compute  psf: '+imgtarg0

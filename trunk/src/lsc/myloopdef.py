@@ -1206,12 +1206,15 @@ def display_subtraction(img):
         ax1.imshow(origdata, vmin=np.percentile(origdata, pmin), vmax=np.percentile(origdata, pmax))
         ax2.imshow(tempdata, vmin=np.percentile(tempdata, pmin), vmax=np.percentile(tempdata, pmax))
         ax3.imshow(diffdata, vmin=np.percentile(diffdata, pmin), vmax=np.percentile(diffdata, pmax))
-        ax1.set_title(os.path.basename(origimg))
-        ax2.set_title(os.path.basename(tempimg))
-        ax3.set_title(os.path.basename(diffimg))
-        plt.xlim(origdata.shape[0] / 2 - 500, origdata.shape[0] / 2 + 500)
-        plt.ylim(origdata.shape[1] / 2 - 500, origdata.shape[1] / 2 + 500)
-        plt.gcf().text(0.75, 0.25, 'filter = {filter}\npsfmag = {psfmag:.2f} mag\nmag = {mag:.2f} mag'.format(**ggg[0]), va='center', ha='center')
+        basename = origimg.split('.')[0]
+        ax1.set_title(origimg.replace(basename, ''))
+        ax2.set_title(tempimg.replace(basename, ''))
+        ax3.set_title(diffimg.replace(basename, ''))
+        plt.xlim(origdata.shape[0] / 2 - 100, origdata.shape[0] / 2 + 100)
+        plt.ylim(origdata.shape[1] / 2 - 100, origdata.shape[1] / 2 + 100)
+        plt.gcf().text(0.75, 0.25,
+                       os.path.basename(basename) + '\nfilter = {filter}\npsfmag = {psfmag:.2f} mag\nmag = {mag:.2f} mag'.format(**ggg[0]),
+                       va='center', ha='center')
         plt.tight_layout()
     else:
         for f in [origimg, tempimg, diffimg]:

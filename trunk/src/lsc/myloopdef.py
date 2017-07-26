@@ -1202,7 +1202,7 @@ def display_subtraction(img):
         ax1 = plt.subplot(2, 2, 1, adjustable='box-forced')
         ax2 = plt.subplot(2, 2, 2, sharex=ax1, sharey=ax1, adjustable='box-forced')
         ax3 = plt.subplot(2, 2, 3, sharex=ax1, sharey=ax1, adjustable='box-forced')
-        pmin, pmax = 1, 99
+        pmin, pmax = 5, 99
         ax1.imshow(origdata, vmin=np.percentile(origdata, pmin), vmax=np.percentile(origdata, pmax))
         ax2.imshow(tempdata, vmin=np.percentile(tempdata, pmin), vmax=np.percentile(tempdata, pmax))
         ax3.imshow(diffdata, vmin=np.percentile(diffdata, pmin), vmax=np.percentile(diffdata, pmax))
@@ -1282,8 +1282,7 @@ def checkmag(imglist, datamax=None):
             aa = raw_input('>>>good mag [[y]/n] or [b] bad quality ? ')
             if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                 print 'update status: bad psfmag & mag'
-                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, img)
-                lsc.mysqldef.updatevalue('photlco', 'mag', 9999, img)
+                lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(img)], lsc.conn)
                 os.system('rm -v ' + ogfile)
                 os.system('rm -v ' + rsfile)
             if aa in ['bad', 'b', 'B']:
@@ -1527,9 +1526,7 @@ def plotfast2(setup):
             display_subtraction(filenames[i])
 
     def delete_hook(i):
-        lsc.mysqldef.updatevalue('photlco', 'mag', 9999, filenames[i])
-        lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, filenames[i])
-        lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, filenames[i])
+        lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(filenames[i])], lsc.conn)
         _dir = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath')[0]['filepath']
         if _dir:
             lsc.util.updateheader(_dir + filenames[i].replace('.fits', '.sn2.fits'), 0,

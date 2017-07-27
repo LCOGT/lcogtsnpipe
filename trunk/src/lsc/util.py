@@ -122,6 +122,8 @@ def readhdr(img):
         print "Couldn't read header of {}. Try deleting it and starting over.".format(img)
         raise e
     return hdr
+    
+missingvalues = ['NaN', 'UNKNOWN', None, '', 'UNSPECIFIED', 'N/A']
 
 def readkey3(hdr,keyword):
     from astropy.coordinates import Angle

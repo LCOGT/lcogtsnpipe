@@ -66,7 +66,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("-o", "--output", default='', help='output file')
     parser.add_argument("--tempdate", default='19990101-20080101', help='template date')
     parser.add_argument("--temptel", default='', help='--temptel  template instrument')
-    parser.add_argument("--normalize", choices=['i', 't'], default='i', help='normalize to image [i], template [t] (hotpants parameter)')
+    parser.add_argument("--normalize", choices=['i', 't'], default='t', help='normalize to image [i], template [t] (hotpants parameter)')
     parser.add_argument("--convolve", choices=['i', 't'], default='', help='force convolution with image [i], template [t] (hotpants parameter)')
     parser.add_argument("--z1", type=float)
     parser.add_argument("--z2", type=float)

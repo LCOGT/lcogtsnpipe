@@ -278,7 +278,7 @@ def readkey3(hdr,keyword):
                    break
           elif keyword in ['RA', 'CAT-RA'] and type(value) == str and ':' in value:
              value = Angle(value, u.hourangle).deg
-          elif keyword in ['RA', 'CAT-RA', 'DEC', 'CAT-DEC']:
+          elif keyword in ['RA', 'CAT-RA', 'DEC', 'CAT-DEC'] and value not in missingvalues:
              value = Angle(value, u.deg).deg
     elif keyword in hdr:
        value=hdr.get(keyword)

@@ -415,7 +415,7 @@ def targimg(img='', hdrt=None):
         _ra=lsc.util.readkey3(hdrt,'CAT-RA')
         _dec=lsc.util.readkey3(hdrt,'CAT-DEC')
     elif ('RA' in hdrt and 'DEC' in hdrt and 
-        hdrt['RA'] not in ['NaN', 'UNKNOWN', None, ''] and hdrt['DEC'] not in ['NaN', 'UNKNOWN', None, '']):
+        hdrt['RA'] not in lsc.util.missingvalues and hdrt['DEC'] not in lsc.util.missingvalues):
         _ra=lsc.util.readkey3(hdrt,'RA')
         _dec=lsc.util.readkey3(hdrt,'DEC')
     else:

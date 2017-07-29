@@ -103,8 +103,12 @@ if __name__ == "__main__":   # main program
 
     if args.stage in ['', 'local', 'getmag', 'wcs', 'psf', 'psfmag', 'makestamp', 'cosmic', 'apmag', 'ingestsloan', 'ingestps1', 'abscat', 'mag', 'diff', 'template',
             'checkwcs', 'checkpsf', 'checkmag', 'checkquality', 'checkpos', 'checkcat', 'checkmissing', 'checkfvd', 'checkcosmic', 'checkdiff']:
-        ll = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, args.bad, args.name, args.id, args.RA, args.DEC, 
-                                    'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
+        if args.stage == 'diff':
+            ll = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, args.bad, args.name, args.id, args.RA, args.DEC,
+                                        'photlco', filetype, args.groupidcode, args.instrument)
+        else:
+            ll = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, args.bad, args.name, args.id, args.RA, args.DEC, 
+                                        'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
         if ll:
             print '##' * 50
             print '# IMAGE                                    OBJECT           FILTER           WCS            ' \
@@ -253,12 +257,8 @@ if __name__ == "__main__":   # main program
             print '\n### no data selected'
     # ################################################
     else:
-        if args.stage == 'diff':
-            ll0 = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, args.bad, args.name, args.id, args.RA, args.DEC,
-                                         'photlco', filetype, args.groupidcode, args.instrument, args.temptel)
-        else:
-            ll0 = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, args.bad, args.name, args.id, args.RA, args.DEC,
-                                         'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
+        ll0 = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, args.bad, args.name, args.id, args.RA, args.DEC,
+                                     'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
         for epo in np.unique(ll0['dayobs']):
             print '\n#### ' + str(epo)
             ll = {key: val[ll0['dayobs'] == epo] for key, val in ll0.items()}

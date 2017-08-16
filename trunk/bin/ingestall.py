@@ -39,7 +39,8 @@ fullpaths = []
 for frame in frames:
     try:
         filepath, filename = download_frame(frame)
-        fullpaths.append(filepath + filename)
+        if '-en0' not in filename:
+            fullpaths.append(filepath + filename)
     except:
         print '!!! FAILED TO DOWNLOAD ' + frame['filename']
         traceback.print_exc()

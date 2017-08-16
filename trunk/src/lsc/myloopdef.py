@@ -1222,24 +1222,37 @@ def display_subtraction(img):
     return diffimg, origimg, tempimg
 
 def checkdiff(imglist, database='photlco'):
-    plt.ion()
-    plt.figure(figsize=(8, 8))
+    iraf.digiphot(_doprint=0)
+    iraf.daophot(_doprint=0)
+    iraf.set(stdimage='imt1024')
     for img in imglist:
         status = checkstage(img, 'wcs')
         if status >= 0:
-            diffimg, origimg, tempimg = display_subtraction(img)
-            ans = raw_input('>>> good difference [[y]/n] or [b]ad quality (original image)? ')
-            if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
-                print 'updatestatus bad'
-                print 'rm', diffimg.replace('.fits', '*')
-                os.system('rm ' + diffimg.replace('.fits', '*'))
-                print 'rm', tempimg
-                os.system('rm ' + tempimg)
-                print 'delete', img, 'from database'
-                lsc.mysqldef.deleteredufromarchive(img, 'photlco', 'filename')
-            if ans in ['bad', 'b', 'B']:
-                print 'updatestatus bad quality'
-                lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(origimg))
+            photlcodict = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
+            _dir = photlcodict[0]['filepath']
+            diffimg = _dir + img
+            origimg = diffimg.split('.')[0] + '.' + diffimg.split('.')[-1]
+            tempimg = diffimg.replace('diff', 'ref')
+            if os.path.isfile(diffimg) and os.path.isfile(origimg) and os.path.isfile(tempimg):
+                print img, photlcodict[0]['filter']
+                iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
+                iraf.display(tempimg, 2, fill=True, Stdout=1)
+                iraf.display(diffimg, 3, fill=True, Stdout=1)
+                ans = raw_input('>>> good difference [[y]/n] or [b]ad quality (original image)? ')
+                if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
+                    print 'updatestatus bad'
+                    print 'rm', diffimg.replace('.fits', '*')
+                    os.system('rm ' + diffimg.replace('.fits', '*'))
+                    print 'rm', tempimg
+                    os.system('rm ' + tempimg)
+                    print 'delete', img, 'from database'
+                    lsc.mysqldef.deleteredufromarchive(img, 'photlco', 'filename')
+                if ans in ['bad', 'b', 'B']:
+                    print 'updatestatus bad quality'
+                    lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(origimg))
+            else:
+                for f in [origimg, tempimg, diffimg]:
+                    if not os.path.isfile(f): print f, 'not found'
         elif status == -1:
             print 'status ' + str(status) + ': sn2.fits file not found'
         elif status == -2:

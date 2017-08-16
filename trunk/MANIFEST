@@ -9,7 +9,6 @@ bin/LCOGTingest.py
 bin/lscabsphot.py
 bin/lscastro.py
 bin/lscdiff.py
-bin/lscingestredudata.py
 bin/lscingestsloan.py
 bin/lscloop.py
 bin/lscmaketempl.py

@@ -35,9 +35,11 @@ frames += get_metadata(authtoken, start=start, end=end, PROPID='LCOEPO2016B-001'
 
 print 'Total number of frames:', len(frames)
 
+fullpaths = []
 for frame in frames:
     try:
         filepath, filename = download_frame(frame)
+        fullpaths.append(filepath + filename)
     except:
         print '!!! FAILED TO DOWNLOAD ' + frame['filename']
         traceback.print_exc()
@@ -55,4 +57,4 @@ for frame in frames:
             print '!!! FAILED TO MAKE PNG FOR ' + filename
             traceback.print_exc()
 
-os.system('lscingestredudata.py -e ' + daterange) # ingest new data into photlco
+lsc.mysqldef.ingestredu(fullpaths) # ingest new data into photlco

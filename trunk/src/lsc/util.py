@@ -791,8 +791,7 @@ def checksnlist(img,listfile):
 ##########################################################################################################
 def checksndb(img):
     filename = os.path.basename(img)
-    command = '''select targets.ra0, targets.dec0, classificationid
-                 from targets, photlcoraw
+    command = '''select targets.ra0, targets.dec0, classificationid from targets, photlco
                  where targetid=targets.id and filename="{}"'''.format(filename)
     target = lsc.mysqldef.query([command], lsc.conn)
     if target:

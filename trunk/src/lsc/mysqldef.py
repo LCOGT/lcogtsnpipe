@@ -90,31 +90,19 @@ def getfromdataraw(conn, table, column, value,column2='*'):
    return resultSet
 
 
-def getlistfromraw(conn, table, column, value1,value2,column2='*',telescope='all'):
-   import sys
-   import lsc
-   import MySQLdb,os,string
-   try:
-      cursor = conn.cursor (MySQLdb.cursors.DictCursor)
-      if telescope=='all':
-         if value2:
-            cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"'")
-         else:
-            cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"="+"'"+value1+"'")
-      else:
-         fntel = telescope.replace('-', '')  # 1m0-01 (input) --> 1m001 (in filename)
-         if value2:
-            cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"' and (filename like '%"+fntel+"%' or telescope='"+telescope+"')")
-         else:
-            cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"="+"'"+value1+"' and (filename like '%"+fntel+"%' or telescope='"+telescope+"')")
-      resultSet = cursor.fetchall ()
-      if cursor.rowcount == 0:
-         pass
-      cursor.close ()
-   except MySQLdb.Error, e: 
-      print "Error %d: %s" % (e.args[0], e.args[1])
-      sys.exit (1)
-   return resultSet
+def getlistfromraw(conn, table, column, value1, value2, column2='*', telescope='all'):
+    import MySQLdb
+    cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+    if not value2:
+        value2 = value1
+    if telescope=='all':
+        cursor.execute("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"'")
+    else:
+        fntel = telescope.replace('-', '')  # 1m0-01 (input) --> 1m001 (in filename)
+        cursor.execute("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"' and (filename like '%"+fntel+"%' or telescope='"+telescope+"')")
+    resultSet = cursor.fetchall()
+    cursor.close()
+    return resultSet
 
 ###########################################################################
 

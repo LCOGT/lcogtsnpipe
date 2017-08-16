@@ -20,12 +20,14 @@ filterst = {
 'r': ['rp', 'SDSS-R'],
 'i': ['ip', 'SDSS-I'],
 'z': ['zs', 'Pan-Starrs', 'Pan-Starrs-Z'],
-'landolt': ['landolt'],
-'sloan': ['sloan'],
-'apass': ['apass']
 }
 
 filterst1 = dict()
 for key, val in filterst.items():
     for subval in val:
         filterst1[subval] = key
+
+filterst['landolt'] = sum([filterst[f] for f in 'UBVRI'], [])
+filterst['sloan'] = sum([filterst[f] for f in 'ugriz'], [])
+filterst['apass'] = sum([filterst[f] for f in 'BVgri'], [])
+filterst[''] = filterst['landolt'] + filterst['sloan']

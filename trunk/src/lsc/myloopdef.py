@@ -3,6 +3,7 @@ import lsc
 import numpy as np
 import matplotlib.pyplot as plt
 from pyraf import iraf
+from glob import glob
 import datetime
 import astropy.units as u
 from astropy.io import fits
@@ -164,50 +165,33 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     if _output:
         ff.close()
 
-def run_cat(imglist, extlist, _interactive=False, mode=1, _type='fit', _fix=False, database='photlco'):
-    status = []
-    if mode == 1:
-        _mode = 'lsccatalogue.py'
-        stat = 'abscat'
-    elif mode == 2:
-        _mode = 'lscmag.py'
-        stat = 'mag'
+def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit', database='photlco', field=None, refcat=None, force=False, minstars=0):
     if len(extlist) > 0:
-        for img in extlist:  status.append(checkstage(img, stat))
-        extlist = extlist[np.where(np.array(status) > 0)]
-        status = np.array(status)[np.where(np.array(status) > 0)]
         f = open('_tmpext.list', 'w')
         for img in extlist:
-            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
-            _dir = ggg[0]['filepath']
-            f.write(_dir + img.replace('fits', 'sn2.fits') + '\n')
+            if checkstage(img, 'zcat'):
+                ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
+                f.write(ggg[0]['filepath'] + img.replace('fits', 'sn2.fits') + '\n')
         f.close()
-    else:
-        for img in imglist:
-            status.append(checkstage(img, stat))
-        imglist = imglist[np.where(np.array(status) > 0)]
-        status = np.array(status)[np.where(np.array(status) > 0)]
 
     f = open('_tmp.list', 'w')
     for img in imglist:
-        ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
-        _dir = ggg[0]['filepath']
-        f.write(_dir + img.replace('fits', 'sn2.fits') + '\n')
+        if checkstage(img, 'psf'):
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
+            f.write(ggg[0]['filepath'] + img.replace('fits', 'sn2.fits') + '\n')
     f.close()
+    
+    command = 'calibratemag.py _tmp.list -s {} -t {} -f {}'.format(stage, magtype, field)
+    if len(extlist):
+        command += ' -e _tmpext.list'
     if _interactive:
-        ii = ' -i '
-    else:
-        ii = ''
-    if _fix:
-        ff = ' -c '
-    else:
-        ff = ''
-    tt = ' -t ' + _type + ' '
-
-    if len(extlist) > 0:
-        command = _mode + ' _tmp.list -e _tmpext.list ' + ii + tt + ff
-    else:
-        command = _mode + ' _tmp.list ' + ii + tt + ff
+        command += ' -i'
+    if force:
+        command += ' -F'
+    if refcat:
+        command += ' -c ' + refcat
+    if minstars:
+        command += ' --minstars ' + str(minstars)
     print command
     os.system(command)
 
@@ -693,20 +677,9 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             for jj in ll1.keys():
                 ll1[jj] = []
     if _filter:  #filter 
-        if _filter == 'sloan':
-            ww = np.array([i for i in range(len(ll1['filter'])) if (
-            (ll1['filter'][i] in ['zs', 'up', 'gp', 'ip', 'rp', 'SDSS-U', 'SDSS-G', 'SDSS-R', 'SDSS-I', 'Pan-Starrs-Z']))])
-        elif _filter == 'landolt':
-            ww = np.array([i for i in range(len(ll1['filter'])) if (
-            (ll1['filter'][i] in ['U', 'B', 'V', 'R', 'I', 'Bessell-U', 'Bessell-B', 'Bessell-V', 'Bessell-R', 'Bessell-I']))])
-        elif _filter == 'apass':
-            ww = np.array([i for i in range(len(ll1['filter']))
-                          if ((ll1['filter'][i] in ['B', 'V', 'Bessell-B','Bessell-V', 'gp', 'ip', 'rp', 'SDSS-G',
-                                                    'SDSS-R', 'SDSS-I']))])
-        else:
-            lista = sum([lsc.sites.filterst[fil] for fil in _filter.split(',')], [])
-            print lista
-            ww = np.array([i for i in range(len(ll1['filter'])) if ((ll1['filter'][i] in lista))])
+        lista = sum([lsc.sites.filterst[fil] for fil in _filter.split(',')], [])
+        print lista
+        ww = np.array([i for i in range(len(ll1['filter'])) if ll1['filter'][i] in lista])
         if len(ww) > 0:
             for jj in ll1.keys():
                 ll1[jj] = np.array(ll1[jj])[ww]
@@ -796,11 +769,10 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
         elif _bad == 'cosmic':
             maskexists = [os.path.isfile(filepath+filename.replace('.fits', '.mask.fits'))
                             for filepath, filename in zip(ll1['filepath'], ll1['filename'])]
-            ww = np.flatnonzero(np.logical_not(np.array(maskexists)))
+            ww = np.flatnonzero(np.logical_not(maskexists))
         elif _bad == 'diff':
-            maskexists = [os.path.isfile(filepath+filename.replace('.fits', '.{}.diff.fits'.format(_temptel).replace('..', '')))
-                            for filepath, filename in zip(ll1['filepath'], ll1['filename'])]
-            ww = np.flatnonzero(np.logical_not(np.array(maskexists)))
+            ww = np.array([i for i, (filepath, filename) in enumerate(zip(ll1['filepath'], ll1['filename']))
+                          if not glob(filepath+filename.replace('.fits', '*.diff.fits'))])
         elif _bad == 'mag':
             ww = np.array([i for i in range(len(ll1['mag'])) if (ll1['mag'][i] >= 1000 or ll1[_bad][i] < 0)])
         else:
@@ -827,30 +799,6 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             #               for jj in ll1.keys(): ll1[jj]=[]
 
     return ll1
-
-
-#########################################################################
-def run_local(imglist, _field, _interactive=False, database='photlco'):
-    ff = open('_tmpcat.list', 'w')
-    for img in imglist:
-        ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
-        if ggg:
-            _dir = ggg[0]['filepath']
-            if ggg[0]['abscat'] != 'X':
-                ff.write(_dir + img.replace('.fits', '.cat') + '\n')
-    ff.close()
-    if _interactive:
-        ii = ' -i '
-    else:
-        ii = ''
-    if _field:
-        _field = ' -f ' + _field
-    else:
-        _field = ''
-    command = 'lscmaglocal.py _tmpcat.list ' + ii + ' ' + _field
-    print command
-    os.system(command)
-
 
 ##########################################################################
 def position(imglist, ra1, dec1, show=False):
@@ -1241,6 +1189,38 @@ def checkcosmic(imglist, database='photlco'):
         else:
             print 'status ' + str(status) + ': unknown status'
 
+def display_subtraction(img):
+    ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', img, '*')
+    diffimg = ggg[0]['filepath'] + img
+    origimg = diffimg.split('.')[0] + '.' + diffimg.split('.')[-1]
+    tempimg = diffimg.replace('diff', 'ref')
+    if os.path.isfile(diffimg) and os.path.isfile(origimg) and os.path.isfile(tempimg):
+        diffdata = fits.getdata(diffimg)
+        origdata = fits.getdata(origimg)
+        tempdata = fits.getdata(tempimg)
+        plt.clf()
+        ax1 = plt.subplot(2, 2, 1, adjustable='box-forced')
+        ax2 = plt.subplot(2, 2, 2, sharex=ax1, sharey=ax1, adjustable='box-forced')
+        ax3 = plt.subplot(2, 2, 3, sharex=ax1, sharey=ax1, adjustable='box-forced')
+        pmin, pmax = 5, 99
+        ax1.imshow(origdata, vmin=np.percentile(origdata, pmin), vmax=np.percentile(origdata, pmax))
+        ax2.imshow(tempdata, vmin=np.percentile(tempdata, pmin), vmax=np.percentile(tempdata, pmax))
+        ax3.imshow(diffdata, vmin=np.percentile(diffdata, pmin), vmax=np.percentile(diffdata, pmax))
+        basename = origimg.split('.')[0]
+        ax1.set_title(origimg.replace(basename, ''))
+        ax2.set_title(tempimg.replace(basename, ''))
+        ax3.set_title(diffimg.replace(basename, ''))
+        plt.xlim(origdata.shape[0] / 2 - 100, origdata.shape[0] / 2 + 100)
+        plt.ylim(origdata.shape[1] / 2 - 100, origdata.shape[1] / 2 + 100)
+        plt.gcf().text(0.75, 0.25,
+                       os.path.basename(basename) + '\nfilter = {filter}\npsfmag = {psfmag:.2f} mag\nmag = {mag:.2f} mag'.format(**ggg[0]),
+                       va='center', ha='center')
+        plt.tight_layout()
+    else:
+        for f in [origimg, tempimg, diffimg]:
+            if not os.path.isfile(f): print f, 'not found'
+    return diffimg, origimg, tempimg
+
 def checkdiff(imglist, database='photlco'):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
@@ -1303,7 +1283,7 @@ def display_psf_fit(img, datamax=None):
             axL.plot(i_sat, j_sat, 'rx', label='{:d} pixels > {:.0f} ADU'.format(len(i_sat), datamax))
             axL.legend()
         plt.colorbar(im, ax=[axL, axR], orientation='horizontal')
-        plt.gcf().text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
+        plt.gcf().text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag\nmag = {mag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
     return ogfile, rsfile
 
 def checkmag(imglist, datamax=None):
@@ -1315,8 +1295,7 @@ def checkmag(imglist, datamax=None):
             aa = raw_input('>>>good mag [[y]/n] or [b] bad quality ? ')
             if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                 print 'update status: bad psfmag & mag'
-                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, img)
-                lsc.mysqldef.updatevalue('photlco', 'mag', 9999, img)
+                lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(img)], lsc.conn)
                 os.system('rm -v ' + ogfile)
                 os.system('rm -v ' + rsfile)
             if aa in ['bad', 'b', 'B']:
@@ -1501,7 +1480,7 @@ class PickablePlot():
                 self.delete_current()
                 self.i_active = None
             plt.draw()
-            axlims = plt.axis()
+            axlims = fig.gca().axis()
         
     def onclick(self, event):
         print # to get off the raw_input line
@@ -1551,15 +1530,16 @@ def plotfast2(setup):
     def click_hook(i):
         print filenames[i], 'selected'
         print 'mjd = {:.2f}\tmag = {:.2f} ({:+d} shift on plot)'.format(mjds[i], mags[i], shifts[i])
-        dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, mjd, mag')[0]
+        dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, mjd, mag, filetype')[0]
         print 'mjd = {:.2f}\tmag = {:.2f} (from database)'.format(dbrow['mjd'], dbrow['mag'])
         plt.figure(2)
         display_psf_fit(filenames[i])
+        if dbrow['filetype'] == '3':
+            plt.figure(3, figsize=(8, 8))
+            display_subtraction(filenames[i])
 
     def delete_hook(i):
-        lsc.mysqldef.updatevalue('photlco', 'mag', 9999, filenames[i])
-        lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, filenames[i])
-        lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, filenames[i])
+        lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(filenames[i])], lsc.conn)
         _dir = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath')[0]['filepath']
         if _dir:
             lsc.util.updateheader(_dir + filenames[i].replace('.fits', '.sn2.fits'), 0,
@@ -1567,8 +1547,15 @@ def plotfast2(setup):
         print 'deleted', filenames[i]
 
     def bad_hook(i):
-        lsc.mysqldef.updatevalue('photlco', 'magtype', -1, filenames[i])
-        print 'marked', filenames[i], 'as bad'
+        dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, filetype')[0]
+        if dbrow['filetype'] == '3':
+            os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.fits', '*'))
+            os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.diff', '.ref'))
+            lsc.mysqldef.deleteredufromarchive(filenames[i], 'photlco', 'filename')
+            print 'delete difference image', filenames[i]
+        else:
+            lsc.mysqldef.updatevalue('photlco', 'magtype', -1, filenames[i])
+            print 'marked', filenames[i], 'as bad'
 
     def limit_hook(i):
         lsc.mysqldef.updatevalue('photlco', 'quality', 1, filenames[i])
@@ -1731,7 +1718,44 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
         ll = ''
     return ll
 
-
+def get_standards(epoch, name, filters):
+    epoch1 = epoch.split('-')[0]
+    epoch2 = epoch.split('-')[-1]
+    query = '''SELECT DISTINCT std.filename, std.objname, std.filter,
+               std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat
+               FROM
+               photlco AS obj,
+               photlco AS std,
+               targetnames AS targobj,
+               targets AS targstd,
+               telescopes AS telobj,
+               telescopes AS telstd,
+               instruments AS instobj,
+               instruments AS inststd
+               WHERE obj.telescopeid = telobj.id
+               AND std.telescopeid = telstd.id
+               AND obj.instrumentid = instobj.id
+               AND std.instrumentid = inststd.id
+               AND telobj.shortname = telstd.shortname
+               AND instobj.type = inststd.type
+               AND obj.targetid = targobj.targetid
+               AND std.targetid = targstd.id
+               AND targstd.classificationid = 1
+               AND obj.filter = std.filter
+               AND obj.dayobs = std.dayobs
+               AND obj.quality = 127
+               AND std.quality = 127
+               AND obj.dayobs >= {epoch1}
+               AND obj.dayobs <= {epoch2}
+               AND targobj.name = "{name}"
+               '''.format(epoch1=epoch1, epoch2=epoch2, name=name)
+    if filters:
+        query += 'AND (obj.filter="' + '" OR obj.filter="'.join(lsc.sites.filterst[filters]) + '")'
+    print 'Searching for corresponding standard fields. This may take a minute...'
+    matching_stds = lsc.mysqldef.query([query], lsc.conn)
+    final_list = {col: [ll[col] for ll in matching_stds] for col in matching_stds[0]}
+    return final_list
+        
 ######
 
 def check_missing(lista, database='photlco'):

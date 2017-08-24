@@ -12,6 +12,7 @@ from astropy.coordinates import SkyCoord
 from astropy.io import ascii
 import matplotlib.pyplot as plt
 from datetime import datetime
+import sys
 
 def crossmatch(cat0, cat1, threshold=1., racol0='ra', deccol0='dec', racol1='ra', deccol1='dec', right_join=False):
     dra = cat0[racol0] - np.atleast_2d(cat1[racol1]).T
@@ -124,6 +125,8 @@ if __name__ == "__main__":
 
     with open(args.imglist) as f:
         lista = f.read().splitlines()
+    if not lista:
+        sys.exit('calibratemag.py: ' + args.imglist + ' is empty')
 
     if args.stage in ['abscat', 'local'] and args.catalog is not None:
         try:

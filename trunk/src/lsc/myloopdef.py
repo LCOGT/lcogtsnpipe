@@ -1753,7 +1753,10 @@ def get_standards(epoch, name, filters):
         query += 'AND (obj.filter="' + '" OR obj.filter="'.join(lsc.sites.filterst[filters]) + '")'
     print 'Searching for corresponding standard fields. This may take a minute...'
     matching_stds = lsc.mysqldef.query([query], lsc.conn)
-    final_list = {col: [ll[col] for ll in matching_stds] for col in matching_stds[0]}
+    if matching_stds:
+        final_list = {col: [ll[col] for ll in matching_stds] for col in matching_stds[0]}
+    else:
+        final_list = {'filename': []}
     return final_list
         
 ######

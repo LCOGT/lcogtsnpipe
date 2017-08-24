@@ -134,8 +134,7 @@ if __name__ == "__main__":
                 if lsc.util.getcatalog(obj, field):
                     run_cmd(basecmd + ' -b zcat -s zcat -F --cutmag 6 --field ' + field + ' -n ' + obj + ' -T ' + tel, logfile, args.timeout)
                 # produce catalogs
-                for std in standard:
-                    run_cmd(basecmd + ' -b abscat -s abscat -F -n ' + obj + ' --field ' + field + ' -T ' + tel + ' --standard ' + std, logfile, args.timeout)
+                run_cmd(basecmd + ' -b abscat -s abscat -F -n ' + obj + ' --field ' + field + ' -T ' + tel + ' --standard all', logfile, args.timeout)
             # compute zeropoint with apass if not in landolt/sloan
             run_cmd(basecmd + ' -b zcat -s zcat -F --cutmag 6 --field apass -n ' + obj + ' -T ' + tel, logfile, args.timeout)
             if obj not in standard:

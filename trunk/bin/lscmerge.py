@@ -86,7 +86,8 @@ if __name__ == "__main__":
     for f in lista:
         for o in lista[f]:
             imglist1 = lista[f][o]
-            hdr0 = lsc.util.readhdr(imglist1[0])
+            hdrs = [fits.getheader[img] for img in imglist1]
+            hdr0 = hdrs[0]
             _tel = lsc.util.readkey3(hdr0, 'TELID')
             _gain = lsc.util.readkey3(hdr0, 'gain')
             _ron = lsc.util.readkey3(hdr0, 'ron')
@@ -174,7 +175,7 @@ if __name__ == "__main__":
 
             ar, hd = fits.getdata(outname, header=True)
             ar = where(ar <= 0, mean(ar[where(ar > 0)]), ar)
-            keyw = ['OBJECT', 'DATE', 'ORIGIN', 'EXPTIME', 'HDUCLAS1', 'HDUCLAS2', 'HDSTYPE', 'DATADICV', 'HDRVER',
+            keyw = ['OBJECT', 'DATE', 'ORIGIN', 'HDUCLAS1', 'HDUCLAS2', 'HDSTYPE', 'DATADICV', 'HDRVER',
                     'SITEID', 'SITE', 'MJD-OBS', 'MJD',
                     'ENCID', 'ENCLOSUR', 'TELID', 'TELESCOP', 'LATITUDE', 'LONGITUD', 'HEIGHT', 'OBSGEO-X', 'OBSGEO-Y',
                     'OBSGEO-Z', 'OBSTYPE', 'FRAMENUM', 'MOLTYPE', 'MOLNUM', 'MOLFRNUM', 'FRMTOTAL', 'ORIGNAME',
@@ -191,7 +192,7 @@ if __name__ == "__main__":
                     'SRCTYPE', 'PM-RA', 'PM-DEC', 'PARALLAX', 'RADVEL', 'RATRACK', 'DECTRACK', 'TELSTATE',
                     'ENGSTATE', 'TCSSTATE', 'TCSVER', 'TPNTMODL', 'UT1-UTC', 'POLARMOX',
                     'POLARMOY', 'EOPSRC', 'ROLLERDR', 'ROLLERND', 'AZDMD', 'AZIMUTH', 'AZSTAT', 'ALTDMD', 'ALTITUDE',
-                    'ALTSTAT', 'AIRMASS', 'AMSTART', 'AMEND', 'ENC1STAT', 'ENC2STAT', 'ENCAZ', 'ENCWLIGT',
+                    'ALTSTAT', 'AMSTART', 'AMEND', 'ENC1STAT', 'ENC2STAT', 'ENCAZ', 'ENCWLIGT',
                     'ENCRLIGT', 'FOLDSTAT', 'FOLDPORT', 'FOLDPOSN', 'M1COVER',
                     'M1HRTMN', 'FOCDMD', 'FOCPOSN', 'FOCTELZP', 'FOCINOFF', 'FOCTOFF', 'FOCZOFF', 'FOCAFOFF',
                     'FOCOBOFF', 'FOCFLOFF', 'FOCSTAT', 'M2PITCH', 'M2ROLL', 'QV1_0', 'QV1_1', 'QV1_7', 'QV1_9',
@@ -210,6 +211,9 @@ if __name__ == "__main__":
             for jj in keyw:
                 if jj in hdr0:
                     hd[jj] = (hdr0[jj], hdr0.comments[jj])
+            exptimes = [hdr['EXPTIME'] for hdr in hdrs]
+            hd['EXPTIME'] = np.sum(exptimes)
+            hd['AIRMASS'] = np.average([hdr['AIRMASS'] for hdr in hdrs], weights=exptimes)
             out_fits = fits.PrimaryHDU(header=hd, data=ar)
             out_fits.writeto(outname, overwrite=True, output_verify='fix')
             os.system(line2)  # make noise image

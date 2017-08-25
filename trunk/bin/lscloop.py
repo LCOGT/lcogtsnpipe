@@ -252,7 +252,7 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.checkcosmic(ll['filename'])
             elif args.stage == 'checkdiff':
                 lsc.myloopdef.checkdiff(ll['filename'])
-            else:
+            elif args.stage:
                 print args.stage + ' not defined'
     # ################################################
         else:

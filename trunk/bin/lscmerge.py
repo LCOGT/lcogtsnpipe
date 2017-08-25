@@ -172,8 +172,7 @@ if __name__ == "__main__":
             print line2
             os.system(line)
 
-            hd = fits.getheader(outname)
-            ar = fits.getdata(outname)
+            ar, hd = fits.getdata(outname, header=True)
             ar = where(ar <= 0, mean(ar[where(ar > 0)]), ar)
             keyw = ['OBJECT', 'DATE', 'ORIGIN', 'EXPTIME', 'HDUCLAS1', 'HDUCLAS2', 'HDSTYPE', 'DATADICV', 'HDRVER',
                     'SITEID', 'SITE', 'MJD-OBS', 'MJD',
@@ -209,16 +208,13 @@ if __name__ == "__main__":
                     'L1PHOTOM', 'L1ZP', 'L1ZPERR', 'L1ZPSRC', 'L1FWHM', 'L1ELLIP', 'L1ELLIPA', 'L1QCVER', 'L1QOBCON',
                     'L1QIMGST', 'L1QCATST', 'L1QPHTST', 'L1PUBPRV', 'L1PUBDAT', 'L1SEEING']
             for jj in keyw:
-                try:
-                    hd.update(jj, hdr0[jj], hdr0.comments[jj])
-                except:
-                    pass
+                if jj in hdr0:
+                    hd[jj] = (hdr0[jj], hdr0.comments[jj])
             out_fits = fits.PrimaryHDU(header=hd, data=ar)
             out_fits.writeto(outname, overwrite=True, output_verify='fix')
             os.system(line2)  # make noise image
 
             print outname
-            hd = fits.getheader(outname)
             _targetid = lsc.mysqldef.targimg(outname)
             _tel = lsc.util.readkey3(hd, 'telid')
             dictionary = {'dateobs': lsc.util.readkey3(hd, 'date-obs'), 'exptime': lsc.util.readkey3(hd, 'exptime'),

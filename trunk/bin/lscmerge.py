@@ -86,7 +86,7 @@ if __name__ == "__main__":
     for f in lista:
         for o in lista[f]:
             imglist1 = lista[f][o]
-            hdrs = [fits.getheader[img] for img in imglist1]
+            hdrs = [fits.getheader(img) for img in imglist1]
             hdr0 = hdrs[0]
             _tel = lsc.util.readkey3(hdr0, 'TELID')
             _gain = lsc.util.readkey3(hdr0, 'gain')

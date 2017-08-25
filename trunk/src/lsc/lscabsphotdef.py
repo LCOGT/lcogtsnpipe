@@ -426,70 +426,9 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
              standardpixL=standardpixLL
              stdcooL=stdcooLL
 
-     if _calib=='apass':
-           filters={'ip':'i','gp':'g','rp':'r','SDSS-G':'g','SDSS-R':'r','SDSS-I':'i','B':'B', 'V':'V', 'R':'R', 'I':'I','Bessell-B':'B','Bessell-V':'V'}
-           if _color:
-                 colors=lsc.myloopdef.chosecolor(_color,False,'apass')
-                 if not colors:             colors={'B':['BV'],'V':['BV','Vg'],'g':['Vg','gr'],'r':['gr','ri'],'i':['ri']}
-           else:
-                 colors={'B':['BV'],'V':['BV','Vg'],'g':['Vg','gr'],'r':['gr','ri'],'i':['ri']}
-           standardpix=standardpixL
-           stdcoo=stdcooL
-     else:
-       if _filter in ['U', 'B', 'V', 'R','I','Bessell-B','Bessell-V','Bessell-R','Bessell-I']:
-        filters={'U':'U', 'B':'B', 'V':'V', 'R':'R', 'I':'I','Bessell-B':'B','Bessell-V':'V','Bessell-R':'R','Bessell-I':'I'}
-        if _color:
-            colors=lsc.myloopdef.chosecolor(_color,False)
-            if not colors:             colors={'U':['UB'],'B':['UB','BV'],'V':['BV','VR'],'R':['VR','RI'],'I':['RI']}
-        else:
-            colors={'U':['UB'],'B':['UB','BV'],'V':['BV','VR'],'R':['VR','RI'],'I':['RI']}
-        if _field=='sloan':
-                standardpix,stdcoo={'ra':[9999],'dec':[9999],'id':[1]},{'ra':[9999],'dec':[9999]}
-                print 'filters and field selected do not match'
-        else:
-            _field='landolt'
-            if len(xstdL)>=1:
-                    standardpix=standardpixL
-                    stdcoo=stdcooL
-                    if not _catalogue:
-                          if len(xstdLL)>0: _catalogue='StetsonCat.dat'
-                          else:             _catalogue='landolt.dat'
-            elif len(xstdS)>=1:
-                if not _catalogue:  _catalogue='sdss8'  
-                standardpix=standardpixS
-                stdcoo=stdcooS
-                stdcoo=lsc.lscastrodef.transformsloanlandolt(stdcoo)
-                if not _catalogue:  _catalogue='sdss8' 
-                print '\n### transform sloan in landolt'
-            else:
-                print 'landolt, but catalogue not found'
-                standardpix,stdcoo={'ra':[9999],'dec':[9999],'id':[1]},{'ra':[9999],'dec':[9999]}
-       elif _filter in  ['up','gp','rp','ip','zs','SDSS-G','SDSS-R','SDSS-I','Pan-Starrs-Z']: 
-        filters={'up':'u','ip':'i','gp':'g','rp':'r','zs':'z','SDSS-G':'g','SDSS-R':'r','SDSS-I':'i','Pan-Starrs-Z':'z'}
-        if _color:
-            colors=lsc.myloopdef.chosecolor(_color,False)
-            if not colors:             colors={'i':['ri','iz'],'r':['gr','ri'],'g':['ug','gr'],'z':['iz'],'u':['ug']}
-        else:
-#            colors={'i':['ri','iz'],'r':['gr','ri'],'g':['ug','gr'],'z':['iz'],'u':['ug']}
-            colors={'i':['ri'],'r':['gr','ri'],'g':['ug','gr'],'z':['iz'],'u':['ug']}
-        if _field=='landolt':   
-                standardpix,stdcoo={'ra':[9999],'dec':[9999],'id':[1]},{'ra':[9999],'dec':[9999]}
-                print 'filters and field selected do not match'
-        else:
-            _field='sloan'
-            if len(xstdS)>=1:
-                if not _catalogue:  _catalogue='sdss8' 
-                standardpix=standardpixS
-                stdcoo=stdcooS
-            elif len(xstdL)>=1:
-                standardpix=standardpixL
-                stdcoo=stdcooL
-                stdcoo=lsc.lscastrodef.transformlandoltsloan(stdcoo)
-                if not _catalogue:  _catalogue='landolt.dat' 
-                print '\n### transform landolt to sloan'
-            else:
-                print 'sloan, but not in the sdss footprint'
-                standardpix,stdcoo={'ra':[9999],'dec':[9999],'id':[1]},{'ra':[9999],'dec':[9999]}        
+     colors = lsc.sites.chosecolor(_color, False)
+     standardpix = standardpixL
+     stdcoo = stdcooL
 
      xstd=standardpix['ra']
      ystd=standardpix['dec']
@@ -528,14 +467,13 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         rasex=rasex[pos1]
         decsex=decsex[pos1]
         # after change in may 2013 mag in sn2.fits file are already at 1s
-        magsex=magsex[pos1]-kk[filters[_filter]]*float(_airmass)  #   - K x airmass
+        magsex=magsex[pos1]-kk[lsc.sites.filterst1[_filter]]*float(_airmass)  #   - K x airmass
         magerrsex = magerrsex[pos1]
-#        magsex=magsex[pos1]+2.5*math.log10(float(_exptime))-kk[filters[_filter]]*float(_airmass)  #  mag    exptime      - K x airmass
 #################################################################################
         if _field=='landolt':
             print '\n###  landolt system'
             for _filtlandolt in 'UBVRI':
-                if _filtlandolt==filters[_filter]:  airmass0[_filtlandolt]=  0 #_airmass
+                if _filtlandolt==lsc.sites.filterst1[_filter]:  airmass0[_filtlandolt]=  0 #_airmass
                 else: airmass0[_filtlandolt]= 0
                 magstd0[_filtlandolt]=stdcoo0[_filtlandolt]
                 errstd0[_filtlandolt]=stdcoo0[_filtlandolt+'err']
@@ -551,15 +489,18 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
             fileph['RI']=array(array(magstd0['R'],float)-array(magstd0['I'],float),str)
         elif _field=='sloan':
             for _filtsloan in 'ugriz':
-                if _filtsloan==filters[_filter]:  airmass0[_filtsloan]= 0   # _airmass
+                if _filtsloan==lsc.sites.filterst1[_filter]:  airmass0[_filtsloan]= 0   # _airmass
                 else: airmass0[_filtsloan]=0
                 magstd0[_filtsloan]=stdcoo0[_filtsloan]
                 errstd0[_filtsloan]=stdcoo0[_filtsloan+'err']
+            magstd0['w'] = magstd0['r']
+            errstd0['w'] = errstd0['r']
             fileph['mu']=zeros(len(rastd0))+999
             fileph['mg']=zeros(len(rastd0))+999
             fileph['mr']=zeros(len(rastd0))+999
             fileph['mi']=zeros(len(rastd0))+999
             fileph['mz']=zeros(len(rastd0))+999
+            fileph['mw'] = fileph['mr']
             fileph['r']=magstd0['r']
             fileph['gr']=array(array(magstd0['g'],float)-array(magstd0['r'],float),str)
             fileph['ri']=array(array(magstd0['r'],float)-array(magstd0['i'],float),str)
@@ -567,15 +508,18 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
             fileph['iz']=array(array(magstd0['i'],float)-array(magstd0['z'],float),str)
         elif _field=='apass':
             for _filtsloan in 'BVgri':
-                if _filtsloan==filters[_filter]:  airmass0[_filtsloan]= 0   # _airmass
+                if _filtsloan==lsc.sites.filterst1[_filter]:  airmass0[_filtsloan]= 0   # _airmass
                 else: airmass0[_filtsloan]=0
                 magstd0[_filtsloan]=stdcoo0[_filtsloan]
                 errstd0[_filtsloan]=stdcoo0[_filtsloan+'err']
+            magstd0['w'] = magstd0['r']
+            errstd0['w'] = errstd0['r']
             fileph['mB']=zeros(len(rastd0))+999
             fileph['mV']=zeros(len(rastd0))+999
             fileph['mg']=zeros(len(rastd0))+999
             fileph['mr']=zeros(len(rastd0))+999
             fileph['mi']=zeros(len(rastd0))+999
+            fileph['mw'] = fileph['mr']
             fileph['V']=magstd0['V']
             fileph['BV']=array(array(magstd0['B'],float)-array(magstd0['V'],float),str)
             fileph['gr']=array(array(magstd0['g'],float)-array(magstd0['r'],float),str)
@@ -598,7 +542,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
             fil.write('%6.6s\t%6.6s\t%6.6s\t%6.6s\t%6.6s\n' % (str(1),str(1),str(1),str(1),str(1)))  # exptime
             fil.write('%6.6s\t%6.6s\t%6.6s\t%6.6s\t%6.6s\n' % (str(airmass0['B']),str(airmass0['V']),str(airmass0['g']),str(airmass0['r']),str(airmass0['i'])))
         for i in range(0,len(magsex)): 
-            fileph['m'+filters[_filter]][i]=magsex[i]    #  instrumental mangitude of std in pos0[i]
+            fileph['m'+lsc.sites.filterst1[_filter]][i]=magsex[i]    #  instrumental mangitude of std in pos0[i]
             if _field=='landolt':
                 stringastandard='%12.12s\t%7.7s\t%7.7s\t%7.7s\t%7.7s\t%7.7s' % (idstd0[i],fileph['V'][i],fileph['BV'][i],fileph['UB'][i],\
                                                                                 fileph['VR'][i],fileph['RI'][i])
@@ -614,15 +558,15 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                                                                                 fileph['gr'][i],fileph['ri'][i])
                 fil.write('%7.7s\t%7.7s\t%7.7s\t%7.7s\t%7.7s\t%60.60s\n' \
                               % (str(fileph['mB'][i]),str(fileph['mV'][i]),str(fileph['mg'][i]),str(fileph['mr'][i]),str(fileph['mi'][i]),str(stringastandard)))
-            zero.append(float(float(magstd0[filters[_filter]][i]))-float(magsex[i]))
-            zeroerr.append((float(errstd0[filters[_filter]][i])**2 + magerrsex[i]**2)**0.5)
+            zero.append(float(magstd0[lsc.sites.filterst1[_filter]][i])-float(magsex[i]))
+            zeroerr.append((float(errstd0[lsc.sites.filterst1[_filter]][i])**2 + magerrsex[i]**2)**0.5)
             magcor.append(magsex[i])
         fil.close()
         magstdn=lsc.lscabsphotdef.transform2natural(_instrume,magstd0,colorefisso,_field)
 
-        magsex1=magsex+kk[filters[_filter]]*float(_airmass)  #   add again extinction for natural zero point comparison
+        magsex1=magsex+kk[lsc.sites.filterst1[_filter]]*float(_airmass)  #   add again extinction for natural zero point comparison
 
-        media,mediaerr,mag2,data2=lsc.lscabsphotdef.zeropoint2(array(magstdn[filters[_filter]],float),array(magsex1,float),10,2,show)
+        media,mediaerr,mag2,data2=lsc.lscabsphotdef.zeropoint2(array(magstdn[lsc.sites.filterst1[_filter]],float),array(magsex1,float),10,2,show)
 
         if media!=9999: 
               _limmag = limmag(re.sub('.sn2.fits','.fits',img), media, 3, _fwhm)     #   compute limiting magnitude at 3 sigma
@@ -633,12 +577,12 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
               lsc.mysqldef.updatevalue('photlco','znnum',len(data2),string.split(re.sub('.sn2.fits','.fits',img),'/')[-1],'lcogt2','filename')
 
 
-        colorvec=colors[filters[_filter]]
+        colorvec=colors[lsc.sites.filterst1[_filter]]
         zero = array(zero)
         zeroerr = array(zeroerr)
         print 'attempting these colors:', colorvec
         if not colorvec:
-            colorvec.append(2*filters[_filter])
+            colorvec.append(2*lsc.sites.filterst1[_filter])
         if zcatnew and show and not _interactive:
             fig, axarr = plt.subplots(ncols=len(colorvec), figsize=(8*len(colorvec), 6), squeeze=False)
         for i, col in enumerate(colorvec):
@@ -665,15 +609,15 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
             zeroerr2 = zeroerr[good]
             coloreerr2 = colerrstd0[good]
 
-            if _fix and filters[_filter]+col in colorefisso:
-                fisso = colorefisso[filters[_filter]+col]
-            elif col == 2*filters[_filter]:
+            if _fix and lsc.sites.filterst1[_filter]+col in colorefisso:
+                fisso = colorefisso[lsc.sites.filterst1[_filter]+col]
+            elif col == 2*lsc.sites.filterst1[_filter]:
                 fisso = 0.
             else:
                 fisso = None
 
             if len(colore2)==0:
-                print 'no calibration:', filters[_filter], col, _field
+                print 'no calibration:', lsc.sites.filterst1[_filter], col, _field
                 continue
 #                b,a,sa,sb=9999,9999,0,0
             else:
@@ -684,7 +628,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                 else:
                     if _interactive:    a,sa,b,sb=fitcol(colore2,zero2,_filter,col,fisso)
                     else:               a,sa,b,sb=fitcol2(colore2,zero2,_filter,col,fisso,show,rejection)
-            result[filters[_filter]+col]=[a,sa,b,sb]
+            result[lsc.sites.filterst1[_filter]+col]=[a,sa,b,sb]
         if result:
             print '### zeropoint ..... done at airmass 0'
             if _catalogue:
@@ -987,7 +931,6 @@ def meanclip3(xx,yy,slope, clipsig=3.0, maxiter=5, converge_num=0.1, verbose=0):
 def makecatalogue(imglist):
     from astropy.io import fits
     from numpy import array, zeros
-    filters={}
     dicti={}
     for img in imglist:
         t = fits.open(img)

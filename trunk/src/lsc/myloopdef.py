@@ -1666,21 +1666,6 @@ def subset(xx, _avg=''):  # lista  mjd
 
 ##########################################################
 
-def chosecolor(allfilter, usegood=False, _field=''):
-    color = {filt: [] for filt in allfilter}
-    for col in ['UB', 'BV', 'VR', 'RI', 'ug', 'gr', 'ri', 'iz']:
-        if col[0] in allfilter and col[1] in allfilter:
-            color[col[0]].append(col)
-            color[col[1]].append(col)
-    if usegood:
-        goodcol = {'U': 'UB', 'B': 'BV', 'V': 'VR', 'R': 'VR', 'I': 'RI',
-                   'u': 'ug', 'g': 'gr', 'r': 'ri', 'i': 'ri', 'z': 'iz'}
-        for filt in color:
-            if goodcol[filt] in color[filt]: color[filt] = [goodcol[filt]]
-    return color
-
-
-###########################################################################
 def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
              filetype=1, _groupid=None, _instrument='', _temptel='', _difftype='', classid=None):
              

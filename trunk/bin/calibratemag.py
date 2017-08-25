@@ -148,7 +148,7 @@ if __name__ == "__main__":
     elif args.typemag == 'ph': # aperture photometry for local sequence
         targets = get_image_data(lista, 'magp3', 'merrp3', refcat)
         
-    color_to_use = lsc.myloopdef.chosecolor(targets['filter'], True)
+    color_to_use = lsc.sites.chosecolor(targets['filter'], True)
     colors_to_calculate = set(sum(color_to_use.values(), []))
 
     # copy average zero points & color terms from the standards to the science images

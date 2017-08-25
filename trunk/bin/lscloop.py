@@ -21,9 +21,8 @@ if __name__ == "__main__":   # main program
     parser.add_argument("-I", "--instrument", default='', help='kb, fl, fs, sinistro, sbig')
     parser.add_argument("-n", "--name", default='', help='object name')
     parser.add_argument("-d", "--id", default='')
-    parser.add_argument("-f", "--filter", default='',
-                        choices=['landolt', 'sloan', 'apass', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I',
-                                'u,g', 'g,r', 'g,r,i', 'g,r,i,z', 'r,i,z', 'U,B,V', 'B,V,R', 'B,V', 'B,V,R,I', 'V,R,I'])
+    parser.add_argument("-f", "--filter", default='', nargs='+',
+                        choices=['landolt', 'sloan', 'apass', 'u', 'g', 'r', 'i', 'z', 'U', 'B', 'V', 'R', 'I', 'w'])
     parser.add_argument("-F", "--force", action="store_true")
     parser.add_argument("-b", "--bad", default='', help='bad stage',
                         choices=['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'goodcat', 'quality', 'cosmic', 'diff'])
@@ -94,18 +93,20 @@ if __name__ == "__main__":   # main program
 
     if args.field:
         field = args.field
-    elif np.all([filt in ['U', 'B', 'V', 'R', 'I', 'landolt'] for filt in args.filter.split(',')]):
+    elif np.all([filt in ['U', 'B', 'V', 'R', 'I', 'landolt'] for filt in args.filter]):
         field = 'landolt'
-    elif np.all([filt in ['u', 'g', 'r', 'i', 'z', 'sloan'] for filt in args.filter.split(',')]):
+    elif np.all([filt in ['u', 'g', 'r', 'i', 'z', 'sloan', 'w'] for filt in args.filter]):
         field = 'sloan'
     else:
-        field = 'apass'        
+        field = 'apass'
+    
+    filters = ','.join(args.filter)
 
     if args.stage == 'diff':
-        ll = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, args.bad, args.name, args.id, args.RA, args.DEC,
+        ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
                                     'photlco', filetype, args.groupidcode, args.instrument)
     else:
-        ll = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, args.bad, args.name, args.id, args.RA, args.DEC, 
+        ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC, 
                                     'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
     if ll:
         if args.stage not in ['zcat', 'merge']:
@@ -128,9 +129,9 @@ if __name__ == "__main__":   # main program
             print '\n###  total number = ' + str(len(ll['filename']))
             if args.standard:
                 if args.standard == 'all':
-                    mm = lsc.myloopdef.get_standards(args.epoch, args.name, args.filter)
+                    mm = lsc.myloopdef.get_standards(args.epoch, args.name, filters)
                 else:
-                    mm = lsc.myloopdef.get_list(args.epoch, args.telescope, args.filter, _instrument=args.instrument, _name=args.standard)
+                    mm = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, _instrument=args.instrument, _name=args.standard)
                 for i in range(len(mm['filename'])):
                     print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
                           (str(mm['filename'][i]), str(mm['objname'][i]), str(mm['filter'][i]),
@@ -218,7 +219,7 @@ if __name__ == "__main__":   # main program
                         inds = np.argsort(ll00['mjd'])  #  sort by mjd
                         for i in ll00.keys():
                             ll00[i] = np.take(ll00[i], inds)
-                        lltemp = lsc.myloopdef.filtralist(ll00, args.filter, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '')
+                        lltemp = lsc.myloopdef.filtralist(ll00, filters, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '')
 
                     if not lista or not lltemp:
                         raise Exception('template not found')
@@ -279,11 +280,11 @@ if __name__ == "__main__":   # main program
                             catalogue = lsc.util.getcatalog(args.name, field)
 
                         if field == 'apass':
-                            filters_in_field = set('BVgri')
+                            filters_in_field = set('BVgriw')
                         elif field == 'landolt':
                             filters_in_field = set('UBVRI')
                         elif field == 'sloan':
-                            filters_in_field = set('ugriz')
+                            filters_in_field = set('ugrizw')
                         else:
                             print 'warning: field not defined, zeropoint not computed'
 

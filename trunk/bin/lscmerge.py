@@ -8,20 +8,18 @@ import re
 import string
 import sys
 import lsc
+import numpy as np
 from astropy.io import fits
+from astropy.wcs import WCS
 from optparse import OptionParser
 
 
 def checkast(imglist):
-    import lsc
-    from astropy.wcs import WCS
-    from numpy import median, array, compress, abs, std, argmin, isnan, sqrt
-
     hdr0 = lsc.util.readhdr(imglist[0])
     # ######  check with sources the accuracy of the astrometry
     wcs = WCS(hdr0)
     xpix, ypix, fw, cl, cm, ell, bkg = lsc.lscastrodef.sextractor(imglist1[0])
-    pixref = array(zip(xpix, ypix), float)
+    pixref = np.array(zip(xpix, ypix), float)
     sky0 = wcs.wcs_pix2world(pixref, 1)
     max_sep = 10
     for img in imglist1:
@@ -32,25 +30,24 @@ def checkast(imglist):
         xpix1, ypix1 = zip(*pix1)  # pixel position of the obj in image 0
         xdist, ydist = [], []
         for i in range(len(xpix1)):
-            dist = sqrt((xpix1[i] - xsex) ** 2 + (ypix1[i] - ysex) ** 2)
-            idist = argmin(dist)
+            dist = np.sqrt((xpix1[i] - xsex) ** 2 + (ypix1[i] - ysex) ** 2)
+            idist = np.argmin(dist)
             if dist[idist] < max_sep:
                 xdist.append(xpix1[i] - xsex[idist])
                 ydist.append(ypix1[i] - ysex[idist])
-        xoff, xstd = round(median(xdist), 2), round(std(xdist), 2)
-        yoff, ystd = round(median(ydist), 2), round(std(ydist), 2)
-        _xdist, _ydist = array(xdist), array(ydist)
-        __xdist = compress((abs(_xdist - xoff) < 3 * xstd) & (abs(_ydist - yoff) < 3 * ystd), _xdist)
-        __ydist = compress((abs(_xdist - xoff) < 3 * xstd) & (abs(_ydist - yoff) < 3 * ystd), _ydist)
-        xoff, xstd = round(median(__xdist), 2), round(std(__xdist), 2)
-        yoff, ystd = round(median(__ydist), 2), round(std(__ydist), 2)
-        if isnan(xoff): xoff, xstd = 0, 0
-        if isnan(yoff): yoff, ystd = 0, 0
+        xoff, xstd = round(np.median(xdist), 2), round(np.std(xdist), 2)
+        yoff, ystd = round(np.median(ydist), 2), round(np.std(ydist), 2)
+        _xdist, _ydist = np.array(xdist), np.array(ydist)
+        good = (np.abs(_xdist - xoff) < 3 * xstd) & (np.abs(_ydist - yoff) < 3 * ystd)
+        __xdist = _xdist[good]
+        __ydist = _ydist[good]
+        xoff, xstd = round(np.median(__xdist), 2), round(np.std(__xdist), 2)
+        yoff, ystd = round(np.median(__ydist), 2), round(np.std(__ydist), 2)
+        if np.isnan(xoff): xoff, xstd = 0, 0
+        if np.isnan(yoff): yoff, ystd = 0, 0
         print xoff, xstd, len(__xdist)
         print yoff, ystd
-        #if abs(xoff)>=1:        
         lsc.updateheader(img, 0, {'CRPIX1': [hdr1['CRPIX1'] - xoff, 'Value at ref. pixel on axis 1']})
-        #if abs(yoff)>=1:        
         lsc.updateheader(img, 0, {'CRPIX2': [hdr1['CRPIX2'] - yoff, 'Value at ref. pixel on axis 2']})
 
 # ############################################################
@@ -67,7 +64,6 @@ if __name__ == "__main__":
     if len(args) < 1: sys.argv.append('--help')
     option, args = parser.parse_args()
     imglist = lsc.util.readlist(args[0])
-    from numpy import where, mean
 
     _checkast = option.check
     force = option.force
@@ -137,7 +133,6 @@ if __name__ == "__main__":
                 hdm = fits.getheader(output)
                 dmask = fits.getdata(mask)
                 dsat = fits.getdata(satu)
-                #ar1=where(arm>saturation,2,0)
                 out_fits = fits.PrimaryHDU(header=hdm, data=dsat + dmask)
                 out_fits.writeto(re.sub('.fits', '.mask.fits', string.split(gg, '/')[-1]), overwrite=True,
                                  output_verify='fix')
@@ -174,7 +169,6 @@ if __name__ == "__main__":
             os.system(line)
 
             ar, hd = fits.getdata(outname, header=True)
-            ar = where(ar <= 0, mean(ar[where(ar > 0)]), ar)
             keyw = ['OBJECT', 'DATE', 'ORIGIN', 'HDUCLAS1', 'HDUCLAS2', 'HDSTYPE', 'DATADICV', 'HDRVER',
                     'SITEID', 'SITE', 'MJD-OBS', 'MJD',
                     'ENCID', 'ENCLOSUR', 'TELID', 'TELESCOP', 'LATITUDE', 'LONGITUD', 'HEIGHT', 'OBSGEO-X', 'OBSGEO-Y',

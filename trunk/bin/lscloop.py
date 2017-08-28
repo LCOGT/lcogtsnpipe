@@ -27,7 +27,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("-b", "--bad", default='', help='bad stage',
                         choices=['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'goodcat', 'quality', 'cosmic', 'diff'])
     parser.add_argument("-s", "--stage", default='',
-                        choices=['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'local', 'getmag', 'merge', 'diff',
+                        choices=['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'local', 'getmag', 'merge', 'mergeall', 'diff',
                                  'template', 'makestamp', 'apmag', 'cosmic', 'ingestsloan', 'ingestps1',
                                  'checkwcs', 'checkpsf', 'checkmag', 'checkquality', 'checkpos', 'checkcat',
                                  'checkmissing', 'checkfvd', 'checkcosmic', 'checkdiff'])
@@ -108,6 +108,7 @@ if __name__ == "__main__":   # main program
     else:
         ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC, 
                                     'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
+    listfile = np.array([k + v for k, v in zip(ll['filepath'], ll['filename'])])
     if ll:
         if args.stage not in ['zcat', 'merge']:
             print '##' * 50
@@ -159,7 +160,6 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'apmag':
                 lsc.myloopdef.run_apmag(ll['filename'], 'photlco')
             elif args.stage == 'cosmic':
-                listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                 if args.multicore > 1:
                     p = Pool(args.multicore)
                     inp = [([i], 'photlco', 4.5, 0.2, 4,args.force) for i in listfile]
@@ -169,10 +169,8 @@ if __name__ == "__main__":   # main program
                 else:
                     lsc.myloopdef.run_cosmic(listfile, 'photlco', 4.5, 0.2, 4, args.force)
             elif args.stage == 'ingestsloan':
-                listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                 lsc.myloopdef.run_ingestsloan(listfile, 'sloan', show=args.show, force=args.force)
             elif args.stage == 'ingestps1':
-                listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
                 lsc.myloopdef.run_ingestsloan(listfile, 'ps1', args.ps1frames, show=args.show, force=args.force)
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
                 if args.catalogue:
@@ -224,13 +222,13 @@ if __name__ == "__main__":   # main program
                     if not lista or not lltemp:
                         raise Exception('template not found')
 
-                    listtar = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
-                    listtemp = [k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])]
+                    listtemp = np.array([k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])])
 
-                    lsc.myloopdef.run_diff(np.array(listtar), np.array(listtemp), args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, difftype, suffix)
-            elif args.stage == 'template':  #    merge images using lacos and swarp
-                listfile = [k + v for k, v in zip(ll['filepath'], ll['filename'])]
-                lsc.myloopdef.run_template(np.array(listfile), args.show, args.force, args.interactive, args.RA, args.DEC, args.psf, args.mag, args.clean, args.subtract_mag_from_header)
+                    lsc.myloopdef.run_diff(listfile, listtemp, args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, difftype, suffix)
+            elif args.stage == 'template':
+                lsc.myloopdef.run_template(listfile, args.show, args.force, args.interactive, args.RA, args.DEC, args.psf, args.mag, args.clean, args.subtract_mag_from_header)
+            elif args.stage == 'mergeall':  #    merge images using lacos and swarp
+                lsc.myloopdef.run_merge(listfile, args.force)
             elif args.stage == 'checkpsf':
                 lsc.myloopdef.checkpsf(ll['filename'])
             elif args.stage == 'checkmag':
@@ -296,8 +294,8 @@ if __name__ == "__main__":   # main program
                         else:
                             print 'none of your filters ({}) match the chosen catalog ({})'.format(''.join(filters_in_images), ''.join(filters_in_field))
                     elif args.stage == 'merge':  #    merge images using lacos and swarp
-                        listfile = [k + v for k, v in zip(ll0['filepath'], ll0['filename'])]
-                        lsc.myloopdef.run_merge(np.array(listfile), args.force)
+                        listfile = np.array([k + v for k, v in zip(ll0['filepath'], ll0['filename'])])
+                        lsc.myloopdef.run_merge(listfile, args.force)
                 else:
                     print '\n### no data selected'
     else:

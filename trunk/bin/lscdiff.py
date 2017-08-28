@@ -370,9 +370,10 @@ if __name__ == "__main__":
                                                            reference_mask='_tempmask.fits',
                                                            science_saturation=sat_targ,
                                                            reference_saturation=sat_temp,
-                                                           n_stamps=4,
+                                                           n_stamps=1,
                                                            output=imgout,
-                                                           normalization = normalize)
+                                                           normalization=normalize,
+                                                           show=_show)
 
                             # create fields in header that hotpants does
                             hotpants_fields = {'TARGET': (imgtarg_path, 'target image'),
@@ -427,7 +428,9 @@ if __name__ == "__main__":
                             lsc.util.updateheader(imgout, 0, {'EXPTIME': [exp_temp, '[s] Exposure length'],
                                                               'SATURATE': [sat_temp, '[ADU] Saturation level used']})
 
-                        if hd['CONVOL00'] == 'TEMPLATE':
+                        if 'CONVOL00' not in hd:
+                            print '\n ### PSF computed by PyZOGY'
+                        elif hd['CONVOL00'] == 'TEMPLATE':
                             print '\n ### image to compute  psf: '+imgtarg0
                             lsc.util.updateheader(imgout, 0, {'PSF': [imgtarg0, 'image to compute  psf']})
                         else:
@@ -464,7 +467,6 @@ if __name__ == "__main__":
                         dictionary['z2'] = 9999
                         dictionary['c1'] = 9999
                         dictionary['c2'] = 9999
-                        dictionary['psf']='X'
                         dictionary['filename'] = imgout0
                         dictionary['filepath'] = _dir
                         dictionary['filetype'] = 3
@@ -474,13 +476,21 @@ if __name__ == "__main__":
                                 print dictionary['filepath']
                                 os.mkdir(dictionary['filepath'])
                             if not os.path.isfile(dictionary['filepath'] + imgout0) or _force in ['yes', True]:
-                                if _force in ['yes', True]:
-                                    move = 'mv -vf '
+                                os.system('mv -v ' + imgout + ' ' + dictionary['filepath'] + imgout0)
+                                os.system('mv -v ' + imgtemp + ' ' + dictionary['filepath'] + re.sub('.diff.', '.ref.', imgout0))
+                                imgpsf = imgout.replace('.fits', '.psf.fits')
+                                imgpsf0 = imgout0.replace('.fits', '.psf.fits')
+                                if os.path.exists(imgpsf):
+                                    data = fits.getdata(imgpsf)
+                                    with open('_psf.coo', 'w') as f:
+                                        f.write('{} {}'.format(data.shape[0] / 2, data.shape[1] / 2))
+                                    iraf.phot(imgpsf, '_psf.coo', '_psf.mag', interac=False, verify=False, verbose=False)
+                                    iraf.pstselect(imgpsf, '_psf.mag', '_psf.pst', 1, interac=False, verify=False, verbose=False)
+                                    iraf.psf(imgpsf, '_psf.mag', '_psf.pst', dictionary['filepath'] + imgpsf0, '_psf.psto', '_psf.psg', interac=False, verify=False, verbose=False)
+                                    os.system('rm _psf.coo _psf.mag _psf.pst _psf.psto _psf.psg ' + imgpsf)
+                                    dictionary['psf'] = imgpsf0
                                 else:
-                                    move = 'mv '
-                                print move + imgout + ' ' + dictionary['filepath'] + imgout0
-                                os.system(move + imgout + ' ' + dictionary['filepath'] + imgout0)
-                                os.system(move + imgtemp + ' ' + dictionary['filepath'] + re.sub('.diff.', '.ref.', imgout0))
+                                    dictionary['psf'] = 'X'
                         ###########################################################################################################
                         #                           choose sn2 file depending on
                         #                           normalization parameter

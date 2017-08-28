@@ -355,7 +355,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                 hdrdiff=lsc.util.readhdr(_dir+img)
                 if 'PSF' not in hdrdiff:
                     raise Exception('PSF file not defined')
-                else:
+                elif ggg[0]['difftype'] == 0:
                     imgpsf=hdrdiff['PSF']
                     print '\n### psf file for difference image: '+imgpsf
                     statuspsf = checkstage(imgpsf, 'psf')

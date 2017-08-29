@@ -5,7 +5,7 @@ import os
 from argparse import ArgumentParser
 import lsc
 import numpy.ma as np
-from numpy import pi
+from numpy import pi, newaxis
 import astropy.units as u
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
@@ -15,8 +15,8 @@ from datetime import datetime
 import sys
 
 def crossmatch(cat0, cat1, threshold=1., racol0='ra', deccol0='dec', racol1='ra', deccol1='dec', right_join=False):
-    dra = cat0[racol0] - np.atleast_2d(cat1[racol1]).T
-    ddec = cat0[deccol0] - np.atleast_2d(cat1[deccol1]).T
+    dra = cat0[racol0] - cat1[racol1][:, newaxis]
+    ddec = cat0[deccol0] - cat1[deccol1][:, newaxis]
     sep = np.sqrt(dra**2 + ddec**2) * 3600.
     matches = np.min(sep, axis=1) < threshold
     inds = np.argmin(sep, axis=1)
@@ -93,8 +93,9 @@ def combine_nights(combined_catalog, filterlist, refcat):
     for filt in filterlist:
         mags = combined_catalog['mag'][combined_catalog['filter'] == filt]
         median = np.median(mags, axis=0)
-        mad = np.median(np.abs(mags - median), axis=0) * np.sqrt(pi / 2)
-        mags.mask |= np.abs(mags - median) > 5 * mad
+        absdev_mag = mags - median
+        mad = np.median(np.abs(absdev_mag), axis=0) * np.sqrt(pi / 2)
+        mags.mask |= np.abs(absdev_mag) > 5 * mad
         catalog[filt] = np.median(mags, axis=0)
         catalog[filt+'err'] = np.median(np.abs(mags - catalog[filt]), axis=0) * np.sqrt(pi / 2)
     return catalog

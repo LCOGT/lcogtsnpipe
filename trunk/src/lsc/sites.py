@@ -43,5 +43,6 @@ def chosecolor(allfilter, usegood=False):
         goodcol = {'U': 'UB', 'B': 'BV', 'V': 'VR', 'R': 'VR', 'I': 'RI',
                    'u': 'ug', 'g': 'gr', 'r': 'ri', 'i': 'ri', 'z': 'iz'}
         for filt in color:
-            if goodcol[filt] in color[filt]: color[filt] = [goodcol[filt]]
+            if filt in goodcol and goodcol[filt] in color[filt]:
+                color[filt] = [goodcol[filt]]
     return color

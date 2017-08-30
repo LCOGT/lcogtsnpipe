@@ -34,8 +34,8 @@ def get_image_data(lista, magcol=None, errcol=None, refcat=None):
     filename_equals = ['filename="{}"'.format(os.path.basename(fn).replace('.sn2.fits', '.fits')) for fn in lista]
     t = Table(lsc.mysqldef.query(['''select filter, filepath, filename, airmass, shortname, dayobs, instrument,
                                      zcol1, z1, c1, dz1, dc1, zcol2, z2, c2, dz2, dc2, psfmag, psfdmag, apmag, dapmag
-                                     from photlco, telescopes where photlco.telescopeid=telescopes.id and (''' + 
-                                     ' or '.join(filename_equals) + ')'], lsc.conn), masked=True)
+                                     from photlco left join telescopes on photlco.telescopeid=telescopes.id where ''' + 
+                                     ' or '.join(filename_equals)], lsc.conn), masked=True)
     t['filter'] = [lsc.sites.filterst1[filt] for filt in t['filter']]
     if magcol in t.colnames and errcol in t.colnames:
         t.rename_column(magcol, 'instmag')

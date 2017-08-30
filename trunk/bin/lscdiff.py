@@ -365,7 +365,8 @@ if __name__ == "__main__":
                             os.system('rm {0} {1}'.format(psftarg, psftemp))
                             iraf.seepsf(imgtarg_path.replace('.fits','.psf.fits'), psftarg)
                             iraf.seepsf(imgtemp_path.replace('.fits','.psf.fits'), psftemp)
-                            run_subtraction(imgtarg, imgtemp, psftarg, psftemp,
+                            try:
+                                run_subtraction(imgtarg, imgtemp, psftarg, psftemp,
                                                            science_mask='_targmask.fits',
                                                            reference_mask='_tempmask.fits',
                                                            science_saturation=sat_targ,
@@ -374,6 +375,10 @@ if __name__ == "__main__":
                                                            output=imgout,
                                                            normalization=normalize,
                                                            show=_show)
+                            except Exception as e:
+                                print e
+                                print 'PyZOGY failed on', imgtarg0
+                                continue
 
                             # create fields in header that hotpants does
                             hotpants_fields = {'TARGET': (imgtarg_path, 'target image'),

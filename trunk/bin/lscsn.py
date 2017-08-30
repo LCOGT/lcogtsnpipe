@@ -764,7 +764,7 @@ if __name__ == "__main__":
                                'PSFMAG' + str(i + 1): [str(float(truemag[i]) - DM), 'psf magnitude'],
                                'PSFDMAG' + str(i + 1): [str(max(arterr, magerr[i])), 'psf mag error'],
                                'APMAG' + str(i + 1): [str(apmag3[i]), 'ap mag after bgsub'],
-                               'DAPMAG' + std(i + 1): [str(dapmag3[i]), 'ap mag error']}
+                               'DAPMAG' + str(i + 1): [str(dapmag3[i]), 'ap mag error']}
                     lsc.util.updateheader(img + '.sn2.fits', 0, headers)
                 lsc.util.delete("apori")
                 lsc.util.delete("sec")

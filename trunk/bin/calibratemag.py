@@ -143,7 +143,7 @@ if __name__ == "__main__":
     if args.typemag == 'fit' and args.stage == 'mag': # PSF photometry for supernova
         targets = get_image_data(lista, 'psfmag', 'psfdmag')
     elif args.typemag == 'ph' and args.stage == 'mag': # aperture photometry for supernova
-        targets = get_image_data(lista, 'apmag', 'psfdmag') # This is really bad! We should be using 'dapmag' but it is not populated.
+        targets = get_image_data(lista, 'apmag', 'dapmag')
     elif args.typemag == 'fit': # PSF photometry for local sequence
         targets = get_image_data(lista, 'smagf', 'smagerrf', refcat)
     elif args.typemag == 'ph': # aperture photometry for local sequence

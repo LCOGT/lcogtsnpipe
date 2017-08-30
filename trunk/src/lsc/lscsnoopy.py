@@ -96,7 +96,7 @@ def fitsn(img,imgpsf,coordlist,_recenter,fwhm0,original,sn,residual,_show,_inter
             apori3.append(string.split(i)[2])
             
     iraf.txsort(img+".sn.mag","YCENTER")
-    tmptbl=iraf.txdump(img+".sn.mag","mag,magerr",expr='yes', Stdout=1) 
+    tmptbl=iraf.txdump(img+".sn.mag","mag,merr",expr='yes', Stdout=1) 
 
     if _show:
         print "********************************************************************"
@@ -104,7 +104,7 @@ def fitsn(img,imgpsf,coordlist,_recenter,fwhm0,original,sn,residual,_show,_inter
         print "     ",a1,"       ",a2,"      ",a3,"        ",a1,"     ",a2,"     ",a3 
 
 
-    apmag1,apmag2,apmag3,truemag=[],[],[],[]
+    apmag1,apmag2,apmag3,dapmag1,dapmag2,dapmag3,truemag=[],[],[],[],[],[],[]
     for i in range(len(tmptbl)):
         try:
             apmag1.append(float(string.split(tmptbl[i])[0]))#-2.5*log10(_exptime))
@@ -118,6 +118,18 @@ def fitsn(img,imgpsf,coordlist,_recenter,fwhm0,original,sn,residual,_show,_inter
             apmag3.append(float(string.split(tmptbl[i])[2]))#-2.5*log10(_exptime))
         except:
             apmag3.append(9999)
+        try:
+            dapmag1.append(float(string.split(tmptbl[i])[0]))#-2.5*log10(_exptime))
+        except:
+            dapmag1.append(9999)
+        try:
+            dapmag2.append(float(string.split(tmptbl[i])[1]))#-2.5*log10(_exptime))
+        except:
+            dapmag2.append(9999)
+        try:
+            dapmag3.append(float(string.split(tmptbl[i])[2]))#-2.5*log10(_exptime))
+        except:
+            dapmag3.append(9999)
         try:
             truemag.append(fitmag[i]+float(apco0))
         except:
@@ -163,7 +175,7 @@ def fitsn(img,imgpsf,coordlist,_recenter,fwhm0,original,sn,residual,_show,_inter
         ff.write(str(s1)+' '+str(s2)+" RESIDUAL")
         ff.close()    
         iraf.tvmark(1,"tmptbl",autol='no',mark="none",inter='no',label='yes',txsize=2)
-    return apori1,apori2,apori3,apmag1,apmag2,apmag3,fitmag,truemag,magerr,centx,centy
+    return apori1,apori2,apori3,apmag1,apmag2,apmag3,dapmag1,dapmag2,dapmag3,fitmag,truemag,magerr,centx,centy
 
 ###########################  DEFINE MANUAL CHANGING  #########################################
 
@@ -325,7 +337,7 @@ def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_num
         iraf.imarith("reserr","-","artsky","artsn",calctype="r",pixtype="r",verb='no') 
         iraf.imarith("artsn","+",midpt,"artsn",verb='no')
 
-        artap1, artap2, artap3, artmag1, artmag2, artmag3, artfitmag, arttruemag, artmagerr, artcentx, artcenty = \
+        artap1, artap2, artap3, artmag1, artmag2, artmag3, dartmag1, dartmag2, dartmag3, artfitmag, arttruemag, artmagerr, artcentx, artcenty = \
             fitsn(img,imgpsf,coordlist,_recenter,fwhm0,'reserr','artsn','artres',_show,_interactive,dmax,dmin,z11,z22,midpt,size,apco0)
 
         for ii in range(0,_numiter):
@@ -346,7 +358,7 @@ def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_num
 
             iraf.imarith("reserr","-","artsky","artsn",calctype="r",pixtype="r",verb='no') 
             iraf.imarith("artsn.fits","+",midpt,"artsn.fits",verb='no') 
-            artap1, artap2, artap3, artmag1, artmag2, artmag3, artfitmag, arttruemag, artmagerr, artcentx, artcenty = \
+            artap1, artap2, artap3, artmag1, artmag2, artmag3, dartmag1, dartmag2, dartmag3, artfitmag, arttruemag, artmagerr, artcentx, artcenty = \
                 fitsn(img,imgpsf,coordlist,_recenter,fwhm0,'reserr','artsn','artres',_show,_interactive,dmax,dmin,z11,z22,midpt,size,0)
 ####### 
         if i==0: era='yes'

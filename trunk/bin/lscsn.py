@@ -593,7 +593,7 @@ if __name__ == "__main__":
                     _dmax = lsc.util.readkey3(hdr, 'datamax')
                 if _dmin is None:
                     _dmin = lsc.util.readkey3(hdr, 'datamin')
-                apori1, apori2, apori3, apmag1, apmag2, apmag3, fitmag, truemag, magerr, centx, centy = \
+                apori1, apori2, apori3, apmag1, apmag2, apmag3, dapmag1, dapmag2, dapmag3, fitmag, truemag, magerr, centx, centy = \
                     lsc.lscsnoopy.fitsn(img, psfimage, img + '.sn.coo', _recenter, fwhm0, 'original', 'sn',
                                         'residual', _show, _interactive, _dmax, _dmin, z11, z22, midpt, _size, apco0)
                 #################       Iterate Beckground    ###################################
@@ -650,7 +650,7 @@ if __name__ == "__main__":
                     iraf.imarith("original", "-", "tmp", "sn", calctype="r", pixtype="r")
                     iraf.imarith("sn.fits", "+", midpt, "sn.fits")
                     lsc.util.delete("skyfit.fits")
-                    apori1, apori2, apori3, apmag1, apmag2, apmag3, fitmag, truemag, magerr, centx, centy = \
+                    apori1, apori2, apori3, apmag1, apmag2, apmag3, dapmag1, dapmag2, dapmag3, fitmag, truemag, magerr, centx, centy = \
                         lsc.lscsnoopy.fitsn( img, psfimage, img + '.sn.coo', _recenter, fwhm0, 'original', 'sn',
                                              'residual', _show, _interactive, _dmax, _dmin, z11, z22, midpt, _size, apco0)
                     print _numiter, _count
@@ -763,7 +763,8 @@ if __name__ == "__main__":
                                'PSFY' + str(i + 1): [str(centy[i] + y1 - 1), 'y pos psf mag'],
                                'PSFMAG' + str(i + 1): [str(float(truemag[i]) - DM), 'psf magnitude'],
                                'PSFDMAG' + str(i + 1): [str(max(arterr, magerr[i])), 'psf mag error'],
-                               'APMAG' + str(i + 1): [str(apmag3[i]), 'ap mag after bgsub']}
+                               'APMAG' + str(i + 1): [str(apmag3[i]), 'ap mag after bgsub'],
+                               'DAPMAG' + std(i + 1): [str(dapmag3[i]), 'ap mag error']}
                     lsc.util.updateheader(img + '.sn2.fits', 0, headers)
                 lsc.util.delete("apori")
                 lsc.util.delete("sec")
@@ -785,6 +786,7 @@ if __name__ == "__main__":
                     lsc.mysqldef.updatevalue('photlco', 'psfx', centx[0] + x1 - 1, string.split(img, '/')[-1] + '.fits')
                     lsc.mysqldef.updatevalue('photlco', 'psfy', centy[0] + y1 - 1, string.split(img, '/')[-1] + '.fits')
                     lsc.mysqldef.updatevalue('photlco', 'apmag', apmag3[0], string.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'dapmag', dapmag3[0], string.split(img, '/')[-1] + '.fits')
                 except:
                     print 'module mysqldef not found'
             else:

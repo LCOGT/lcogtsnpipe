@@ -203,7 +203,7 @@ def onclick(event):
                      (aa,sss,bb,sigmaa,sigmab))
 
 
-def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit',redo=False,show=False,cutmag=-1,database='photlco',_calib='sloan',zcatnew=False):
+def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit',redo=False,show=False,cutmag=-1,database='photlco',_calib='sloan',zcatold=False):
     from astropy.io import fits
     import math
     import sys,re,string,os
@@ -583,7 +583,7 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         print 'attempting these colors:', colorvec
         if not colorvec:
             colorvec.append(2*lsc.sites.filterst1[_filter])
-        if zcatnew and show and not _interactive:
+        if not zcatold and show and not _interactive:
             fig, axarr = plt.subplots(ncols=len(colorvec), figsize=(8*len(colorvec), 6), squeeze=False)
         for i, col in enumerate(colorvec):
             col0=magstd0[col[0]] 
@@ -621,13 +621,13 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                 continue
 #                b,a,sa,sb=9999,9999,0,0
             else:
-                if zcatnew:
+                if zcatold:
+                    if _interactive:    a,sa,b,sb=fitcol(colore2,zero2,_filter,col,fisso)
+                    else:               a,sa,b,sb=fitcol2(colore2,zero2,_filter,col,fisso,show,rejection)
+                else:
                     if show and not _interactive:
                         plt.axes(axarr[0, i])
                     a, sa, b, sb = fitcol3(colore2, zero2, coloreerr2, zeroerr2, fisso, _filter, ' - '.join(col), show, _interactive, rejection)
-                else:
-                    if _interactive:    a,sa,b,sb=fitcol(colore2,zero2,_filter,col,fisso)
-                    else:               a,sa,b,sb=fitcol2(colore2,zero2,_filter,col,fisso,show,rejection)
             result[lsc.sites.filterst1[_filter]+col]=[a,sa,b,sb]
         if result:
             print '### zeropoint ..... done at airmass 0'

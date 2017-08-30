@@ -71,7 +71,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--z2", type=float)
     parser.add_argument("--groupidcode", type=int)
     parser.add_argument("--ps1frames", default='', help='list of ps1 frames (download them manually)')
-    parser.add_argument('--zcatnew', action='store_true', help='use fitcol3 for the zero point and color term')
+    parser.add_argument('--zcatold', action='store_true', help='use original zero point and color term routine')
     parser.add_argument("--bgo", default=3., type=float, help=' bgo parameter for hotpants')
     parser.add_argument("-p", "--psf", default='', help='psf image for template')
     parser.add_argument("--mag", type=float, default=0., help='mag to subtract from template image')
@@ -290,7 +290,7 @@ if __name__ == "__main__":   # main program
                         filters_in_images = {lsc.sites.filterst1[filt] for filt in ll0['filter']}
                         _color = ''.join(filters_in_images & filters_in_field)
                         if _color:
-                            lsc.myloopdef.run_zero(filenames, args.fix, args.type, field, catalogue, _color, args.interactive, args.force, args.show, args.cutmag, 'photlco', args.calib, args.zcatnew)
+                            lsc.myloopdef.run_zero(filenames, args.fix, args.type, field, catalogue, _color, args.interactive, args.force, args.show, args.cutmag, 'photlco', args.calib, args.zcatold)
                         else:
                             print 'none of your filters ({}) match the chosen catalog ({})'.format(''.join(filters_in_images), ''.join(filters_in_field))
                     elif args.stage == 'merge':  #    merge images using lacos and swarp

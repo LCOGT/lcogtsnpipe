@@ -239,7 +239,7 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
 
 
 def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=False, redo=False, show=False, _cutmag=99,
-             database='photlco', _calib='', zcatnew=False):
+             database='photlco', _calib='', zcatold=False):
     for img in imglist:
         if interactive:
             ii = '-i'
@@ -282,7 +282,7 @@ def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=Fal
                     cc = '-c ' + _catalogue
                 else:
                     cc = ''
-            if zcatnew: zcn = '--zcatnew'
+            if zcatold: zcn = '--zcatold'
             else: zcn = ''
             command = ' '.join(['lscabsphot.py', _dir+img.replace('.fits', '.sn2.fits'), ii, rr, ff, cc, '-t', _type, ss, dd, hh, ll, '--cutmag', str(_cutmag), zcn])
             print '_'*100

@@ -251,10 +251,11 @@ if __name__ == "__main__":
                         #sys.exit()
 
                         if _show:
-                            iraf.display(imgtemp, frame=4, fill='yes')
-                            iraf.display(_dirtemp + imgtemp0 + '[0]', frame=3, fill='yes')
-                            iraf.display(imgtarg, frame=2, fill='yes')
+                            iraf.set(stdimage='imt2048')
                             iraf.display(_dir + imgtarg0 + '[0]', frame=1, fill='yes')
+                            iraf.display(imgtarg, frame=2, fill='yes')
+                            iraf.display(_dirtemp + imgtemp0 + '[0]', frame=3, fill='yes')
+                            iraf.display(imgtemp, frame=4, fill='yes')
 
                         ###########################################################
 

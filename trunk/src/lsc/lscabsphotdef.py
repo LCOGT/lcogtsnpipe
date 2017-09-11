@@ -1071,8 +1071,8 @@ def zeropoint2(xx,mag,maxiter=10,nn=2,show=False,_cutmag=99):
       std0=np.std(data)
       data1=data[:]
       mag1=mag[:]
-      data2=np.compress((data < (z0+std0)) & (data>(z0-std0)),data)
-      mag2=np.compress((data < (z0+std0)) & (data>(z0-std0)),mag)
+      data2=np.compress((data < (z0+nn*std0)) & (data>(z0-nn*std0)),data)
+      mag2=np.compress((data < (z0+nn*std0)) & (data>(z0-nn*std0)),mag)
       z2, std2 = 9999, 9999
       iter=0; 
       if show:  

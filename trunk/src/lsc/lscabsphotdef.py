@@ -40,7 +40,7 @@ def snr_equation(counts, Nsigma_limit, rdnoise, gain, skynoise,radius):
     :return: Signal / Noise difference from the limiting sigma
     """
     area = np.pi * radius**2 
-    snr = counts * gain - Nsigma_limit * (counts * gain + skynoise**2.0 * gain*area + rdnoise * rdnoise*area) ** 0.5
+    snr = counts * gain - Nsigma_limit * (counts * gain + (skynoise * gain)**2 * area + rdnoise**2 * area) ** 0.5
     return snr
 
 def snr_helper(counts, extra):

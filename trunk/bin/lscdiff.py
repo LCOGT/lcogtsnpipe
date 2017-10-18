@@ -489,13 +489,13 @@ if __name__ == "__main__":
                                     imgpsf0 = imgout0.replace('.fits', '.psf.fits')
                                     data = fits.getdata(imgpsf)
                                     with open('_psf.coo', 'w') as f:
-                                        f.write('{} {}'.format(data.shape[0] / 2, data.shape[1] / 2))
+                                        f.write('{} {}\n'.format(data.shape[1] / 2, data.shape[0] / 2))
                                     iraf.digiphot(_doprint=0)
                                     iraf.daophot(_doprint=0)
                                     iraf.phot(imgpsf, '_psf.coo', '_psf.mag', interac=False, verify=False, verbose=False)
                                     iraf.pstselect(imgpsf, '_psf.mag', '_psf.pst', 1, interac=False, verify=False, verbose=False)
-                                    iraf.psf(imgpsf, '_psf.mag', '_psf.pst', dictionary['filepath'] + imgpsf0, '_psf.psto', '_psf.psg',
-                                             interac=False, verify=False, verbose=False)
+                                    iraf.psf(imgpsf, '_psf.mag', '_psf.pst', imgpsf0, '_psf.psto', '_psf.psg', interac=False, verify=False, verbose=False)
+                                    os.system('mv -v ' + imgpsf0 + ' ' + dictionary['filepath'])
                                     os.system('rm _psf.coo _psf.mag _psf.pst _psf.psto _psf.psg ' + imgpsf)
                                     dictionary['psf'] = imgpsf0
                                 else:

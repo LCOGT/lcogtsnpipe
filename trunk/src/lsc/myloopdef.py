@@ -743,7 +743,9 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                 ll1[jj] = []
 
     if _filetype == 3 and _temptel:
-        temptels = np.array([fn.split('.')[1] if fn.count('.') == 3 else inst[0:2] for fn, inst in zip(ll1['filename'], ll1['instrument'])], dtype=str)
+        temptels = np.array([fn.replace('.optimal', '').split('.')[1].replace('diff', inst[:2])
+#                             if fn.replace('.optimal', '').count('.') == 3 else inst[0:2]
+                             for fn, inst in zip(ll1['filename'], ll1['instrument'])], dtype=str)
         for jj in ll1:
             ll1[jj] = np.array(ll1[jj])[temptels == _temptel]
     

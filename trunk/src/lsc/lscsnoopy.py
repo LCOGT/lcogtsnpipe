@@ -119,15 +119,15 @@ def fitsn(img,imgpsf,coordlist,_recenter,fwhm0,original,sn,residual,_show,_inter
         except:
             apmag3.append(9999)
         try:
-            dapmag1.append(float(string.split(tmptbl[i])[0]))#-2.5*log10(_exptime))
+            dapmag1.append(float(string.split(tmptbl[i])[3]))#-2.5*log10(_exptime))
         except:
             dapmag1.append(9999)
         try:
-            dapmag2.append(float(string.split(tmptbl[i])[1]))#-2.5*log10(_exptime))
+            dapmag2.append(float(string.split(tmptbl[i])[4]))#-2.5*log10(_exptime))
         except:
             dapmag2.append(9999)
         try:
-            dapmag3.append(float(string.split(tmptbl[i])[2]))#-2.5*log10(_exptime))
+            dapmag3.append(float(string.split(tmptbl[i])[5]))#-2.5*log10(_exptime))
         except:
             dapmag3.append(9999)
         try:

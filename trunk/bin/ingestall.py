@@ -46,7 +46,7 @@ for frame in frames:
         traceback.print_exc()
         continue
     try:
-        db_ingest(filepath, filename)
+        dbdict = db_ingest(filepath, filename)
     except:
         print '!!! FAILED TO INGEST ' + filename
         traceback.print_exc()
@@ -56,6 +56,13 @@ for frame in frames:
             fits2png(filepath + filename)
         except:
             print '!!! FAILED TO MAKE PNG FOR ' + filename
+            traceback.print_exc()
+        try:
+            tarframe = get_metadata(authtoken, BLKUID=dbdict['obid'], RLEVEL=90)[0]
+            tardict = {'tracknumber': dbdict['tracknumber'], 'blockid': dbdict['obid'], 'link': tarframe['url']}
+            lsc.mysqldef.insert_values(conn, 'speclcoguider', tardict)
+        except:
+            print '!!! FAILED TO GET GUIDER LINK FOR ' + filename
             traceback.print_exc()
 
 lsc.mysqldef.ingestredu(fullpaths) # ingest new data into photlco

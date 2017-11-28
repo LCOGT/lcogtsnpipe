@@ -214,7 +214,9 @@ def db_ingest(filepath, filename, force=False):
         print 'ingesting', filename
         lsc.mysqldef.insert_values(conn, table, dbdict)
     else:
+        dbdict = {}
         print filename, 'already ingested'
+    return dbdict
 
 def fits2png(filename, zclip=5):
     data = fits.getdata(filename)

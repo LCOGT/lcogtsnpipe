@@ -282,3 +282,10 @@ if __name__ == "__main__":
         db_ingest(filepath, filename, args.force_db)
         if '-en0' in filename and '-e00.fits' in filename and (not os.path.isfile(filepath + filename.replace('.fits', '.png')) or args.force_tn):
             fits2png(filepath + filename)
+        if '-en0' in filename and '-e00.fits' in filename:
+            if not os.path.isfile(filepath + filename.replace('.fits', '.png')) or args.force_tn:
+                fits2png(filepath + filename)
+            if not lsc.mysqldef.query("select link from speclcoguider where blockid={:d}".format(dbdict['obid']), conn):
+                tarframe = get_metadata(authtoken, BLKUID=dbdict['obid'], RLEVEL=90)[0]
+                tardict = {'tracknumber': dbdict['tracknumber'], 'blockid': dbdict['obid'], 'link': tarframe['url']}
+                lsc.mysqldef.insert_values(conn, 'speclcoguider', tardict)

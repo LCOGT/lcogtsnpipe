@@ -58,7 +58,7 @@ for frame in frames:
             except:
                 print '!!! FAILED TO MAKE PNG FOR ' + filename
                 traceback.print_exc()
-        if dbdict and not lsc.mysqldef.query("select link from speclcoguider where blockid={}".format(dbdict['obid']), conn):
+        if dbdict and not lsc.mysqldef.query(["select link from speclcoguider where blockid={}".format(dbdict['obid'])], conn):
             try:
                 tarframe = get_metadata(authtoken, BLKUID=dbdict['obid'], RLEVEL=90)[0]
                 tardict = {'tracknumber': dbdict['tracknumber'], 'blockid': dbdict['obid'], 'link': tarframe['url']}

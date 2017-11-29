@@ -279,7 +279,7 @@ if __name__ == "__main__":
 
     for frame in frames:
         filepath, filename = download_frame(frame, args.force_dl)
-        db_ingest(filepath, filename, args.force_db)
+        dbdict = db_ingest(filepath, filename, args.force_db)
         if '-en0' in filename and '-e00.fits' in filename and (not os.path.isfile(filepath + filename.replace('.fits', '.png')) or args.force_tn):
             fits2png(filepath + filename)
         if '-en0' in filename and '-e00.fits' in filename:

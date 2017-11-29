@@ -219,7 +219,7 @@ def db_ingest(filepath, filename, force=False):
     return dbdict
 
 def fits2png(filename, force=False, zclip=5):
-    if not os.path.isfile(filepath + filename.replace('.fits', '.png')) or force:
+    if not os.path.isfile(filename.replace('.fits', '.png')) or force:
         data = fits.getdata(filename)
         z1 = np.percentile(data, zclip)
         z2 = np.percentile(data, 100-zclip)

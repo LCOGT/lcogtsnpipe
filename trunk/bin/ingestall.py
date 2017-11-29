@@ -52,7 +52,7 @@ for frame in frames:
         traceback.print_exc()
         continue
     if '-en0' in filename and '-e00.fits' in filename:
-        if not os.path.isfile(filepath + filename.replace('.fits', '.png')) or args.force_tn:
+        if not os.path.isfile(filepath + filename.replace('.fits', '.png')):
             try:
                 fits2png(filepath + filename)
             except:

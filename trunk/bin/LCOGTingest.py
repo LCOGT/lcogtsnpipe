@@ -226,7 +226,10 @@ def fits2png(filename, force=False, zclip=5):
         imsave(filename.replace('.fits', '.png'), data, cmap='gray', vmin=z1, vmax=z2, origin='lower')
 
 def get_floyds_tar_link(dbdict, force=False):
-    if dbdict and (not lsc.mysqldef.query(["select link from speclcoguider where blockid={}".format(dbdict['obid'])], conn) or force):
+    linkindb = lsc.mysqldef.query(["select link from speclcoguider where blockid=" + dbdict['obid'])], conn)
+    if dbdict and (not linkindb or force):
+        if linkindb:
+            lsc.mysqldef.query(["delete from speclcoguider where blockid=" + dbdict['obid']], conn)
         tarframe = get_metadata(authtoken, BLKUID=dbdict['obid'], RLEVEL=90)[0]
         tardict = {'tracknumber': dbdict['tracknumber'], 'blockid': dbdict['obid'], 'link': tarframe['url']}
         lsc.mysqldef.insert_values(conn, 'speclcoguider', tardict)

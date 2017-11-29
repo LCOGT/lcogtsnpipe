@@ -52,19 +52,15 @@ for frame in frames:
         traceback.print_exc()
         continue
     if '-en0' in filename and '-e00.fits' in filename:
-        if not os.path.isfile(filepath + filename.replace('.fits', '.png')):
-            try:
-                fits2png(filepath + filename)
-            except:
-                print '!!! FAILED TO MAKE PNG FOR ' + filename
-                traceback.print_exc()
-        if dbdict and not lsc.mysqldef.query(["select link from speclcoguider where blockid={}".format(dbdict['obid'])], conn):
-            try:
-                tarframe = get_metadata(authtoken, BLKUID=dbdict['obid'], RLEVEL=90)[0]
-                tardict = {'tracknumber': dbdict['tracknumber'], 'blockid': dbdict['obid'], 'link': tarframe['url']}
-                lsc.mysqldef.insert_values(conn, 'speclcoguider', tardict)
-            except:
-                print '!!! FAILED TO GET GUIDER LINK FOR ' + filename
-                traceback.print_exc()
+        try:
+            fits2png(filepath + filename)
+        except:
+            print '!!! FAILED TO MAKE PNG FOR ' + filename
+            traceback.print_exc()
+        try:
+            get_floyds_tar_link(dbdict)
+        except:
+            print '!!! FAILED TO GET GUIDER LINK FOR ' + filename
+            traceback.print_exc()
 
 lsc.mysqldef.ingestredu(fullpaths) # ingest new data into photlco

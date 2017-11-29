@@ -218,23 +218,31 @@ def db_ingest(filepath, filename, force=False):
         print filename, 'already ingested'
     return dbdict
 
-def fits2png(filename, zclip=5):
-    data = fits.getdata(filename)
-    z1 = np.percentile(data, zclip)
-    z2 = np.percentile(data, 100-zclip)
-    imsave(filename.replace('.fits', '.png'), data, cmap='gray', vmin=z1, vmax=z2, origin='lower')
+def fits2png(filename, force=False, zclip=5):
+    if not os.path.isfile(filepath + filename.replace('.fits', '.png')) or force:
+        data = fits.getdata(filename)
+        z1 = np.percentile(data, zclip)
+        z2 = np.percentile(data, 100-zclip)
+        imsave(filename.replace('.fits', '.png'), data, cmap='gray', vmin=z1, vmax=z2, origin='lower')
+
+def get_floyds_tar_link(dbdict, force=False):
+    if dbdict and (not lsc.mysqldef.query(["select link from speclcoguider where blockid={}".format(dbdict['obid'])], conn) or force):
+        tarframe = get_metadata(authtoken, BLKUID=dbdict['obid'], RLEVEL=90)[0]
+        tardict = {'tracknumber': dbdict['tracknumber'], 'blockid': dbdict['obid'], 'link': tarframe['url']}
+        lsc.mysqldef.insert_values(conn, 'speclcoguider', tardict)
 
 #################################################################
 if __name__ == "__main__":
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(description='Downloads LCOGT data from archive.lco.global')
+    parser = ArgumentParser(description='Downloads data from archive.lco.global')
     parser.add_argument("-u", "--username")
     parser.add_argument("-p", "--password")
     parser.add_argument("-l", "--limit", type=int, help="maximum number of frames to return")
     parser.add_argument("-F", "--force-dl", action="store_true", help="download files even if they already exist")
     parser.add_argument("-G", "--force-db", action="store_true", help="reingest files even if they already exist")
     parser.add_argument("-H", "--force-tn", action="store_true", help="regenerate thumbnails even if they already exist")
+    parser.add_argument("-J", "--force-gl", action="store_true", help="replace guider links even if they already exist")
 
     parser.add_argument("-S", "--site", choices=['bpl', 'coj', 'cpt', 'elp', 'lsc', 'ogg', 'sqa', 'tfn'])
     parser.add_argument("-T", "--telescope", choices=['0m4a', '0m4b', '0m4c', '0m8a', '1m0a', '2m0a'])
@@ -280,12 +288,6 @@ if __name__ == "__main__":
     for frame in frames:
         filepath, filename = download_frame(frame, args.force_dl)
         dbdict = db_ingest(filepath, filename, args.force_db)
-        if '-en0' in filename and '-e00.fits' in filename and (not os.path.isfile(filepath + filename.replace('.fits', '.png')) or args.force_tn):
-            fits2png(filepath + filename)
         if '-en0' in filename and '-e00.fits' in filename:
-            if not os.path.isfile(filepath + filename.replace('.fits', '.png')) or args.force_tn:
-                fits2png(filepath + filename)
-            if dbdict and not lsc.mysqldef.query(["select link from speclcoguider where blockid={}".format(dbdict['obid'])], conn):
-                tarframe = get_metadata(authtoken, BLKUID=dbdict['obid'], RLEVEL=90)[0]
-                tardict = {'tracknumber': dbdict['tracknumber'], 'blockid': dbdict['obid'], 'link': tarframe['url']}
-                lsc.mysqldef.insert_values(conn, 'speclcoguider', tardict)
+            fits2png(filepath + filename, args.force_tn)
+            get_floyds_tar_link(dbdict, args.force_gl)

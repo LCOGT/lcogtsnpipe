@@ -231,9 +231,10 @@ def get_floyds_tar_link(authtoken, dbdict, force=False):
         if not linkindb or force:
             if linkindb:
                 lsc.mysqldef.query(["delete from speclcoguider where blockid=" + dbdict['obid']], conn)
-            tarframe = get_metadata(authtoken, BLKUID=dbdict['obid'], RLEVEL=90)[0]
-            tardict = {'tracknumber': dbdict['tracknumber'], 'blockid': dbdict['obid'], 'link': tarframe['url']}
-            lsc.mysqldef.insert_values(conn, 'speclcoguider', tardict)
+            tarframes = get_metadata(authtoken, BLKUID=dbdict['obid'], RLEVEL=90)
+            if tarframes:
+                tardict = {'tracknumber': dbdict['tracknumber'], 'blockid': dbdict['obid'], 'link': tarframes[0]['url']}
+                lsc.mysqldef.insert_values(conn, 'speclcoguider', tardict)
 
 #################################################################
 if __name__ == "__main__":

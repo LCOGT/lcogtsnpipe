@@ -225,7 +225,7 @@ def fits2png(filename, force=False, zclip=5):
         z2 = np.percentile(data, 100-zclip)
         imsave(filename.replace('.fits', '.png'), data, cmap='gray', vmin=z1, vmax=z2, origin='lower')
 
-def get_floyds_tar_link(dbdict, force=False):
+def get_floyds_tar_link(authtoken, dbdict, force=False):
     if dbdict:
         linkindb = lsc.mysqldef.query(["select link from speclcoguider where blockid=" + dbdict['obid']], conn)
         if not linkindb or force:
@@ -294,4 +294,4 @@ if __name__ == "__main__":
         dbdict = db_ingest(filepath, filename, args.force_db)
         if '-en0' in filename and '-e00.fits' in filename:
             fits2png(filepath + filename, args.force_tn)
-            get_floyds_tar_link(dbdict, args.force_gl)
+            get_floyds_tar_link(authtoken, dbdict, args.force_gl)

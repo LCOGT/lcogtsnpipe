@@ -58,7 +58,7 @@ for frame in frames:
             print '!!! FAILED TO MAKE PNG FOR ' + filename
             traceback.print_exc()
         try:
-            get_floyds_tar_link(dbdict)
+            get_floyds_tar_link(authtoken, dbdict)
         except:
             print '!!! FAILED TO GET GUIDER LINK FOR ' + filename
             traceback.print_exc()

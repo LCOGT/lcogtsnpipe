@@ -81,9 +81,10 @@ def download_frame(frame, force=False):
 
     if filename[-3:] == '.fz' and (not os.path.isfile(filepath + filename[:-3]) or force):
         print 'unpacking', filename
-        if os.path.exists(os.path.join(filepath, filename[:-3])):
-            os.remove(os.path.join(filepath, filename[:-3]))
+        if os.path.exists(filepath + filename[:-3]):
+            os.remove(filepath + filename[:-3])
         os.system('funpack ' + filepath + filename)
+        os.remove(filepath + filename)
         filename = filename[:-3]
     elif filename[-3:] == '.fz':
         print filename, 'already unpacked'

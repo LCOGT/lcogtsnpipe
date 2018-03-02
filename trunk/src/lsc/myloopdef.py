@@ -346,32 +346,29 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
         if status == 1:
             rr = '-r'
         if status >= 1:
-            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
-            print ggg
-            if str(ggg[0]['filetype']) == '3':
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
+            _dir = ggg[0]['filepath']
+            if ggg[0]['filetype'] == 3 and ggg[0]['difftype'] == 0: # HOTPANTS difference images
                 ##################################################################################
                 print '\n### get parameters for difference image'
-                _dir = ggg[0]['filepath']
                 hdrdiff=lsc.util.readhdr(_dir+img)
                 if 'PSF' not in hdrdiff:
                     raise Exception('PSF file not defined')
-                elif ggg[0]['difftype'] == 0:
-                    imgpsf=hdrdiff['PSF']
-                    print '\n### psf file for difference image: '+imgpsf
-                    statuspsf = checkstage(imgpsf, 'psf')
-                    print statuspsf
-                    if statuspsf == 2:
-                        print 'psf file for difference image found'
-                        gggpsf = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(imgpsf), '*')
-                        _dirpsf = gggpsf[0]['filepath']
-                        os.system('cp '+_dirpsf+imgpsf.replace('.fits', '.psf.fits')+' '+_dir+
-                                  img.replace('.fits', '.psf.fits'))
-                        lsc.mysqldef.updatevalue('photlco', 'psf', img.replace('.fits', '.psf.fits'),
-                                             os.path.basename(img))
-                        print '\n ### copy '+imgpsf.replace('.fits', '.psf.fits')+' in '+img.replace('.fits', '.psf.fits')
-
-                    else:
-                        print '\n### ERROR: PSF file not found \n please run psf file on image: '+imgpsf
+                imgpsf=hdrdiff['PSF']
+                print '\n### psf file for difference image: '+imgpsf
+                statuspsf = checkstage(imgpsf, 'psf')
+                print statuspsf
+                if statuspsf == 2:
+                    print 'psf file for difference image found'
+                    gggpsf = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(imgpsf), '*')
+                    _dirpsf = gggpsf[0]['filepath']
+                    os.system('cp '+_dirpsf+imgpsf.replace('.fits', '.psf.fits')+' '+_dir+
+                              img.replace('.fits', '.psf.fits'))
+                    lsc.mysqldef.updatevalue('photlco', 'psf', img.replace('.fits', '.psf.fits'),
+                                         os.path.basename(img))
+                    print '\n ### copy '+imgpsf.replace('.fits', '.psf.fits')+' in '+img.replace('.fits', '.psf.fits')
+                else:
+                    print '\n### ERROR: PSF file not found \n please run psf file on image: '+imgpsf
                 #####################################################################################
                 if 'PHOTNORM' not in hdrdiff:
                     raise Exception('PHOTNORM file not defined')
@@ -395,10 +392,8 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                         os.system('cp ' + dirtable + sntable + ' ' + _dir + img.replace('.fits', '.sn2.fits'))
                     else:
                         raise Exception('fits table not there, run psf for ' + sntable)
-            else:
-                _dir = ggg[0]['filepath']
-                img0 = img
-                command = 'lscpsf.py ' + _dir + img0 + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
+            else: # PyZOGY difference images or unsubtracted images
+                command = 'lscpsf.py ' + _dir + img + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
                     treshold) + gg + cc + xx + dmin + dmax + pp
                 print command
                 os.system(command)

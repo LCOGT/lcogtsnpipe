@@ -1,25 +1,21 @@
 #!/usr/bin/env python
 description = ">> make different image using hotpants"
 usage = "%prog imagein  imagetem [options] "
-import os, string, re, sys, glob
-# from numpy import array, median, argmin, sqrt, round, isnan, compress, std
+import os
+import sys
 import lsc
-import time
 from astropy.io import fits
+from astropy.wcs import WCS
 import numpy as np
 from optparse import OptionParser, OptionGroup
 from PyZOGY.subtract import run_subtraction
 from pyraf import iraf
-import os
 
 def crossmatchtwofiles(img1, img2, radius=3):
     ''' This module is crossmatch two images:
         It run sextractor transform the pixels position of the the sources in coordinates and crossmatch them  
         The output is a dictionary with the objects in common
     '''
-    import lsc
-    from astropy.wcs import WCS
-    from numpy import array, argmin, min, sqrt
 
     hd1 = fits.getheader(img1)
     hd2 = fits.getheader(img2)
@@ -91,7 +87,6 @@ if __name__ == "__main__":
     option, args = parser.parse_args()
     imglisttar = lsc.util.readlist(args[0])
     imglisttemp = lsc.util.readlist(args[1])
-    from numpy import where, mean, savetxt
 
     _checkast = option.check
     _force = option.force
@@ -149,10 +144,6 @@ if __name__ == "__main__":
             listatemp[_filter][_targetid] = []
         listatemp[_filter][_targetid].append(img)
 
-    from pyraf import iraf
-    from iraf import images
-    from iraf import immatch
-
     for f in listatar:
         for o in listatar[f]:
             if f in listatemp:
@@ -166,24 +157,24 @@ if __name__ == "__main__":
                         _dirtemp, imgtemp0 = os.path.split(imgtemp_path)
                         if _dirtemp: _dirtemp += '/'
 
-                        imgout0 = re.sub('.fits', option.suffix, imgtarg0)
+                        imgout0 = imgtarg0.replace('.fits', option.suffix)
 
                         if os.path.isfile(_dir + imgout0) and not _force:
                             print 'file', imgout0, 'already there'
                             continue
-                        targmask0 = re.sub('.fits', '.mask.fits', imgtarg0)
+                        targmask0 = imgtarg0.replace('.fits', '.mask.fits')
                         if not os.path.isfile(_dir + targmask0):
                             print "no cosmic ray mask for target image, run 'lscloop.py -s cosmic' first"
                             continue
-                        tempmask0 = re.sub('.fits', '.mask.fits', imgtemp0)
+                        tempmask0 = imgtemp0.replace('.fits', '.mask.fits')
                         if not os.path.isfile(_dirtemp + tempmask0):
                             print "no cosmic ray mask for template image, run 'lscloop.py -s cosmic' first"
                             continue
-                        outmask0 = re.sub('.fits', '.mask.fits', imgout0)
+                        outmask0 = imgout0.replace('.fits', '.mask.fits')
                         artar, hdtar = fits.getdata(_dir+imgtarg0, header=True)
 
-                        if os.path.isfile(_dirtemp+re.sub('.fits', '.sn2.fits', imgtemp0)):
-                            hdtempsn = fits.getheader(_dirtemp+re.sub('.fits', '.sn2.fits', imgtemp0))
+                        if os.path.isfile(_dirtemp+imgtemp0.replace('.fits', '.sn2.fits')):
+                            hdtempsn = fits.getheader(_dirtemp+imgtemp0.replace('.fits', '.sn2.fits'))
                         else:
                             hdtempsn = {}
 
@@ -231,24 +222,10 @@ if __name__ == "__main__":
                             iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
                                                interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
-                        if os.path.isfile(_dirtemp +re.sub('.fits','.var.fits',imgtemp0)):
+                        if os.path.isfile(_dirtemp + imgtemp0.replace('.fits','.var.fits')):
                             print 'variance image already there, do not create noise image'
-                            iraf.immatch.gregister(_dirtemp + re.sub('.fits','.var.fits',imgtemp0), 'tempnoise.fits', "tmp$db", "tmpcoo", geometr="geometric",
+                            iraf.immatch.gregister(_dirtemp + imgtemp0.replace('.fits','.var.fits'), 'tempnoise.fits', "tmp$db", "tmpcoo", geometr="geometric",
                                                interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
-
-#                        print 'warning: registration failed '
-#                        hd = fits.getheader(_dirtemp + imgtemp0)
-#                        ar = fits.getdata(_dirtemp + imgtemp0)
-#                        ar = np.rot90(np.rot90(ar))
-#                        new_header = hd
-#                        CD1_1 = hd['CD1_1']
-#                        CD2_2 = hd['CD2_2']
-#                        new_header['CD1_1']  = CD1_1*(-1)
-#                        new_header['CD2_2']  = CD2_2*(-1)
-#                        out_fits = fits.PrimaryHDU(header=new_header, data=ar)
-#                        out_fits.writeto('flip.fits', overwrite=True, output_verify='fix')
-#                        print "try flipping the template image\n cp flip.fits "+_dirtemp + imgtemp0+'\n and run again psf and cosmic'
-                        #sys.exit()
 
                         if _show:
                             iraf.set(stdimage='imt2048')
@@ -298,7 +275,7 @@ if __name__ == "__main__":
                         fits.writeto('targnoise.fits', noiseimg, output_verify='fix', overwrite=True)
 
 #                        print 'variance image already there, do not create noise image'
-                        if not os.path.isfile(_dirtemp +re.sub('.fits','.var.fits',imgtemp0)):                            
+                        if not os.path.isfile(_dirtemp +imgtemp0.replace('.fits','.var.fits')):
                             median = np.median(data_temp)
                             noise = 1.4826*np.median(np.abs(data_temp - median))
                             pssl_temp = gain_temp*noise**2 - rn_temp**2/gain_temp - median
@@ -413,35 +390,31 @@ if __name__ == "__main__":
 
 
                         # delete temporary files
-                        if os.path.isfile(re.sub('.fits', '.conv.fits', imgout0)):
-                            os.system('rm ' + re.sub('.fits', '.conv.fits', imgout0))
-                        if os.path.isfile(re.sub('.fits', 'xy', imgout0)):
-                            os.system('rm ' + re.sub('.fits', 'xy', imgout0))
-                        if os.path.isfile(re.sub('.fits', 'xy.skipped', imgout0)):
-                            os.system('rm ' + re.sub('.fits', 'xy.skipped', imgout0))
-                        if os.path.isfile(re.sub('.fits', 'xy.all', imgout0)):
-                            os.system('rm ' + re.sub('.fits', 'xy.all', imgout0))
+                        os.system('rm -f ' + imgout0.replace('.fits', '.conv.fits') +
+                                  ' ' + imgout0.replace('.fits', 'xy') + 
+                                  ' ' + imgout0.replace('.fits', 'xy.skipped') + 
+                                  ' ' + imgout0.replace('.fits', 'xy.all'))
 
                         hd = fits.getheader(imgout)
                         lsc.util.updateheader(imgout, 0,
-                                              {'template': [imgtemp0, 'template image'],
-                                               'exptemp': [exp_temp,'exposure time template']})
+                                              {'template': (imgtemp0, 'template image'),
+                                               'exptemp': (exp_temp,'exposure time template')})
                         lsc.util.updateheader(imgout, 0,
-                                              {'target': [imgtarg0, 'target image'],
-                                               'exptarg': [exp_targ,'exposure time terget']})
+                                              {'target': (imgtarg0, 'target image'),
+                                               'exptarg': (exp_targ,'exposure time terget')})
 
                         if normalize == 't':
-                            lsc.util.updateheader(imgout, 0, {'EXPTIME': [exp_temp, '[s] Exposure length'],
-                                                              'SATURATE': [sat_temp, '[ADU] Saturation level used']})
+                            lsc.util.updateheader(imgout, 0, {'EXPTIME': (exp_temp, '[s] Exposure length'),
+                                                              'SATURATE': (sat_temp, '[ADU] Saturation level used')})
 
                         if 'CONVOL00' not in hd:
                             print '\n ### PSF computed by PyZOGY'
                         elif hd['CONVOL00'] == 'TEMPLATE':
                             print '\n ### image to compute  psf: '+imgtarg0
-                            lsc.util.updateheader(imgout, 0, {'PSF': [imgtarg0, 'image to compute  psf']})
+                            lsc.util.updateheader(imgout, 0, {'PSF': (imgtarg0, 'image to compute  psf')})
                         else:
                             print '\n ### image to compute  psf: '+imgtemp0
-                            lsc.util.updateheader(imgout, 0, {'PSF': [imgtemp0, 'image to compute  psf']})
+                            lsc.util.updateheader(imgout, 0, {'PSF': (imgtemp0, 'image to compute  psf')})
 
                             #                    copy all information from target
                         hd = fits.getheader(imgout)
@@ -466,6 +439,7 @@ if __name__ == "__main__":
                                           'ra0': lsc.util.readkey3(hd, 'RA'), 'dec0': lsc.util.readkey3(hd, 'DEC')}
 
                         dictionary['exptime'] =  lsc.util.readkey3(hd, 'exptime')
+                        dictionary['psf'] = 'X'
                         dictionary['mag'] = 9999
                         dictionary['psfmag'] = 9999
                         dictionary['apmag'] = 9999
@@ -483,23 +457,25 @@ if __name__ == "__main__":
                                 os.mkdir(dictionary['filepath'])
                             if not os.path.isfile(dictionary['filepath'] + imgout0) or _force in ['yes', True]:
                                 os.system('mv -v ' + imgout + ' ' + dictionary['filepath'] + imgout0)
-                                os.system('mv -v ' + imgtemp + ' ' + dictionary['filepath'] + re.sub('.diff.', '.ref.', imgout0))
+                                os.system('mv -v ' + imgtemp + ' ' + dictionary['filepath'] + imgout0.replace('.diff.', '.ref.'))
                                 if _difftype == '1':
-                                    imgpsf = imgout.replace('.fits', '.psf.fits')
-                                    imgpsf0 = imgout0.replace('.fits', '.psf.fits')
-                                    data = fits.getdata(imgpsf)
-                                    with open('_psf.coo', 'w') as f:
-                                        f.write('{} {}\n'.format(data.shape[1] / 2, data.shape[0] / 2))
-                                    iraf.digiphot(_doprint=0)
-                                    iraf.daophot(_doprint=0)
-                                    iraf.phot(imgpsf, '_psf.coo', '_psf.mag', interac=False, verify=False, verbose=False)
-                                    iraf.pstselect(imgpsf, '_psf.mag', '_psf.pst', 1, interac=False, verify=False, verbose=False)
-                                    iraf.psf(imgpsf, '_psf.mag', '_psf.pst', imgpsf0, '_psf.psto', '_psf.psg', interac=False, verify=False, verbose=False)
-                                    os.system('mv -v ' + imgpsf0 + ' ' + dictionary['filepath'])
-                                    os.system('rm _psf.coo _psf.mag _psf.pst _psf.psto _psf.psg ' + imgpsf)
-                                    dictionary['psf'] = imgpsf0
-                                else:
-                                    dictionary['psf'] = 'X'
+                                    hdulist = fits.open(imgout.replace('.fits', '.psf.fits')
+                                    imgdata = hdulist[0].data
+                                    yctr, xctr = np.array(imgdata.shape) / 2
+                                    cutsize = 100
+                                    hdulist[0].data = imgdata[yctr - cutsize : yctr + cutsize, xctr - cutsize : xctr + cutsize]
+                                    psffile_fields = {'PIXSCALE': (head_targ['PIXSCALE'], '[arcsec/pixel] Nominal pixel scale on sky'),
+                                                      'CRPIX1': (cutsize,), 'CRPIX2': (cutsize,), # make a fake WCS solution
+                                                      'CRVAL1': (0,), 'CRVAL2': (0,),             # where we know the PSF star
+                                                      'CD1_1': (1,), 'CD2_2': (1,),               # is at (0, 0), which is the
+                                                      'CD1_2': (0,), 'CD2_1': (0,)}               # center of the image
+                                    if normalize == 't':
+                                        psffile_fields['EXPTIME'] = (head_temp['EXPTIME'],)
+                                    elif normalize == 'i':
+                                        psffile_fields['EXPTIME'] = (head_targ['EXPTIME'],)
+                                    hdulist[0].header.update(psffile_fields)
+                                    hdulist.writeto(dictionary['filepath'] + imgout0.replace('.fits', '.zogypsf.fits'))
+
                         ###########################################################################################################
                         #                           choose sn2 file depending on
                         #                           normalization parameter
@@ -514,13 +490,13 @@ if __name__ == "__main__":
                             imgscale = imgtemp0
                             pathscale = _dirtemp
 
-                        if os.path.isfile(pathscale + re.sub('.fits', '.sn2.fits', imgscale)):
-                            line = ('cp ' + pathscale + re.sub('.fits', '.sn2.fits', imgscale) + ' ' +
-                                    dictionary['filepath'] + re.sub('.fits', '.sn2.fits', imgout0))
+                        if os.path.isfile(pathscale + imgscale.replace('.fits', '.sn2.fits')):
+                            line = ('cp ' + pathscale + imgscale.replace('.fits', '.sn2.fits') + ' ' +
+                                    dictionary['filepath'] + imgout0.replace('.fits', '.sn2.fits'))
                             os.system(line)
                             print line
-                            lsc.util.updateheader(dictionary['filepath'] + re.sub('.fits', '.sn2.fits', imgout0), 0,
-                                                  {'mag': [9999., 'apparent'], 'psfmag': [9999., 'inst mag'], 'apmag': [9999., 'aperture mag']})
+                            lsc.util.updateheader(dictionary['filepath'] + imgout0.replace('.fits', '.sn2.fits'), 0,
+                                                  {'mag': (9999., 'apparent'), 'psfmag': (9999., 'inst mag'), 'apmag': (9999., 'aperture mag')})
                             #
                             # this is to keep track on the zeropoint and the flux measurement on the template image 
                             # in the difference image. the final flux is the sum of the flux in the difference image 
@@ -534,19 +510,19 @@ if __name__ == "__main__":
                             #  Delta   flux on difference image
                             #
                             if 'ZN' in hdtempsn:
-                                lsc.util.updateheader(dictionary['filepath'] + re.sub('.fits', '.sn2.fits', imgout0), 0,
-                                                      {'ZNref': [hdtempsn['ZN'], 'ZN reference image']})
+                                lsc.util.updateheader(dictionary['filepath'] + imgout0.replace('.fits', '.sn2.fits'), 0,
+                                                      {'ZNref': (hdtempsn['ZN'], 'ZN reference image')})
                             else:
                                 print 'not ZN'
                             if 'apflux' in hdtempsn:
-                                lsc.util.updateheader(dictionary['filepath'] + re.sub('.fits', '.sn2.fits', imgout0), 0,
-                                                      {'apfl1re': [hdtempsn['apflux'], 'flux reference image'],
-                                                       'dapfl1re': [hdtempsn['dapflux'], 'error flux reference image']})
+                                lsc.util.updateheader(dictionary['filepath'] + imgout0.replace('.fits', '.sn2.fits'), 0,
+                                                      {'apfl1re': (hdtempsn['apflux'], 'flux reference image'),
+                                                       'dapfl1re': (hdtempsn['dapflux'], 'error flux reference image')})
                             else:
                                 print 'not apflux'
 
                         else:
-                            print 'fits table not found ' + dictionary['filepath'] + re.sub('.fits', '.sn2.fits', imgscale)
+                            print 'fits table not found ' + dictionary['filepath'] + imgscale.replace('.fits', '.sn2.fits')
                         if conn:
                             ###################    insert in photlco
                             ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', imgout0, '*')

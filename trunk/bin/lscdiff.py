@@ -464,7 +464,7 @@ if __name__ == "__main__":
                                     yctr, xctr = np.array(imgdata.shape) / 2
                                     cutsize = 100
                                     hdulist[0].data = imgdata[yctr - cutsize : yctr + cutsize, xctr - cutsize : xctr + cutsize]
-                                    psffile_fields = {'PIXSCALE': head_targ['PIXSCALE'],,
+                                    psffile_fields = {'PIXSCALE': head_targ['PIXSCALE'],
                                                       'CRPIX1': cutsize, 'CRPIX2': cutsize, # make a fake WCS solution
                                                       'CRVAL1': 0, 'CRVAL2': 0,             # where we know the PSF star
                                                       'CD1_1': 1, 'CD2_2': 1,               # is at (0, 0), which is the

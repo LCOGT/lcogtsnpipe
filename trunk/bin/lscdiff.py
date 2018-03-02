@@ -459,7 +459,7 @@ if __name__ == "__main__":
                                 os.system('mv -v ' + imgout + ' ' + dictionary['filepath'] + imgout0)
                                 os.system('mv -v ' + imgtemp + ' ' + dictionary['filepath'] + imgout0.replace('.diff.', '.ref.'))
                                 if _difftype == '1':
-                                    hdulist = fits.open(imgout.replace('.fits', '.psf.fits')
+                                    hdulist = fits.open(imgout.replace('.fits', '.psf.fits'))
                                     imgdata = hdulist[0].data
                                     yctr, xctr = np.array(imgdata.shape) / 2
                                     cutsize = 100

@@ -464,15 +464,17 @@ if __name__ == "__main__":
                                     yctr, xctr = np.array(imgdata.shape) / 2
                                     cutsize = 100
                                     hdulist[0].data = imgdata[yctr - cutsize : yctr + cutsize, xctr - cutsize : xctr + cutsize]
-                                    psffile_fields = {'PIXSCALE': (head_targ['PIXSCALE'], '[arcsec/pixel] Nominal pixel scale on sky'),
-                                                      'CRPIX1': (cutsize,), 'CRPIX2': (cutsize,), # make a fake WCS solution
-                                                      'CRVAL1': (0,), 'CRVAL2': (0,),             # where we know the PSF star
-                                                      'CD1_1': (1,), 'CD2_2': (1,),               # is at (0, 0), which is the
-                                                      'CD1_2': (0,), 'CD2_1': (0,)}               # center of the image
+                                    psffile_fields = {'PIXSCALE': head_targ['PIXSCALE'],,
+                                                      'CRPIX1': cutsize, 'CRPIX2': cutsize, # make a fake WCS solution
+                                                      'CRVAL1': 0, 'CRVAL2': 0,             # where we know the PSF star
+                                                      'CD1_1': 1, 'CD2_2': 1,               # is at (0, 0), which is the
+                                                      'CD1_2': 0, 'CD2_1': 0}               # center of the image
                                     if normalize == 't':
-                                        psffile_fields['EXPTIME'] = (head_temp['EXPTIME'],)
+                                        psffile_fields['EXPTIME'] = head_temp['EXPTIME']
+                                        psffile_fields['SATURATE'] = head_temp['SATURATE']
                                     elif normalize == 'i':
-                                        psffile_fields['EXPTIME'] = (head_targ['EXPTIME'],)
+                                        psffile_fields['EXPTIME'] = head_targ['EXPTIME']
+                                        psffile_fields['SATURATE'] = head_targ['SATURATE']
                                     hdulist[0].header.update(psffile_fields)
                                     hdulist.writeto(dictionary['filepath'] + imgout0.replace('.fits', '.zogypsf.fits'))
                                     hdulist.close()

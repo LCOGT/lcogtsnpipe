@@ -779,8 +779,6 @@ if __name__ == "__main__":
                 lsc.util.delete(img + ".sn.*")
                 os.system('mv original.fits ' + img + '.og.fits')
                 os.system('mv residual.fits ' + img + '.rs.fits')
-                os.chmod(img + '.og.fits', 0664)
-                os.chmod(img + '.rs.fits', 0664)
                 try:
                     lsc.mysqldef.updatevalue('photlco', 'psfmag', truemag[0] - DM, string.split(img, '/')[-1] + '.fits')
                     lsc.mysqldef.updatevalue('photlco', 'psfdmag', max(arterr, magerr[0]),

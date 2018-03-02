@@ -12,7 +12,7 @@ from optparse import OptionParser
 if __name__ == "__main__":
     start_time = time.time()
     parser = OptionParser(usage=usage, description=description)
-    parser.add_option("-f", "--fwhm", dest="fwhm", default='', help='starting FWHM  \t\t\t %default')
+    parser.add_option("-f", "--fwhm", dest="fwhm", type=float, help='starting FWHM  \t\t\t %default')
     parser.add_option("-t", "--threshold", dest="threshold", default=10., type='float',
                       help='Source detection threshold \t\t\t %default')
     parser.add_option("-p", "--psfstars", dest="psfstars", default=6, type='int',
@@ -71,14 +71,14 @@ if __name__ == "__main__":
                 else:
                     catalog = option.catalog
             while True:
-                result, fwhm = ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
-                                     option.distance, option.interactive, psffun, fixaperture,
-                                     catalog, option.datamin, option.datamax, option.show, make_sn2)
+                result, fwhm = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
+                                                   option.distance, option.interactive, psffun, fixaperture,
+                                                   catalog, option.datamin, option.datamax, option.show, make_sn2)
                 print '\n### ' + str(result)
                 if option.show:
 #                    lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')
                     iraf.delete('tmp.psf.fit?', verify=False)
-                    iraf.seepsf(img + '.psf', '_psf.psf')
+                    iraf.seepsf(img.replace('.fits', '.psf'), '_psf.psf')
                     iraf.surface('_psf.psf')
                     aa = raw_input('>>>good psf [[y]/n] ? ')
                     if not aa or aa.lower()[0] == 'y':

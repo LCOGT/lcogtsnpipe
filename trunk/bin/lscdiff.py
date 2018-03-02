@@ -24,14 +24,14 @@ def crossmatchtwofiles(img1, img2, radius=3):
 
     xpix1, ypix1, fw1, cl1, cm1, ell1, bkg1, fl1 = lsc.lscastrodef.sextractor(img1)
     xpix2, ypix2, fw2, cl2, cm2, ell2, bkg2, fl2 = lsc.lscastrodef.sextractor(img2)
-    xpix1, ypix1, xpix2, ypix2 = array(xpix1, float), array(ypix1, float), array(xpix2, float), array(ypix2, float)
+    xpix1, ypix1, xpix2, ypix2 = np.array(xpix1, float), np.array(ypix1, float), np.array(xpix2, float), np.array(ypix2, float)
 
     bb = wcs1.wcs_pix2world(zip(xpix1, ypix1), 1)  #   transform pixel in coordinate
     xra1, xdec1 = zip(*bb)
     bb = wcs2.wcs_pix2world(zip(xpix2, ypix2), 1)  #   transform pixel in coordinate
     xra2, xdec2 = zip(*bb)
 
-    xra1, xdec1, xra2, xdec2 = array(xra1, float), array(xdec1, float), array(xra2, float), array(xdec2, float)
+    xra1, xdec1, xra2, xdec2 = np.array(xra1, float), np.array(xdec1, float), np.array(xra2, float), np.array(xdec2, float)
     distvec, pos1, pos2 = lsc.lscastrodef.crossmatch(xra1, xdec1, xra2, xdec2, radius)
     #dict={}
     dict = {'ra1': xra1[pos1], 'dec1': xdec1[pos1], 'ra2': xra2[pos2], 'dec2': xdec2[pos2], \
@@ -475,7 +475,7 @@ if __name__ == "__main__":
                                         psffile_fields['EXPTIME'] = (head_targ['EXPTIME'],)
                                     hdulist[0].header.update(psffile_fields)
                                     hdulist.writeto(dictionary['filepath'] + imgout0.replace('.fits', '.zogypsf.fits'))
-
+                                    hdulist.close()
                         ###########################################################################################################
                         #                           choose sn2 file depending on
                         #                           normalization parameter

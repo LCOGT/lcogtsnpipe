@@ -632,13 +632,13 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         if result:
             print '### zeropoint ..... done at airmass 0'
             if _catalogue:
-                lsc.util.updateheader(img,0,{'CATALOG':[str(string.split(_catalogue,'/')[-1]),'catalogue source']})
+                lsc.util.updateheader(img,0,{'CATALOG':(str(string.split(_catalogue,'/')[-1]),'catalogue source')})
             stringa=''
             for ll in result:
                 for kk in range(0,len(result[ll])):
                                     if not isfinite(result[ll][kk]): result[ll][kk]=0.0 
                 valore='%3.3s %6.6s %6.6s  %6.6s  %6.6s' %  (str(ll),str(result[ll][0]),str(result[ll][2]),str(result[ll][1]),str(result[ll][3]))
-                lsc.util.updateheader(img,0,{'zp'+ll:[str(valore),'a b sa sb in y=a+bx']})
+                lsc.util.updateheader(img,0,{'zp'+ll:(str(valore),'a b sa sb in y=a+bx')})
                 print '### added to header:', valore
                 if ll[0]==ll[2]: num=2
                 elif ll[0]==ll[1]: num=1

@@ -1389,9 +1389,9 @@ def onkeypress2(event):
         lsc.mysqldef.updatevalue(_database, 'apmag', 9999, _filename[ii])
         if _dir:
             lsc.util.updateheader(_dir + _filename[ii].replace('.fits', '.sn2.fits'), 0,
-                                  {'PSFMAG1': [9999, 'psf magnitude']})
+                                  {'PSFMAG1': (9999, 'psf magnitude')})
             lsc.util.updateheader(_dir + _filename[ii].replace('.fits', '.sn2.fits'), 0,
-                                  {'APMAG1': [9999, 'ap magnitude']})
+                                  {'APMAG1': (9999, 'ap magnitude')})
     elif event.key in ['u']:
         lsc.mysqldef.updatevalue(_database, 'magtype', -1, _filename[ii])
         print '\n### set as a limit'
@@ -1540,7 +1540,7 @@ def plotfast2(setup):
         _dir = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath')[0]['filepath']
         if _dir:
             lsc.util.updateheader(_dir + filenames[i].replace('.fits', '.sn2.fits'), 0,
-                                  {'PSFMAG1': [9999, 'psf magnitude'], 'APMAG1': [9999, 'ap magnitude']})
+                                  {'PSFMAG1': (9999, 'psf magnitude'), 'APMAG1': (9999, 'ap magnitude')})
         print 'deleted', filenames[i]
 
     def bad_hook(i):
@@ -2003,7 +2003,7 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
                 else:
                     if not os.path.isfile(_dir + img.replace('.fits', '.clean.fits')) or not os.path.isfile(_dir + img.replace('.fits', '.mask.fits')) or _force:
                         output, mask, satu = lsc.util.Docosmic(_dir + img, _sigclip, _sigfrac, _objlim)
-                        lsc.util.updateheader(output, 0, {'DOCOSMIC': [True, 'Cosmic rejection using LACosmic']})
+                        lsc.util.updateheader(output, 0, {'DOCOSMIC': (True, 'Cosmic rejection using LACosmic')})
                         print 'mv ' + output + ' ' + _dir
                         os.system('mv ' + output + ' ' + _dir)
                         os.system('mv ' + mask + ' ' + _dir)

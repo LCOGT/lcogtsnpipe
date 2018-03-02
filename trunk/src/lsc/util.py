@@ -299,11 +299,10 @@ def writeinthelog(text,logfile):
     f.close()
 
 def updateheader(filename, dimension, headerdict):
-    tupledict = {key: tuple(value) for key, value in headerdict.items()}
     try:
         hdulist = fits.open(filename, mode='update')
         header = hdulist[dimension].header
-        header.update(tupledict)
+        header.update(headerdict)
         hdulist.close()
     except Exception as e:
         print 'header of', filename, 'not updated:'
@@ -527,7 +526,7 @@ def airmass(img,overwrite=True,_observatory='lasilla'):
       except: _air=999
       delete('airmass.txt')
       if overwrite and _air<99.:
-         updateheader(img,0,{'AIRMASS':[_air,'mean airmass computed with astcalc']})
+         updateheader(img,0,{'AIRMASS':(_air,'mean airmass computed with astcalc')})
    else:   _air=''
    return _air
 ####################################################################################
@@ -567,7 +566,7 @@ def correctobject(img,coordinatefile):
     _dec=readkey3(hdr,'DEC')
     dd=arccos(sin(_dec*scal)*sin(decstd*scal)+cos(_dec*scal)*cos(decstd*scal)*cos((_ra-rastd)*scal))*((180/pi)*3600)
     if min(dd)<200:
-       updateheader(img,0,{'OBJECT':[std[argmin(dd)],'Original target.']})
+       updateheader(img,0,{'OBJECT':(std[argmin(dd)],'Original target.')})
        aa,bb,cc=rastd[argmin(dd)],decstd[argmin(dd)],std[argmin(dd)]
     else: aa,bb,cc='','',''
     return aa,bb,cc

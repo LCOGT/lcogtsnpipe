@@ -759,12 +759,12 @@ if __name__ == "__main__":
                     if apmag3[i] == 'INDEF':
                         apmag3[i] = 9999
 
-                    headers = {'PSFX' + str(i + 1): [str(centx[i] + x1 - 1), 'x pos psf mag'],
-                               'PSFY' + str(i + 1): [str(centy[i] + y1 - 1), 'y pos psf mag'],
-                               'PSFMAG' + str(i + 1): [str(float(truemag[i]) - DM), 'psf magnitude'],
-                               'PSFDMAG' + str(i + 1): [str(max(arterr, magerr[i])), 'psf mag error'],
-                               'APMAG' + str(i + 1): [str(apmag3[i]), 'ap mag after bgsub'],
-                               'DAPMAG' + str(i + 1): [str(dapmag3[i]), 'ap mag error']}
+                    headers = {'PSFX' + str(i + 1): (str(centx[i] + x1 - 1), 'x pos psf mag'),
+                               'PSFY' + str(i + 1): (str(centy[i] + y1 - 1), 'y pos psf mag'),
+                               'PSFMAG' + str(i + 1): (str(float(truemag[i]) - DM), 'psf magnitude'),
+                               'PSFDMAG' + str(i + 1): (str(max(arterr, magerr[i])), 'psf mag error'),
+                               'APMAG' + str(i + 1): (str(apmag3[i]), 'ap mag after bgsub'),
+                               'DAPMAG' + str(i + 1): (str(dapmag3[i]), 'ap mag error')}
                     lsc.util.updateheader(img + '.sn2.fits', 0, headers)
                 lsc.util.delete("apori")
                 lsc.util.delete("sec")

@@ -145,10 +145,10 @@ def wcsstart(img,CRPIX1='',CRPIX2=''):
     WAT0_001= 'system=image'
     WAT1_001= 'wtype=tan axtype=ra'
     WAT2_001= 'wtype=tan axtype=dec'
-    lsc.util.updateheader(img,0,{'CTYPE1':[CTYPE1,''], 'CTYPE2':[CTYPE2,''], 'CRVAL1':[CRVAL1,''], 'CRVAL2':[CRVAL2,''],\
-                'CRPIX1':[CRPIX1,''], 'CRPIX2':[CRPIX2,''], 'CDELT1':[CDELT1,''], 'CDELT2':[CDELT2,''],\
-                'CD1_1':[CD1_1,''], 'CD2_2':[CD2_2,''], 'CD1_2':[CD1_2,''], 'CD2_1':[CD2_1,''],\
-                'WCSDIM':[WCSDIM,'']})
+    lsc.util.updateheader(img,0,{'CTYPE1':CTYPE1, 'CTYPE2':CTYPE2, 'CRVAL1':CRVAL1, 'CRVAL2':CRVAL2,
+                'CRPIX1':CRPIX1, 'CRPIX2':CRPIX2, 'CDELT1':CDELT1, 'CDELT2':CDELT2,
+                'CD1_1':CD1_1, 'CD2_2':CD2_2, 'CD1_2':CD1_2, 'CD2_1':CD2_1,
+                'WCSDIM':WCSDIM})
 
 ##########################################################
 ###vizq(_ra,_dec,catalogue,radius):
@@ -346,7 +346,7 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
             ellgess3=9999
         if _instrume[:2] in ['kb', 'fl', 'fs', 'em']:
             mbkg3=median(bkg3)
-            lsc.util.updateheader(img,0,{'MBKG':[mbkg3,'background level']})
+            lsc.util.updateheader(img,0,{'MBKG':(mbkg3,'background level')})
         else:
             mbkg3=readkey3(hdr,'MBKG')
         if fwhmgess3:
@@ -467,8 +467,8 @@ def lscastrometry2(lista,catalogue,_interactive,number,sexvec,catvec,guess=False
     if isnan(yoff): yoff=0
     _CRPIX1=readkey3(hdr,'CRPIX1')
     _CRPIX2=readkey3(hdr,'CRPIX2')
-    lsc.util.updateheader(img,0,{'CRPIX1':[_CRPIX1-xoff,'']})
-    lsc.util.updateheader(img,0,{'CRPIX2':[_CRPIX2-yoff,'']})
+    lsc.util.updateheader(img,0,{'CRPIX1':_CRPIX1-xoff})
+    lsc.util.updateheader(img,0,{'CRPIX2':_CRPIX2-yoff})
     xusno2_new=xusno-xoff
     yusno2_new=yusno-yoff
 #####################################################################
@@ -828,7 +828,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
                     result=''
                     print 'no calibration, '+_filter+' '+_field
             elif len(colore)>1:
-                lsc.util.updateheader(img,0,{'PHOTZP':[median(zero),'MAG=-2.5*log(data)+PHOTZP ']})
+                lsc.util.updateheader(img,0,{'PHOTZP':(median(zero),'MAG=-2.5*log(data)+PHOTZP ')})
                 if _field=='landolt':      a, b, RR=lsc.lscastrodef.linreg(colore, zero)
 #                elif _field=='sloan':      b,a,RR=median(zero),0,0
                 elif _field=='sloan':      a, b, RR=lsc.lscastrodef.linreg(colore, zero)
@@ -836,14 +836,14 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
                 yy=lsc.lscastrodef.pval(array(xx),[b,a])
                 result[filters[_filter]+col]=[a,b,RR]
             else: 
-                lsc.util.updateheader(img,0,{'PHOTZP':[zero[0],'MAG=-2.5*log(data)+PHOTZP']})
+                lsc.util.updateheader(img,0,{'PHOTZP':(zero[0],'MAG=-2.5*log(data)+PHOTZP')})
                 b,a,RR=zero[0],0,0
                 xx=colore
                 yy=zero
                 result[filters[_filter]+col]=[0,zero[0],0]                    
             if len(colore)>=1:
-                if _field=='landolt':     lsc.util.updateheader(img,0,{'PHOTSYS':['VEGA','mags (landolt catalogue)']})
-                elif _field=='sloan':     lsc.util.updateheader(img,0,{'PHOTSYS':['AB','mags (sloan catalogue)']})
+                if _field=='landolt':     lsc.util.updateheader(img,0,{'PHOTSYS':('VEGA','mags (landolt catalogue)')})
+                elif _field=='sloan':     lsc.util.updateheader(img,0,{'PHOTSYS':('AB','mags (sloan catalogue)')})
             if verbose and len(colore)>0:
                 from pylab import plot,show,ion,xlim,ylim,legend,setp,gca, draw, clf
                 clf()
@@ -1358,35 +1358,32 @@ def run_astrometry(im, clobber=True,redo=False):
             else:
                 fwhm = 5
             astrostring = '1  1  1'
-            dictionary = {'ASTROMET': [astrostring, 'rmsx rmsy nstars'],
-                    'PSF_FWHM': [fwhm, 'FHWM (arcsec) - computed with sectractor'],
-                    'CTYPE1'  : [ 'RA---TAN', 'TAN (gnomic) projection'],
-                    'CTYPE2'  : ['DEC--TAN' , 'TAN (gnomic) projection'],
-                    'WCSAXES' : [ hdrt['WCSAXES'] , 'no comment'],
-                    'EQUINOX' : [ hdrt['EQUINOX'] , 'Equatorial coordinates definition (yr)'],
-                    'LONPOLE' : [ hdrt['LONPOLE'] , 'no comment'],
-                    'LATPOLE' : [ hdrt['LATPOLE'] , 'no comment'],
-                    'CRVAL1'  : [ hdrt['CRVAL1']  , 'RA  of reference point'],
-                    'CRVAL2'  : [ hdrt['CRVAL2'] , 'DEC of reference point'],
-                    'CRPIX1'  : [ hdrt['CRPIX1']     , 'X reference pixel'],
-                    'CRPIX2'  : [ hdrt['CRPIX2']     , 'Y reference pixel'],
-                    'CUNIT1'  : ['deg     ' , 'X pixel scale units'],
-                    'CUNIT2'  : ['deg     ' , 'Y pixel scale units'],
-                    'CD1_1'   : [ hdrt['CD1_1'] , 'Transformation matrix'],
-                    'CD1_2'   : [ hdrt['CD1_2'] , 'no comment'],
-                    'CD2_1'   : [ hdrt['CD2_1'] , 'no comment'],
-                    'CD2_2'   : [ hdrt['CD2_2'] , 'no comment'],
-                    'IMAGEW'  : [ hdrt['IMAGEW']  , 'Image width,  in pixels.'],
-                    'IMAGEH'  : [ hdrt['IMAGEH']  , 'Image height, in pixels.']}
+            dictionary = {'ASTROMET': (astrostring, 'rmsx rmsy nstars'),
+                    'PSF_FWHM': (fwhm, 'FHWM (arcsec) - computed with sectractor'),
+                    'CTYPE1'  : ( 'RA---TAN', 'TAN (gnomic) projection'),
+                    'CTYPE2'  : ('DEC--TAN' , 'TAN (gnomic) projection'),
+                    'WCSAXES' :   hdrt['WCSAXES'],
+                    'EQUINOX' : ( hdrt['EQUINOX'] , 'Equatorial coordinates definition (yr)'),
+                    'LONPOLE' :   hdrt['LONPOLE'],
+                    'LATPOLE' :   hdrt['LATPOLE'],
+                    'CRVAL1'  : ( hdrt['CRVAL1']  , 'RA  of reference point'),
+                    'CRVAL2'  : ( hdrt['CRVAL2'] , 'DEC of reference point'),
+                    'CRPIX1'  : ( hdrt['CRPIX1']     , 'X reference pixel'),
+                    'CRPIX2'  : ( hdrt['CRPIX2']     , 'Y reference pixel'),
+                    'CUNIT1'  : ('deg     ' , 'X pixel scale units'),
+                    'CUNIT2'  : ('deg     ' , 'Y pixel scale units'),
+                    'CD1_1'   : ( hdrt['CD1_1'] , 'Transformation matrix'),
+                    'CD1_2'   :   hdrt['CD1_2'],
+                    'CD2_1'   :   hdrt['CD2_1'],
+                    'CD2_2'   :   hdrt['CD2_2'],
+                    'IMAGEW'  : ( hdrt['IMAGEW']  , 'Image width,  in pixels.'),
+                    'IMAGEH'  : ( hdrt['IMAGEH']  , 'Image height, in pixels.')}
             if 'WCS_ERR' in hdr and 'WCSERR' not in hdr:
-                dictionary['WCS_ERR'] = [0, '']
+                dictionary['WCS_ERR'] = 0
             else:
-                dictionary['WCSERR'] = [0, '']
+                dictionary['WCSERR'] = 0
             lsc.util.updateheader(im, 0, dictionary)
             lsc.mysqldef.updatevalue('photlco', 'WCS', 0, string.split(im, '/')[-1])
-#        shutil.move('tmpwcs.fits', outputname)
-#        lsc.util.updateheader(outputname, 0, {'ASTROMET': [astrostring, 'rmsx rmsy nstars'],
-#                                              'PSF_FWHM': [fwhmgess, 'FHWM (arcsec) - computed with sectractor']})
         else:
             print 'tmpwcs.fits files do not exist'
 ###################################################################

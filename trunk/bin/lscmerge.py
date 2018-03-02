@@ -47,8 +47,8 @@ def checkast(imglist):
         if np.isnan(yoff): yoff, ystd = 0, 0
         print xoff, xstd, len(__xdist)
         print yoff, ystd
-        lsc.updateheader(img, 0, {'CRPIX1': [hdr1['CRPIX1'] - xoff, 'Value at ref. pixel on axis 1']})
-        lsc.updateheader(img, 0, {'CRPIX2': [hdr1['CRPIX2'] - yoff, 'Value at ref. pixel on axis 2']})
+        lsc.updateheader(img, 0, {'CRPIX1': (hdr1['CRPIX1'] - xoff, 'Value at ref. pixel on axis 1')})
+        lsc.updateheader(img, 0, {'CRPIX2': (hdr1['CRPIX2'] - yoff, 'Value at ref. pixel on axis 2')})
 
 # ############################################################
 

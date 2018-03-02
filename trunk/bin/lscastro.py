@@ -107,21 +107,21 @@ if __name__ == "__main__":
                                 lsc.lscastrodef.lscastroloop([img], cat, _interactive, int(10), int(10),
                                 int(25), 'rxyscale', _t1, _t2, sexvec, True, int(3), _method, _xshift, _yshift)
                 astrostring = str(rmsx3) + ' ' + str(rmsy3) + ' ' + str(num3)
-                lsc.util.updateheader(img, 0, {'ASTROMET': [astrostring, 'rmsx rmsy nstars']})
+                lsc.util.updateheader(img, 0, {'ASTROMET': (astrostring, 'rmsx rmsy nstars')})
             except Exception, e:
                 print e
                 rmsx3, rmsy3, num3, fwhmgess, ellgess, ccc, rasys3, decsys3, mbkg3 = '', '', '', '', '', '', '', '', ''
                 print '\n### problem with astrometry, lsc.lscastrodef.lscastroloop crashed  '
             if fwhmgess and fwhmgess < 99:
                 print '\n### check astrometry: fine \n### rmsx rmsy nstars: ' + astrostring
-                lsc.util.updateheader(img, 0, {'PSF_FWHM': [fwhmgess, 'FHWM (arcsec) - computed with sectractor'],
-                                               'ELLIPTIC': [ellgess, 'ellipticity of point sources (1-b/a)'],
-                                               'CRDER1': [(1 / np.sqrt(2.)) * float(rmsx3), 'Random error in axis 1'],
-                                               'CRDER2': [(1 / np.sqrt(2.)) * float(rmsy3), 'Random error in axis 2'],
-                                               'CUNIT1': ['deg', 'unit of the coord. trans.'],
-                                               'CUNIT2': ['deg', 'unit of the coord. trans.'],
-                                               'CSYER1': [rasys3, 'Systematic error (RA_m - Ra_ref)'],
-                                               'CSYER2': [decsys3, 'Systematic error (DEC_m - DEC_ref)']})
+                lsc.util.updateheader(img, 0, {'PSF_FWHM': (fwhmgess, 'FHWM (arcsec) - computed with sectractor'),
+                                               'ELLIPTIC': (ellgess, 'ellipticity of point sources (1-b/a)'),
+                                               'CRDER1': ((1 / np.sqrt(2.)) * float(rmsx3), 'Random error in axis 1'),
+                                               'CRDER2': ((1 / np.sqrt(2.)) * float(rmsy3), 'Random error in axis 2'),
+                                               'CUNIT1': ('deg', 'unit of the coord. trans.'),
+                                               'CUNIT2': ('deg', 'unit of the coord. trans.'),
+                                               'CSYER1': (rasys3, 'Systematic error (RA_m - Ra_ref)'),
+                                               'CSYER2': (decsys3, 'Systematic error (DEC_m - DEC_ref)')})
                 if _zeropoint:
                     try:
                         result = lsc.lscastrodef.zeropoint(img, _system, False)
@@ -130,7 +130,7 @@ if __name__ == "__main__":
                             for ll in result:
                                 valore = '%3.3s %6.6s %6.6s' % (str(ll), str(result[ll][1]), str(result[ll][0]))
                                 print '### ', valore
-                                lsc.util.updateheader(img, 0, {'zp' + ll: [str(valore), '']})
+                                lsc.util.updateheader(img, 0, {'zp' + ll: str(valore)})
                     except Exception as e:
                         print e
                         print 'zero point calculation failed'
@@ -142,11 +142,11 @@ if __name__ == "__main__":
         else:
             WCSERR = 9999
         if 'WCS_ERR' in hdr and 'WCSERR' not in hdr:
-            lsc.util.updateheader(img, 0, {'WCS_ERR': [WCSERR, '']})
+            lsc.util.updateheader(img, 0, {'WCS_ERR': WCSERR})
         else:
-            lsc.util.updateheader(img, 0, {'WCSERR': [WCSERR, '']})
+            lsc.util.updateheader(img, 0, {'WCSERR': WCSERR})
         lsc.mysqldef.updatevalue('photlco', 'WCS', WCSERR, img.split('/')[-1])
-        lsc.util.updateheader(img, 0, {'L1FWHM': [fwhmgess, 'FHWM (arcsec) - computed with sectractor']})
+        lsc.util.updateheader(img, 0, {'L1FWHM': (fwhmgess, 'FHWM (arcsec) - computed with sectractor')})
         lsc.mysqldef.updatevalue('photlco', 'psf', 'X', string.split(img, '/')[-1] + '.fits')
         lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, string.split(img, '/')[-1] + '.fits')
         lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, string.split(img, '/')[-1] + '.fits')

@@ -591,7 +591,9 @@ if __name__ == "__main__":
                 print img, psfimage, 'xxxxx'
                 if _dmax is None:
                     _dmax = lsc.util.readkey3(hdr, 'datamax')
-                if _dmin is None and 'optimal' not in img:
+                if _dmin is None and 'optimal' in img:
+                    _dmin = 'INDEF'
+                elif _dmin is None:
                     _dmin = lsc.util.readkey3(hdr, 'datamin')
                 apori1, apori2, apori3, apmag1, apmag2, apmag3, dapmag1, dapmag2, dapmag3, fitmag, truemag, magerr, centx, centy = \
                     lsc.lscsnoopy.fitsn(img, psfimage, img + '.sn.coo', _recenter, fwhm0, 'original', 'sn',

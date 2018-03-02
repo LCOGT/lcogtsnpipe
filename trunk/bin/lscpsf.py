@@ -53,14 +53,15 @@ if __name__ == "__main__":
         if os.path.exists(img.replace('.fits', '.psf.fits')) and not option.redo:
             print img + ': psf already calculated'
         else:
-            fwhm0 = option.fwhm
             if 'optimal' in img: # PyZOGY difference images
                 img_for_psf = img.replace('.fits', '.zogypsf')
+                fwhm0 = 5
                 make_sn2 = False
                 psfstars = 1
                 catalog = lsc.__path__[0] + '/standard/cat/zero.cat'
             else:
                 img_for_psf = img.replace('.fits', '')
+                fwhm0 = option.fwhm
                 make_sn2 = True
                 psfstars = option.psfstars
                 if not option.use_sextractor and not option.catalog:

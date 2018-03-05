@@ -230,7 +230,7 @@ if __name__ == "__main__":
     color_used = np.choose(izcol, [targets[col].T if col in targets.colnames else 0. for col in uzcol]).filled(0.) # if no other filter, skip color correction
     dcolor_used = np.choose(izcol, [targets['d'+col].T if col in targets.colnames else 0. for col in uzcol]).filled(0.)
     targets['mag'] = (targets['instmag_amcorr'].T + zeropoint + colorterm * color_used).T
-    targets['dmag'] = np.sqrt(targets['dinstmag'].T**2 + dzeropoint**2 + dcolorterm**2 * color_used**2 + colorterm**2 + dcolor_used**2).T
+    targets['dmag'] = np.sqrt(targets['dinstmag'].T**2 + dzeropoint**2 + dcolorterm**2 * color_used**2 + colorterm**2 * dcolor_used**2).T
 
     if args.stage == 'mag':
         # write mag & dmag to database

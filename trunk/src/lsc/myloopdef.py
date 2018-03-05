@@ -1210,7 +1210,7 @@ def display_subtraction(img):
         plt.xlim(origdata.shape[0] / 2 - 100, origdata.shape[0] / 2 + 100)
         plt.ylim(origdata.shape[1] / 2 - 100, origdata.shape[1] / 2 + 100)
         plt.gcf().text(0.75, 0.25,
-                       os.path.basename(basename) + '\nfilter = {filter}\npsfmag = {psfmag:.2f} mag\nmag = {mag:.2f} mag'.format(**ggg[0]),
+                       os.path.basename(basename) + u'\nfilter = {filter}\npsfmag = {psfmag:.2f} \u00b1 {psfdmag:.2f} mag\nmag = {mag:.2f} \u00b1 {dmag:.2f} mag'.format(**ggg[0]),
                        va='center', ha='center')
         plt.tight_layout()
     else:
@@ -1280,7 +1280,7 @@ def display_psf_fit(img, datamax=None):
             axL.plot(i_sat, j_sat, 'rx', label='{:d} pixels > {:.0f} ADU'.format(len(i_sat), datamax))
             axL.legend()
         plt.colorbar(im, ax=[axL, axR], orientation='horizontal')
-        plt.gcf().text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag\nmag = {mag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
+        plt.gcf().text(0.5, 0.99, u'{filename}\nfilter = {filter}\npsfmag = {psfmag:.2f} \u00b1 {psfdmag:.2f} mag\nmag = {mag:.2f} \u00b1 {dmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
     return ogfile, rsfile
 
 def checkmag(imglist, datamax=None):

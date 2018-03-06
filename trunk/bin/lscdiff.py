@@ -344,6 +344,7 @@ if __name__ == "__main__":
                             iraf.seepsf(imgtarg_path.replace('.fits','.psf.fits'), psftarg)
                             iraf.seepsf(imgtemp_path.replace('.fits','.psf.fits'), psftemp)
                             try:
+                                print 'Passing images to PyZOGY'
                                 run_subtraction(imgtarg, imgtemp, psftarg, psftemp,
                                                            science_mask='_targmask.fits',
                                                            reference_mask='_tempmask.fits',

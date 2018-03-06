@@ -117,18 +117,6 @@ if __name__ == "__main__":
                 img = imglong[:-5]
             else:
                 img = imglong
-            ######    set database value to 9999 before calculating them again ##################
-            try:
-                print string.split(img, '/')[-1] + '.fits'
-                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfdmag', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfx', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfy', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, string.split(img, '/')[-1] + '.fits')
-            except:
-                print 'module mysqldef not found'
-            ####################################################################################
-
             #########  read header, find psf file  #############################################
             hdr = lsc.util.readhdr(imglong)
             _instrument = lsc.util.readkey3(hdr, 'instrume')
@@ -168,6 +156,13 @@ if __name__ == "__main__":
 
             #######################  plot image, find fwhm  #####################################
             if skip == 0:
+                ######    set database value to 9999 before calculating them again ##################
+                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, string.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfdmag', 9999, string.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfx', 9999, string.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfy', 9999, string.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, string.split(img, '/')[-1] + '.fits')
+
                 iraf.set(stdimage='imt2048')
                 if _interactive:
                     _z1, _z2, goon = lsc.util.display_image(img + '.fits', 1, '', '', True, _xsize=1, _ysize=1)

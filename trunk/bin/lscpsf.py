@@ -55,7 +55,10 @@ if __name__ == "__main__":
         else:
             if 'optimal' in img: # PyZOGY difference images
                 img_for_psf = img.replace('.fits', '.zogypsf')
-                fwhm0 = 5
+                if option.fwhm:
+                    fwhm0 = option.fwhm
+                else:
+                    fwhm0 = 5
                 make_sn2 = False
                 psfstars = 1
                 catalog = lsc.__path__[0] + '/standard/cat/zero.cat'

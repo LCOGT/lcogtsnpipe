@@ -714,13 +714,13 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
          print 'warning RDNOISE not found'
          rdnoise = 1
    if '91.fits' in img:
-       _pssl = 0.
+       ar[ar < readkey3(hd, 'datamin')] = sat
    else:
        # need to trick LACosmic into using the right sigma for a sky-subtracted image
        med = np.median(ar)                           # median pixel of image (in ADU)
        noise = 1.4826*np.median(np.abs(ar - med))    # using median absolute deviation instead of sigma
        _pssl = gain*noise**2 - rdnoise**2/gain - med # previously subtracted sky level
-   ar[ar < -_pssl] = sat                         # change (what will be) negative values to saturated
+       ar[ar < -_pssl] = sat                         # change (what will be) negative values to saturated
 
    print 'gain    sat     noise   sigclip objlim  sigfrac pssl'
    print '{:<7.1f} {:<7.0f} {:<7.1f} {:<7.1f} {:<7.0f} {:<7.1f} {:<7.2f}'.format(gain, sat, rdnoise, _sigclip, _objlim, _sigfrac, _pssl)

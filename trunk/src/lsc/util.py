@@ -715,6 +715,7 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
          rdnoise = 1
    if '91.fits' in img:
        ar[ar < readkey3(hd, 'datamin')] = sat
+       _pssl = 0.
    else:
        # need to trick LACosmic into using the right sigma for a sky-subtracted image
        med = np.median(ar)                           # median pixel of image (in ADU)

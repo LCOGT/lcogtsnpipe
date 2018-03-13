@@ -176,7 +176,8 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
     iraf.daopars.recenter = 'yes'
     iraf.photpars.zmag = zmag
 
-    iraf.delete('_psf.ma*,' + img + '.psf.fit?,_psf.ps*,_psf.gr?,_psf.n*,_psf.sub.fit?', verify=False)
+    psfout = img.replace('.zogypsf', '') + '.psf.fits'
+    iraf.delete('_psf.ma*,_psf.ps*,_psf.gr?,_psf.n*,_psf.sub.fit?,'+psfout, verify=False)
     iraf.phot(img+'[0]', '_psf.coo', '_psf.mag', interac=False, verify=False, verbose=False)
 
     # removes saturated stars from the list (IRAF just issues a warning)
@@ -203,7 +204,6 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
     else:
         iraf.pstselect(img+'[0]', '_psf.mag', '_psf.pst', psfstars, interac=False, verify=False)
 
-    psfout = img.replace('.zogypsf', '') + '.psf'
     iraf.psf(img + '[0]', '_psf.mag', '_psf.pst', psfout, '_psf.psto', '_psf.psg', interac=interactive,
              verify=False, verbose=False)
     iraf.group(img + '[0]', '_psf.mag', psfout, '_psf.grp', verify=False, verbose=False)

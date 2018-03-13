@@ -477,7 +477,7 @@ if __name__ == "__main__":
                                         psffile_fields['EXPTIME'] = head_targ['EXPTIME']
                                         psffile_fields['SATURATE'] = head_targ['SATURATE']
                                     hdulist[0].header.update(psffile_fields)
-                                    hdulist.writeto(dictionary['filepath'] + imgout0.replace('.fits', '.zogypsf.fits'))
+                                    hdulist.writeto(dictionary['filepath'] + imgout0.replace('.fits', '.zogypsf.fits'), overwrite=True)
                                     hdulist.close()
                         ###########################################################################################################
                         #                           choose sn2 file depending on

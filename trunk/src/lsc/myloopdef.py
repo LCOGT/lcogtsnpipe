@@ -1274,8 +1274,8 @@ def display_psf_fit(img, datamax=None):
         axR = plt.subplot(1, 2, 2, sharex=axL, sharey=axL, adjustable='box-forced')
         vmin = np.percentile(ogdata, 5)
         vmax = np.percentile(ogdata, 95)
-        im = axL.imshow(ogdata, vmin=vmin, vmax=vmax)
-        axR.imshow(rsdata, vmin=vmin, vmax=vmax)
+        im = axL.imshow(ogdata, vmin=vmin, vmax=vmax, origin='lower')
+        axR.imshow(rsdata, vmin=vmin, vmax=vmax, origin='lower')
         j_sat, i_sat = np.where(ogdata > datamax)
         if len(i_sat):
             axL.plot(i_sat, j_sat, 'rx', label='{:d} pixels > {:.0f} ADU'.format(len(i_sat), datamax))

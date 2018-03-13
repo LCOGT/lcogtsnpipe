@@ -1158,8 +1158,9 @@ def checkcosmic(imglist, database='photlco'):
             diffimg = origimg.replace('.fits', '.diff.fits')
             if os.path.isfile(origimg) and os.path.isfile(maskimg):
                 print img, photlcodict[0]['filter']
+                iraf.set(stdimage='imt8192')
                 iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
-                iraf.display(maskimg, 2, fill=True, Stdout=1)
+                iraf.display(maskimg, 2, zscale=False, fill=True, Stdout=1)
                 ans = raw_input('>>> good mask [[y]/n] or [b]ad quality? ')
                 if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                     print 'updatestatus bad'

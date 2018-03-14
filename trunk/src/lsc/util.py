@@ -713,7 +713,7 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
       else:
          print 'warning RDNOISE not found'
          rdnoise = 1
-   if '91.fits' in img:
+   if '-e91.' in img:
        ar[ar < readkey3(hd, 'datamin')] = sat
        _pssl = 0.
    else:

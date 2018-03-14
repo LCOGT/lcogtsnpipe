@@ -178,6 +178,8 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'ingestps1':
                 lsc.myloopdef.run_ingestsloan(listfile, 'ps1', args.ps1frames, show=args.show, force=args.force)
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
+                if not catalogue:
+                    catalogue = lsc.util.getcatalog('ASASSN-15so', 'apass')
                 lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force, args.minstars)
             elif args.stage == 'diff':  #    difference images using hotpants
                 _difftypelist = args.difftype.split(',')

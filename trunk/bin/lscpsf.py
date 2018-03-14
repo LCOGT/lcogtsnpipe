@@ -67,13 +67,15 @@ if __name__ == "__main__":
                 fwhm0 = option.fwhm
                 make_sn2 = True
                 psfstars = option.psfstars
-                if not option.use_sextractor and not option.catalog:
+                if option.use_sextractor:
+                    catalog = ''
+                elif option.catalog:
+                    catalog = option.catalog
+                else:
                     for system in ['sloan', 'apass', 'landolt']:
                         catalog = lsc.util.getcatalog(img, system)
                         if catalog:
                             break
-                else:
-                    catalog = option.catalog
             while True:
                 result, fwhm = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
                                                    option.distance, option.interactive, psffun, fixaperture,

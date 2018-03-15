@@ -117,18 +117,6 @@ if __name__ == "__main__":
                 img = imglong[:-5]
             else:
                 img = imglong
-            ######    set database value to 9999 before calculating them again ##################
-            try:
-                print string.split(img, '/')[-1] + '.fits'
-                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfdmag', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfx', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfy', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, string.split(img, '/')[-1] + '.fits')
-            except:
-                print 'module mysqldef not found'
-            ####################################################################################
-
             #########  read header, find psf file  #############################################
             hdr = lsc.util.readhdr(imglong)
             _instrument = lsc.util.readkey3(hdr, 'instrume')
@@ -168,6 +156,13 @@ if __name__ == "__main__":
 
             #######################  plot image, find fwhm  #####################################
             if skip == 0:
+                ######    set database value to 9999 before calculating them again ##################
+                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, string.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfdmag', 9999, string.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfx', 9999, string.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfy', 9999, string.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, string.split(img, '/')[-1] + '.fits')
+
                 iraf.set(stdimage='imt2048')
                 if _interactive:
                     _z1, _z2, goon = lsc.util.display_image(img + '.fits', 1, '', '', True, _xsize=1, _ysize=1)
@@ -591,7 +586,9 @@ if __name__ == "__main__":
                 print img, psfimage, 'xxxxx'
                 if _dmax is None:
                     _dmax = lsc.util.readkey3(hdr, 'datamax')
-                if _dmin is None:
+                if _dmin is None and 'optimal' in img:
+                    _dmin = 'INDEF'
+                elif _dmin is None:
                     _dmin = lsc.util.readkey3(hdr, 'datamin')
                 apori1, apori2, apori3, apmag1, apmag2, apmag3, dapmag1, dapmag2, dapmag3, fitmag, truemag, magerr, centx, centy = \
                     lsc.lscsnoopy.fitsn(img, psfimage, img + '.sn.coo', _recenter, fwhm0, 'original', 'sn',
@@ -759,12 +756,12 @@ if __name__ == "__main__":
                     if apmag3[i] == 'INDEF':
                         apmag3[i] = 9999
 
-                    headers = {'PSFX' + str(i + 1): [str(centx[i] + x1 - 1), 'x pos psf mag'],
-                               'PSFY' + str(i + 1): [str(centy[i] + y1 - 1), 'y pos psf mag'],
-                               'PSFMAG' + str(i + 1): [str(float(truemag[i]) - DM), 'psf magnitude'],
-                               'PSFDMAG' + str(i + 1): [str(max(arterr, magerr[i])), 'psf mag error'],
-                               'APMAG' + str(i + 1): [str(apmag3[i]), 'ap mag after bgsub'],
-                               'DAPMAG' + str(i + 1): [str(dapmag3[i]), 'ap mag error']}
+                    headers = {'PSFX' + str(i + 1): (str(centx[i] + x1 - 1), 'x pos psf mag'),
+                               'PSFY' + str(i + 1): (str(centy[i] + y1 - 1), 'y pos psf mag'),
+                               'PSFMAG' + str(i + 1): (str(float(truemag[i]) - DM), 'psf magnitude'),
+                               'PSFDMAG' + str(i + 1): (str(max(arterr, magerr[i])), 'psf mag error'),
+                               'APMAG' + str(i + 1): (str(apmag3[i]), 'ap mag after bgsub'),
+                               'DAPMAG' + str(i + 1): (str(dapmag3[i]), 'ap mag error')}
                     lsc.util.updateheader(img + '.sn2.fits', 0, headers)
                 lsc.util.delete("apori")
                 lsc.util.delete("sec")
@@ -777,8 +774,6 @@ if __name__ == "__main__":
                 lsc.util.delete(img + ".sn.*")
                 os.system('mv original.fits ' + img + '.og.fits')
                 os.system('mv residual.fits ' + img + '.rs.fits')
-                os.chmod(img + '.og.fits', 0664)
-                os.chmod(img + '.rs.fits', 0664)
                 try:
                     lsc.mysqldef.updatevalue('photlco', 'psfmag', truemag[0] - DM, string.split(img, '/')[-1] + '.fits')
                     lsc.mysqldef.updatevalue('photlco', 'psfdmag', max(arterr, magerr[0]),

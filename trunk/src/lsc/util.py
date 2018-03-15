@@ -299,11 +299,10 @@ def writeinthelog(text,logfile):
     f.close()
 
 def updateheader(filename, dimension, headerdict):
-    tupledict = {key: tuple(value) for key, value in headerdict.items()}
     try:
         hdulist = fits.open(filename, mode='update')
         header = hdulist[dimension].header
-        header.update(tupledict)
+        header.update(headerdict)
         hdulist.close()
     except Exception as e:
         print 'header of', filename, 'not updated:'
@@ -527,7 +526,7 @@ def airmass(img,overwrite=True,_observatory='lasilla'):
       except: _air=999
       delete('airmass.txt')
       if overwrite and _air<99.:
-         updateheader(img,0,{'AIRMASS':[_air,'mean airmass computed with astcalc']})
+         updateheader(img,0,{'AIRMASS':(_air,'mean airmass computed with astcalc')})
    else:   _air=''
    return _air
 ####################################################################################
@@ -567,7 +566,7 @@ def correctobject(img,coordinatefile):
     _dec=readkey3(hdr,'DEC')
     dd=arccos(sin(_dec*scal)*sin(decstd*scal)+cos(_dec*scal)*cos(decstd*scal)*cos((_ra-rastd)*scal))*((180/pi)*3600)
     if min(dd)<200:
-       updateheader(img,0,{'OBJECT':[std[argmin(dd)],'Original target.']})
+       updateheader(img,0,{'OBJECT':(std[argmin(dd)],'Original target.')})
        aa,bb,cc=rastd[argmin(dd)],decstd[argmin(dd)],std[argmin(dd)]
     else: aa,bb,cc='','',''
     return aa,bb,cc
@@ -714,17 +713,15 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
       else:
          print 'warning RDNOISE not found'
          rdnoise = 1
-   # need to trick LACosmic into using the right sigma for a sky-subtracted image
-   med = np.median(ar)                           # median pixel of image (in ADU)
-   noise = 1.4826*np.median(np.abs(ar - med))    # using median absolute deviation instead of sigma
-   _pssl = gain*noise**2 - rdnoise**2/gain - med # previously subtracted sky level
-   ar[ar < -_pssl] = sat                         # change (what will be) negative values to saturated
-
-#   # same as above but using stats from ORAC pipeline
-#   if 'L1SIGMA' in hd and 'L1MEAN' in hd:
-#      _pssl=((gain*hd['L1SIGMA'])**2-rdnoise**2)/gain-hd['L1MEAN']
-#   else:
-#      _pssl=0.0
+   if '-e91.' in img:
+       ar[ar < readkey3(hd, 'datamin')] = sat
+       _pssl = 0.
+   else:
+       # need to trick LACosmic into using the right sigma for a sky-subtracted image
+       med = np.median(ar)                           # median pixel of image (in ADU)
+       noise = 1.4826*np.median(np.abs(ar - med))    # using median absolute deviation instead of sigma
+       _pssl = gain*noise**2 - rdnoise**2/gain - med # previously subtracted sky level
+       ar[ar < -_pssl] = sat                         # change (what will be) negative values to saturated
 
    print 'gain    sat     noise   sigclip objlim  sigfrac pssl'
    print '{:<7.1f} {:<7.0f} {:<7.1f} {:<7.1f} {:<7.0f} {:<7.1f} {:<7.2f}'.format(gain, sat, rdnoise, _sigclip, _objlim, _sigfrac, _pssl)

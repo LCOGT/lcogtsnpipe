@@ -8,6 +8,7 @@ from sites import *
 from externaldata import *
 from myloopdef import *
 from cosmics import *
+from lscpsfdef import *
 
 __version__ = "unknown"
 try:

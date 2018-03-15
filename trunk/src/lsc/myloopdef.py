@@ -346,32 +346,29 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
         if status == 1:
             rr = '-r'
         if status >= 1:
-            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
-            print ggg
-            if str(ggg[0]['filetype']) == '3':
+            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
+            _dir = ggg[0]['filepath']
+            if ggg[0]['filetype'] == 3 and ggg[0]['difftype'] == 0: # HOTPANTS difference images
                 ##################################################################################
                 print '\n### get parameters for difference image'
-                _dir = ggg[0]['filepath']
                 hdrdiff=lsc.util.readhdr(_dir+img)
                 if 'PSF' not in hdrdiff:
                     raise Exception('PSF file not defined')
-                elif ggg[0]['difftype'] == 0:
-                    imgpsf=hdrdiff['PSF']
-                    print '\n### psf file for difference image: '+imgpsf
-                    statuspsf = checkstage(imgpsf, 'psf')
-                    print statuspsf
-                    if statuspsf == 2:
-                        print 'psf file for difference image found'
-                        gggpsf = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(imgpsf), '*')
-                        _dirpsf = gggpsf[0]['filepath']
-                        os.system('cp '+_dirpsf+imgpsf.replace('.fits', '.psf.fits')+' '+_dir+
-                                  img.replace('.fits', '.psf.fits'))
-                        lsc.mysqldef.updatevalue('photlco', 'psf', img.replace('.fits', '.psf.fits'),
-                                             os.path.basename(img))
-                        print '\n ### copy '+imgpsf.replace('.fits', '.psf.fits')+' in '+img.replace('.fits', '.psf.fits')
-
-                    else:
-                        print '\n### ERROR: PSF file not found \n please run psf file on image: '+imgpsf
+                imgpsf=hdrdiff['PSF']
+                print '\n### psf file for difference image: '+imgpsf
+                statuspsf = checkstage(imgpsf, 'psf')
+                print statuspsf
+                if statuspsf == 2:
+                    print 'psf file for difference image found'
+                    gggpsf = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(imgpsf), '*')
+                    _dirpsf = gggpsf[0]['filepath']
+                    os.system('cp '+_dirpsf+imgpsf.replace('.fits', '.psf.fits')+' '+_dir+
+                              img.replace('.fits', '.psf.fits'))
+                    lsc.mysqldef.updatevalue('photlco', 'psf', img.replace('.fits', '.psf.fits'),
+                                         os.path.basename(img))
+                    print '\n ### copy '+imgpsf.replace('.fits', '.psf.fits')+' in '+img.replace('.fits', '.psf.fits')
+                else:
+                    print '\n### ERROR: PSF file not found \n please run psf file on image: '+imgpsf
                 #####################################################################################
                 if 'PHOTNORM' not in hdrdiff:
                     raise Exception('PHOTNORM file not defined')
@@ -395,10 +392,8 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                         os.system('cp ' + dirtable + sntable + ' ' + _dir + img.replace('.fits', '.sn2.fits'))
                     else:
                         raise Exception('fits table not there, run psf for ' + sntable)
-            else:
-                _dir = ggg[0]['filepath']
-                img0 = img
-                command = 'lscpsf.py ' + _dir + img0 + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
+            else: # PyZOGY difference images or unsubtracted images
+                command = 'lscpsf.py ' + _dir + img + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
                     treshold) + gg + cc + xx + dmin + dmax + pp
                 print command
                 os.system(command)
@@ -1163,8 +1158,9 @@ def checkcosmic(imglist, database='photlco'):
             diffimg = origimg.replace('.fits', '.diff.fits')
             if os.path.isfile(origimg) and os.path.isfile(maskimg):
                 print img, photlcodict[0]['filter']
+                iraf.set(stdimage='imt8192')
                 iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
-                iraf.display(maskimg, 2, fill=True, Stdout=1)
+                iraf.display(maskimg, 2, zscale=False, fill=True, Stdout=1)
                 ans = raw_input('>>> good mask [[y]/n] or [b]ad quality? ')
                 if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                     print 'updatestatus bad'
@@ -1215,7 +1211,7 @@ def display_subtraction(img):
         plt.xlim(origdata.shape[0] / 2 - 100, origdata.shape[0] / 2 + 100)
         plt.ylim(origdata.shape[1] / 2 - 100, origdata.shape[1] / 2 + 100)
         plt.gcf().text(0.75, 0.25,
-                       os.path.basename(basename) + '\nfilter = {filter}\npsfmag = {psfmag:.2f} mag\nmag = {mag:.2f} mag'.format(**ggg[0]),
+                       os.path.basename(basename) + u'\nfilter = {filter}\npsfmag = {psfmag:.2f} \u00b1 {psfdmag:.2f} mag\nmag = {mag:.2f} \u00b1 {dmag:.2f} mag'.format(**ggg[0]),
                        va='center', ha='center')
         plt.tight_layout()
     else:
@@ -1278,14 +1274,14 @@ def display_psf_fit(img, datamax=None):
         axR = plt.subplot(1, 2, 2, sharex=axL, sharey=axL, adjustable='box-forced')
         vmin = np.percentile(ogdata, 5)
         vmax = np.percentile(ogdata, 95)
-        im = axL.imshow(ogdata, vmin=vmin, vmax=vmax)
-        axR.imshow(rsdata, vmin=vmin, vmax=vmax)
+        im = axL.imshow(ogdata, vmin=vmin, vmax=vmax, origin='lower')
+        axR.imshow(rsdata, vmin=vmin, vmax=vmax, origin='lower')
         j_sat, i_sat = np.where(ogdata > datamax)
         if len(i_sat):
             axL.plot(i_sat, j_sat, 'rx', label='{:d} pixels > {:.0f} ADU'.format(len(i_sat), datamax))
             axL.legend()
         plt.colorbar(im, ax=[axL, axR], orientation='horizontal')
-        plt.gcf().text(0.5, 0.99, '{filename}\nfilter = {filter}\nexptime = {exptime:.0f} s\npsfmag = {psfmag:.2f} mag\nmag = {mag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
+        plt.gcf().text(0.5, 0.99, u'{filename}\nfilter = {filter}\npsfmag = {psfmag:.2f} \u00b1 {psfdmag:.2f} mag\nmag = {mag:.2f} \u00b1 {dmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
     return ogfile, rsfile
 
 def checkmag(imglist, datamax=None):
@@ -1394,9 +1390,9 @@ def onkeypress2(event):
         lsc.mysqldef.updatevalue(_database, 'apmag', 9999, _filename[ii])
         if _dir:
             lsc.util.updateheader(_dir + _filename[ii].replace('.fits', '.sn2.fits'), 0,
-                                  {'PSFMAG1': [9999, 'psf magnitude']})
+                                  {'PSFMAG1': (9999, 'psf magnitude')})
             lsc.util.updateheader(_dir + _filename[ii].replace('.fits', '.sn2.fits'), 0,
-                                  {'APMAG1': [9999, 'ap magnitude']})
+                                  {'APMAG1': (9999, 'ap magnitude')})
     elif event.key in ['u']:
         lsc.mysqldef.updatevalue(_database, 'magtype', -1, _filename[ii])
         print '\n### set as a limit'
@@ -1545,7 +1541,7 @@ def plotfast2(setup):
         _dir = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath')[0]['filepath']
         if _dir:
             lsc.util.updateheader(_dir + filenames[i].replace('.fits', '.sn2.fits'), 0,
-                                  {'PSFMAG1': [9999, 'psf magnitude'], 'APMAG1': [9999, 'ap magnitude']})
+                                  {'PSFMAG1': (9999, 'psf magnitude'), 'APMAG1': (9999, 'ap magnitude')})
         print 'deleted', filenames[i]
 
     def bad_hook(i):
@@ -2008,7 +2004,7 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
                 else:
                     if not os.path.isfile(_dir + img.replace('.fits', '.clean.fits')) or not os.path.isfile(_dir + img.replace('.fits', '.mask.fits')) or _force:
                         output, mask, satu = lsc.util.Docosmic(_dir + img, _sigclip, _sigfrac, _objlim)
-                        lsc.util.updateheader(output, 0, {'DOCOSMIC': [True, 'Cosmic rejection using LACosmic']})
+                        lsc.util.updateheader(output, 0, {'DOCOSMIC': (True, 'Cosmic rejection using LACosmic')})
                         print 'mv ' + output + ' ' + _dir
                         os.system('mv ' + output + ' ' + _dir)
                         os.system('mv ' + mask + ' ' + _dir)

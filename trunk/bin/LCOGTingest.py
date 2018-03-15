@@ -226,16 +226,18 @@ def fits2png(filename, force=False, zclip=5):
         z2 = np.percentile(data, 100-zclip)
         imsave(filename.replace('.fits', '.png'), data, cmap='gray', vmin=z1, vmax=z2, origin='lower')
 
-def get_floyds_tar_link(authtoken, dbdict, force=False):
-    if dbdict:
-        linkindb = lsc.mysqldef.query(["select link from speclcoguider where blockid=" + dbdict['obid']], conn)
-        if not linkindb or force:
-            if linkindb:
-                lsc.mysqldef.query(["delete from speclcoguider where blockid=" + dbdict['obid']], conn)
-            tarframes = get_metadata(authtoken, BLKUID=dbdict['obid'], RLEVEL=90)
-            if tarframes:
-                tardict = {'tracknumber': dbdict['tracknumber'], 'blockid': dbdict['obid'], 'link': tarframes[0]['url']}
-                lsc.mysqldef.insert_values(conn, 'speclcoguider', tardict)
+def record_floyds_tar_link(authtoken, frame, force=False):
+    linkindb = lsc.mysqldef.query(["select link from speclcoguider where blockid={:d}".format(frame['BLKUID'])], conn)
+    if not linkindb or force:
+        if linkindb:
+            lsc.mysqldef.query(["delete from speclcoguider where blockid={:d}".format(frame['BLKUID'])], conn)
+        dbdicts = lsc.mysqldef.query(["select tracknumber from speclcoraw where obid={:d}".format(frame['BLKUID'])], conn)
+        if dbdicts:
+            tardict = {'tracknumber': dbdicts[0]['tracknumber'], 'blockid': frame['BLKUID'], 'link': frame['url']}
+            print 'adding link to', frame['filename']
+            lsc.mysqldef.insert_values(conn, 'speclcoguider', tardict)
+    else:
+        print 'link to', frame['filename'], 'already added'
 
 #################################################################
 if __name__ == "__main__":
@@ -292,8 +294,10 @@ if __name__ == "__main__":
     print 'Total number of frames:', len(frames)
 
     for frame in frames:
-        filepath, filename = download_frame(frame, args.force_dl)
-        dbdict = db_ingest(filepath, filename, args.force_db)
-        if '-en0' in filename and '-e00.fits' in filename:
-            fits2png(filepath + filename, args.force_tn)
-            get_floyds_tar_link(authtoken, dbdict, args.force_gl)
+        if '.tar.gz' not in frame['filename']:
+            filepath, filename = download_frame(frame, args.force_dl)
+            dbdict = db_ingest(filepath, filename, args.force_db)
+            if '-en0' in filename and '-e00.fits' in filename:
+                fits2png(filepath + filename, args.force_tn)
+        else:
+            record_floyds_tar_link(authtoken, frame, args.force_gl)

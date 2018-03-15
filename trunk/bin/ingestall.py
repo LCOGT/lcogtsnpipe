@@ -57,10 +57,18 @@ for frame in frames:
         except:
             print '!!! FAILED TO MAKE PNG FOR ' + filename
             traceback.print_exc()
-        try:
-            get_floyds_tar_link(authtoken, dbdict)
-        except:
-            print '!!! FAILED TO GET GUIDER LINK FOR ' + filename
-            traceback.print_exc()
 
 lsc.mysqldef.ingestredu(fullpaths) # ingest new data into photlco
+
+# add links to FLOYDS guider frames in database
+frames = get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=90, public=False)  # all FTN spectra SNEx is a co-I
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=90, public=False) # all FTS spectra SNEx is a co-I
+frames += get_metadata(authtoken, start=start, end=end, PROPID='OGG_calib', RLEVEL=90)            # FTN standard star spectra
+frames += get_metadata(authtoken, start=start, end=end, PROPID='COJ_calib', RLEVEL=90)            # FTS standard star spectra
+
+for frame in frames:
+    try:
+        record_floyds_tar_link(authtoken, frame)
+    except:
+        print '!!! FAILED TO RECORD GUIDER LINK FOR ' + frame['filename']
+        traceback.print_exc()

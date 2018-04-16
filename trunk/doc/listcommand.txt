@@ -1,4 +1,0 @@
-/Users/sv/lib/python2.6/site-packages/lsc/bin/lscastro.py L95.I.ut130107.0101_1.fits
-/Users/sv/lib/python2.6/site-packages/lsc/bin/lscpsf.py L95.I.ut130107.0101_1.fits
-lscabsphot.py L95.I.ut130107.0101_1.sn2.fits
-lsccatalogue.py listastd 

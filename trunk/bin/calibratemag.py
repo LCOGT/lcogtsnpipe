@@ -117,13 +117,6 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", default='{SN}_{field}_{datenow}.cat', help='output filename')
     args = parser.parse_args()
     
-    if args.field == 'landolt':
-        filterlist = ['U', 'B', 'V', 'R', 'I']
-    elif args.field == 'sloan':
-        filterlist = ['u', 'g', 'r', 'i', 'z']
-    elif args.field == 'apass':
-        filterlist = ['B', 'V', 'g', 'r', 'i']
-
     with open(args.imglist) as f:
         lista = f.read().splitlines()
     if not lista:
@@ -260,6 +253,14 @@ if __name__ == "__main__":
             except IOError as e:
                 print e, '-- use -F to overwrite'
     elif args.stage == 'local':
+        if args.field == 'landolt':
+            filterlist = ['U', 'B', 'V', 'R', 'I']
+        elif args.field == 'sloan':
+            filterlist = ['u', 'g', 'r', 'i', 'z']
+        elif args.field == 'apass':
+            filterlist = ['B', 'V', 'g', 'r', 'i']
+        else:
+            raise Exception('Need to give --field (landolt, sloan, apass) for -s local')
         # make master catalog and write to file
         catalog = combine_nights(targets, filterlist, refcat)
         catfile = os.path.basename(args.catalog)

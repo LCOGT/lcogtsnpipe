@@ -238,68 +238,6 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
             print 'status ' + str(status) + ': unknown status'
 
 
-def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=False, redo=False, show=False, _cutmag=99,
-             database='photlco', _calib='', zcatold=False):
-    for img in imglist:
-        if interactive:
-            ii = '-i'
-        else:
-            ii = ''
-        if _fix:
-            ff = '-f'
-        else:
-            ff = ''
-        if redo:
-            rr = '-r'
-        else:
-            rr = ''
-        if _field:
-            ss = '-s ' + _field
-        else:
-            ss = ''
-        if show:
-            dd = '--show'
-        else:
-            dd = ''
-        if _calib:
-            ll = '--calib ' + _calib
-        else:
-            ll = ''
-        if _color:
-            hh = '-C ' + _color
-        else:
-            hh = ''
-        status = checkstage(img, 'zcat')
-        if status == 1: rr = '-r'
-        if status >= 1:
-            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
-            _dir = ggg[0]['filepath']
-            if catalogue:
-                cc = '-c ' + catalogue
-            else:
-                _catalogue = lsc.util.getcatalog(_dir + img, _calib if _calib else _field)
-                if _catalogue:
-                    cc = '-c ' + _catalogue
-                else:
-                    cc = ''
-            if zcatold: zcn = '--zcatold'
-            else: zcn = ''
-            command = ' '.join(['lscabsphot.py', _dir+img.replace('.fits', '.sn2.fits'), ii, rr, ff, cc, '-t', _type, ss, dd, hh, ll, '--cutmag', str(_cutmag), zcn])
-            print '_'*100
-            print command
-            os.system(command)
-        elif status == 0:
-            print 'status ' + str(status) + ': WCS stage not done'
-        elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
-        elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
-        elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
-        else:
-            print 'status ' + str(status) + ': unknown status'
-
-
 def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, fix=True,
             catalog='', database='photlco', use_sextractor=False, datamin=None, datamax=None, nstars=6):
     for img in imglist:

@@ -9,6 +9,20 @@ with warnings.catch_warnings(): # so cronic doesn't email on the "experimental" 
     warnings.simplefilter('ignore')
     from astroquery.sdss import SDSS
 
+def get_other_filters(filename):
+    query = '''SELECT DISTINCT p2.filter FROM
+               photlco AS p1, photlco AS p2,
+               telescopes AS t1, telescopes AS t2
+               WHERE p1.filename='{}'
+               AND p1.dayobs=p2.dayobs
+               AND p1.targetid=p2.targetid
+               AND p1.telescopeid=t1.id
+               AND p2.telescopeid=t2.id
+               AND t1.shortname=t2.shortname'''.format(filename)
+    result = lsc.mysqldef.query([query], lsc.conn)
+    other_filters = {lsc.sites.filterst1[row['filter']] for row in result}
+    return other_filters
+
 def limmag(img, zeropoint=0, Nsigma_limit=3, _fwhm = 5):
     image = fits.open(img)
     hdr = image[0].header
@@ -203,7 +217,7 @@ def onclick(event):
                      (aa,sss,bb,sigmaa,sigmab))
 
 
-def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit',redo=False,show=False,cutmag=-1,database='photlco',_calib='sloan',zcatold=False):
+def absphot(img,_field,_catalogue,_fix,rejection,_interactive,_type='fit',redo=False,show=False,cutmag=-1,_calib='sloan',zcatold=False):
     from astropy.io import fits
     import math
     import sys,re,string,os
@@ -285,10 +299,12 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
     if _cat and not redo:
         print 'already calibrated'
     else:
+     print '_' * 100
+     print 'Calibrating {} to {}'.format(os.path.split(img)[1], os.path.split(_catalogue)[1])
      try:
-           lsc.mysqldef.updatevalue(database,'zcat','X',string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
+           lsc.mysqldef.updatevalue('photlco','zcat','X',string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
            if os.path.isfile(string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1]):
-                 lsc.mysqldef.updatevalue(database,'zcat','X',string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
+                 lsc.mysqldef.updatevalue('photlco','zcat','X',string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
      except: print 'module mysqldef not found'
 
      column=makecatalogue([img])[_filter][img]
@@ -426,7 +442,6 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
              standardpixL=standardpixLL
              stdcooL=stdcooLL
 
-     colors = lsc.sites.chosecolor(_color, False)
      standardpix = standardpixL
      stdcoo = stdcooL
 
@@ -442,7 +457,6 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         airmass0={}
         result={}
         fileph={}
-        print '\n###  standard field: '+str(_field)
         ystd0=compress((array(xstd,float)<readkey3(hdr,'XDIM'))&(array(xstd,float)>0)&(array(ystd,float)>0)\
                                &(array(ystd,float)<readkey3(hdr,'YDIM')),ystd)
         rastd0=compress((array(xstd,float)<readkey3(hdr,'XDIM'))&(array(xstd,float)>0)&(array(ystd,float)>0)\
@@ -471,7 +485,6 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         magerrsex = magerrsex[pos1]
 #################################################################################
         if _field=='landolt':
-            print '\n###  landolt system'
             for _filtlandolt in 'UBVRI':
                 if _filtlandolt==lsc.sites.filterst1[_filter]:  airmass0[_filtlandolt]=  0 #_airmass
                 else: airmass0[_filtlandolt]= 0
@@ -570,13 +583,13 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 
         if media!=9999: 
               _limmag = limmag(re.sub('.sn2.fits','.fits',img), media, 3, _fwhm)     #   compute limiting magnitude at 3 sigma
-              print '#####  ',str(_limmag)
               lsc.mysqldef.updatevalue('photlco','limmag',_limmag,string.split(re.sub('.sn2.fits','.fits',img),'/')[-1],'lcogt2','filename')
               lsc.mysqldef.updatevalue('photlco','zn',media,string.split(re.sub('.sn2.fits','.fits',img),'/')[-1],'lcogt2','filename')
               lsc.mysqldef.updatevalue('photlco','dzn',mediaerr,string.split(re.sub('.sn2.fits','.fits',img),'/')[-1],'lcogt2','filename')
               lsc.mysqldef.updatevalue('photlco','znnum',len(data2),string.split(re.sub('.sn2.fits','.fits',img),'/')[-1],'lcogt2','filename')
 
-
+        filters = get_other_filters(os.path.split(img)[1].replace('.sn2.fits', '.fits'))
+        colors = lsc.sites.chosecolor(filters, False)
         colorvec=colors[lsc.sites.filterst1[_filter]]
         zero = array(zero)
         zeroerr = array(zeroerr)
@@ -630,7 +643,6 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                     a, sa, b, sb = fitcol3(colore2, zero2, coloreerr2, zeroerr2, fisso, _filter, ' - '.join(col), show, _interactive, rejection)
             result[lsc.sites.filterst1[_filter]+col]=[a,sa,b,sb]
         if result:
-            print '### zeropoint ..... done at airmass 0'
             if _catalogue:
                 lsc.util.updateheader(img,0,{'CATALOG':(str(string.split(_catalogue,'/')[-1]),'catalogue source')})
             stringa=''
@@ -644,26 +656,25 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                 elif ll[0]==ll[1]: num=1
                 else: sys.exit('somthing wrong with color '+ll)
                 try:
-                    print 'zcol'+str(num),ll[1:],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1]
-                    lsc.mysqldef.updatevalue(database,'zcol'+str(num),ll[1:],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-                    lsc.mysqldef.updatevalue(database,'z'+str(num),result[ll][0],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-                    lsc.mysqldef.updatevalue(database,'c'+str(num),result[ll][2],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-                    lsc.mysqldef.updatevalue(database,'dz'+str(num),result[ll][1],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-                    lsc.mysqldef.updatevalue(database,'dc'+str(num),result[ll][3],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
+                    lsc.mysqldef.updatevalue('photlco','zcol'+str(num),ll[1:],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
+                    lsc.mysqldef.updatevalue('photlco','z'+str(num),result[ll][0],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
+                    lsc.mysqldef.updatevalue('photlco','c'+str(num),result[ll][2],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
+                    lsc.mysqldef.updatevalue('photlco','dz'+str(num),result[ll][1],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
+                    lsc.mysqldef.updatevalue('photlco','dc'+str(num),result[ll][3],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
                     if os.path.isfile(string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1]):
-                          lsc.mysqldef.updatevalue(database,'zcol'+str(num),ll[1:],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-                          lsc.mysqldef.updatevalue(database,'z'+str(num),result[ll][0],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-                          lsc.mysqldef.updatevalue(database,'c'+str(num),result[ll][2],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-                          lsc.mysqldef.updatevalue(database,'dz'+str(num),result[ll][1],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-                          lsc.mysqldef.updatevalue(database,'dc'+str(num),result[ll][3],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
+                          lsc.mysqldef.updatevalue('photlco','zcol'+str(num),ll[1:],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
+                          lsc.mysqldef.updatevalue('photlco','z'+str(num),result[ll][0],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
+                          lsc.mysqldef.updatevalue('photlco','c'+str(num),result[ll][2],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
+                          lsc.mysqldef.updatevalue('photlco','dz'+str(num),result[ll][1],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
+                          lsc.mysqldef.updatevalue('photlco','dc'+str(num),result[ll][3],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
                     if result[ll][0]!=9999:
-                          lsc.mysqldef.updatevalue(database,'zcat',string.split(_catalogue,'/')[-1],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
+                          lsc.mysqldef.updatevalue('photlco','zcat',string.split(_catalogue,'/')[-1],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
                           if os.path.isfile(string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1]):
-                                lsc.mysqldef.updatevalue(database,'zcat',string.split(_catalogue,'/')[-1],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
+                                lsc.mysqldef.updatevalue('photlco','zcat',string.split(_catalogue,'/')[-1],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
                     else:
-                        lsc.mysqldef.updatevalue(database,'zcat','X',string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
+                        lsc.mysqldef.updatevalue('photlco','zcat','X',string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
                         if os.path.isfile(string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1]):
-                              lsc.mysqldef.updatevalue(database,'zcat','X',string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
+                              lsc.mysqldef.updatevalue('photlco','zcat','X',string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
                 except: print 'module mysqldef not found'
                 
 #################################################################

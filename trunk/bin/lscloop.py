@@ -52,6 +52,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--use-sextractor", action="store_true", help="use souces from sextractor for PSF instead of catalog")
     parser.add_argument("--catalogue", default='')
     parser.add_argument("--calib", default='', choices=['sloan', 'natural', 'sloanprime'])
+    parser.add_argument("--sigma-clip", default=2., help='number of sigma at which to reject stars for zero point calibration')
     parser.add_argument("--type", choices=['fit', 'ph', 'mag'], default='fit', help='type of magnitude (PSF, aperture, apparent)')
     parser.add_argument("--standard", default='', help='use the zeropoint from this standard')
     parser.add_argument("--xshift", default=0, type=int, help='x-shift in the guess astrometry')
@@ -89,23 +90,9 @@ if __name__ == "__main__":   # main program
     elif args.bad == 'diff':
         filetype = 1
     else:
-        filetype = args.filetype        
-
-    if args.field:
-        field = args.field
-    elif np.all([filt in ['U', 'B', 'V', 'R', 'I', 'landolt'] for filt in args.filter]):
-        field = 'landolt'
-    elif np.all([filt in ['u', 'g', 'r', 'i', 'z', 'sloan', 'w'] for filt in args.filter]):
-        field = 'sloan'
-    else:
-        field = 'apass'
+        filetype = args.filetype
     
     filters = ','.join(args.filter)
-    
-    if args.catalogue:
-        catalogue = args.catalogue
-    else:
-        catalogue = lsc.util.getcatalog(args.name, field)
 
     if args.stage == 'diff':
         ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
@@ -115,7 +102,7 @@ if __name__ == "__main__":   # main program
                                     'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
     listfile = np.array([k + v for k, v in zip(ll['filepath'], ll['filename'])])
     if ll:
-        if args.stage not in ['zcat', 'merge']:
+        if args.stage != 'merge':
             print '##' * 50
             print '# IMAGE                                    OBJECT           FILTER           WCS            ' \
                   ' PSF           PSFMAG    APMAG       ZCAT          MAG      ABSCAT'
@@ -153,13 +140,13 @@ if __name__ == "__main__":   # main program
             if args.stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type)
             elif args.stage == 'psf':
-                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, catalogue,
+                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,
                                       'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars)
             elif args.stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], args.RAS, args.DECS, args.xord, args.yord, args.bkg, args.size, args.recenter, args.ref,
                                       args.interactive, args.show, args.force, args.datamax,args.datamin,'photlco',args.RA0,args.DEC0)
             elif args.stage == 'wcs':
-                lsc.myloopdef.run_wcs(ll['filename'], args.interactive, args.force, args.xshift, args.xshift, catalogue,'photlco',args.mode)
+                lsc.myloopdef.run_wcs(ll['filename'], args.interactive, args.force, args.xshift, args.xshift, args.catalogue,'photlco',args.mode)
             elif args.stage == 'makestamp':
                 lsc.myloopdef.makestamp(ll['filename'], 'photlco', args.z1, args.z2, args.interactive, args.force, args.output)
             elif args.stage == 'apmag':
@@ -177,10 +164,23 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.run_ingestsloan(listfile, 'sloan', show=args.show, force=args.force)
             elif args.stage == 'ingestps1':
                 lsc.myloopdef.run_ingestsloan(listfile, 'ps1', args.ps1frames, show=args.show, force=args.force)
+            elif args.stage == 'zcat':
+                for path, img, filt in zip(ll['filepath'], ll['filename'], ll['filter']):
+                    if not args.field:
+                        filtchar = lsc.sites.filterst1[filt]
+                        if filtchar in 'UBVRI' and lsc.util.getcatalog(img, 'landolt'):
+                            field = 'landolt'
+                        elif filtchar in 'ugrizw' and lsc.util.getcatalog(img, 'sloan'):
+                            field = 'sloan'
+                        else:
+                            field = 'apass'
+                        catalogue = lsc.util.getcatalog(img, field)
+                    lsc.lscabsphotdef.absphot(path + img.replace('.fits', '.sn2.fits'), field, catalogue, args.fix, args.sigma_clip,
+                                              args.interactive, args.type, args.force, args.show, args.cutmag, args.calib, args.zcatold)
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
-                if not catalogue:
+                if not args.catalogue:
                     catalogue = lsc.util.getcatalog(args.name, 'apass')
-                lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force, args.minstars)
+                lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', args.field, catalogue, args.force, args.minstars)
             elif args.stage == 'diff':  #    difference images using hotpants
                 _difftypelist = args.difftype.split(',')
                 for difftype in _difftypelist:
@@ -257,44 +257,16 @@ if __name__ == "__main__":   # main program
             elif args.stage:
                 print args.stage + ' not defined'
     # ################################################
-        else:
+        else: # if args.stage == 'merge'
             for epo in np.unique(ll['dayobs']):
                 print '\n#### ' + str(epo)
                 ll0 = {key: val[ll['dayobs'] == epo] for key, val in ll.items()}
-                if len(ll0['filename']) > 0:
-                    # print '##'*50
-                    #                 print '# IMAGE                                    OBJECT           FILTER           WCS             PSF           PSFMAG          ZCAT          MAG      ABSCAT'
-                    for i in range(0, len(ll0['filename'])):
-                        print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
-                              (str(ll0['filename'][i]), str(ll0['objname'][i]), str(ll0['filter'][i]), str(ll0['wcs'][i]),
-                               str(ll0['psf'][i]),
-                               str(ll0['psfmag'][i]), str(ll0['zcat'][i]), str(ll0['mag'][i]), str(ll0['abscat'][i]))
-                    print '\n###  total number = ' + str(len(ll0['filename']))
-                    if args.stage == 'zcat':
-                        if not args.name:
-                            raise Exception('''name not selected, if you want to do zeropoint,
-                                                you need to specify the name of the object''')
-
-                        if field == 'apass':
-                            filters_in_field = set('BVgriw')
-                        elif field == 'landolt':
-                            filters_in_field = set('UBVRI')
-                        elif field == 'sloan':
-                            filters_in_field = set('ugrizw')
-                        else:
-                            print 'warning: field not defined, zeropoint not computed'
-
-                        filenames = [fn for fn, filt in zip(ll0['filename'], ll0['filter']) if lsc.sites.filterst1[filt] in filters_in_field]
-                        filters_in_images = {lsc.sites.filterst1[filt] for filt in ll0['filter']}
-                        _color = ''.join(filters_in_images & filters_in_field)
-                        if _color:
-                            lsc.myloopdef.run_zero(filenames, args.fix, args.type, field, catalogue, _color, args.interactive, args.force, args.show, args.cutmag, 'photlco', args.calib, args.zcatold)
-                        else:
-                            print 'none of your filters ({}) match the chosen catalog ({})'.format(''.join(filters_in_images), ''.join(filters_in_field))
-                    elif args.stage == 'merge':  #    merge images using lacos and swarp
-                        listfile = np.array([k + v for k, v in zip(ll0['filepath'], ll0['filename'])])
-                        lsc.myloopdef.run_merge(listfile, args.force)
-                else:
-                    print '\n### no data selected'
+                for i in range(0, len(ll0['filename'])):
+                    print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
+                          (str(ll0['filename'][i]), str(ll0['objname'][i]), str(ll0['filter'][i]), str(ll0['wcs'][i]),
+                           str(ll0['psf'][i]),
+                           str(ll0['psfmag'][i]), str(ll0['zcat'][i]), str(ll0['mag'][i]), str(ll0['abscat'][i]))
+                print '\n###  total number = ' + str(len(ll0['filename']))
+                lsc.myloopdef.run_merge(listfile[ll['dayobs'] == epo], args.force) # merge images using lacos and swarp
     else:
         print '\n### no data selected'

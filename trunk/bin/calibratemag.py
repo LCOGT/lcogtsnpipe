@@ -110,7 +110,7 @@ if __name__ == "__main__":
                         help='calibrate the local sequence (abscat) or the supernova (mag)?')
     parser.add_argument("-t", "--typemag", default='fit', choices=['fit', 'ph'], 
                         help='PSF photometry (fit) or aperture photometry (ph)?')
-    parser.add_argument("-f", "--field", default='landolt', choices=['landolt', 'sloan', 'apass'],
+    parser.add_argument("-f", "--field", choices=['landolt', 'sloan', 'apass'],
                         help='Landolt (UBVRI), Sloan (ugriz), or APASS (BVgri) filters?')
     parser.add_argument("-c", "--catalog", help="use only stars that match this reference catalog")
     parser.add_argument("--minstars", default=0, type=int, help="minimum number of catalog matches for inclusion")

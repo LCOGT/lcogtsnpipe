@@ -166,7 +166,9 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.run_ingestsloan(listfile, 'ps1', args.ps1frames, show=args.show, force=args.force)
             elif args.stage == 'zcat':
                 for path, img, filt in zip(ll['filepath'], ll['filename'], ll['filter']):
-                    if not args.field:
+                    if args.field:
+                        field = args.field
+                    else:
                         filtchar = lsc.sites.filterst1[filt]
                         if filtchar in 'UBVRI' and lsc.util.getcatalog(img, 'landolt'):
                             field = 'landolt'
@@ -174,7 +176,7 @@ if __name__ == "__main__":   # main program
                             field = 'sloan'
                         else:
                             field = 'apass'
-                        catalogue = lsc.util.getcatalog(img, field)
+                    catalogue = lsc.util.getcatalog(img, field)
                     lsc.lscabsphotdef.absphot(path + img.replace('.fits', '.sn2.fits'), field, catalogue, args.fix, args.sigma_clip,
                                               args.interactive, args.type, args.force, args.show, args.cutmag, args.calib, args.zcatold)
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova

@@ -181,7 +181,9 @@ def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit',
             f.write(ggg[0]['filepath'] + img.replace('fits', 'sn2.fits') + '\n')
     f.close()
     
-    command = 'calibratemag.py _tmp.list -s {} -t {} -f {}'.format(stage, magtype, field)
+    command = 'calibratemag.py _tmp.list -s {} -t {}'.format(stage, magtype)
+    if field:
+        command += ' -f ' + field
     if len(extlist):
         command += ' -e _tmpext.list'
     if _interactive:

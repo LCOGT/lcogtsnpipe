@@ -176,11 +176,18 @@ if __name__ == "__main__":   # main program
                             field = 'sloan'
                         else:
                             field = 'apass'
-                    catalogue = lsc.util.getcatalog(img, field)
+                    if args.catalogue:
+                        catalogue = args.catalogue
+                    else:
+                        catalogue = lsc.util.getcatalog(img, field)
                     lsc.lscabsphotdef.absphot(path + img.replace('.fits', '.sn2.fits'), field, catalogue, args.fix, args.sigma_clip,
                                               args.interactive, args.type, args.force, args.show, args.cutmag, args.calib, args.zcatold)
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
-                if not args.catalogue:
+                if args.catalogue:
+                    catalogue = args.catalogue
+                elif args.field:
+                    catalogue = lsc.util.getcatalog(args.name, args.field)
+                else:
                     catalogue = lsc.util.getcatalog(args.name, 'apass')
                 lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', args.field, catalogue, args.force, args.minstars)
             elif args.stage == 'diff':  #    difference images using hotpants

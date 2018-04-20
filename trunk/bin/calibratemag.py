@@ -180,7 +180,7 @@ if __name__ == "__main__":
     targets['site'] = [row['shortname'].split()[0].lower() if row['shortname'] is not None else None for row in targets]
     extinction = [lsc.sites.extinction[row['site']][row['filter']] for row in targets]
     targets['instmag_amcorr'] = (targets['instmag'].T - extinction * targets['airmass']).T
-    targets = targets.group_by(['dayobs', 'shortname'])
+    targets = targets.group_by(['dayobs', 'shortname', 'instrument'])
     for filters in colors_to_calculate:
         colors, dcolors = [], []
         for group in targets.groups:

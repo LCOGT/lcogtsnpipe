@@ -1642,7 +1642,7 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
 def get_standards(epoch, name, filters):
     epoch1 = epoch.split('-')[0]
     epoch2 = epoch.split('-')[-1]
-    query = '''SELECT DISTINCT std.filename, std.objname, std.filter,
+    query = '''SELECT DISTINCT std.filepath, std.filename, std.objname, std.filter,
                std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat
                FROM
                photlco AS obj,

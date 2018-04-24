@@ -588,8 +588,9 @@ def absphot(img,_field,_catalogue,_fix,rejection,_interactive,_type='fit',redo=F
               lsc.mysqldef.updatevalue('photlco','dzn',mediaerr,string.split(re.sub('.sn2.fits','.fits',img),'/')[-1],'lcogt2','filename')
               lsc.mysqldef.updatevalue('photlco','znnum',len(data2),string.split(re.sub('.sn2.fits','.fits',img),'/')[-1],'lcogt2','filename')
 
-        filters = get_other_filters(os.path.split(img)[1].replace('.sn2.fits', '.fits'))
-        colors = lsc.sites.chosecolor(filters, False)
+        filters_observed = get_other_filters(os.path.split(img)[1].replace('.sn2.fits', '.fits'))
+        filters_in_catalog = set(magstd0.keys())
+        colors = lsc.sites.chosecolor(filters_observed & filters_in_catalog, False)
         colorvec=colors[lsc.sites.filterst1[_filter]]
         zero = array(zero)
         zeroerr = array(zeroerr)

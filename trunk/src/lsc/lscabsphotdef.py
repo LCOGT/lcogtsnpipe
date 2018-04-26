@@ -221,8 +221,8 @@ def onclick(event):
                      (aa,sss,bb,sigmaa,sigmab))
 
 
-def absphot(img,_field,_catalogue,_fix,rejection,_interactive,_type='fit',redo=False,show=False,cutmag=-1,_calib='sloan',zcatold=False):
-    hdr = fits.getheader(img)
+def absphot(img,_field=None,_catalogue=None,_fix=True,rejection=2.,_interactive=False,_type='fit',redo=False,show=False,cutmag=-1,_calib='sloan',zcatold=False):
+    hdr = fits.getheader(img.replace('.fits', '.sn2.fits'))
     wcs = WCS(hdr)
     _cat=lsc.util.readkey3(hdr,'catalog')
     _instrume=lsc.util.readkey3(hdr,'instrume')
@@ -238,10 +238,25 @@ def absphot(img,_field,_catalogue,_fix,rejection,_interactive,_type='fit',redo=F
     else:
         raise Exception(_siteid + ' not in lsc.sites.extinction')
 
+    if _field is None:
+        filtchar = lsc.sites.filterst1[_filter]
+        if filtchar in 'UBVRI' and lsc.util.getcatalog(img, 'landolt'):
+            _field = 'landolt'
+        elif filtchar in 'ugrizw' and lsc.util.getcatalog(img, 'sloan'):
+            _field = 'sloan'
+        else:
+            _field = 'apass'
+
     if _calib=='apass': _field='apass'
     if _field=='apass': _calib='apass'
-    if _calib=='apass' and not _catalogue:
-        raise Exception('apass option for field or calib is valid only when apass catalogue is also provided')
+    
+    if _catalogue is None:
+       catalogpath = lsc.util.getcatalog(img, _field)
+    elif _catalogue[0]=='/':
+       catalogpath = _catalogue
+    else:
+       catalogpath = lsc.__path__[0]+'/standard/cat/'+_catalogue
+    catalog = os.path.basename(catalogpath)
 
     if _calib == 'sloanprime' and ('fs' in _instrume or 'em' in _instrume):
         colorefisso = {'UUB':0.0,'uug':0.0,'BUB':0.0,'BBV':0.0,'VBV':0.0,'VVR':0.0,\
@@ -286,11 +301,11 @@ def absphot(img,_field,_catalogue,_fix,rejection,_interactive,_type='fit',redo=F
         print 'already calibrated'
     else:
      print '_' * 100
-     origfile = os.path.split(img)[1].replace('.sn2.fits', '.fits')
-     print 'Calibrating {} to {}'.format(origfile, os.path.split(_catalogue)[1])
+     origfile = os.path.basename(img)
+     print 'Calibrating {} to {}'.format(origfile, catalog)
      lsc.mysqldef.updatevalue('photlco', 'zcat', 'X', origfile)
 
-     column=makecatalogue([img])[_filter][img]
+     column=makecatalogue([img.replace('.fits', '.sn2.fits')])[_filter][img.replace('.fits', '.sn2.fits')]
      rasex=np.array(column['ra0'],float)
      decsex=np.array(column['dec0'],float)
      if _type=='fit':
@@ -316,14 +331,10 @@ def absphot(img,_field,_catalogue,_fix,rejection,_interactive,_type='fit',redo=F
         xpix, ypix = wcs.wcs_world2pix(rasex, decsex, 1)
         xy = ['{:.1f} {:.1f}'.format(x, y) for x, y in zip(xpix, ypix)]
         iraf.set(stdimage='imt1024')
-        iraf.display(img.replace('.sn2', '') + '[0]',1,fill=True,Stdout=1)
+        iraf.display(img + '[0]',1,fill=True,Stdout=1)
         iraf.tvmark(1,'STDIN',Stdin=list(xy),mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=207,txsize=2)
         print 'yellow circles sextractor'
-        
-     if _catalogue[0]=='/':
-        catalogpath = _catalogue
-     else:
-        catalogpath = lsc.__path__[0]+'/standard/cat/'+_catalogue
+
      stdcoo = lsc.lscastrodef.readtxt(catalogpath)
      stdcoo['x'], stdcoo['y'] = wcs.wcs_world2pix(stdcoo['ra'], stdcoo['dec'], 1)
 
@@ -454,7 +465,7 @@ def absphot(img,_field,_catalogue,_fix,rejection,_interactive,_type='fit',redo=F
         media,mediaerr,mag2,data2=lsc.lscabsphotdef.zeropoint2(np.array(magstdn[lsc.sites.filterst1[_filter]],float),np.array(magsex1,float),10,2,show)
 
         if media!=9999: 
-              _limmag = limmag(img.replace('.sn2.fits', '.fits'), media, 3, _fwhm)     #   compute limiting magnitude at 3 sigma
+              _limmag = limmag(img, media, 3, _fwhm)     #   compute limiting magnitude at 3 sigma
               lsc.mysqldef.updatevalue('photlco', ['limmag', 'zn', 'dzn', 'znnum'], [_limmag, media, mediaerr, len(data2)], origfile)
 
         filters_observed = get_other_filters(origfile)
@@ -513,19 +524,18 @@ def absphot(img,_field,_catalogue,_fix,rejection,_interactive,_type='fit',redo=F
                     a, sa, b, sb = fitcol3(colore2, zero2, coloreerr2, zeroerr2, fisso, _filter, ' - '.join(col), show, _interactive, rejection)
             result[lsc.sites.filterst1[_filter]+col]=[a,sa,b,sb]
         if result:
-            if _catalogue:
-                lsc.util.updateheader(img, 0, {'CATALOG':(os.path.basename(_catalogue),'catalogue source')})
+            lsc.util.updateheader(img.replace('.fits', '.sn2.fits'), 0, {'CATALOG': (catalog, 'catalogue source')})
             for ll in result:
                 for kk in range(0,len(result[ll])):
                                     if not np.isfinite(result[ll][kk]): result[ll][kk]=0.0 
                 valore='%3.3s %6.6s %6.6s  %6.6s  %6.6s' %  (str(ll),str(result[ll][0]),str(result[ll][2]),str(result[ll][1]),str(result[ll][3]))
-                lsc.util.updateheader(img,0,{'zp'+ll:(str(valore),'a b sa sb in y=a+bx')})
+                lsc.util.updateheader(img.replace('.fits', '.sn2.fits'), 0, {'zp'+ll:(str(valore),'a b sa sb in y=a+bx')})
                 print '### added to header:', valore
                 if ll[0]==ll[2]: num=2
                 elif ll[0]==ll[1]: num=1
                 else: raise Exception('somthing wrong with color '+ll)
                 columns = ['zcol'+str(num), 'z'+str(num), 'c'+str(num), 'dz'+str(num), 'dc'+str(num), 'zcat']
-                values = [ll[1:], result[ll][0], result[ll][2], result[ll][1], result[ll][3], 'X' if result[ll][0] == 9999 else os.path.basename(_catalogue)]
+                values = [ll[1:], result[ll][0], result[ll][2], result[ll][1], result[ll][3], 'X' if result[ll][0] == 9999 else catalog]
                 lsc.mysqldef.updatevalue('photlco', columns, values, origfile)
                 
 #################################################################

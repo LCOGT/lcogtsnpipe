@@ -50,7 +50,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--field", default='', choices=['landolt', 'sloan', 'apass'])
     parser.add_argument("--ref", default='', help='get sn position from this file')
     parser.add_argument("--use-sextractor", action="store_true", help="use souces from sextractor for PSF instead of catalog")
-    parser.add_argument("--catalogue", default='')
+    parser.add_argument("--catalogue", default='', help="filename of catalog (full path OR ./___apass.cat OR apass/___apass.cat)")
     parser.add_argument("--calib", default='', choices=['sloan', 'natural', 'sloanprime'])
     parser.add_argument("--sigma-clip", default=2., help='number of sigma at which to reject stars for zero point calibration')
     parser.add_argument("--type", choices=['fit', 'ph', 'mag'], default='fit', help='type of magnitude (PSF, aperture, apparent)')
@@ -165,23 +165,18 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'ingestps1':
                 lsc.myloopdef.run_ingestsloan(listfile, 'ps1', args.ps1frames, show=args.show, force=args.force)
             elif args.stage == 'zcat':
-                for path, img, filt in zip(ll['filepath'], ll['filename'], ll['filter']):
-                    if args.field:
-                        field = args.field
-                    else:
-                        filtchar = lsc.sites.filterst1[filt]
-                        if filtchar in 'UBVRI' and lsc.util.getcatalog(img, 'landolt'):
-                            field = 'landolt'
-                        elif filtchar in 'ugrizw' and lsc.util.getcatalog(img, 'sloan'):
-                            field = 'sloan'
-                        else:
-                            field = 'apass'
-                    if args.catalogue:
-                        catalogue = args.catalogue
-                    else:
-                        catalogue = lsc.util.getcatalog(img, field)
-                    lsc.lscabsphotdef.absphot(path + img.replace('.fits', '.sn2.fits'), field, catalogue, args.fix, args.sigma_clip,
-                                              args.interactive, args.type, args.force, args.show, args.cutmag, args.calib, args.zcatold)
+                def run_absphot(img):
+                    return lsc.lscabsphotdef.absphot(img, args.field, args.catalogue, args.fix, args.sigma_clip, args.interactive,
+                                                     args.type, args.force, args.show, args.cutmag, args.calib, args.zcatold)
+                args.multicore = 1 # parallel processing doesn't work yet; problem with too many mysql queries
+                if args.multicore > 1:
+                    p = Pool(args.multicore)
+                    p.map(run_absphot, listfile)
+                    p.close()
+                    p.join()
+                else:                    
+                    for img in listfile:
+                        run_absphot(img)
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
                 if args.catalogue:
                     catalogue = args.catalogue

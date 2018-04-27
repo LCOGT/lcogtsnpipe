@@ -524,10 +524,15 @@ def lscastrometry2(lista,catalogue,_interactive,number,sexvec,catvec,guess=False
 
 def readtxt(ascifile):
     t = Table.read(ascifile, format='ascii')
+    is_colname = False
     for header_field in t.meta['comments']:
         spec = header_field.split()
-        if spec and spec[0] not in ['BEGIN', 'END', 'nfields', '']:
+        if spec and spec[0] == 'END':
+            break
+        if is_colname:
             t.rename_column('col'+str(spec[1]), spec[0])
+        if spec and spec[0] == 'nfields':
+            is_colname = True
     return t
 
 #########################################################################

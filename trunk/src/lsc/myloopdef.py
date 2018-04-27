@@ -1853,7 +1853,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
     os.system(command)
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype='0', suffix='.diff.fits'):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype='0', suffix='.diff.fits', use_mask=True):
     status = []
     stat = 'psf'
     for img in listtar:
@@ -1894,7 +1894,11 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
         difftype = ' --difftype ' + _difftype
     else:
         difftype = ''
-    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix
+    if use_mask:
+        mask = ''
+    else:
+        mask = ' --unmask'
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix + mask
     print command
     os.system(command)
 

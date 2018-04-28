@@ -83,6 +83,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--minstars", type=int, default=0, help="minimum number of stars matching catalog (-s abscat/local)")
     parser.add_argument("--difftype", default='', choices=['0', '1', '0,1'], help='Choose hotpants or optimal subtraction; hotpants = 0, difftype = 1, both = 0,1')
     parser.add_argument("--multicore", default=8, type=int, help='numbers of cores')
+    parser.add_argument("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
     args = parser.parse_args()
 
     if args.stage == 'checkdiff':
@@ -231,7 +232,7 @@ if __name__ == "__main__":   # main program
 
                     listtemp = np.array([k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])])
 
-                    lsc.myloopdef.run_diff(listfile, listtemp, args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, difftype, suffix)
+                    lsc.myloopdef.run_diff(listfile, listtemp, args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, difftype, suffix, args.use_mask)
             elif args.stage == 'template':
                 lsc.myloopdef.run_template(listfile, args.show, args.force, args.interactive, args.RA, args.DEC, args.psf, args.mag, args.clean, args.subtract_mag_from_header)
             elif args.stage == 'mergeall':  #    merge images using lacos and swarp

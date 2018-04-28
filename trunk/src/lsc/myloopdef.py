@@ -1601,16 +1601,18 @@ def subset(xx, _avg=''):  # lista  mjd
 
 
 ##########################################################
-
-def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
-             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype='', classid=None):
-             
+def process_epoch(epoch):
     if epoch is None:
         d = datetime.date.today() + datetime.timedelta(1)
         g = d - datetime.timedelta(4)
         epochs = [g.strftime("%Y%m%d"), d.strftime("%Y%m%d")]
     else:
         epochs = epoch.split('-')
+    return epochs
+
+def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
+             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype='', classid=None):
+    epochs = process_epoch(epoch)
     lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epochs[0], epochs[-1], '*', _telescope)
     if lista:
         ll0 = {}
@@ -1640,8 +1642,7 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
     return ll
 
 def get_standards(epoch, name, filters):
-    epoch1 = epoch.split('-')[0]
-    epoch2 = epoch.split('-')[-1]
+    epochs = process_epoch(epoch)
     query = '''SELECT DISTINCT std.filepath, std.filename, std.objname, std.filter,
                std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat
                FROM
@@ -1666,10 +1667,10 @@ def get_standards(epoch, name, filters):
                AND obj.dayobs = std.dayobs
                AND obj.quality = 127
                AND std.quality = 127
-               AND obj.dayobs >= {epoch1}
-               AND obj.dayobs <= {epoch2}
+               AND obj.dayobs >= {start}
+               AND obj.dayobs <= {end}
                AND targobj.name = "{name}"
-               '''.format(epoch1=epoch1, epoch2=epoch2, name=name)
+               '''.format(start=epochs[0], end=epochs[-1], name=name)
     if filters:
         query += 'AND (obj.filter="' + '" OR obj.filter="'.join(lsc.sites.filterst[filters]) + '")'
     print 'Searching for corresponding standard fields. This may take a minute...'
@@ -1793,7 +1794,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
     os.system(command)
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype='0', suffix='.diff.fits'):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype='0', suffix='.diff.fits', use_mask=True):
     status = []
     stat = 'psf'
     for img in listtar:
@@ -1834,7 +1835,11 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
         difftype = ' --difftype ' + _difftype
     else:
         difftype = ''
-    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix
+    if use_mask:
+        mask = ''
+    else:
+        mask = ' --unmask'
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix + mask
     print command
     os.system(command)
 

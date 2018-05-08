@@ -1,13 +1,31 @@
 from scipy.optimize import fsolve # root
 from astropy.io import fits
+from astropy.wcs import WCS
 import numpy as np
 from scipy import stats, odr
 import matplotlib.pyplot as plt
 import warnings
 import lsc
+import os
+from pyraf import iraf
+
 with warnings.catch_warnings(): # so cronic doesn't email on the "experimental" warning
     warnings.simplefilter('ignore')
     from astroquery.sdss import SDSS
+
+def get_other_filters(filename):
+    query = '''SELECT DISTINCT p2.filter FROM
+               photlco AS p1, photlco AS p2,
+               telescopes AS t1, telescopes AS t2
+               WHERE p1.filename='{}'
+               AND p1.dayobs=p2.dayobs
+               AND p1.targetid=p2.targetid
+               AND p1.telescopeid=t1.id
+               AND p2.telescopeid=t2.id
+               AND t1.shortname=t2.shortname'''.format(filename)
+    result = lsc.mysqldef.query([query], lsc.conn)
+    other_filters = {lsc.sites.filterst1[row['filter']] for row in result}
+    return other_filters
 
 def limmag(img, zeropoint=0, Nsigma_limit=3, _fwhm = 5):
     image = fits.open(img)
@@ -203,26 +221,16 @@ def onclick(event):
                      (aa,sss,bb,sigmaa,sigmab))
 
 
-def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit',redo=False,show=False,cutmag=-1,database='photlco',_calib='sloan',zcatold=False):
-    from astropy.io import fits
-    import math
-    import sys,re,string,os
-    from lsc.util import readkey3, readhdr
-    from numpy import array, compress, zeros, median, std, asarray, isfinite,mean
-    from pyraf import iraf
+def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=False,_type='fit',redo=False,show=False,cutmag=-1,_calib='sloan',zcatold=False):
+    filename = os.path.basename(img)
+    status = lsc.myloopdef.checkstage(filename, 'zcat')
+    if status < 1:
+        print 'cannot run zcat stage yet:', filename
+        return
 
-    iraf.noao(_doprint=0)
-    iraf.digiphot(_doprint=0)
-    iraf.daophot(_doprint=0)
-    iraf.images(_doprint=0)
-    iraf.imcoords(_doprint=0)
-    iraf.proto(_doprint=0)
-    t = fits.open(img)
-    tbdata = t[1].data
-    hdr2=t[1].header
-    hdr=lsc.util.readhdr(img)
-    _cat=readkey3(hdr,'catalog')
-    _telescope=lsc.util.readkey3(hdr,'telescop')
+    hdr = fits.getheader(img.replace('.fits', '.sn2.fits'))
+    wcs = WCS(hdr)
+    _cat=lsc.util.readkey3(hdr,'catalog')
     _instrume=lsc.util.readkey3(hdr,'instrume')
     _filter=lsc.util.readkey3(hdr,'filter')
     _airmass=lsc.util.readkey3(hdr,'airmass')
@@ -230,18 +238,38 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
     _date=lsc.util.readkey3(hdr,'date-obs')
     _object=lsc.util.readkey3(hdr,'object')
     _fwhm = lsc.util.readkey3(hdr,'PSF_FWHM')
-    _ra=lsc.util.readkey3(hdr,'RA')
-    _dec=lsc.util.readkey3(hdr,'DEC')
     _siteid = hdr['SITEID']
     if _siteid in lsc.sites.extinction:
         kk = lsc.sites.extinction[_siteid]
     else:
-        print _siteid
-        sys.exit('siteid not in lsc.sites.extinction')
-
+        raise Exception(_siteid + ' not in lsc.sites.extinction')
+    
     if _calib=='apass': _field='apass'
     if _field=='apass': _calib='apass'
-    if _calib=='apass' and not _catalogue: sys.exit('ERROR: apass option for field or calib is valid only when apass catalogue is also provided')
+
+    if not _catalogue:
+       catalogpath, _field = lsc.util.getcatalog(filename, _field, return_field=True)
+    elif _catalogue[0] in ['/', '.']:
+       catalogpath = os.path.realpath(_catalogue)
+    else:
+       catalogpath = lsc.__path__[0] + '/standard/cat/' + _catalogue
+    if not catalogpath:
+        print 'could not find a catalog for', _object, _filter
+        return
+
+    catalog = os.path.basename(catalogpath)
+    stdcoo = lsc.lscastrodef.readtxt(catalogpath)
+    if not _field:
+        fielddefs = {'landolt': {'U', 'B', 'V', 'R', 'I'},
+                     'sloan': {'u', 'g', 'r', 'i', 'z'},
+                     'apass': {'B', 'V', 'g', 'r', 'i'}}
+        for fieldname, fieldfilts in fielddefs.items():
+            if fieldfilts & set(stdcoo.colnames) == fieldfilts:
+                _field = fieldname
+                break
+        else:
+            print catalog, 'columns do not match any known field:', set(stdcoo.colnames)
+            return
 
     if _calib == 'sloanprime' and ('fs' in _instrume or 'em' in _instrume):
         colorefisso = {'UUB':0.0,'uug':0.0,'BUB':0.0,'BBV':0.0,'VBV':0.0,'VVR':0.0,\
@@ -285,182 +313,61 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
     if _cat and not redo:
         print 'already calibrated'
     else:
-     try:
-           lsc.mysqldef.updatevalue(database,'zcat','X',string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-           if os.path.isfile(string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1]):
-                 lsc.mysqldef.updatevalue(database,'zcat','X',string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-     except: print 'module mysqldef not found'
+     print '_' * 100
+     print 'Calibrating {} to {}'.format(filename, catalog)
+     lsc.mysqldef.updatevalue('photlco', 'zcat', 'X', filename)
 
-     column=makecatalogue([img])[_filter][img]
-
-     rasex=array(column['ra0'],float)
-     decsex=array(column['dec0'],float)
+     column=makecatalogue([img.replace('.fits', '.sn2.fits')])[_filter][img.replace('.fits', '.sn2.fits')]
+     rasex=np.array(column['ra0'],float)
+     decsex=np.array(column['dec0'],float)
      if _type=='fit':
-        magsex=array(column['smagf'],float)
-        magerrsex=array(column['smagerrf'],float)
+        magsex=np.array(column['smagf'],float)
+        magerrsex=np.array(column['smagerrf'],float)
      elif _type=='ph':
-        magsex=array(column['magp3'],float)
-        magerrsex=array(column['merrp3'],float)
-     else: sys.exit(_type+' not valid (ph or fit)')
+        magsex=np.array(column['magp3'],float)
+        magerrsex=np.array(column['merrp3'],float)
+     else:
+        raise Exception(_type+' not valid (ph or fit)')
      
 
      if not cutmag: 
          cutmag=99
 
-     if len(compress( array(magsex) < float(cutmag) , magsex)) < 5 : cutmag=99  # not cut if only few object
-     rasex     = compress(array(magsex,float)<=cutmag,rasex)
-     decsex    = compress(array(magsex,float)<=cutmag,decsex)
-     magerrsex = compress(array(magsex,float)<=cutmag,magerrsex)
-     magsex    = compress(array(magsex,float)<=cutmag,array(magsex))
+     if len(np.compress( np.array(magsex) < float(cutmag) , magsex)) < 5 : cutmag=99  # not cut if only few object
+     rasex     = np.compress(np.array(magsex,float)<=cutmag,rasex)
+     decsex    = np.compress(np.array(magsex,float)<=cutmag,decsex)
+     magerrsex = np.compress(np.array(magsex,float)<=cutmag,magerrsex)
+     magsex    = np.compress(np.array(magsex,float)<=cutmag,np.array(magsex))
 
      if _interactive:
+        xpix, ypix = wcs.wcs_world2pix(rasex, decsex, 1)
+        xy = ['{:.1f} {:.1f}'.format(x, y) for x, y in zip(xpix, ypix)]
         iraf.set(stdimage='imt1024')
-        iraf.display(re.sub('.sn2','',img) + '[0]',1,fill=True,Stdout=1)
-        vector=[]
-        for i in range(0,len(rasex)):
-            vector.append(str(rasex[i])+' '+str(decsex[i]))
-        xy = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vector,Stdout=1,image=img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
-                               formats='%10.1f %10.1f',verbose='yes')[3:]
+        iraf.display(img + '[0]',1,fill=True,Stdout=1)
         iraf.tvmark(1,'STDIN',Stdin=list(xy),mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=207,txsize=2)
-        print 'yelow circles sextractor'
-        
-     if _catalogue:
-        ######## use external catalogue
-        if _catalogue[0]=='/':   stdcooC=lsc.lscastrodef.readtxt(_catalogue)
-        else:                   stdcooC=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/'+_catalogue)
-        rastdC,decstdL=array(stdcooC['ra'],float),array(stdcooC['dec'],float)
-        lsc.util.delete('tmp.stdL.pix')
-        colonne=str(stdcooC['rapos'])+'   '+str(stdcooC['decpos'])
-        if _catalogue[0]=='/': 
-            iraf.wcsctran(_catalogue,'tmp.stdL.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
-                          columns=colonne,formats='%10.1f %10.1f',verbose='no')
-        else:
-            iraf.wcsctran(lsc.__path__[0]+'/standard/cat/'+_catalogue,'tmp.stdL.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
-                          columns=colonne,formats='%10.1f %10.1f',verbose='no')
-        standardpixC=lsc.lscastrodef.readtxt('tmp.stdL.pix')
-        if _interactive:
-              vector=[k+' '+v for k,v in  zip(standardpixC['ra'],standardpixC['dec'])]
-              iraf.tvmark(1,'STDIN',Stdin=list(vector),mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=204,txsize=2)
-              print 'yelow circles sextractor'
+        print 'yellow circles sextractor'
 
-        xstdC=standardpixC['ra']
-        ystdC=standardpixC['dec']
-        idstdC=standardpixC['id']
-        xstdC=compress((array(xstdC,float)<readkey3(hdr,'XDIM'))&(array(xstdC,float)>0)&(array(ystdC,float)>0)&(array(ystdC,float)<readkey3(hdr,'YDIM')),xstdC)
-        xstdL=xstdLL=xstdS=xstdC
-        standardpixL=standardpixLL=standardpixS=standardpixC
-        stdcooL=stdcooLL=stdcooS=stdcooC
-     else:
-        ######## check if it is landolt field
-        stdcooL=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/landolt.cat')
-        rastdL,decstdL=array(stdcooL['ra'],float),array(stdcooL['dec'],float)
-        lsc.util.delete('tmp.stdL.pix')
-        iraf.wcsctran(lsc.__path__[0]+'/standard/cat/landolt.cat','tmp.stdL.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
-                          columns='1 2',formats='%10.1f %10.1f',verbose='no')
-        standardpixL=lsc.lscastrodef.readtxt('tmp.stdL.pix')
-        if _interactive:
-              vector=[k+' '+v for k,v in  zip(standardpixL['ra'],standardpixL['dec'])]
-              iraf.tvmark(1,'STDIN',Stdin=list(vector),mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=204,txsize=2)
-              #iraf.tvmark(1,'tmp.stdL.pix',mark="circle",number='yes',label='no',radii=8,nxoffse=5,nyoffse=5,color=204,txsize=2)
-              print 'yelow circles sextractor'
+     stdcoo['x'], stdcoo['y'] = wcs.wcs_world2pix(stdcoo['ra'], stdcoo['dec'], 1)
+     if _interactive:
+           vector=['{:.1f} {:.1f}'.format(x, y) for x, y in zip(stdcoo['x'],stdcoo['y'])]
+           iraf.tvmark(1,'STDIN',Stdin=vector,mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=204,txsize=2)
+           print 'red circles catalog'
 
-        xstdL=standardpixL['ra']
-        ystdL=standardpixL['dec']
-        idstdL=standardpixL['id']
-        xstdL=compress((array(xstdL,float)<readkey3(hdr,'XDIM'))&(array(xstdL,float)>0)&(array(ystdL,float)>0)&(array(ystdL,float)<readkey3(hdr,'YDIM')),xstdL)
-
-        ######## check if it is Stetson field
-        stdcooLL=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/StetsonCat.dat')
-        ww=asarray([i for i in range(len(stdcooLL['ra'])) if ( abs(float(stdcooLL['ra'][i])-float(_ra))<.2 and  abs(float(stdcooLL['dec'][i])-_dec)<.2    )])
-        if len(ww)>0:
-            for hh in stdcooLL.keys(): 
-                if type(stdcooLL[hh])!=int:
-                    if hh not in ['id','ra','dec']:
-                        stdcooLL[hh]=array(array(stdcooLL[hh])[ww],float)
-                    else:
-                        stdcooLL[hh]=array(stdcooLL[hh])[ww]
-        lll=[]
-        for i in range(0,len(stdcooLL['ra'])): lll.append(stdcooLL['ra'][i]+' '+stdcooLL['dec'][i])
-
-        rastdLL,decstdLL=array(stdcooLL['ra'],float),array(stdcooLL['dec'],float)
-        lsc.util.delete('tmp.stdLL.pix')
-        iraf.wcsctran('STDIN','tmp.stdLL.pix',img + '[0]',inwcs='world',Stdin=lll,units='degrees degrees',outwcs='logical',\
-                          columns='1 2',formats='%10.1f %10.1f',verbose='no')
-
-        standardpixLL={}
-        for ii in stdcooLL.keys(): standardpixLL[ii]=stdcooLL[ii]
-        standardpixLL['ra']=array(iraf.proto.fields('tmp.stdLL.pix',fields='1',Stdout=1),float) #standardpixLL['ra']
-        standardpixLL['dec']=array(iraf.proto.fields('tmp.stdLL.pix',fields='2',Stdout=1),float) #standardpixLL['dec']
-        xstdLL=array(iraf.proto.fields('tmp.stdLL.pix',fields='1',Stdout=1),float) #standardpixLL['ra']
-        ystdLL=array(iraf.proto.fields('tmp.stdLL.pix',fields='2',Stdout=1),float) #standardpixLL['dec']
-        idstdLL=standardpixLL['id']
-
-        if _interactive:
-              vector=[k+' '+v for k,v in  zip(standardpixLL['ra'],standardpixLL['dec'])]
-              iraf.tvmark(1,'STDIN',Stdin=list(vector),mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=204,txsize=2)
-              #iraf.tvmark(1,'tmp.stdLL.pix',mark="cross",number='yes',label='no',radii=8,nxoffse=5,nyoffse=5,color=204,txsize=2)
-              print 'red crosses Stetson'
-
-        xstdLL=compress((array(xstdLL,float)<readkey3(hdr,'XDIM'))&(array(xstdLL,float)>0)&(array(ystdLL,float)>0)&(array(ystdLL,float)<readkey3(hdr,'YDIM')),xstdLL)
-        ######## check if it is sloan field
-        magsel0,magsel1=12,18
-        _ids=lsc.lscastrodef.sloan2file(_ra,_dec,20,float(magsel0),float(magsel1),'_tmpsloan.cat')
-        ascifile='_tmpsloan.cat'
-        stdcooS=lsc.lscastrodef.readtxt(ascifile)
-        rastdS,decstdS=array(stdcooS['ra'],float),array(stdcooS['dec'],float)
-        lsc.util.delete('tmp.stdS.pix')
-        iraf.wcsctran(ascifile,'tmp.stdS.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.1f %10.1f',verbose='no')
-        standardpixS=lsc.lscastrodef.readtxt('tmp.stdS.pix')
-        if _interactive:
-              vector=[k+' '+v for k,v in  zip(standardpixS['ra'],standardpixS['dec'])]
-              iraf.tvmark(1,'STDIN',Stdin=list(vector),mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=204,txsize=2)
-              print 'green cross sloan'
-
-        xstdS=standardpixS['ra']
-        ystdS=standardpixS['dec']
-        idstdS=standardpixS['id']
-        xstdS=compress((array(xstdS,float)<readkey3(hdr,'XDIM'))&(array(xstdS,float)>0)&(array(ystdS,float)>0)&(array(ystdS,float)<readkey3(hdr,'YDIM')),xstdS)
-        ##############################################3
-     if not _catalogue and len(xstdLL)>0:
-             xstdL=xstdLL
-             standardpixL=standardpixLL
-             stdcooL=stdcooLL
-
-     colors = lsc.sites.chosecolor(_color, False)
-     standardpix = standardpixL
-     stdcoo = stdcooL
-
-     xstd=standardpix['ra']
-     ystd=standardpix['dec']
-     idstd=standardpix['id']
-     rastd,decstd=array(stdcoo['ra'],float),array(stdcoo['dec'],float)
-     xstd0=compress((array(xstd,float)<readkey3(hdr,'XDIM'))&(array(xstd,float)>0)&(array(ystd,float)>0)&(array(ystd,float)<readkey3(hdr,'YDIM')),xstd)
-
-     if len(xstd0)>1:  ########   go only if standard stars are in the field  ##########
+     in_field = (stdcoo['x'] > 0) & (stdcoo['x'] < lsc.util.readkey3(hdr, 'XDIM')) & (stdcoo['y'] > 0) & (stdcoo['y'] < lsc.util.readkey3(hdr, 'YDIM'))
+     if np.any(in_field):  ########   go only if standard stars are in the field  ##########
         magstd0={}
         errstd0={}
         airmass0={}
         result={}
         fileph={}
-        print '\n###  standard field: '+str(_field)
-        ystd0=compress((array(xstd,float)<readkey3(hdr,'XDIM'))&(array(xstd,float)>0)&(array(ystd,float)>0)\
-                               &(array(ystd,float)<readkey3(hdr,'YDIM')),ystd)
-        rastd0=compress((array(xstd,float)<readkey3(hdr,'XDIM'))&(array(xstd,float)>0)&(array(ystd,float)>0)\
-                                &(array(ystd,float)<readkey3(hdr,'YDIM')),rastd)
-        decstd0=compress((array(xstd,float)<readkey3(hdr,'XDIM'))&(array(xstd,float)>0)&(array(ystd,float)>0)\
-                                 &(array(ystd,float)<readkey3(hdr,'YDIM')),decstd)
-        idstd0=compress((array(xstd,float)<readkey3(hdr,'XDIM'))&(array(xstd,float)>0)&(array(ystd,float)>0)\
-                                 &(array(ystd,float)<readkey3(hdr,'YDIM')),idstd)
-        stdcoo0={}
-        for key in stdcoo.keys():
-#              if key in 'ugrizUBVRI':
-              if 'pos' not in key:
-                    stdcoo0[key]=compress((array(xstd,float)<readkey3(hdr,'XDIM'))&(array(xstd,float)>0)&(array(ystd,float)>0)\
-                                                &(array(ystd,float)<readkey3(hdr,'YDIM')),stdcoo[key])
+        stdcoo0 = stdcoo[in_field]
+        rastd0 = stdcoo0['ra']
+        decstd0 = stdcoo0['dec']
+        idstd0 = stdcoo0['id']
         ###############################################################
         #               pos0 = standard                          pos1 = sextractor
-        distvec,pos0,pos1=lsc.lscastrodef.crossmatch(array(rastd0),array(decstd0),array(rasex),array(decsex),5)
-        for key in stdcoo0.keys():            stdcoo0[key]=stdcoo0[key][pos0]
+        distvec, pos0, pos1 = lsc.lscastrodef.crossmatch(rastd0, decstd0, rasex, decsex, 5)
+        stdcoo0 = stdcoo0[pos0]
         rastd0=rastd0[pos0]
         decstd0=decstd0[pos0]
         idstd0=idstd0[pos0]
@@ -471,22 +378,21 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         magerrsex = magerrsex[pos1]
 #################################################################################
         if _field=='landolt':
-            print '\n###  landolt system'
             for _filtlandolt in 'UBVRI':
                 if _filtlandolt==lsc.sites.filterst1[_filter]:  airmass0[_filtlandolt]=  0 #_airmass
                 else: airmass0[_filtlandolt]= 0
                 magstd0[_filtlandolt]=stdcoo0[_filtlandolt]
                 errstd0[_filtlandolt]=stdcoo0[_filtlandolt+'err']
-            fileph['mU']=zeros(len(rastd0))+999
-            fileph['mB']=zeros(len(rastd0))+999
-            fileph['mV']=zeros(len(rastd0))+999
-            fileph['mR']=zeros(len(rastd0))+999
-            fileph['mI']=zeros(len(rastd0))+999
+            fileph['mU']=np.tile(999, len(rastd0))
+            fileph['mB']=np.tile(999, len(rastd0))
+            fileph['mV']=np.tile(999, len(rastd0))
+            fileph['mR']=np.tile(999, len(rastd0))
+            fileph['mI']=np.tile(999, len(rastd0))
             fileph['V']=magstd0['V']
-            fileph['BV']=array(array(magstd0['B'],float)-array(magstd0['V'],float),str)
-            fileph['UB']=array(array(magstd0['U'],float)-array(magstd0['B'],float),str)
-            fileph['VR']=array(array(magstd0['V'],float)-array(magstd0['R'],float),str)
-            fileph['RI']=array(array(magstd0['R'],float)-array(magstd0['I'],float),str)
+            fileph['BV']=np.array(np.array(magstd0['B'],float)-np.array(magstd0['V'],float),str)
+            fileph['UB']=np.array(np.array(magstd0['U'],float)-np.array(magstd0['B'],float),str)
+            fileph['VR']=np.array(np.array(magstd0['V'],float)-np.array(magstd0['R'],float),str)
+            fileph['RI']=np.array(np.array(magstd0['R'],float)-np.array(magstd0['I'],float),str)
         elif _field=='sloan':
             for _filtsloan in 'ugriz':
                 if _filtsloan==lsc.sites.filterst1[_filter]:  airmass0[_filtsloan]= 0   # _airmass
@@ -495,17 +401,17 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                 errstd0[_filtsloan]=stdcoo0[_filtsloan+'err']
             magstd0['w'] = magstd0['r']
             errstd0['w'] = errstd0['r']
-            fileph['mu']=zeros(len(rastd0))+999
-            fileph['mg']=zeros(len(rastd0))+999
-            fileph['mr']=zeros(len(rastd0))+999
-            fileph['mi']=zeros(len(rastd0))+999
-            fileph['mz']=zeros(len(rastd0))+999
+            fileph['mu']=np.tile(999, len(rastd0))
+            fileph['mg']=np.tile(999, len(rastd0))
+            fileph['mr']=np.tile(999, len(rastd0))
+            fileph['mi']=np.tile(999, len(rastd0))
+            fileph['mz']=np.tile(999, len(rastd0))
             fileph['mw'] = fileph['mr']
             fileph['r']=magstd0['r']
-            fileph['gr']=array(array(magstd0['g'],float)-array(magstd0['r'],float),str)
-            fileph['ri']=array(array(magstd0['r'],float)-array(magstd0['i'],float),str)
-            fileph['ug']=array(array(magstd0['u'],float)-array(magstd0['g'],float),str)
-            fileph['iz']=array(array(magstd0['i'],float)-array(magstd0['z'],float),str)
+            fileph['gr']=np.array(np.array(magstd0['g'],float)-np.array(magstd0['r'],float),str)
+            fileph['ri']=np.array(np.array(magstd0['r'],float)-np.array(magstd0['i'],float),str)
+            fileph['ug']=np.array(np.array(magstd0['u'],float)-np.array(magstd0['g'],float),str)
+            fileph['iz']=np.array(np.array(magstd0['i'],float)-np.array(magstd0['z'],float),str)
         elif _field=='apass':
             for _filtsloan in 'BVgri':
                 if _filtsloan==lsc.sites.filterst1[_filter]:  airmass0[_filtsloan]= 0   # _airmass
@@ -514,22 +420,22 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                 errstd0[_filtsloan]=stdcoo0[_filtsloan+'err']
             magstd0['w'] = magstd0['r']
             errstd0['w'] = errstd0['r']
-            fileph['mB']=zeros(len(rastd0))+999
-            fileph['mV']=zeros(len(rastd0))+999
-            fileph['mg']=zeros(len(rastd0))+999
-            fileph['mr']=zeros(len(rastd0))+999
-            fileph['mi']=zeros(len(rastd0))+999
+            fileph['mB']=np.tile(999, len(rastd0))
+            fileph['mV']=np.tile(999, len(rastd0))
+            fileph['mg']=np.tile(999, len(rastd0))
+            fileph['mr']=np.tile(999, len(rastd0))
+            fileph['mi']=np.tile(999, len(rastd0))
             fileph['mw'] = fileph['mr']
             fileph['V']=magstd0['V']
-            fileph['BV']=array(array(magstd0['B'],float)-array(magstd0['V'],float),str)
-            fileph['gr']=array(array(magstd0['g'],float)-array(magstd0['r'],float),str)
-            fileph['ri']=array(array(magstd0['r'],float)-array(magstd0['i'],float),str)
-            fileph['Vg']=array(array(magstd0['V'],float)-array(magstd0['g'],float),str)
+            fileph['BV']=np.array(np.array(magstd0['B'],float)-np.array(magstd0['V'],float),str)
+            fileph['gr']=np.array(np.array(magstd0['g'],float)-np.array(magstd0['r'],float),str)
+            fileph['ri']=np.array(np.array(magstd0['r'],float)-np.array(magstd0['i'],float),str)
+            fileph['Vg']=np.array(np.array(magstd0['V'],float)-np.array(magstd0['g'],float),str)
 ########################################################################################
         zero=[]
         zeroerr = []
         magcor=[]
-        fil = open(re.sub('.fits','.ph',img),'w')
+        fil = open(img.replace('.fits', '.ph'), 'w')
         fil.write(str(_instrume)+' '+str(_date)+'\n')
         fil.write('*** '+_object+' '+str(len(magsex))+'\n')
         if _field=='landolt':
@@ -566,20 +472,18 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
 
         magsex1=magsex+kk[lsc.sites.filterst1[_filter]]*float(_airmass)  #   add again extinction for natural zero point comparison
 
-        media,mediaerr,mag2,data2=lsc.lscabsphotdef.zeropoint2(array(magstdn[lsc.sites.filterst1[_filter]],float),array(magsex1,float),10,2,show)
+        media,mediaerr,mag2,data2=lsc.lscabsphotdef.zeropoint2(np.array(magstdn[lsc.sites.filterst1[_filter]],float),np.array(magsex1,float),10,2,show)
 
         if media!=9999: 
-              _limmag = limmag(re.sub('.sn2.fits','.fits',img), media, 3, _fwhm)     #   compute limiting magnitude at 3 sigma
-              print '#####  ',str(_limmag)
-              lsc.mysqldef.updatevalue('photlco','limmag',_limmag,string.split(re.sub('.sn2.fits','.fits',img),'/')[-1],'lcogt2','filename')
-              lsc.mysqldef.updatevalue('photlco','zn',media,string.split(re.sub('.sn2.fits','.fits',img),'/')[-1],'lcogt2','filename')
-              lsc.mysqldef.updatevalue('photlco','dzn',mediaerr,string.split(re.sub('.sn2.fits','.fits',img),'/')[-1],'lcogt2','filename')
-              lsc.mysqldef.updatevalue('photlco','znnum',len(data2),string.split(re.sub('.sn2.fits','.fits',img),'/')[-1],'lcogt2','filename')
+              _limmag = limmag(img, media, 3, _fwhm)     #   compute limiting magnitude at 3 sigma
+              lsc.mysqldef.updatevalue('photlco', ['limmag', 'zn', 'dzn', 'znnum'], [_limmag, media, mediaerr, len(data2)], filename)
 
-
+        filters_observed = get_other_filters(filename)
+        filters_in_catalog = set(magstd0.keys())
+        colors = lsc.sites.chosecolor(filters_observed & filters_in_catalog, False)
         colorvec=colors[lsc.sites.filterst1[_filter]]
-        zero = array(zero)
-        zeroerr = array(zeroerr)
+        zero = np.array(zero)
+        zeroerr = np.array(zeroerr)
         print 'attempting these colors:', colorvec
         if not colorvec:
             colorvec.append(2*lsc.sites.filterst1[_filter])
@@ -588,20 +492,20 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
         for i, col in enumerate(colorvec):
             col0=magstd0[col[0]] 
             col1=magstd0[col[1]]
-            colstd0=array(col0,float)-array(col1,float)
+            colstd0=np.array(col0,float)-np.array(col1,float)
             colerr0 = errstd0[col[0]]
             colerr1 = errstd0[col[1]]
-            colerrstd0 = (array(colerr0, float)**2 + array(colerr1, float)**2)**0.5
+            colerrstd0 = (np.array(colerr0, float)**2 + np.array(colerr1, float)**2)**0.5
 
 #            colore=[]
 #            for i in range(0,len(pos1)):   colore.append(colstd0[i])
             # cut stars with crazy magnitude and color
-#            colore1=compress(abs(array(zero))<50,array(colore))
-#            zero1=compress(abs(array(zero))<50,array(zero))
+#            colore1=np.compress(abs(np.array(zero))<50,np.array(colore))
+#            zero1=np.compress(abs(np.array(zero))<50,np.array(zero))
             if _filter in ['up', 'zs']: maxcolor = 10
             else:                       maxcolor = 2
-#            zero2=compress(abs(array(colore1)) < maxcolor,array(zero1))
-#            colore2=compress(abs(array(colore1)) < maxcolor,array(colore1))
+#            zero2=np.compress(abs(np.array(colore1)) < maxcolor,np.array(zero1))
+#            colore2=np.compress(abs(np.array(colore1)) < maxcolor,np.array(colore1))
 
             good = (abs(zero) < 50) & (abs(colstd0) < maxcolor) & (zeroerr != 0) & (colerrstd0 != 0)
             zero2 = zero[good]
@@ -630,41 +534,19 @@ def absphot(img,_field,_catalogue,_fix,_color,rejection,_interactive,_type='fit'
                     a, sa, b, sb = fitcol3(colore2, zero2, coloreerr2, zeroerr2, fisso, _filter, ' - '.join(col), show, _interactive, rejection)
             result[lsc.sites.filterst1[_filter]+col]=[a,sa,b,sb]
         if result:
-            print '### zeropoint ..... done at airmass 0'
-            if _catalogue:
-                lsc.util.updateheader(img,0,{'CATALOG':(str(string.split(_catalogue,'/')[-1]),'catalogue source')})
-            stringa=''
+            lsc.util.updateheader(img.replace('.fits', '.sn2.fits'), 0, {'CATALOG': (catalog, 'catalogue source')})
             for ll in result:
                 for kk in range(0,len(result[ll])):
-                                    if not isfinite(result[ll][kk]): result[ll][kk]=0.0 
+                                    if not np.isfinite(result[ll][kk]): result[ll][kk]=0.0 
                 valore='%3.3s %6.6s %6.6s  %6.6s  %6.6s' %  (str(ll),str(result[ll][0]),str(result[ll][2]),str(result[ll][1]),str(result[ll][3]))
-                lsc.util.updateheader(img,0,{'zp'+ll:(str(valore),'a b sa sb in y=a+bx')})
+                lsc.util.updateheader(img.replace('.fits', '.sn2.fits'), 0, {'zp'+ll:(str(valore),'a b sa sb in y=a+bx')})
                 print '### added to header:', valore
                 if ll[0]==ll[2]: num=2
                 elif ll[0]==ll[1]: num=1
-                else: sys.exit('somthing wrong with color '+ll)
-                try:
-                    print 'zcol'+str(num),ll[1:],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1]
-                    lsc.mysqldef.updatevalue(database,'zcol'+str(num),ll[1:],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-                    lsc.mysqldef.updatevalue(database,'z'+str(num),result[ll][0],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-                    lsc.mysqldef.updatevalue(database,'c'+str(num),result[ll][2],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-                    lsc.mysqldef.updatevalue(database,'dz'+str(num),result[ll][1],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-                    lsc.mysqldef.updatevalue(database,'dc'+str(num),result[ll][3],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-                    if os.path.isfile(string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1]):
-                          lsc.mysqldef.updatevalue(database,'zcol'+str(num),ll[1:],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-                          lsc.mysqldef.updatevalue(database,'z'+str(num),result[ll][0],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-                          lsc.mysqldef.updatevalue(database,'c'+str(num),result[ll][2],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-                          lsc.mysqldef.updatevalue(database,'dz'+str(num),result[ll][1],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-                          lsc.mysqldef.updatevalue(database,'dc'+str(num),result[ll][3],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-                    if result[ll][0]!=9999:
-                          lsc.mysqldef.updatevalue(database,'zcat',string.split(_catalogue,'/')[-1],string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-                          if os.path.isfile(string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1]):
-                                lsc.mysqldef.updatevalue(database,'zcat',string.split(_catalogue,'/')[-1],string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-                    else:
-                        lsc.mysqldef.updatevalue(database,'zcat','X',string.split(re.sub('.sn2.fits','.fits',img),'/')[-1])
-                        if os.path.isfile(string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1]):
-                              lsc.mysqldef.updatevalue(database,'zcat','X',string.split(re.sub('.diff.sn2.fits','.fits',img),'/')[-1])
-                except: print 'module mysqldef not found'
+                else: raise Exception('somthing wrong with color '+ll)
+                columns = ['zcol'+str(num), 'z'+str(num), 'c'+str(num), 'dz'+str(num), 'dc'+str(num), 'zcat']
+                values = [ll[1:], result[ll][0], result[ll][2], result[ll][1], result[ll][3], 'X' if result[ll][0] == 9999 else catalog]
+                lsc.mysqldef.updatevalue('photlco', columns, values, filename)
                 
 #################################################################
 #################### new zero point calculation #################

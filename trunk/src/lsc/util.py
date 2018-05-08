@@ -4,6 +4,7 @@ from astropy.io import fits
 from astropy.nddata import Cutout2D
 from astropy.wcs import WCS
 import lsc
+from glob import glob
 
 workdirectory = os.getenv('LCOSNDIR')
 if workdirectory is None:
@@ -797,25 +798,41 @@ def checksndb(img):
         return '', '', ''
 ##################################################################3
 
-def getcatalog(name_or_filename, field):
+def getcatalog(name_or_filename, field='', return_field=False):
     catalog = ''
-    catalog_path = lsc.__path__[0] + '/standard/cat/' + field + '/'
-    # get the catalog from the database
-    entries = lsc.mysqldef.query(['''select name, sloan_cat, landolt_cat, apass_cat
-                                     from targets, targetnames, photlco
-                                     where targets.id=targetnames.targetid and targets.id=photlco.targetid
-                                     and (name="{0}" or filename="{0}")'''.format(os.path.basename(name_or_filename))], lsc.conn)
-    if entries:
-        if field + '_cat' in entries[0] and entries[0][field + '_cat']:
-            catalog = catalog_path + entries[0][field + '_cat']
-    # if not in database, search for the catalog in the directory
-    if not catalog:
-        for entry in entries:
-            catlist = os.listdir(catalog_path)
-            targetnames = [os.path.basename(cat).split('_' + field)[0].lower() for cat in catlist]
-            targetname = entry['name'].replace(' ', '').lower()
-            if targetname in targetnames:
-               catalog = catalog_path + catlist[targetnames.index(targetname)]
-    return catalog
+    # get the catalog(s) from the database
+    if '.fits' in name_or_filename:
+        entries = lsc.mysqldef.query(['''select name, sloan_cat, landolt_cat, apass_cat, filter
+                                         from targets, targetnames, photlco
+                                         where targets.id=targetnames.targetid and targets.id=photlco.targetid
+                                         and filename="{}"'''.format(name_or_filename)], lsc.conn)
+    else:
+        entries = lsc.mysqldef.query(['''select othernames.name, sloan_cat, landolt_cat, apass_cat
+                                         from targets, targetnames, targetnames as othernames
+                                         where targets.id=targetnames.targetid and targets.id=othernames.targetid
+                                         and targetnames.name="{}"'''.format(name_or_filename)], lsc.conn)
+    if field:
+        fields = [field]
+    else:
+        fields = ['landolt', 'sloan', 'apass'] # use this priority by default
+    for field in fields:
+        if entries: # if your query worked
+            entry = entries[0] # choose first one
+            # if you searched by image, check that the filter is compatible with this field
+            if 'filter' not in entry or entry['filter'] in lsc.sites.filterst[field]:
+                catalog_path = lsc.__path__[0] + '/standard/cat/' + field + '/'
+                if entry[field + '_cat']:
+                    catalog = catalog_path + entries[0][field + '_cat']
+                    break
+                # if not in database, search for the catalog in the directory
+                for entry in entries:
+                    catlist = glob(catalog_path + entry['name'].replace(' ', ''))
+                    if catlist:
+                       catalog = catalog_path + catlist[0]
+                       break
+    if return_field:
+        return catalog, field
+    else:
+        return catalog
 
 ######################################################################################################

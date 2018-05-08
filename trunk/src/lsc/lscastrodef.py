@@ -1,3 +1,5 @@
+from astropy.table import Table
+
 def vizq(_ra,_dec,catalogue,radius):
     import os,string,re
     _site='vizier.u-strasbg.fr'
@@ -521,32 +523,17 @@ def lscastrometry2(lista,catalogue,_interactive,number,sexvec,catvec,guess=False
 ##########################################################################
 
 def readtxt(ascifile):
-    import string
-    f=open(ascifile,'r')
-    ss=f.readlines()
-    f.close()
-    columnname=[]
-    for i in range(0,len(ss)):
-        if  ss[i][0]=='#' and 'nfields' in ss[i] :
-            num=int(string.split(ss[i])[-1])
-            for g in range(1,num+1):
-                columnname.append(string.split(ss[i+g])[1])
+    t = Table.read(ascifile, format='ascii')
+    is_colname = False
+    for header_field in t.meta['comments']:
+        spec = header_field.split()
+        if spec and spec[0] == 'END':
             break
-    ascidic={}
-    try:
-        from numpy import genfromtxt
-        data=genfromtxt(ascifile,str,unpack=True)
-        for i in range(0,len(columnname)):
-            ascidic[columnname[i]]=data[i]
-            ascidic[columnname[i]+'pos']=i+1
-    except:
-        for j in columnname:     ascidic[j]=[]
-        for j in range(0,len(columnname)):
-            ascidic[columnname[j]+'pos']=j+1
-            for i in range(0,len(ss)):
-                if  ss[i][0]!='#':
-                    ascidic[columnname[j]].append(string.split(ss[i])[j])     
-    return ascidic
+        if is_colname:
+            t.rename_column('col'+str(spec[1]), spec[0])
+        if spec and spec[0] == 'nfields':
+            is_colname = True
+    return t
 
 #########################################################################
 

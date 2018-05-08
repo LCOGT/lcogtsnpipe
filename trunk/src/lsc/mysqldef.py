@@ -115,15 +115,20 @@ def updatevalue(table,column,value,filename,connection='lcogt2',filename0='filen
    conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
    try:
       cursor = conn.cursor (MySQLdb.cursors.DictCursor)
-      if value in [True,False]:
-         cursor.execute ("UPDATE "+str(table)+" set "+column+"="+str(value)+" where "+str(filename0)+"= "+"'"+str(filename)+"'"+"   ")
-      elif value in ['Null','null','NULL','']:
-         cursor.execute ("UPDATE "+str(table)+" set "+column+"=NULL where "+str(filename0)+"= "+"'"+str(filename)+"'"+"   ")
-      elif type(value) is float:
-         cursor.execute ("UPDATE %s set %s=%16.16f where %s= '%s'   " % (table,column,value,filename0,filename) )
+      if isinstance(column, list):
+         columns = column
       else:
-         print "UPDATE "+str(table)+" set "+column+"="+"'"+str(value)+"'"+" where "+str(filename0)+"= "+"'"+str(filename)+"'"+"   "
-         cursor.execute ("UPDATE "+str(table)+" set "+column+"="+"'"+str(value)+"'"+" where "+str(filename0)+"= "+"'"+str(filename)+"'"+"   ")
+         columns = [column]
+      if isinstance(value, list):
+         values = ["'{}'".format(val) if isinstance(val, str) else val for val in value]
+      elif isinstance(value, str):
+         values = ["'{}'".format(value)]
+      else:
+         values = [value]
+      column_equals_value = ', '.join(['{}={}'.format(col, val) for col, val in zip(columns, values)])
+      query = "UPDATE {} SET {} WHERE {}='{}'".format(table, column_equals_value, filename0, filename)
+      print query
+      cursor.execute(query)
       resultSet = cursor.fetchall ()
       if cursor.rowcount == 0:
          pass

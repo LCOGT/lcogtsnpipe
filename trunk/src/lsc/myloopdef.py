@@ -181,7 +181,9 @@ def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit',
             f.write(ggg[0]['filepath'] + img.replace('fits', 'sn2.fits') + '\n')
     f.close()
     
-    command = 'calibratemag.py _tmp.list -s {} -t {} -f {}'.format(stage, magtype, field)
+    command = 'calibratemag.py _tmp.list -s {} -t {}'.format(stage, magtype)
+    if field:
+        command += ' -f ' + field
     if len(extlist):
         command += ' -e _tmpext.list'
     if _interactive:
@@ -226,68 +228,6 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
                 lsc.lscastrodef.run_astrometry(_dir + img, True, redo)
             else:
                 print str(_mode)+' not defined'
-        elif status == 0:
-            print 'status ' + str(status) + ': WCS stage not done'
-        elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
-        elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
-        elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
-        else:
-            print 'status ' + str(status) + ': unknown status'
-
-
-def run_zero(imglist, _fix, _type, _field, catalogue, _color='', interactive=False, redo=False, show=False, _cutmag=99,
-             database='photlco', _calib='', zcatold=False):
-    for img in imglist:
-        if interactive:
-            ii = '-i'
-        else:
-            ii = ''
-        if _fix:
-            ff = '-f'
-        else:
-            ff = ''
-        if redo:
-            rr = '-r'
-        else:
-            rr = ''
-        if _field:
-            ss = '-s ' + _field
-        else:
-            ss = ''
-        if show:
-            dd = '--show'
-        else:
-            dd = ''
-        if _calib:
-            ll = '--calib ' + _calib
-        else:
-            ll = ''
-        if _color:
-            hh = '-C ' + _color
-        else:
-            hh = ''
-        status = checkstage(img, 'zcat')
-        if status == 1: rr = '-r'
-        if status >= 1:
-            ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
-            _dir = ggg[0]['filepath']
-            if catalogue:
-                cc = '-c ' + catalogue
-            else:
-                _catalogue = lsc.util.getcatalog(_dir + img, _calib if _calib else _field)
-                if _catalogue:
-                    cc = '-c ' + _catalogue
-                else:
-                    cc = ''
-            if zcatold: zcn = '--zcatold'
-            else: zcn = ''
-            command = ' '.join(['lscabsphot.py', _dir+img.replace('.fits', '.sn2.fits'), ii, rr, ff, cc, '-t', _type, ss, dd, hh, ll, '--cutmag', str(_cutmag), zcn])
-            print '_'*100
-            print command
-            os.system(command)
         elif status == 0:
             print 'status ' + str(status) + ': WCS stage not done'
         elif status == -1:
@@ -1703,7 +1643,7 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
 
 def get_standards(epoch, name, filters):
     epochs = process_epoch(epoch)
-    query = '''SELECT DISTINCT std.filename, std.objname, std.filter,
+    query = '''SELECT DISTINCT std.filepath, std.filename, std.objname, std.filter,
                std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat
                FROM
                photlco AS obj,

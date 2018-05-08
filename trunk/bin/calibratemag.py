@@ -110,20 +110,13 @@ if __name__ == "__main__":
                         help='calibrate the local sequence (abscat) or the supernova (mag)?')
     parser.add_argument("-t", "--typemag", default='fit', choices=['fit', 'ph'], 
                         help='PSF photometry (fit) or aperture photometry (ph)?')
-    parser.add_argument("-f", "--field", default='landolt', choices=['landolt', 'sloan', 'apass'],
+    parser.add_argument("-f", "--field", choices=['landolt', 'sloan', 'apass'],
                         help='Landolt (UBVRI), Sloan (ugriz), or APASS (BVgri) filters?')
     parser.add_argument("-c", "--catalog", help="use only stars that match this reference catalog")
     parser.add_argument("--minstars", default=0, type=int, help="minimum number of catalog matches for inclusion")
     parser.add_argument("-o", "--output", default='{SN}_{field}_{datenow}.cat', help='output filename')
     args = parser.parse_args()
     
-    if args.field == 'landolt':
-        filterlist = ['U', 'B', 'V', 'R', 'I']
-    elif args.field == 'sloan':
-        filterlist = ['u', 'g', 'r', 'i', 'z']
-    elif args.field == 'apass':
-        filterlist = ['B', 'V', 'g', 'r', 'i']
-
     with open(args.imglist) as f:
         lista = f.read().splitlines()
     if not lista:
@@ -187,7 +180,7 @@ if __name__ == "__main__":
     targets['site'] = [row['shortname'].split()[0].lower() if row['shortname'] is not None else None for row in targets]
     extinction = [lsc.sites.extinction[row['site']][row['filter']] for row in targets]
     targets['instmag_amcorr'] = (targets['instmag'].T - extinction * targets['airmass']).T
-    targets = targets.group_by(['dayobs', 'shortname'])
+    targets = targets.group_by(['dayobs', 'shortname', 'instrument'])
     for filters in colors_to_calculate:
         colors, dcolors = [], []
         for group in targets.groups:
@@ -260,6 +253,14 @@ if __name__ == "__main__":
             except IOError as e:
                 print e, '-- use -F to overwrite'
     elif args.stage == 'local':
+        if args.field == 'landolt':
+            filterlist = ['U', 'B', 'V', 'R', 'I']
+        elif args.field == 'sloan':
+            filterlist = ['u', 'g', 'r', 'i', 'z']
+        elif args.field == 'apass':
+            filterlist = ['B', 'V', 'g', 'r', 'i']
+        else:
+            raise Exception('Need to give --field (landolt, sloan, apass) for -s local')
         # make master catalog and write to file
         catalog = combine_nights(targets, filterlist, refcat)
         catfile = os.path.basename(args.catalog)

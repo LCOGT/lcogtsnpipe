@@ -70,7 +70,7 @@ if __name__ == "__main__":
     hotpants.add_option("--interpolation", dest="interpolation", default='drizzle',
                         help='interpolation algorithm  [drizzle,nearest,linear,poly3,poly5,spline3]\t [%default]')
     parser.add_option("--difftype", type=str, default='0', help='Choose hotpants (0) or optimal (1) subtraction \t [%(default)s]')
-    parser.add_argument("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
+    parser.add_option("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
 
     parser.add_option_group(hotpants)
     option, args = parser.parse_args()

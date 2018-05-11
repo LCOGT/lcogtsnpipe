@@ -355,7 +355,7 @@ if __name__ == "__main__":
                                                            output=imgout,
                                                            normalization=normalize,
                                                            show=_show,
-                                                           use_mask_for_gain=args.use_mask)
+                                                           use_mask_for_gain=option.use_mask)
                             except Exception as e:
                                 print e
                                 print 'PyZOGY failed on', imgtarg0

@@ -185,10 +185,10 @@ if __name__ == "__main__":   # main program
                     catalogue = lsc.util.getcatalog(args.name, args.field)
                 else:
                     catalogue = lsc.util.getcatalog(args.name, 'apass')
-                if args.field:
-                    field = args.field
-                elif args.filter and args.filter[0] in ['landolt', 'sloan', 'apass']:
+                if not args.field and args.filter and args.filter[0] in ['landolt', 'sloan', 'apass']:
                     field = args.filter[0]
+                else:
+                    field = args.field
                 lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force, args.minstars)
             elif args.stage == 'diff':  #    difference images using hotpants
                 _difftypelist = args.difftype.split(',')

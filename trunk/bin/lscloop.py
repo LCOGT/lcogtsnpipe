@@ -101,7 +101,6 @@ if __name__ == "__main__":   # main program
     else:
         ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC, 
                                     'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
-    listfile = np.array([k + v for k, v in zip(ll['filepath'], ll['filename'])])
     if ll:
         if args.stage != 'merge':
             print '##' * 50
@@ -137,6 +136,7 @@ if __name__ == "__main__":   # main program
                     ll = mm
             else:
                 mm = {'filename': []}
+            listfile = np.array([k + v for k, v in zip(ll['filepath'], ll['filename'])])
             # ####################################
             if args.stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type)

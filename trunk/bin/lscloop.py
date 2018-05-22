@@ -4,9 +4,10 @@ description = "> process lsc data  "
 import re
 import numpy as np
 from argparse import ArgumentParser
-from datetime import datetime, timedelta
+from datetime import datetime
 import lsc
 from multiprocessing import Pool
+import os
 
 def multi_run_cosmic(args):
     return lsc.myloopdef.run_cosmic(*args)
@@ -28,7 +29,7 @@ if __name__ == "__main__":   # main program
                         choices=['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'goodcat', 'quality', 'cosmic', 'diff'])
     parser.add_argument("-s", "--stage", default='',
                         choices=['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'local', 'getmag', 'merge', 'mergeall', 'diff',
-                                 'template', 'makestamp', 'apmag', 'cosmic', 'ingestsloan', 'ingestps1',
+                                 'template', 'makestamp', 'apmag', 'cosmic', 'ingestsloan', 'ingestps1', 'fpack',
                                  'checkwcs', 'checkpsf', 'checkmag', 'checkquality', 'checkpos', 'checkcat',
                                  'checkmissing', 'checkfvd', 'checkcosmic', 'checkdiff'])
     parser.add_argument("-R", "--RA", default='')
@@ -138,7 +139,35 @@ if __name__ == "__main__":   # main program
                 mm = {'filename': []}
             listfile = np.array([k + v for k, v in zip(ll['filepath'], ll['filename'])])
             # ####################################
-            if args.stage == 'getmag':  # get final magnitude from mysql
+            if args.stage != 'fpack': # unpack any fpacked files before anything else
+                packed_files = [filepath + filename for filepath, filename, lastunpacked in
+                                zip(ll['filepath'], ll['filename'], ll['lastunpacked'])
+                                if lastunpacked is None]
+                def funpack(filename):
+                    return os.system('funpack -v -D ' + filename)
+                p = Pool(args.multicore)
+                exitcodes = p.map(funpack, packed_files)
+                p.close()
+                p.join()
+                unpacked = [os.path.basename(filepath) for filepath, exitcode in zip(packed_files, exitcodes) if exitcode == 0]
+                query = 'update photlco set lastunpacked="{}" where filename="'.format(datetime.now())
+                query += '" or filename="'.join(unpacked) + '"'
+                lsc.mysqldef.query([query], lsc.conn)
+
+            if args.stage == 'fpack':
+                unpacked_files = [filepath + filename for filepath, filename, lastunpacked in
+                                  zip(ll['filepath'], ll['filename'], ll['lastunpacked'])
+                                  if lastunpacked is not None]
+                def fpack(filename):
+                    return os.system('fpack -q 64 -v -D -Y ' + filename)
+                p = Pool(args.multicore)
+                exitcodes = p.map(fpack, unpacked_files)
+                p.close()
+                p.join()
+                packed = [os.path.basename(filepath) for filepath, exitcode in zip(unpacked_files, exitcodes) if exitcode == 0]
+                query = 'update photlco set lastunpacked=NULL where filename="' + '" or filename="'.join(packed) + '"'
+                lsc.mysqldef.query([query], lsc.conn)
+            elif args.stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type)
             elif args.stage == 'psf':
                 lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,

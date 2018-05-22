@@ -4,7 +4,7 @@ description = "> process lsc data  "
 import re
 import numpy as np
 from argparse import ArgumentParser
-from datetime import datetime
+from datetime import datetime, timedelta
 import lsc
 from multiprocessing import Pool
 import os
@@ -142,9 +142,7 @@ if __name__ == "__main__":   # main program
             listfile = np.array([k + v for k, v in zip(ll['filepath'], ll['filename'])])
             # ####################################
             if args.stage not in ['', 'getmag', 'fpack']: # unpack any fpacked files before anything else
-                packed_files = [filepath + filename for filepath, filename, lastunpacked in
-                                zip(ll['filepath'], ll['filename'], ll['lastunpacked'])
-                                if lastunpacked is None]
+                packed_files = listfile[ll['lastunpacked'] == np.array(None)]
                 def funpack(filename):
                     return os.system('funpack -v -D ' + filename)
                 p = Pool(args.multicore)
@@ -157,9 +155,9 @@ if __name__ == "__main__":   # main program
                 lsc.mysqldef.query([query], lsc.conn)
 
             if args.stage == 'fpack':
-                unpacked_files = [filepath + filename for filepath, filename, lastunpacked in
-                                  zip(ll['filepath'], ll['filename'], ll['lastunpacked'])
-                                  if lastunpacked is not None]
+                unpacked_files = listfile[ll['lastunpacked'] != np.array(None)]
+                if not args.force: # only fpack month-old data unless run with -F
+                    unpacked_files = unpacked_files[ll['lastunpacked'] < datetime.utcnow() - timedelta(31)]
                 def fpack(filename):
                     return os.system('fpack -q 64 -v -D -Y ' + filename)
                 p = Pool(args.multicore)

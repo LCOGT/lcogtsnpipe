@@ -143,8 +143,8 @@ if __name__ == "__main__":
                 run_cmd(basecmd + ' -b mag -s mag -n ' + obj + ' -T ' + tel, logfile, args.timeout)
     
     epoch_to_fpack = datetime.strftime(datetime.utcnow() - timedelta(31), '%Y%m%d')
-    run_cmd(basecmd + ' -e {} -s fpack'.format(epoch_to_fpack), logfile, args.timeout)
-    run_cmd(basecmd + ' -e {} -s fpack -b quality'.format(epoch_to_fpack), logfile, args.timeout)
+    run_cmd('lscloop.py -e {} -s fpack'.format(epoch_to_fpack), logfile, args.timeout)
+    run_cmd('lscloop.py -e {} -s fpack -b quality'.format(epoch_to_fpack), logfile, args.timeout)
 
     stop = time.time()
     logfile.write('####  time to process all data: ' + str(stop - start) + ' seconds\n')

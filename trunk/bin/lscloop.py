@@ -158,7 +158,8 @@ if __name__ == "__main__":   # main program
                 is_unpacked = ll['lastunpacked'] != np.array(None)
                 unpacked_files = listfile[is_unpacked]
                 if not args.force: # only fpack month-old data unless run with -F
-                    unpacked_files = unpacked_files[ll['lastunpacked'][is_unpacked] < datetime.utcnow() - timedelta(31)]
+                    month_old = np.array(ll['lastunpacked'])[is_unpacked] < datetime.utcnow() - timedelta(31)
+                    unpacked_files = unpacked_files[month_old]
                 def fpack(filename):
                     return os.system('fpack -q 64 -v -D -Y ' + filename)
                 p = Pool(args.multicore)

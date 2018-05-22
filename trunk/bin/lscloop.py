@@ -155,9 +155,10 @@ if __name__ == "__main__":   # main program
                 lsc.mysqldef.query([query], lsc.conn)
 
             if args.stage == 'fpack':
-                unpacked_files = listfile[ll['lastunpacked'] != np.array(None)]
+                is_unpacked = ll['lastunpacked'] != np.array(None)
+                unpacked_files = listfile[is_unpacked]
                 if not args.force: # only fpack month-old data unless run with -F
-                    unpacked_files = unpacked_files[ll['lastunpacked'] < datetime.utcnow() - timedelta(31)]
+                    unpacked_files = unpacked_files[ll['lastunpacked'][is_unpacked] < datetime.utcnow() - timedelta(31)]
                 def fpack(filename):
                     return os.system('fpack -q 64 -v -D -Y ' + filename)
                 p = Pool(args.multicore)

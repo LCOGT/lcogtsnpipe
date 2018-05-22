@@ -183,6 +183,7 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
    import string,re,os,sys
    import lsc
    from lsc.util import readkey3, readhdr
+   from datetime import datetime
 
    hostname, username, passwd, database=lsc.mysqldef.getconnection('lcogt2')
    conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
@@ -242,6 +243,7 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
            _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
          instid=_instid[0]['id']
          dictionary['instrumentid']=str(instid)
+         dictionary['lastunpacked'] = str(datetime.utcnow())
 
          print dictionary
          print 'insert reduced'

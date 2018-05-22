@@ -150,7 +150,7 @@ if __name__ == "__main__":   # main program
                 p.close()
                 p.join()
                 unpacked = [os.path.basename(filepath) for filepath, exitcode in zip(packed_files, exitcodes) if exitcode == 0]
-                query = 'update photlco set lastunpacked="{}" where filename="'.format(datetime.now())
+                query = 'update photlco set lastunpacked="{}" where filename="'.format(datetime.utcnow())
                 query += '" or filename="'.join(unpacked) + '"'
                 lsc.mysqldef.query([query], lsc.conn)
 

@@ -63,7 +63,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--combine", default=1e-10, type=float, help='range to combine (in days)')
     parser.add_argument("--datamax", type=int, help='data max for saturation (counts)')
     parser.add_argument("--datamin", type=int, help='data min for saturation (counts)')
-    parser.add_argument("--filetype", choices=[1, 2, 3, 4], default=1, type=int, help='filetype 1 [single], 2 [merge], 3 [difference]')
+    parser.add_argument("--filetype", choices=range(5), default=1, type=int, help='filetype 1 [single], 2 [merge], 3 [difference], 0 [all]')
     parser.add_argument("-o", "--output", default='', help='output file')
     parser.add_argument("--tempdate", default='19990101-20080101', help='template date')
     parser.add_argument("--temptel", default='', help='--temptel  template instrument')
@@ -91,6 +91,8 @@ if __name__ == "__main__":   # main program
         filetype = 3
     elif args.bad == 'diff':
         filetype = 1
+    elif args.stage == 'fpack':
+        filetype = 0
     else:
         filetype = args.filetype
     
@@ -139,7 +141,7 @@ if __name__ == "__main__":   # main program
                 mm = {'filename': []}
             listfile = np.array([k + v for k, v in zip(ll['filepath'], ll['filename'])])
             # ####################################
-            if args.stage != 'fpack': # unpack any fpacked files before anything else
+            if args.stage not in ['', 'getmag', 'fpack']: # unpack any fpacked files before anything else
                 packed_files = [filepath + filename for filepath, filename, lastunpacked in
                                 zip(ll['filepath'], ll['filename'], ll['lastunpacked'])
                                 if lastunpacked is None]

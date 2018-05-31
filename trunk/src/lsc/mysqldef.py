@@ -30,50 +30,6 @@ def getconnection(site):
 
 ########################################################################
 
-def getmissing(conn, epoch0, epoch2,telescope,datatable='photlco'):
-   import sys
-   import lsc
-   import MySQLdb,os,string
-   print epoch0, epoch2,telescope
-   try:
-      cursor = conn.cursor (MySQLdb.cursors.DictCursor)
-      if telescope =='all':
-         if epoch2:
-            print "select raw.filename, raw.objname from photlcoraw as raw where "+\
-                " raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
-                " and NOT EXISTS(select * from "+str(datatable)+" as redu where raw.filename = redu.filename)"
-            cursor.execute ("select raw.filename, raw.objname from photlcoraw as raw where "+\
-                               " raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" as redu where raw.filename = redu.filename)")
-         else:
-            cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where "+\
-                               " raw.dayobs = "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
-      else:
-         fntel = telescope.replace('-', '') # 1m0-01 (input) --> 1m001 (in filename)
-         if epoch2:  
-            print "select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
-                               " or raw.telescope = '"+telescope+"') and raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)"
-            cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
-                               " or raw.telescope = '"+telescope+"') and raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
-         else:
-            print "select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
-                               " or raw.telescope = '"+telescope+"') and raw.dayobs = "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)"
-            cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
-                               " or raw.telescope = '"+telescope+"') and raw.dayobs = "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
-      resultSet = cursor.fetchall ()
-      if cursor.rowcount == 0:
-         pass
-      cursor.close ()
-   except MySQLdb.Error, e:
-      print "Error %d: %s" % (e.args[0], e.args[1])
-      sys.exit (1)
-   return resultSet
-
 def getfromdataraw(conn, table, column, value,column2='*'):
    import sys
    import MySQLdb,os,string
@@ -179,6 +135,22 @@ def insert_values(conn,table,values):
 
 ########################################################################
 
+def get_groupidcode(hdr):
+    if 'tracknum' in hdr and hdr['tracknum'] != 'UNSPECIFIED':
+        result = lsc.mysqldef.query(['''select obsrequests.groupidcode, obsrequests.targetid
+                                        from obsrequests, obslog
+                                        where obsrequests.id = obslog.requestsid
+                                        and obslog.tracknumber = ''' + str(hdr['tracknum'])], conn)
+    else:
+        result = ()
+    if result:
+        targetid = result[0]['targetid']
+    else:
+        targetid = lsc.mysqldef.targimg(hdrt=hdr)
+        result = lsc.mysqldef.query(['select groupidcode from targets where id=' + str(targetid)], conn)
+    groupidcode = result[0]['groupidcode']
+    return groupidcode, targetid
+
 def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
    import string,re,os,sys
    import lsc
@@ -193,12 +165,6 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
       path += '/'
 
       exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
-      exist2=lsc.mysqldef.getfromdataraw(conn,'photlcoraw','filename', string.split(img,'/')[-1],column2='filename, groupidcode')
-      if exist2:
-         print exist2
-         _groupidcode=exist2[0]['groupidcode']
-      else:
-         _groupidcode=''
 
       if exist:
          if force=='yes':
@@ -209,7 +175,7 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
 
       if not exist or force =='update':
          hdr=readhdr(fullpath)
-         _targetid=lsc.mysqldef.targimg(fullpath)
+         _groupidcode, _targetid = get_groupidcode(hdr)
          try:
             _tracknumber=int(readkey3(hdr,'TRACKNUM'))
          except:
@@ -371,14 +337,6 @@ def updateDatabase(tarfile):
 def getfromcoordinate(conn, table, ra0, dec0,distance):
    import sys
    import MySQLdb,os,string
-   #  this is acually not needed
-   if table=='targets':
-      ra1='ra0'
-      dec1='dec0'
-   elif table=='photlcoraw':
-      ra1='ra0'
-      dec1='dec0'
-   ####
    try:
       cursor = conn.cursor (MySQLdb.cursors.DictCursor)
       command=["set @sc = pi()/180","set @ra = "+str(ra0), "set @dec = "+str(dec0),"set @distance = "+str(distance),"SELECT *,abs(2*asin( sqrt( sin((a.dec0-@dec)*@sc/2)*sin((a.dec0-@dec)*@sc/2) + cos(a.dec0*@sc)*cos(@dec*@sc)*sin((a.ra0-@ra)*@sc/2)*sin((a.ra0-@ra)*@sc/2.0) )))*180/pi() as hsine FROM "+str(table)+" as a HAVING hsine<@distance order by a.ra0 desc"]

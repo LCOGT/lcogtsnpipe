@@ -31,7 +31,7 @@ if __name__ == "__main__":   # main program
                         choices=['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'local', 'getmag', 'merge', 'mergeall', 'diff',
                                  'template', 'makestamp', 'apmag', 'cosmic', 'ingestsloan', 'ingestps1', 'fpack',
                                  'checkwcs', 'checkpsf', 'checkmag', 'checkquality', 'checkpos', 'checkcat',
-                                 'checkmissing', 'checkfvd', 'checkcosmic', 'checkdiff'])
+                                 'checkfvd', 'checkcosmic', 'checkdiff'])
     parser.add_argument("-R", "--RA", default='')
     parser.add_argument("-D", "--DEC", default='')
     parser.add_argument("--RAS", default='')
@@ -286,8 +286,6 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.checkpos(ll['filename'], args.RA, args.DEC)
             elif args.stage == 'checkcat':
                 lsc.myloopdef.checkcat(ll['filename'])
-            elif args.stage == 'checkmissing':
-                lsc.myloopdef.check_missing(ll['filename'])
             elif args.stage == 'checkfvd':
                 lsc.myloopdef.checkfilevsdatabase(ll)
             elif args.stage == 'checkcosmic':

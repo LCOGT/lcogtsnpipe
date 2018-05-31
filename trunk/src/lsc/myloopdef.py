@@ -1624,17 +1624,8 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
         for i in ll0.keys():
             ll0[i] = np.take(ll0[i], inds)
 
-        ll0['ra'] = []
-        ll0['dec'] = []
-        if 'ra0' not in ll0.keys():
-            for i in ll0['filename']:
-                print i
-                ggg = lsc.mysqldef.getfromdataraw(conn, 'photlcoraw', 'filename', i, '*')
-                ll0['ra'].append(ggg[0]['ra0'])
-                ll0['dec'].append(ggg[0]['dec0'])
-        else:
-            ll0['ra'] = ll0['ra0']
-            ll0['dec'] = ll0['dec0']
+        ll0['ra'] = ll0['ra0']
+        ll0['dec'] = ll0['dec0']
         ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad,
              filetype, _groupid, _instrument, _temptel, _difftype, classid)
     else:
@@ -1682,17 +1673,6 @@ def get_standards(epoch, name, filters):
     return final_list
         
 ######
-
-def check_missing(lista, database='photlco'):
-    if len(lista) > 0:
-        for i in lista:
-            xx = lsc.mysqldef.getfromdataraw(conn, 'photlcoraw', 'filename', str(i), column2='filepath')
-            yy = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(i), column2='filepath')
-            xx, yy = xx[0]['filepath'], yy[0]['filepath']
-            if not os.path.isfile(yy + i):
-                os.system('cp ' + xx + i + ' ' + yy + i)
-                print xx, str(i), yy + i
-
 
 def checkfilevsdatabase(lista, database='photlco'):
     if lista:

@@ -1644,7 +1644,7 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
 def get_standards(epoch, name, filters):
     epochs = process_epoch(epoch)
     query = '''SELECT DISTINCT std.filepath, std.filename, std.objname, std.filter,
-               std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat
+               std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat, std.lastunpacked
                FROM
                photlco AS obj,
                photlco AS std,

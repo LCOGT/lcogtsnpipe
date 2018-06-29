@@ -10,6 +10,9 @@ from matplotlib.image import imsave
 import numpy as np
 from datetime import datetime
 from glob import glob
+import logging
+
+logger = logging.getLogger()
 
 def authenticate(username, password):
     '''Get the authentication token'''
@@ -17,7 +20,7 @@ def authenticate(username, password):
                              data = {'username': username, 'password': password}).json()
     token = response.get('token')
     if token is None:
-        raise Exception('Authentication failed with username ' + username)
+        raise Exception('Authentication failed with username {}'.format(username))
     else:
         authtoken = {'Authorization': 'Token ' + token}
     return authtoken
@@ -28,12 +31,12 @@ def get_metadata(authtoken={}, limit=None, **kwargs):
             [key + '=' + str(val) for key, val in kwargs.items() if val is not None])
     url = url.replace('False', 'false')
     url = url.replace('True', 'true')
-    print url
+    logger.info(url)
 
     response = requests.get(url, headers=authtoken).json()
     frames = response['results']
     while response['next'] and (limit is None or len(frames) < limit):
-        print response['next']
+        logger.info(response['next'])
         response = requests.get(response['next'], headers=authtoken).json()
         frames += response['results']
     return frames[:limit]
@@ -53,7 +56,7 @@ def download_frame(frame, force=False):
     elif '0m4' in frame['TELID']:
         daydir = 'data/0m4/' + dayobs + '/'
     else:
-        print 'failed to identify telescope:', frame['TELID'], frame['INSTRUME']
+        logger.error('failed to identify telescope: {} {}'.format(frame['TELID'], frame['INSTRUME']))
     filepath = os.path.join(lsc.util.workdirectory, daydir)
 
     if not os.path.isdir(filepath):
@@ -62,17 +65,17 @@ def download_frame(frame, force=False):
     basename = filename.replace('.fits.fz', '')[:-1] + '?.fits'
     matches = glob(filepath + basename) + glob(filepath + 'bad/' + basename)
     if not matches or force:
-        print 'downloading', filename, 'to', filepath
+        logger.info('downloading {} to {}'.format(filename, filepath))
         with open(filepath + filename, 'wb') as f:
             f.write(requests.get(frame['url']).content)
     else:
         matches_filenames = [os.path.basename(fullpath) for fullpath in matches]
         if filename not in matches_filenames:
             filename = matches_filenames[0]
-        print filename, 'already in', filepath
+        logger.info('{} already in {}'.format(filename, filepath))
 
     if os.path.isfile(filepath + filename) and os.stat(filepath + filename).st_size == 0:
-        print filename, 'has size 0. Redownloading.'
+        logger.warning('{} has size 0. Redownloading.'.format(filename))
         with open('filesize0.log', 'a') as l:
             l.write(str(datetime.utcnow()) + '\t' + filename + '\n')
         filename = frame['filename']
@@ -80,13 +83,13 @@ def download_frame(frame, force=False):
             f.write(requests.get(frame['url']).content)
 
     if filename[-3:] == '.fz' and (not os.path.isfile(filepath + filename[:-3]) or force):
-        print 'unpacking', filename
+        logger.info('unpacking {}'.format(filename))
         if os.path.exists(filepath + filename[:-3]):
             os.remove(filepath + filename[:-3])
         os.system('funpack -D ' + filepath + filename)
         filename = filename[:-3]
     elif filename[-3:] == '.fz':
-        print filename, 'already unpacked'
+        logger.info('{} already unpacked'.format(filename))
         filename = filename[:-3]
 
     return filepath, filename
@@ -198,24 +201,24 @@ def db_ingest(filepath, filename, force=False):
                 else:
                     dbdict[dbcol] = hdr[hdrkey]
         if hdr['TELESCOP'] not in telescopeids:
-            print hdr['TELESCOP'], 'not recognized. Adding to telescopes table.'
+            logger.info('{} not recognized. Adding to telescopes table.'.format(hdr['TELESCOP']))
             lsc.mysqldef.insert_values(conn, 'telescopes', {'name': hdr['TELESCOP']})
             telescopes = lsc.mysqldef.query(['select id, name from telescopes'], conn)
             telescopeids = {tel['name']: tel['id'] for tel in telescopes}
         dbdict['telescopeid'] = telescopeids[hdr['TELESCOP']]
         if hdr['INSTRUME'] not in instrumentids:
-            print hdr['INSTRUME'], 'not recognized. Adding to instruments table.'
+            logger.info('{} not recognized. Adding to instruments table.'.format(hdr['INSTRUME']))
             lsc.mysqldef.insert_values(conn, 'instruments', {'name': hdr['INSTRUME']})
             instruments = lsc.mysqldef.query(['select id, name from instruments'], conn)
             instrumentids = {inst['name']: inst['id'] for inst in instruments}
         dbdict['instrumentid'] = instrumentids[hdr['INSTRUME']]
         if fileindb:
             lsc.mysqldef.query(["delete from " + table + " where filename='" + filename + "'"], conn)
-        print 'ingesting', filename
+        logger.info('ingesting {}'.format(filename))
         lsc.mysqldef.insert_values(conn, table, dbdict)
     else:
         dbdict = {}
-        print filename, 'already ingested'
+        logger.info('{} already ingested'.format(filename))
     return dbdict
 
 def fits2png(filename, force=False, zclip=5):
@@ -233,10 +236,10 @@ def record_floyds_tar_link(authtoken, frame, force=False):
         dbdicts = lsc.mysqldef.query(["select tracknumber from speclcoraw where obid={:d}".format(frame['BLKUID'])], conn)
         if dbdicts:
             tardict = {'tracknumber': dbdicts[0]['tracknumber'], 'blockid': frame['BLKUID'], 'link': frame['url']}
-            print 'adding link to', frame['filename']
+            logger.info('adding link to {}'.format(frame['filename']))
             lsc.mysqldef.insert_values(conn, 'speclcoguider', tardict)
     else:
-        print 'link to', frame['filename'], 'already added'
+        logger.info('link to {} already added'.format(frame['filename']))
 
 #################################################################
 if __name__ == "__main__":

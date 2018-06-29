@@ -7,6 +7,15 @@ from datetime import datetime, timedelta
 import os
 import sys
 import traceback
+import logging
+
+logger = logging.getLogger()
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
+
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
 if len(sys.argv) > 1:
     daterange = sys.argv[1]
@@ -33,7 +42,7 @@ frames += get_metadata(authtoken, start=start, end=end, PROPID='OGG_calib', RLEV
 frames += get_metadata(authtoken, start=start, end=end, PROPID='COJ_calib', RLEVEL=0)                   # FTS standard star spectra
 frames += get_metadata(authtoken, start=start, end=end, PROPID='LCOEPO2016B-001', RLEVEL=91)            # supernova tracker images
 
-print 'Total number of frames:', len(frames)
+logger.info('Total number of frames: {:d}'.format(len(frames)))
 
 fullpaths = []
 for frame in frames:
@@ -42,20 +51,20 @@ for frame in frames:
         if '-en0' not in filename:
             fullpaths.append(filepath + filename)
     except:
-        print '!!! FAILED TO DOWNLOAD ' + frame['filename']
+        logger.error('!!! FAILED TO DOWNLOAD {}'.format(frame['filename']))
         traceback.print_exc()
         continue
     try:
         dbdict = db_ingest(filepath, filename)
     except:
-        print '!!! FAILED TO INGEST ' + filename
+        logger.error('!!! FAILED TO INGEST {}'.format(filename))
         traceback.print_exc()
         continue
     if '-en0' in filename and '-e00.fits' in filename:
         try:
             fits2png(filepath + filename)
         except:
-            print '!!! FAILED TO MAKE PNG FOR ' + filename
+            logger.error('!!! FAILED TO MAKE PNG FOR {}'.format(filename))
             traceback.print_exc()
 
 lsc.mysqldef.ingestredu(fullpaths) # ingest new data into photlco
@@ -70,5 +79,5 @@ for frame in frames:
     try:
         record_floyds_tar_link(authtoken, frame)
     except:
-        print '!!! FAILED TO RECORD GUIDER LINK FOR ' + frame['filename']
+        logger.error('!!! FAILED TO RECORD GUIDER LINK FOR {}'.format(frame['filename']))
         traceback.print_exc()

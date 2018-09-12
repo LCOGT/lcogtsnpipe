@@ -1678,7 +1678,7 @@ def get_standards(epoch, name, filters):
     if matching_stds:
         final_list = {col: [ll[col] for ll in matching_stds] for col in matching_stds[0]}
     else:
-        final_list = {'filename': []}
+        final_list = {'filepath': [], 'filename': []}
     return final_list
         
 ######

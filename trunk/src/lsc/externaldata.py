@@ -505,6 +505,8 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
       _telescope = 'spectral'
    elif 'fl' in _instrume:
       _telescope = 'sinistro'
+   elif 'fa' in _instrume:
+      _telescope = 'sinistro'
    elif 'kb' in _instrume:
       _telescope = 'sbig'
 

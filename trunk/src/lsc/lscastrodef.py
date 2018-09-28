@@ -66,7 +66,7 @@ def wcsstart(img,CRPIX1='',CRPIX2=''):
         else: CRPIX2= 1000.+CRPIX2
         CDELT1=2
         CDELT2=2
-    elif 'fl' in _instrume:
+    elif 'fl' in _instrume or 'fa' in _instrume:
         angle=readkey3(hdr,'ROLLERDR')#posang)
         theta=(angle*pi/180.)
         pixscale=float(readkey3(hdr,'PIXSCALE'))
@@ -168,7 +168,7 @@ def querycatalogue(catalogue,img,method='iraf'):
         _instrume=hdr.get('instrume')
         iraf.imcoords(_doprint=0)
         iraf.astcat(_doprint=0)
-        if 'fl' in _instrume: # sinistro
+        if 'fl' in _instrume or 'fa' in _instrume: # sinistro
             _size=40
         else:
             _size=20
@@ -329,7 +329,7 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
                 fwhmgess3=median(array(fwhm3))*.68*2.35*0.467
                 if _imex:  fwhmgessime = median(array(ccc))*0.467
                 else:     fwhmgessime = 9999
-            elif 'fl' in _instrume:
+            elif 'fl' in _instrume or 'fa' in _instrume:
                 fwhmgess3=median(array(fwhm3))*.68*2.35*0.467          #  need to check
                 if _imex:  fwhmgessime = median(array(ccc))*0.467
                 else:     fwhmgessime = 9999
@@ -346,13 +346,13 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
             fwhmgess3=9999
             fwhmgessime=9999
             ellgess3=9999
-        if _instrume[:2] in ['kb', 'fl', 'fs', 'em']:
+        if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa']:
             mbkg3=median(bkg3)
             lsc.util.updateheader(img,0,{'MBKG':(mbkg3,'background level')})
         else:
             mbkg3=readkey3(hdr,'MBKG')
         if fwhmgess3:
-            if _instrume[:2] in ['kb', 'fl', 'fs', 'em']:
+            if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa']:
                 V=(math.pi/(4*math.log(2)))*(45000-float(mbkg3))*(float(fwhmgess3)**2)
             else:                     
                 V=(math.pi/(4*math.log(2)))*(32000-float(mbkg3))*(float(fwhmgess3)**2)
@@ -1334,6 +1334,8 @@ def run_astrometry(im, clobber=True,redo=False):
             if len(fw)>1:
                 if 'kb' in _instrume:
                     fwhm = np.median(np.array(fw))*.68*2.35*0.467
+                elif 'fa' in _instrume:
+                    fwhm = np.median(np.array(fw))*.68*2.35*0.467          #  need to check
                 elif 'fl' in _instrume:
                     fwhm = np.median(np.array(fw))*.68*2.35*0.467          #  need to check
                 elif 'fs' in _instrume:

@@ -244,6 +244,8 @@ if __name__ == "__main__":   # main program
                             fake_temptel = 'spectral'
                         elif args.telescope == 'fl':
                             fake_temptel = 'sinistro'
+                        elif args.telescope == 'fa':
+                            fake_temptel = 'sinistro'
                     elif args.temptel:
                         fake_temptel = args.temptel
                     else:

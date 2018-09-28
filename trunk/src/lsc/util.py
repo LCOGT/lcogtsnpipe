@@ -159,7 +159,7 @@ def readkey3(hdr,keyword):
                            'propid'      : 'PROPID',\
                            'userid'      : 'USERID',\
                            'telescop'  : 'TELESCOP'} 
-    elif 'fl' in _instrume: # sinistro
+    elif 'fl' in _instrume or 'fa' in _instrume: # sinistro
         useful_keys = {'object'    : 'OBJECT',\
                            'date-obs'  : 'DATE-OBS',\
                            'ut'        : 'DATE-OBS',\

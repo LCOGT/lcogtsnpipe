@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     imglisttar = lsc.util.readlist(args.targlist)
-    imglisttemp = list.util.readlist(args.templist)
+    imglisttemp = lsc.util.readlist(args.templist)
 
     listatar = {}
     try:

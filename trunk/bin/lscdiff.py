@@ -2,12 +2,11 @@
 description = ">> make different image using hotpants"
 usage = "%prog imagein  imagetem [options] "
 import os
-import sys
 import lsc
 from astropy.io import fits
 from astropy.wcs import WCS
 import numpy as np
-from optparse import OptionParser, OptionGroup
+from argparse import ArgumentParser
 from PyZOGY.subtract import run_subtraction
 from pyraf import iraf
 
@@ -41,66 +40,41 @@ def crossmatchtwofiles(img1, img2, radius=3):
 
 ###################################################
 if __name__ == "__main__":
-    parser = OptionParser(usage=usage, description=description)
-    parser.add_option("-c", "--check", dest="check", action="store_true",
-                      default=False, help=' check images registration \t\t\t [%default]')
-    parser.add_option("-f", "--force", dest="force", action="store_true",
+    parser = ArgumentParser(usage=usage, description=description)
+    parser.add_argument("targlist", help='list of images with the target in them')
+    parser.add_argument("templist", help='list of template images')
+    parser.add_argument("-f", "--force", dest="force", action="store_true",
                       default=False, help=' force archiving \t\t\t [%default]')
-    parser.add_option("--show", dest="show", action="store_true",
+    parser.add_argument("--show", dest="show", action="store_true",
                       default=False, help=' show result  \t\t\t [%default]')
-    parser.add_option("--fixpix", dest="fixpix", action="store_true", default=False,
+    parser.add_argument("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing the subtraction')
-    parser.add_option('--suffix', default='.diff.fits', help='suffix for difference images')
+    parser.add_argument('--suffix', default='.diff.fits', help='suffix for difference images')
 
-    hotpants = OptionGroup(parser, "hotpants parameters")
-    hotpants.add_option("--nrxy", dest="nrxy", default='1,1',
+    hotpants = parser.add_argument_group("hotpants parameters")
+    hotpants.add_argument("--nrxy", dest="nrxy", default='1,1',
                         help='Number of image region in x y directions \t [%default]')
-    hotpants.add_option("--nsxy", dest="nsxy", default='8,8',
+    hotpants.add_argument("--nsxy", dest="nsxy", default='8,8',
                         help="Number of region's stamps in x y directions\t [%default]")
-    hotpants.add_option("--ko", dest="ko", default='2',
+    hotpants.add_argument("--ko", dest="ko", default='2',
                         help='spatial order of kernel variation within region\t [%default]')
-    hotpants.add_option("--bgo", dest="bgo", default='2',
+    hotpants.add_argument("--bgo", dest="bgo", default='2',
                         help='spatial order of background variation within region \t [%default]')
-    hotpants.add_option("--afssc", dest="afssc", default=False,
+    hotpants.add_argument("--afssc", dest="afssc", default=False,
                         action="store_true", help='use selected stamps \t\t\t [%default]')
-    hotpants.add_option("--normalize", dest="normalize", default='i',
+    hotpants.add_argument("--normalize", dest="normalize", default='i', choices=['i', 't'],
                         help='normalize zero point to image [i] or template [t] \t [%default]')
-    hotpants.add_option("--convolve", dest="convolve", default='',
+    hotpants.add_argument("--convolve", dest="convolve", default='', choices=['i', 't', ''],
                         help='convolve direction to image [i] or template [t] \t [%default]')
-    hotpants.add_option("--interpolation", dest="interpolation", default='drizzle',
+    hotpants.add_argument("--interpolation", dest="interpolation", default='drizzle',
+                          choices=['drizzle', 'nearest', 'linear', 'poly3', 'poly5', 'spline3'],
                         help='interpolation algorithm  [drizzle,nearest,linear,poly3,poly5,spline3]\t [%default]')
-    parser.add_option("--difftype", type=str, default='0', help='Choose hotpants (0) or optimal (1) subtraction \t [%(default)s]')
-    parser.add_option("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
+    parser.add_argument("--difftype", type=str, default='0', help='Choose hotpants (0) or optimal (1) subtraction \t [%(default)s]')
+    parser.add_argument("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
 
-    parser.add_option_group(hotpants)
-    option, args = parser.parse_args()
-    _normalize = option.normalize
-    _convolve0 = option.convolve
-    _interpolation = option.interpolation
-    if _convolve0 not in ['i','t','']:
-        sys.argv.append('--help')
-    if _normalize not in ['i', 't']:
-        sys.argv.append('--help')
-    if _interpolation not in ['drizzle', 'nearest', 'linear', 'poly3', 'poly5', 'spline3']:
-        sys.argv.append('--help')
-    if len(args) < 2:
-        sys.argv.append('--help')
-    option, args = parser.parse_args()
-    imglisttar = lsc.util.readlist(args[0])
-    imglisttemp = lsc.util.readlist(args[1])
-
-    _checkast = option.check
-    _force = option.force
-    _show = option.show
-    _fixpix = option.fixpix
-    _difftype = option.difftype
-
-    #     saturation=40000
-    nrxy = option.nrxy
-    nsxy = option.nsxy
-    ko = option.ko
-    bgo = option.bgo
-    afssc = option.afssc
+    args = parser.parse_args()
+    imglisttar = lsc.util.readlist(args.targlist)
+    imglisttemp = list.util.readlist(args.templist)
 
     listatar = {}
     try:
@@ -158,9 +132,9 @@ if __name__ == "__main__":
                         _dirtemp, imgtemp0 = os.path.split(imgtemp_path)
                         if _dirtemp: _dirtemp += '/'
 
-                        imgout0 = imgtarg0.replace('.fits', option.suffix)
+                        imgout0 = imgtarg0.replace('.fits', args.suffix)
 
-                        if os.path.isfile(_dir + imgout0) and not _force:
+                        if os.path.isfile(_dir + imgout0) and not args.force:
                             print 'file', imgout0, 'already there'
                             continue
                         targmask0 = imgtarg0.replace('.fits', '.mask.fits')
@@ -212,23 +186,23 @@ if __name__ == "__main__":
                         iraf.imcopy(_dir + targmask0, targmask, verbose='yes')
 #                        try:
                         iraf.immatch.gregister(_dirtemp + imgtemp0, imgtemp, "tmp$db", "tmpcoo", geometr="geometric",
-                                               interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+                                               interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
                         print 'here' 
                         try:
                             iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
-                                               interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+                                               interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
                         except:
                             print 'try again'
                             # this is strange, sometime the registration of the msk fail the first time, but not the second time
                             iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
-                                               interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+                                               interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
                         if os.path.isfile(_dirtemp + imgtemp0.replace('.fits','.var.fits')):
                             print 'variance image already there, do not create noise image'
                             iraf.immatch.gregister(_dirtemp + imgtemp0.replace('.fits','.var.fits'), 'tempnoise.fits', "tmp$db", "tmpcoo", geometr="geometric",
-                                               interpo=_interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+                                               interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
-                        if _show:
+                        if args.show:
                             iraf.set(stdimage='imt2048')
                             iraf.display(_dir + imgtarg0 + '[0]', frame=1, fill='yes')
                             iraf.display(imgtarg, frame=2, fill='yes')
@@ -297,7 +271,7 @@ if __name__ == "__main__":
                         mask = np.abs(data_temp) < 1e-6
                         fits.writeto('tempmask.fits',mask.astype('i'))
 
-                        if _fixpix:
+                        if args.fixpix:
                             try:
                                 iraf.flpr(); iraf.flpr()
                                 iraf.unlearn(iraf.fixpix)
@@ -321,20 +295,18 @@ if __name__ == "__main__":
                         radius = str(np.median([15, 3.0*max_fwhm, 25])) # HW substamp to extract around each centroid
                         sconv = '-sconv'                                # all regions convolved in same direction (0)
 
-                        normalize = _normalize  #normalize to (t)emplate, (i)mage, or (u)nconvolved (t)
-
-                        if _convolve0 in ['t','i']:
-                            _convolve=' -c '+_convolve0+' '
+                        if args.convolve in ['t','i']:
+                            _convolve=' -c ' + args.convolve + ' '
                         else:
                             _convolve=''
 
-                        if afssc:
+                        if args.afssc:
                             substamplist, xpix1, ypix1, xpix2, ypix2 = crossmatchtwofiles(imgtarg, imgtemp)
                             _afssc = ' -cmp ' + str(substamplist) + ' -afssc 1 '
                         else:
                             _afssc = ''
 
-                        if _difftype == '1':
+                        if args.difftype == '1':
                             #do subtraction
                             iraf.noao()
                             iraf.digiphot()
@@ -353,9 +325,9 @@ if __name__ == "__main__":
                                                            reference_saturation=sat_temp,
                                                            n_stamps=1,
                                                            output=imgout,
-                                                           normalization=normalize,
-                                                           show=_show,
-                                                           use_mask_for_gain=option.use_mask)
+                                                           normalization=args.normalize,
+                                                           show=args.show,
+                                                           use_mask_for_gain=args.use_mask)
                             except Exception as e:
                                 print e
                                 print 'PyZOGY failed on', imgtarg0
@@ -381,11 +353,11 @@ if __name__ == "__main__":
                                     ' -ir ' + str(rn_targ) + ' -ip ' + str(min(-pssl_targ,0)) +
                                     ' -ini targnoise.fits ' +
                                     ' -r ' + str(rkernel) +
-                                    ' -nrx ' + nrxy.split(',')[0] + ' -nry ' + nrxy.split(',')[1] +
-                                    ' -nsx ' + nsxy.split(',')[0] + ' -nsy ' + nsxy.split(',')[1] +
+                                    ' -nrx ' + args.nrxy.split(',')[0] + ' -nry ' + args.nrxy.split(',')[1] +
+                                    ' -nsx ' + args.nsxy.split(',')[0] + ' -nsy ' + args.nsxy.split(',')[1] +
                                     _afssc + ' -rss ' + str(radius) +
-                                    _convolve + ' -n ' + normalize + ' ' + sconv +
-                                    ' -ko ' + ko + ' -bgo ' + bgo+' -tmi tempmask.fits  -okn -ng 4 9 0.70 6 1.50 4 3.00 2 5 ')
+                                    _convolve + ' -n ' + args.normalize + ' ' + sconv +
+                                    ' -ko ' + args.ko + ' -bgo ' + args.bgo+' -tmi tempmask.fits  -okn -ng 4 9 0.70 6 1.50 4 3.00 2 5 ')
 
 
                             print line
@@ -406,7 +378,7 @@ if __name__ == "__main__":
                                               {'target': (imgtarg0, 'target image'),
                                                'exptarg': (exp_targ,'exposure time terget')})
 
-                        if normalize == 't':
+                        if args.normalize == 't':
                             lsc.util.updateheader(imgout, 0, {'EXPTIME': (exp_temp, '[s] Exposure length'),
                                                               'SATURATE': (sat_temp, '[ADU] Saturation level used')})
 
@@ -453,15 +425,15 @@ if __name__ == "__main__":
                         dictionary['filename'] = imgout0
                         dictionary['filepath'] = _dir
                         dictionary['filetype'] = 3
-                        dictionary['difftype'] = _difftype
+                        dictionary['difftype'] = args.difftype
                         if dictionary['filepath']:
                             if not os.path.isdir(dictionary['filepath']):
                                 print dictionary['filepath']
                                 os.mkdir(dictionary['filepath'])
-                            if not os.path.isfile(dictionary['filepath'] + imgout0) or _force in ['yes', True]:
+                            if not os.path.isfile(dictionary['filepath'] + imgout0) or args.force in ['yes', True]:
                                 os.system('mv -v ' + imgout + ' ' + dictionary['filepath'] + imgout0)
                                 os.system('mv -v ' + imgtemp + ' ' + dictionary['filepath'] + imgout0.replace('.diff.', '.ref.'))
-                                if _difftype == '1':
+                                if args.difftype == '1':
                                     hdulist = fits.open(imgout.replace('.fits', '.psf.fits'))
                                     imgdata = hdulist[0].data
                                     yctr, xctr = np.array(imgdata.shape) / 2
@@ -472,10 +444,10 @@ if __name__ == "__main__":
                                                       'CRVAL1': 0, 'CRVAL2': 0,             # where we know the PSF star
                                                       'CD1_1': 1, 'CD2_2': 1,               # is at (0, 0), which is the
                                                       'CD1_2': 0, 'CD2_1': 0}               # center of the image
-                                    if normalize == 't':
+                                    if args.normalize == 't':
                                         psffile_fields['EXPTIME'] = head_temp['EXPTIME']
                                         psffile_fields['SATURATE'] = head_temp['SATURATE']
-                                    elif normalize == 'i':
+                                    elif args.normalize == 'i':
                                         psffile_fields['EXPTIME'] = head_targ['EXPTIME']
                                         psffile_fields['SATURATE'] = head_targ['SATURATE']
                                     hdulist[0].header.update(psffile_fields)
@@ -486,11 +458,11 @@ if __name__ == "__main__":
                         #                           normalization parameter
                         #
                         ##########################################################################################################
-                        if normalize == 'i':
+                        if args.normalize == 'i':
                             print '\n ### scale to target'
                             imgscale = imgtarg0
                             pathscale = _dir
-                        elif normalize == 't':
+                        elif args.normalize == 't':
                             print '\n ### scale to reference'
                             imgscale = imgtemp0
                             pathscale = _dirtemp
@@ -531,9 +503,9 @@ if __name__ == "__main__":
                         if conn:
                             ###################    insert in photlco
                             ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', imgout0, '*')
-                            if ggg and _force:
+                            if ggg and args.force:
                                 lsc.mysqldef.deleteredufromarchive(imgout0, 'photlco', 'filename')
-                            if not ggg or _force:
+                            if not ggg or args.force:
                                 print 'insert'
                                 print dictionary
                                 lsc.mysqldef.insert_values(conn, 'photlco', dictionary)

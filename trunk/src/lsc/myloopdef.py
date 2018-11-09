@@ -241,7 +241,8 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
 
 
 def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, fix=True,
-            catalog='', database='photlco', use_sextractor=False, datamin=None, datamax=None, nstars=6):
+            catalog='', database='photlco', use_sextractor=False, datamin=None, datamax=None, 
+            nstars=6, banzai=False):
     for img in imglist:
         if interactive:
             ii = '-i'
@@ -271,6 +272,10 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
             xx = ' --use-sextractor '
         else:
             xx = ''
+        if banzai:
+            bz = ' --banzai '
+        else:
+            bz = ''
         if datamin is not None:
             dmin = ' --datamin ' + str(datamin) + ' '
         else:
@@ -334,7 +339,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                         raise Exception('fits table not there, run psf for ' + sntable)
             else: # PyZOGY difference images or unsubtracted images
                 command = 'lscpsf.py ' + _dir + img + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
-                    treshold) + gg + cc + xx + dmin + dmax + pp
+                    treshold) + gg + cc + xx + dmin + dmax + pp + bz
                 print command
                 os.system(command)
         elif status == 0:

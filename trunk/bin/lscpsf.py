@@ -36,8 +36,10 @@ if __name__ == "__main__":
                       help="value below which pixels are considered bad")
     parser.add_option("--datamax", type=int,
                       help="value above which pixels are considered saturated (default = SATURATE in header)")
+    parser.add_option("--banzai", action="store_true", help="use souces from sextractor instead of catalog")
 
     option, args = parser.parse_args()
+
     if len(args) < 1: 
         sys.argv.append('--help')
     option, args = parser.parse_args()
@@ -69,11 +71,15 @@ if __name__ == "__main__":
                 psfstars = option.psfstars
                 if option.use_sextractor:
                     catalog = ''
+                elif option.banzai:
+                    if psfstars == 6: psfstars = 18
+                    catalog = lsc.banzaicat.make_cat(option.datamax,psfstars,img)
                 elif option.catalog:
                     catalog = option.catalog
                 else:
                     for system in ['sloan', 'apass', 'landolt']:
-                        catalog = lsc.util.getcatalog(img, system)
+                        #catalog = lsc.util.getcatalog(img, system)
+                        catalog = lsc.util.getcatalog(img.split('/')[-1], system)
                         if catalog:
                             break
             while True:

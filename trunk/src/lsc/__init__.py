@@ -9,6 +9,7 @@ from externaldata import *
 from myloopdef import *
 from cosmics import *
 from lscpsfdef import *
+from banzaicat import *
 
 __version__ = "unknown"
 try:

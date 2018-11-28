@@ -56,7 +56,10 @@ def download_frame(frame, force=False):
     elif '0m4' in frame['TELID']:
         daydir = 'data/0m4/' + dayobs + '/'
     else:
-        logger.error('failed to identify telescope: {} {}'.format(frame['TELID'], frame['INSTRUME']))
+        daydir = os.path.join('data', frame['TELID'], dayobs, '')
+        if not os.path.exists(daydir):
+            os.makedirs(daydir)
+        logger.error('failed to identify telescope: {} {}. Placing data in {}'.format(frame['TELID'], frame['INSTRUME'], daydir))
     filepath = os.path.join(lsc.util.workdirectory, daydir)
 
     if not os.path.isdir(filepath):

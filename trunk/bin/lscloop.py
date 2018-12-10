@@ -72,6 +72,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--z1", type=float)
     parser.add_argument("--z2", type=float)
     parser.add_argument("--groupidcode", type=int)
+    parser.add_argument("--targetid",    type=int)
     parser.add_argument("--ps1frames", default='', help='list of ps1 frames (download them manually)')
     parser.add_argument('--zcatold', action='store_true', help='use original zero point and color term routine')
     parser.add_argument("--bgo", default=3., type=float, help=' bgo parameter for hotpants')
@@ -266,7 +267,7 @@ if __name__ == "__main__":   # main program
                         inds = np.argsort(ll00['mjd'])  #  sort by mjd
                         for i in ll00.keys():
                             ll00[i] = np.take(ll00[i], inds)
-                        lltemp = lsc.myloopdef.filtralist(ll00, filters, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '')
+                        lltemp = lsc.myloopdef.filtralist(ll00, filters, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '', '', '', None, _targetid)
 
                     if not lista or not lltemp:
                         raise Exception('template not found')

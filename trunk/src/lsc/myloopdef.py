@@ -595,7 +595,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):
     return rasn2c, decsn2c
 
 
-def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype='', classid=None):
+def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype='', classid=None, _targetid=None):
     ll1 = {}
     for key in ll2.keys():
         ll1[key] = ll2[key][:]
@@ -664,6 +664,14 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
+
+    if _targetid:  # name
+        ww = asarray([i for i in range(len(ll1['targetid'])) if ((ll1['targetid'][i]==int(_targetid)))])
+        if len(ww) > 0:
+            for jj in ll1.keys(): ll1[jj] = array(ll1[jj])[ww]
+        else:
+            for jj in ll1.keys(): ll1[jj] = []
+
     if _groupid:
         ww = np.array([i for i in range(len(ll1['filter'])) if ((ll1['groupidcode'][i] != _groupid))])
         if len(ww) > 0:
@@ -1630,7 +1638,7 @@ def process_epoch(epoch):
     return epochs
 
 def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
-             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype='', classid=None):
+             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype='', classid=None, _targetid=None):
     epochs = process_epoch(epoch)
     lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epochs[0], epochs[-1], '*', _telescope)
     if lista:
@@ -1655,7 +1663,7 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
             ll0['ra'] = ll0['ra0']
             ll0['dec'] = ll0['dec0']
         ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad,
-             filetype, _groupid, _instrument, _temptel, _difftype, classid)
+                                      filetype, _groupid, _instrument, _temptel, _difftype, classid, _targetid)
     else:
         ll = ''
     return ll

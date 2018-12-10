@@ -668,7 +668,8 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     if _targetid:  # name
         ww = np.array([i for i in range(len(ll1['targetid'])) if ((ll1['targetid'][i]==int(_targetid)))])
         if len(ww) > 0:
-            for jj in ll1.keys(): ll1[jj] = array(ll1[jj])[ww]
+            for jj in ll1.keys(): 
+                ll1[jj] = np.array(ll1[jj])[ww]
         else:
             for jj in ll1.keys(): ll1[jj] = []
 

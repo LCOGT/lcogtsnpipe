@@ -65,6 +65,7 @@ if __name__ == "__main__":
     from pyraf import iraf
     from iraf import digiphot
     from iraf import daophot
+    iraf.set(stdimage='imt2048')
     from astropy.wcs import WCS
     ##################################
     goon = False
@@ -119,7 +120,7 @@ if __name__ == "__main__":
                 if chosepos:
                     print 'choose xpos, ypos interactively'
                     lsc.util.delete('tmp.log')
-                    zz1, zz2, goon = lsc.util.display_image(img, 1, '', '', True)
+                    zz1, zz2, goon = lsc.util.display_image(img, 1, 0, 6000, True)
                     iraf.imexamine(img, 1, wcs='logical', logfile='tmp.log', keeplog=True)
                     xytargets = iraf.fields('tmp.log', '1,2', Stdout=1)
                     _xpos, _ypos = string.split(xytargets[0])[0], string.split(xytargets[0])[1]

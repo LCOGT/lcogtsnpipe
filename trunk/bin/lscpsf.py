@@ -72,8 +72,7 @@ if __name__ == "__main__":
                 if option.use_sextractor:
                     catalog = ''
                 elif option.banzai:
-                    if psfstars == 6: psfstars = 18
-                    catalog = lsc.banzaicat.make_cat(option.datamax,psfstars,img)
+                    catalog = lsc.banzaicat.make_cat(img,datamax=option.datamax)
                 elif option.catalog:
                     catalog = option.catalog
                 else:

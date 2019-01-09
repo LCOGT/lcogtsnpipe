@@ -3,7 +3,7 @@ from astropy.io import fits
 from scipy.stats import sigmaclip
 from operator import itemgetter
 
-def make_cat(filename,datamax=75000,banzai_sig=3,banzai_crlim=3):
+def make_cat(filename,datamax=75000,b_sigma=3.0,b_crlim=3.0):
 
 	if datamax == None: datamax = 75000
 
@@ -16,9 +16,9 @@ def make_cat(filename,datamax=75000,banzai_sig=3,banzai_crlim=3):
 	backgrounds = [x['BACKGROUND'] for x in banzai_cat]
 	fwhms = [x['FWHM'] for x in banzai_cat]
 
-	filtered_el, lo, hi = sigmaclip(ellipticities, low=banzai_sig, high=banzai_sig)
-	filtered_bg, lo, hi = sigmaclip(backgrounds, low=banzai_sig, high=banzai_sig)
-	filtered_fwhm, lo, hi = sigmaclip(fwhms, low=banzai_sig, high=banzai_sig)
+	filtered_el, lo, hi = sigmaclip(ellipticities, low=b_sigma, high=b_sigma)
+	filtered_bg, lo, hi = sigmaclip(backgrounds, low=b_sigma, high=b_sigma)
+	filtered_fwhm, lo, hi = sigmaclip(fwhms, low=b_sigma, high=b_sigma)
 
 	id_num = 0
 	sources = []
@@ -29,7 +29,7 @@ def make_cat(filename,datamax=75000,banzai_sig=3,banzai_crlim=3):
 				and source['ELLIPTICITY'] in filtered_el 
 				and source['BACKGROUND'] in filtered_bg
 				and source['FWHM'] in filtered_fwhm 
-				and source['FWHM'] > banzai_crlim):
+				and source['FWHM'] > b_crlim):
 			id_num += 1
 			
 			StN = source['PEAK']/source['BACKGROUND']	
@@ -39,7 +39,7 @@ def make_cat(filename,datamax=75000,banzai_sig=3,banzai_crlim=3):
 	print ("Number of sources in BANZAI catalog after filtering: "
 		"{0}".format(len(sources)))
 	print ("({0}-sigma clipping on source ellipticity, "
-		"background level, and FWHM.)".format(banzai_sig))
+		"background level, and FWHM.)".format(b_sigma))
 
 	#Sort by S/N	
 	sources = sorted(sources, key=itemgetter(2), reverse=True)

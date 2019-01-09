@@ -86,6 +86,9 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--multicore", default=8, type=int, help='numbers of cores')
     parser.add_argument("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
     parser.add_argument("--banzai", action="store_true", help="Use souces from BANZAI catalogs stored in image headers for PSF")
+    parser.add_argument("--b_sigma", type=float, default=3.0, help="value used to sigma-clip BANZAI sources")
+    parser.add_argument("--b_crlim", type=float, default=3.0, help="lower limit used to reject CRs identified as BANZAI sources")
+
     args = parser.parse_args()
 
     if args.stage == 'checkdiff':
@@ -174,7 +177,7 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type)
             elif args.stage == 'psf':
                 lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,
-                                      'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai)
+                                      'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai, args.b_sigma, args.b_crlim)
             elif args.stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], args.RAS, args.DECS, args.xord, args.yord, args.bkg, args.size, args.recenter, args.ref,
                                       args.interactive, args.show, args.force, args.datamax,args.datamin,'photlco',args.RA0,args.DEC0)

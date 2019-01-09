@@ -242,7 +242,7 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
 
 def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, fix=True,
             catalog='', database='photlco', use_sextractor=False, datamin=None, datamax=None, 
-            nstars=6, banzai=False):
+            nstars=6, banzai=False, b_sigma=3.0, b_crlim=3.0):
     for img in imglist:
         if interactive:
             ii = '-i'
@@ -273,7 +273,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
         else:
             xx = ''
         if banzai:
-            bz = ' --banzai '
+            bz = ' --banzai --b_sigma={0} --b_crlim={1} '.format(b_sigma,b_crlim)
         else:
             bz = ''
         if datamin is not None:

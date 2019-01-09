@@ -37,6 +37,10 @@ if __name__ == "__main__":
     parser.add_option("--datamax", type=int,
                       help="value above which pixels are considered saturated (default = SATURATE in header)")
     parser.add_option("--banzai", action="store_true", help="use souces from sextractor instead of catalog")
+    parser.add_option("--b_sigma", type=float, default=3.0,
+                      help="value used to sigma-clip BANZAI sources")
+    parser.add_option("--b_crlim", type=float, default=3.0,
+                      help="lower limit used to reject CRs identified as BANZAI sources")
 
     option, args = parser.parse_args()
 
@@ -72,7 +76,8 @@ if __name__ == "__main__":
                 if option.use_sextractor:
                     catalog = ''
                 elif option.banzai:
-                    catalog = lsc.banzaicat.make_cat(img,datamax=option.datamax)
+                    catalog = lsc.banzaicat.make_cat(img,option.datamax,
+                        option.b_sigma,option.b_crlim)
                 elif option.catalog:
                     catalog = option.catalog
                 else:

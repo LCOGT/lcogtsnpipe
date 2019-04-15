@@ -51,6 +51,8 @@ def download_frame(frame, force=False):
         daydir = 'data/floyds/' + dayobs + '_ftn/'
     elif frame['INSTRUME'] == 'en05':
         daydir = 'data/floyds/' + dayobs + '_fts/'
+    elif frame['INSTRUME'] == 'en12':
+        daydir = 'data/floyds/' + dayobs + '_fts/'
     elif '1m0' in frame['TELID']:
         daydir = 'data/lsc/' + dayobs + '/'
     elif '0m4' in frame['TELID']:
@@ -170,7 +172,7 @@ def get_groupidcode(hdr):
 def db_ingest(filepath, filename, force=False):
     '''Read an image header and add a row to the database'''
     global telescopeids, instrumentids
-    if '-en0' in filename:
+    if '-en' in filename:
         table = 'speclcoraw'
         db_to_hdrkey = speclcoraw_to_hdrkey
     else:
@@ -300,7 +302,7 @@ if __name__ == "__main__":
         if '.tar.gz' not in frame['filename']:
             filepath, filename = download_frame(frame, args.force_dl)
             dbdict = db_ingest(filepath, filename, args.force_db)
-            if '-en0' in filename and '-e00.fits' in filename:
+            if '-en' in filename and '-e00.fits' in filename:
                 fits2png(filepath + filename, args.force_tn)
         else:
             record_floyds_tar_link(authtoken, frame, args.force_gl)

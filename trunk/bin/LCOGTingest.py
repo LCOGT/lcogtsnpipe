@@ -27,17 +27,20 @@ def authenticate(username, password):
 
 def get_metadata(authtoken={}, limit=None, **kwargs):
     '''Get the list of files meeting criteria in kwargs'''
-    url = 'https://archive-api.lco.global/frames/?' + '&'.join(
-            [key + '=' + str(val) for key, val in kwargs.items() if val is not None])
-    url = url.replace('False', 'false')
-    url = url.replace('True', 'true')
-    logger.info(url)
-
-    response = requests.get(url, headers=authtoken).json()
+    url = 'https://archive-api.lco.global/frames/'
+    params = {}
+    for key, val in kwargs.items():
+        if val is True:
+            params[key] = 'true'
+        elif val is False:
+            params[key] = 'false'
+        elif val is not None:
+            params[key] = val 
+    response = requests.get(url, headers=authtoken, params=params).json()
     frames = response['results']
     while response['next'] and (limit is None or len(frames) < limit):
         logger.info(response['next'])
-        response = requests.get(response['next'], headers=authtoken).json()
+        response = requests.get(response['next'], headers=authtoken, params=params).json()
         frames += response['results']
     return frames[:limit]
 

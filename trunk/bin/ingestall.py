@@ -31,7 +31,11 @@ else:
 login = lsc.mysqldef.query(["select username, userpw from programs where idcode='KEY2014A-003'"], conn)
 username = login[0]['username']
 password = base64.decodestring(login[0]['userpw'])
-authtoken = authenticate(username, password)
+try:
+    authtoken = authenticate(username, password)
+except ValueError as e:
+    logger.info('Getting throttled: {error}'.format(error = str(e)))
+    sys.exit()
 
 frames = get_metadata(authtoken, start=start, end=end, OBSTYPE='EXPOSE', RLEVEL=91, public=False)       # all images where SNEx is a co-I
 for telid in ['2m0a', '1m0a', '0m4a', '0m4b', '0m4c']:

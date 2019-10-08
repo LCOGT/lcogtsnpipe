@@ -33,7 +33,7 @@ def get_metadata(authtoken={}, limit=None, **kwargs):
     url = url.replace('True', 'true')
     logger.info(url)
 
-    response = requests.get(url, headers=authtoken).json()
+    response = requests.get(url, headers=authtoken, stream=True).json()
     frames = response['results']
     while response['next'] and (limit is None or len(frames) < limit):
         logger.info(response['next'])

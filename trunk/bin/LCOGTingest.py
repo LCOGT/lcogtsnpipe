@@ -37,7 +37,7 @@ def get_metadata(authtoken={}, limit=None, **kwargs):
     frames = response['results']
     while response['next'] and (limit is None or len(frames) < limit):
         logger.info(response['next'])
-        response = requests.get(response['next'], headers=authtoken).json()
+        response = requests.get(response['next'], headers=authtoken, stream=True).json()
         frames += response['results']
     return frames[:limit]
 

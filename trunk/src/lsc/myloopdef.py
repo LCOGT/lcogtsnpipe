@@ -293,7 +293,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
         if status >= 1:
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
             _dir = ggg[0]['filepath']
-            if ggg[0]['filetype'] == 3 and ggg[0]['difftype'] == 0: # HOTPANTS difference images
+            if ggg[0]['filetype'] == '3' and ggg[0]['difftype'] == 0: # HOTPANTS difference images
                 ##################################################################################
                 print '\n### get parameters for difference image'
                 hdrdiff=lsc.util.readhdr(_dir+img)

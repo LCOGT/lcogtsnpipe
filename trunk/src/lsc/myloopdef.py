@@ -2,6 +2,7 @@ import os
 import lsc
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from pyraf import iraf
 from glob import glob
 import datetime
@@ -856,9 +857,10 @@ def checkcat(imglist, database='photlco'):
             print 'status ' + str(status) + ': unknown status'
 
 
-def checkpsf(imglist, database='photlco'):
+def checkpsf(imglist, no_iraf, database='photlco'):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
+    plt.ion()
     for img in imglist:
         status = checkstage(img, 'checkpsf')
         print img, status
@@ -869,8 +871,12 @@ def checkpsf(imglist, database='photlco'):
             if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
                 print img
                 lsc.util.marksn2(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
-                iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
-                iraf.surface('_psf.psf')
+                if no_iraf:
+                    psf_filename = _dir + img.replace('.fits', '.psf.fits')
+                    make_psf_plot(psf_filename)
+                else:
+                    iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
+                    iraf.surface('_psf.psf')
                 aa = raw_input('>>>good psf [[y]/n] or [b] bad quality ? ')
                 if not aa: aa = 'y'
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
@@ -896,6 +902,47 @@ def checkpsf(imglist, database='photlco'):
             print 'status ' + str(status) + ': bad quality image'
         else:
             print 'status ' + str(status) + ': unknown status'
+
+
+def make_psf_plot(psf_filename):
+    """
+    Displays plots of PSFs for the checkpsf stage without using iraf
+    :param psf_filename: filepath+filename of psf file
+    """
+    plt.clf()
+
+    psf_hdul = fits.open(psf_filename)
+    N = psf_hdul[0].header['PSFHEIGH'] / psf_hdul[0].header['NPSFSTAR']
+    sigma_x = psf_hdul[0].header['PAR1']
+    sigma_y = psf_hdul[0].header['PAR2']
+    psfrad = psf_hdul[0].header['PSFRAD']
+    NAXIS1 = psf_hdul[0].header['NAXIS1']
+    NAXIS2 = psf_hdul[0].header['NAXIS2']
+
+    x = np.linspace(-psfrad, psfrad, num=NAXIS1)
+    y = np.linspace(-psfrad, psfrad, num=NAXIS2)
+    X, Y = np.meshgrid(x, y)
+    # PSF is elliptical gaussian (from header) + residuals (from img data)
+    # in description https://iraf.net/irafhelp.php?val=seepsf
+    # not 100% sure normalization is correct, but tested on
+    #       good and bad psfs and I think it's right
+    analytic = N * np.exp(-(((X ** 2) / (sigma_x ** 2)) + ((Y ** 2) / (sigma_y ** 2))) / 2)
+    residual = psf_hdul[0].data
+    Z = analytic + residual
+
+    ax = plt.subplot(1, 1, 1, projection='3d')
+    ax.plot_wireframe(X, Y, Z, rcount=2 * psfrad + 1, ccount=2 * psfrad + 1)
+    """
+    # replicate iraf look, much slower than wireframe
+    ax.plot_surface(X,Y,Z,rcount=2*psfrad+1,ccount=2*psfrad+1,
+            antialiased=True,linewidth=.25,color='black',edgecolor='white')
+    """
+
+    ax.view_init(elev=40, azim=330)  # replicating starting view of iraf PSF
+    ax.set_axis_off()
+    ax.set_title('PSF for {psf_filename}'.format(psf_filename=psf_filename))
+    plt.gcf().set_size_inches(8,4)
+    plt.gcf().tight_layout()
 
     #############################################################################
 

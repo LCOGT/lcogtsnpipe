@@ -231,7 +231,10 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
          _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
          if not _telid:
            print 'Telescope ',_tel,' not recognized.  Adding to telescopes table.'
-           lsc.mysqldef.insert_values(conn,'telescopes',{'name':_tel})
+           #lsc.mysqldef.insert_values(conn,'telescopes',{'name':_tel})
+           # the short name is needed to caligrate the magnitude with extinction 
+           lsc.mysqldef.insert_values(conn,'telescopes',{'name':_tel,'shortname': readkey3(hdr,'SITEID')})
+           
            _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
          telid=_telid[0]['id']
          dictionary['telescopeid']=str(telid)

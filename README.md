@@ -1,8 +1,16 @@
 #  lcogtsnpipe
-this is the pipeline that ingest and reduce new data from the lcogt key project
+This is the pipeline that ingests and reduces new data from the lcogt key project
 
-* auto-gen TOC:
-{:toc}
+# Table of Contents
+- [ Pipeline Documentation](#pipeline-documentation)
+- [Installing the Pipeline and Database](#installing-the-pipeline-and-database)
+- [Testing your installation](#testing-your-installation)
+- [Appendix A: Expected output from show tables](#appendix-a-expected-output-from-show-tables)
+- [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina-)
+- [Appendix C: Other packages you may need to install](#appendix-c-other-packages-you-may-need-to-install)
+
+# Pipeline Documentation:
+1. Image Subtraction: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
 
 # Installing the Pipeline and Database
 1. Install msql  

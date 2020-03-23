@@ -340,3 +340,4 @@ Liberally adopted from: https://iraf-community.github.io/install
 
         sudo make PREFIX=/Users/<your username> install
         ```
+        **Note:** with these direction you do NOT need ATLAS

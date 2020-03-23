@@ -6,7 +6,7 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 - [Installing the Pipeline and Database](#installing-the-pipeline-and-database)
 - [Testing your installation](#testing-your-installation)
 - [Appendix A: Expected output from show tables](#appendix-a-expected-output-from-show-tables)
-- [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina-)
+- [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina)
 - [Appendix C: Other packages you may need to install](#appendix-c-other-packages-you-may-need-to-install)
 
 # Pipeline Documentation:
@@ -303,8 +303,40 @@ Liberally adopted from: https://iraf-community.github.io/install
         conda install pyraf
 
 # Appendix C: Other packages you may need to install
+* Source Extractor:
+    * http://www.astromatic.net/software/sextractor
+    **Note:** This was non-trivial on my Mac. See Appendix D for directions
 * For difference image photometry:
     * *hotpants*  https://github.com/acbecker/hotpants  
         **Note:** There is a pull request submitted to this repo to fix issues with mac installation. I ended up cloning https://github.com/exowanderer/hotpants.git, checking out the remote 
     * *PyZOGY* https://github.com/dguevel/PyZOGY/tree/v0.0.1  
         **Note:** I had to also install statsmodels (via conda install) and sep (via pip install) and numpy version >=1.12 
+
+# Appendix D: Installing Source Extractor:
+    In the directions below, <your username> is used repeatedly as a place holder for your actual username (e.g. bostroem)
+    1. Install FFTW from source:  
+        * Download: http://www.fftw.org/download.html  
+        * Install:  
+        ```
+        ./configure --prefix=/Users/<your username>
+        make
+        make install
+        ```
+    2. Install OpenBLAS from source:
+        * Download tar.gz file from link at top of page: https://www.openblas.net
+        * Install:
+        ```
+        make PREFIX=/Users/<your username> install
+        ```
+    3. Install Source Extractor:
+        * Download: http://www.astromatic.net/software/sextractor
+        * Install:
+        ```
+        sh autogen.sh
+
+        ./configure  --with-fftw-incdir=/Users/<your username>/include --with-fftw-libdir=/Users/<your username>/lib --with-openblas-incdir=/Users/<your username/include --with-openblas-libdir=/Users/<your username>/lib --with-atlas-incdir=/Users/<your username>/include --with-atlas-libdir=/Users/<your username>/lib --enable-openblas
+
+        make -j
+
+        sudo make PREFIX=/Users/<your username> install
+        ```

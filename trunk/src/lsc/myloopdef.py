@@ -1541,7 +1541,7 @@ def plotfast(setup, output='', database='photlco'):  #,band,color,fissa=''):
             jj1 = np.compress(np.array(_setup[_tel][_fil]['magtype']) < 0, np.array(_setup[_tel][_fil]['mjd']))
             mm1 = np.compress(np.array(_setup[_tel][_fil]['magtype']) < 0, np.array(_setup[_tel][_fil]['mag']))
             if len(mm1) > 0:
-                plt.errorbar(jj1, mm1, mm1 / 100, lolims=True, fmt=None, ecolor='k')
+                plt.errorbar(jj1, mm1, mm1 / 100, lolims=True, fmt='none', ecolor='k')
 
             mag = list(mag) + list(np.array(_setup[_tel][_fil]['mag']) + _shift[_fil])
             mjd = list(mjd) + list(_setup[_tel][_fil]['mjd'])

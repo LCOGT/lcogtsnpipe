@@ -269,7 +269,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--obstype", choices=['ARC', 'BIAS', 'CATALOG', 'DARK', 'EXPERIMENTAL',
                                         'EXPOSE', 'LAMPFLAT', 'SKYFLAT', 'SPECTRUM', 'STANDARD'])
     parser.add_argument("-r", "--reduction", choices=['raw', 'quicklook', 'reduced'])
-    parser.add_argument("-x", "--experimental", action='store_true', help="get products from Curtis's pipeline")
+    parser.add_argument("--orac", action='store_true', help="get products from the old ORAC-DR pipeline")
     parser.add_argument("--public", action='store_true', help="include public data")
 
     args = parser.parse_args()
@@ -281,14 +281,14 @@ if __name__ == "__main__":
 
     if args.reduction == 'raw':
         rlevel = 0
-    elif args.reduction == 'quicklook' and args.experimental:
-        rlevel = 11
-    elif args.reduction == 'quicklook':
+    elif args.reduction == 'quicklook' and args.orac:
         rlevel = 10
-    elif args.reduction == 'reduced' and args.experimental:
-        rlevel = 91
-    elif args.reduction == 'reduced':
+    elif args.reduction == 'quicklook':
+        rlevel = 11
+    elif args.reduction == 'reduced' and args.orac:
         rlevel = 90
+    elif args.reduction == 'reduced':
+        rlevel = 91
     else:
         rlevel = None
 

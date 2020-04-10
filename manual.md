@@ -4,7 +4,7 @@
 
 # Create apass and sloan catalogs for new objects
 * run comparecatalogs.py to generate new catalogs
-* Note if you are trying to reduce U band, you need to generate a local catalog. See XXX for details.
+* Note if you are trying to reduce U band, you need to generate a local catalog. See [Creating an Landolt Catalog](#Creating-a-Landolt-Catalog) for details.
 
 # Running the pipeline:
 In general, the pipeline is called as a series of stages. Each stage should be called with the general format:
@@ -91,6 +91,8 @@ Where:
     * The most likely failure mode is that there are not enough stars between the catalog and the image. You can visually check this by:
         * Openning DS9
         * running ```-s zcat -i```
+        * if not enough stars are found, then "no calibration: FILTER" is printed to the screen and only the last file is displayed in DS9. You can run this file by file using the --id option described under [Broadly used options](#Broadly-used-options)
+        * if enough stars are found, this also displays a plot calibrated_mag - instrumental_mag vs color.  Each point is a star being used to calculate the zero point. Green are accepted, red are excluded by some automatic sigma-clipping. You can toggle each point by clicking on it if you don’t like the automatic rejection.
 * **How to fix this step if the image looks ok but the zcat step failed**
 
 ### Generate instrumental magnitudes using psf photometry
@@ -123,41 +125,39 @@ Where:
 * **Other Options**:  
 TODO: Figure out where checkquality should go in this workflow
 
-# Creating an Landolt Catalog:
-## Download landolt standard star catalogs
+# Creating a Landolt Catalog:
+### Download landolt standard star catalogs
 * These need to be obtained from LCO (Jamie gave me a zip file with them)
 * Put these files in the directory $LCOSNPIPE/trunk/src/lsc/standard/cat/landolt
 * Reinstall the pipeline ```python setup.py install```
 
-## Download the Standard Star Observations
+### Download and Calibrate the Standard Star Observations
 * Find standard stars that were observed during the epoch you need in the filter you need (U) and at least 1 other filter (for color correction) - recommended B and V
 * Search archive.lco.global for obstype=STANDARD, set date range, filter, if applicable telescope and site (e.g. fo 2018zd I set site=elp and telescope=fl05)
+* from the same telescope, same night, observed the same night as your observations
 * Download the reduced observations
 * run python ingestzip.py -f downloaded_directory_or_zip_filename
-* Calibrate you standard star observations (below is an example for L94 where the catalog I point to is the one I got from LCO as described above and I'm calibrating for U band observations of 2018zd)
-```
-lscloop.py -e 20180301-20180310 -n L94 --stage cosmic
-lscloop.py -e 20180301-20180310 -n L94 --stage wcs
-lscloop.py -e 20180301-20180310 -n L94 --stage psf 
-lscloop.py -e 20180301-20180310 -n L94 --stage psfmag
-lscloop.py -e 20180301-20180310 -n L94 --stage zcat 
-lscloop.py -e 20180301-20180310 -n L94 --stage mag --type fit
-```
+* Calibrate you standard star observations (cosmic, wcs, psf, psfmag, zcat, mag)
+* When running the zcat step, use ```--catalog=<path to anaconda>/envs/lcogtsnpipe/lib/python2.7/site-packages/lsc/standard/cat/landolt/<standard catalog name>```
+* When you run -s local on the SN (in the next step), it queries the database for any standards in the same filter-site-night as the SN observations. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard STANDARD``` where STANDARD is the name of your standard (e.g. L95)
 
-# Create a catalog of standard stars for Landolt filters
-* This calculated the apparent magnitude for the stars in a given filter. If a single class of telescopes seems to be an outlier, then you should limit the telescopes used to calculate the apparent magnitude to a single class of telescopes with the ```-T 1m0``` flag
+### Create a catalog of stars (local sequence) in SN field for Landolt filters
+* This calculates the apparent magnitude for the stars in a given filter in your SN field and creates a catalog that will be used in the zcat step to generate the zeropoint for each observation. If a single class of telescopes seems to be an outlier, then you should limit the telescopes used to calculate the apparent magnitude to a single class of telescopes with the ```-T 1m0``` flag
 ```
-lscloop.py -n 'SN 2018zd' -e 20180302-20200301 -f landolt -s local -i --catalog=/Users/bostroem/anaconda/envs/lcogtsnpipe/lib/python2.7/site-packages/lsc/standard/cat/apass/SN2018zd_apass.cat
+lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -s local -i --standard STANDARD --catalog=CATALOG
 ```
-* Can also point to sloan catalog if needed
-* ```-s``` local does not calculate zero points. It calculates the apparent magnitudes of the stars. So I guess in theory you should not have to restrict yourself to a single telescope class. But based on your plot, the 2m0 observations seem to be outliers, so I would still exclude them. ```-s zcat``` is when you actually calculate the zero points, and that runs on one image at a time. ```-s mag``` uses cross-image information to calculate the SN magnitude, but that handles the different telescope classes correctly.
+Where STANDARD is the standard you calibrated previously and CATALOG is the name of the apass or sloan catalog created for your supernova (e.g. SN2018zd_apass.cat). You should use the full epoch so that you calculate the apparent magnitudes for a variety of night (ideally) making your values more robust to outliers.
 
 * Check plots for:
     - if there is a big difference between the BV filters of Landolt and APASS for a large number of stars (a few stars will be variable)
     - I guess the main thing is that some of the standard field observations will be bad because of clouds or whatever, so make sure they are not pulling the median zero point away too much
+* This outputs a catalog (the name of which is printed to the screen)
 
+### Move the catalog to the catalog directory:
+* Move the catalog created in the previous step to the directory $LCOSNPIPE/trunk/src/lsc/standard/cat/landolt
+* Reinstall the pipeline ```python setup.py install```
 
-## Move the catalog to the catalog directory:
-```
-mv sn2018zd_landolt_20200408_14_04.cat /supernova/conda-envs/pipeline/lib/python2.7/site-packages/lsc/standard/cat/landolt/
-```
+### Manually update the database
+* update the targets table of the database (manually) to know about this catalog ```update targets set landolt_cat=CATALOG where id=ID``` where CATALOG is the catalog you moved in the previous step and ID is the id of your supernova
+### Run the photometry as usual 
+* e.g. ```lscloop.py -n 'SN 2018zd' -e 20180302-20190419 -f landolt -s zcat```

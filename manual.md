@@ -1,3 +1,10 @@
+# Table of Contents
+* [Ingest Data](#Ingest-data)
+* [Create apass and sloan catalogs](#Create-apass-and-sloan-catalogs-for-new-objects)
+* [Running the pipeline](#Running-the-pipeline)
+* [Creating a Landolt Catalog](#Creating-a-Landolt-Catalog)
+* [Telescopes](#Telescopes)
+
 # Ingest data
 * Download observations from SNEx and run ingesttar.py
 * Download observations from archive.lco.global and run ingestzip.py
@@ -161,3 +168,19 @@ Where STANDARD is the standard you calibrated previously and CATALOG is the name
 * update the targets table of the database (manually) to know about this catalog ```update targets set landolt_cat=CATALOG where id=ID``` where CATALOG is the catalog you moved in the previous step and ID is the id of your supernova
 ### Run the photometry as usual 
 * e.g. ```lscloop.py -n 'SN 2018zd' -e 20180302-20190419 -f landolt -s zcat```
+
+# Telescopes
+
+| Number | Short Name   | Long Name                         | ?             | lscloop keyword|
+|--------|--------------|-----------------------------------|---------------|----------------|
+|1       | OGG 2m       | Haleakala Observatory - 2m        | ogg2m001-fs02 | 2m0            |
+|2       | COJ 2m       | Siding Springs Observatory - 2m   | coj2m002-fs03 | 2m0            |
+|3       | COJ 1m       | Siding Springs Observatory - 1m   | coj1m003-kb71 | 0m4            |
+|4       | LSC 1m       | CTIO - Region IV                  | lsc1m004-kb77 | 1m0            |
+|5       | LSC 1m       | CTIO - Region IV                  | lsc1m005-kb78 | 1m0            |
+|8       | ELP 1m       | McDonald Observatory - 1m         | elp1m008-kb74 | 1m0            |
+|9       | LSC 1m       | CTIO - Region IV                  | lsc1m009-fl03 | 1m0            |
+|10      | CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m010      | 1m0            |
+|11      | COJ 1m       | Siding Springs Observatory - 1m   | coj1m011-kb05 | 1m0            |
+|12      | CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m012-kb75 | 1m0            |
+|13      | CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m013-kb76 | 1m0            |

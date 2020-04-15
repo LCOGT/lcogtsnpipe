@@ -29,6 +29,7 @@ Where:
 * ```--id``` run only on a specific image specified by a 3 digit number in the filename. For example you would use ```--id 046``` to run on the file elp1m008-fl05-20180302-0046-s91.
 * ```-T``` run only on observations from one telescope. Valid options: 1m0, 2m0, or 0m4
 * ```-I``` run only on observations from one instrument. Valid options: kb, fl, fs, sinistro, sbig
+* ```-b STAGE``` run only on observations marked at bad at a given stage (where stage is quality, wcs, psf, psfmag, zcat)
 
 ## Steps:
 ### Cosmic ray rejection:
@@ -45,7 +46,12 @@ Where:
 * **Other Options**: 
 * **How to tell if this step worked**:
     * If the pipeline thinks it was successful, then the column wcs in the photlco table of the database will have a 0 in it, if it wasn't able to find a solution the value in this column will be 9999
-    * To inspect images for which the pipeline failed:
+    * Additionally, when the pipeline fails on this step it sets the quality from 127 to 1. 
+    * To inspect images for which the wcs step failed:
+        * open DS9
+        * run the standard lscloop.py with stage ```-s checkquality -b quality --show``` TODO: check if you need --show or -i
+        * You will then be asked if the image is good or bad. If you say its good, the quality will be set to 127, if bad, the quality will stay 1
+    * To inspect the WCS solution for images for which the wcs step succeeded:
         * open DS9
         * run the standard lscloop.py with the stage ```-s checkwcs -b wcs --show``` TODO: check if you need --show or -i
         * This displays image for which the wcs value is 9999 in DS9 with the catalog of stars on top of it. You should see the stars in the image at the locations marked by the catalog.
@@ -126,11 +132,6 @@ Where:
 #
 * Check whether there are enough stars in common between a field and the catalog being used in the zcat step ```-s zcat -i```
 
-### Eliminate bad images
-* **Call**: ```-s checkquality --show``` TODO: check if you need --show or -i
-* **Description**: if an image has been marked as bad, then the quality flag is set from 127 to 1. When you run the checkquality step it displays these images and gives you the option to mark them as good. Note: you need to open DS9 before running this stage 
-* **Other Options**:  
-TODO: Figure out where checkquality should go in this workflow
 
 # Creating a Landolt Catalog:
 ### Download landolt standard star catalogs

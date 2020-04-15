@@ -175,7 +175,7 @@ Where STANDARD is the standard you calibrated previously and CATALOG is the name
 |--------|--------------|-----------------------------------|---------------|----------------|
 |1       | OGG 2m       | Haleakala Observatory - 2m        | ogg2m001-fs02 | 2m0            |
 |2       | COJ 2m       | Siding Springs Observatory - 2m   | coj2m002-fs03 | 2m0            |
-|3       | COJ 1m       | Siding Springs Observatory - 1m   | coj1m003-kb71 | 0m4            |
+|3       | COJ 1m       | Siding Springs Observatory - 1m   | coj1m003-kb71 | 1m0            |
 |4       | LSC 1m       | CTIO - Region IV                  | lsc1m004-kb77 | 1m0            |
 |5       | LSC 1m       | CTIO - Region IV                  | lsc1m005-kb78 | 1m0            |
 |8       | ELP 1m       | McDonald Observatory - 1m         | elp1m008-kb74 | 1m0            |

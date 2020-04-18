@@ -140,13 +140,13 @@ Where:
 * Reinstall the pipeline ```python setup.py install```
 
 ### Download and Calibrate the Standard Star Observations
-* Find standard stars that were observed during the epoch you need in the filter you need (U) and at least 1 other filter (for color correction) - recommended B and V
+* Find standard stars that were observed during the epoch you need in the filter you need (U). Ideally, you also obtain at least 1 other filter (for color correction) - recommended B and V
 * Search archive.lco.global for obstype=STANDARD, set date range, filter, if applicable telescope and site (e.g. fo 2018zd I set site=elp and telescope=fl05)
-* from the same telescope, same night, observed the same night as your observations
+* You will be using standards from the same telescope and observed on the same night as your observations
 * Download the reduced observations
 * run python ingestzip.py -f downloaded_directory_or_zip_filename
-* Calibrate you standard star observations (cosmic, wcs, psf, psfmag, zcat, mag)
-* When running the zcat step, use ```--catalog=<path to anaconda>/envs/lcogtsnpipe/lib/python2.7/site-packages/lsc/standard/cat/landolt/<standard catalog name>```
+* Use the standard star image to find the nightly zeropoint for the nights on which you observed your target and the standard (run cosmic, wcs, psf, psfmag, zcat)
+    * When running the zcat step, use ```--catalog=<path to anaconda>/envs/lcogtsnpipe/lib/python2.7/site-packages/lsc/standard/cat/landolt/<standard catalog name>```
 * When you run -s local on the SN (in the next step), it queries the database for any standards in the same filter-site-night as the SN observations. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard STANDARD``` where STANDARD is the name of your standard (e.g. L95)
 
 ### Create a catalog of stars (local sequence) in SN field for Landolt filters

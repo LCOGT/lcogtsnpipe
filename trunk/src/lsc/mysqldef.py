@@ -436,19 +436,28 @@ def targimg(img='', hdrt=None):
     ########  define targetid  ##################
     _targetid=lsc.mysqldef.gettargetid(_object,'','',conn,.01,False)
     if not _targetid:
-       print '# no target with this name '+_object
-       _targetid=lsc.mysqldef.gettargetid('',_ra,_dec,conn,.01,False)
-       if _targetid:
-          print '# target at this coordinate with a different name, add name '+str(_ra)+' '+str(_dec)
-          dictionary1={'name':_object,'targetid':_targetid,'groupidcode':_group}
-          lsc.mysqldef.insert_values(conn,'targetnames',dictionary1)
+        print '# no target with this name '+_object
+        _targetid=lsc.mysqldef.gettargetid('',_ra,_dec,conn,.01,False)
+        if _targetid:
+            print '# target at this coordinate with a different name, add name '+str(_ra)+' '+str(_dec)
+            dictionary1={'name':_object,'targetid':_targetid,'groupidcode':_group}
+            lsc.mysqldef.insert_values(conn,'targetnames',dictionary1)
 
-          bb2=lsc.mysqldef.query(['select id from targetnames where name = "'+_object+'"'],conn)
-          dictionary3 = {'userid':67, 'tablemodified': 'targetnames', 'idmodified': bb2[0]['id'],
-                         'columnmodified': 'New Row', 'newvalue': 'Multiple'}
-          lsc.mysqldef.insert_values(conn,'useractionlog',dictionary3)
-       else:
-           print 'not found targetid with ra and dec '+str(_ra)+' '+str(_dec)
+            bb2=lsc.mysqldef.query(['select id from targetnames where name = "'+_object+'"'],conn)
+            dictionary3 = {'userid':67, 'tablemodified': 'targetnames', 'idmodified': bb2[0]['id'],
+                          'columnmodified': 'New Row', 'newvalue': 'Multiple'}
+            lsc.mysqldef.insert_values(conn,'useractionlog',dictionary3)
+        else:
+            print '# try to find target at ofst RA and dec'
+            if ('OFST-RA' in hdrt and 'OFST-DEC' in hdrt and 
+                hdrt['OFST-RA'] not in lsc.util.missingvalues and hdrt['OFST-DEC'] not in lsc.util.missingvalues):
+                _ofst_ra = lsc.util.readkey3(hdrt, 'OFST-RA')
+                _ofst_dec = lsc.util.readkey3(hdrt, 'OFST-DEC')
+                _targetid = lsc.mysqldef.gettargetid('',_ofst_ra,_ofst_dec,conn,.01,False)
+
+                if not _targetid:
+                    print 'not found targetid with ra and dec '+str(_ra)+' '+str(_dec)
+
     else:
         print 'found name= '+_object+'  targetid= '+str(_targetid)
     ##############################################

@@ -1648,6 +1648,7 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
 
 def get_standards(epoch, name, filters):
     epochs = process_epoch(epoch)
+    flexible_name = name.lower().replace('at20', 'at20%').replace('sn20', 'sn20%').replace(' ', '%')
     query = '''SELECT DISTINCT std.filepath, std.filename, std.objname, std.filter,
                std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat, std.lastunpacked
                FROM
@@ -1674,8 +1675,8 @@ def get_standards(epoch, name, filters):
                AND std.quality = 127
                AND obj.dayobs >= {start}
                AND obj.dayobs <= {end}
-               AND targobj.name = "{name}"
-               '''.format(start=epochs[0], end=epochs[-1], name=name)
+               AND targobj.name LIKE "{name}"
+               '''.format(start=epochs[0], end=epochs[-1], name=flexible_name)
     if filters:
         query += 'AND (obj.filter="' + '" OR obj.filter="'.join(lsc.sites.filterst[filters]) + '")'
     print 'Searching for corresponding standard fields. This may take a minute...'

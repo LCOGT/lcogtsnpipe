@@ -121,7 +121,7 @@ if __name__ == "__main__":
         lista = f.read().splitlines()
     if not lista:
         sys.exit('calibratemag.py: ' + args.imglist + ' is empty')
-    if args.stage == 'local' and not args.exzp is None:
+    if args.stage == 'local' and args.exzp is not None:
         sys.exit('To run the local stage you must pass -e. It may be that no standards were found by myloopdef.get_standards')
     if args.stage in ['abscat', 'local'] and args.catalog is not None:
         try:

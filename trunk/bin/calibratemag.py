@@ -122,7 +122,7 @@ if __name__ == "__main__":
     if not lista:
         sys.exit('calibratemag.py: ' + args.imglist + ' is empty')
     if args.stage == 'local' and args.exzp is None:
-        sys.exit('To run the local stage you must pass -e. It may be that no standards were found by myloopdef.get_standards')
+        sys.exit('No file with external zeropoints was passed to calibratemag.py. It may be that no standards were found by myloopdef.get_standards')
     if args.stage in ['abscat', 'local'] and args.catalog is not None:
         try:
             refcat = Table.read(args.catalog, format='ascii', fill_values=[('9999.000', '0')])

@@ -9,7 +9,7 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 - [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina)
 - [Appendix C: Other packages you may need to install](#appendix-c-other-packages-you-may-need-to-install)
 - [Appendix D: Installing Source Extractor](#appendix-d-installing-source-extractor)
-- [Appendix E: Using the Pipeline with Docker](#appendix-e-using-the-pipeline-wth-docker)
+- [Appendix E: Using the Pipeline with Docker](#appendix-e-using-the-pipeline-with-docker)
 
 # Pipeline Documentation:
 1. Image Subtraction: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
@@ -315,8 +315,8 @@ Liberally adopted from: https://iraf-community.github.io/install
         **Note:** I had to also install statsmodels (via conda install) and sep (via pip install) and numpy version >=1.12 
 
 # Appendix D: Installing Source Extractor:
-    In the directions below, <your username> is used repeatedly as a place holder for your actual username (e.g. bostroem)
-    1. Install FFTW from source:  
+   In the directions below, <your username> is used repeatedly as a place holder for your actual username (e.g. bostroem)
+   1. Install FFTW from source:  
         * Download: http://www.fftw.org/download.html  
         * Install:  
         ```
@@ -324,25 +324,25 @@ Liberally adopted from: https://iraf-community.github.io/install
         make
         make install
         ```
-    2. Install OpenBLAS from source:
-        * Download tar.gz file from link at top of page: https://www.openblas.net
-        * Install:
-        ```
-        make PREFIX=/Users/<your username> install
-        ```
-    3. Install Source Extractor:
-        * Download: http://www.astromatic.net/software/sextractor
-        * Install:
-        ```
-        sh autogen.sh
+   2. Install OpenBLAS from source:
+       * Download tar.gz file from link at top of page: https://www.openblas.net
+       * Install:
+       ```
+       make PREFIX=/Users/<your username> install
+       ```
+   3. Install Source Extractor:
+       * Download: http://www.astromatic.net/software/sextractor
+       * Install:
+       ```
+       sh autogen.sh
 
-        ./configure  --with-fftw-incdir=/Users/<your username>/include --with-fftw-libdir=/Users/<your username>/lib --with-openblas-incdir=/Users/<your username/include --with-openblas-libdir=/Users/<your username>/lib --with-atlas-incdir=/Users/<your username>/include --with-atlas-libdir=/Users/<your username>/lib --enable-openblas
+       ./configure  --with-fftw-incdir=/Users/<your username>/include --with-fftw-libdir=/Users/<your username>/lib --with-openblas-incdir=/Users/<your username/include --with-openblas-libdir=/Users/<your username>/lib --with-atlas-incdir=/Users/<your username>/include --with-atlas-libdir=/Users/<your username>/lib --enable-openblas
 
-        make -j
+       make -j
 
-        sudo make PREFIX=/Users/<your username> install
-        ```
-        **Note:** with these direction you do NOT need ATLAS
+       sudo make PREFIX=/Users/<your username> install
+       ```
+       **Note:** with these direction you do NOT need ATLAS
 
 # Appendix E: Using the Pipeline with Docker
 You can also run the pipeline from within a Docker container.
@@ -352,19 +352,19 @@ The pipeline itself will run inside the Docker container and forward graphics to
 ## Installation
 These instructions only need to be run once, when you set up the pipeline.
 
-    1. Install [MySQL](https://dev.mysql.com/downloads/mysql/). You'll set a root password that you'll need to remember later.
-    2. Install [Docker](https://docs.docker.com/get-docker/).
-    3. (MacOS only) Install [XQuartz](https://www.xquartz.org).
-    4. Clone this repository: `git clone https://github.com/svalenti/lcogtsnpipe`.
-    5. Initialize the database: `mysql -u root -p < lcogtsnpipe/supernova.sql`. You'll need to type the MySQL root password.
-    6. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
+   1. Install [MySQL](https://dev.mysql.com/downloads/mysql/). You'll set a root password that you'll need to remember later.
+   2. Install [Docker](https://docs.docker.com/get-docker/).
+   3. (MacOS only) Install [XQuartz](https://www.xquartz.org).
+   4. Clone this repository: `git clone https://github.com/svalenti/lcogtsnpipe`
+   5. Initialize the database: `mysql -u root -p < lcogtsnpipe/supernova.sql`. You'll need to type the MySQL root password.
+   6. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
 
 ## Use
 Follow these instructions each time you want to use the pipeline.
 
-    1. Make sure the MySQL server and Docker daemon are running.
-    2. (MacOS only) Run XQuartz from the Finder.
-    3. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\” &`
-    4. Run the Docker container: `docker run -it --rm -e DISPLAY=$(ipconfig getifaddr en0):0 -v /tmp/.X11-unix:/tmp/.X11-unix -v /your/data/directory:/supernova/data lcogtsnpipe`.
-       Replace `/your/data/directory` with a directory on your local machine (outside the docker) where the images and data products will be stored.
-    5. When you're done, type `exit` to leave the Docker.
+   1. Make sure the MySQL server and Docker daemon are running.
+   2. (MacOS only) Run XQuartz from the Finder.
+   3. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\” &`
+   4. Run the Docker container: `docker run -it --rm -e DISPLAY=$(ipconfig getifaddr en0):0 -v /tmp/.X11-unix:/tmp/.X11-unix -v /your/data/directory:/supernova/data lcogtsnpipe`.
+      Replace `/your/data/directory` with a directory on your local machine (outside the docker) where the images and data products will be stored.
+   5. When you're done, type `exit` to leave the Docker.

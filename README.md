@@ -358,6 +358,12 @@ These instructions only need to be run once, when you set up the pipeline.
    4. Clone this repository: `git clone https://github.com/svalenti/lcogtsnpipe`
    5. Initialize the database: `mysql -u root -p < lcogtsnpipe/supernova.sql`. You'll need to type the MySQL root password.
    6. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
+   7. Create directories on your local machine (outside the Docker) where the images and data products will be stored:
+      ```
+      mkdir /your/data/directory
+      cd /your/data/directory
+      mkdir lsc fts 0m4 floyds extdata apass sloan
+      ```
 
 ## Use
 Follow these instructions each time you want to use the pipeline.
@@ -366,5 +372,5 @@ Follow these instructions each time you want to use the pipeline.
    2. (MacOS only) Run XQuartz from the Finder.
    3. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &`
    4. Run the Docker container: `docker run -it --rm -v /your/data/directory:/supernova/data lcogtsnpipe`.
-      Replace `/your/data/directory` with a directory on your local machine (outside the docker) where the images and data products will be stored.
+      Replace `/your/data/directory` with the directory you created above.
    5. When you're done, type `exit` to leave the Docker.

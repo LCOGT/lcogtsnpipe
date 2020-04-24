@@ -364,7 +364,7 @@ Follow these instructions each time you want to use the pipeline.
 
    1. Make sure the MySQL server and Docker daemon are running.
    2. (MacOS only) Run XQuartz from the Finder.
-   3. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\” &`
-   4. Run the Docker container: `docker run -it --rm -e DISPLAY=$(ipconfig getifaddr en0):0 -v /tmp/.X11-unix:/tmp/.X11-unix -v /your/data/directory:/supernova/data lcogtsnpipe`.
+   3. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &`
+   4. Run the Docker container: `docker run -it --rm -v /your/data/directory:/supernova/data lcogtsnpipe`.
       Replace `/your/data/directory` with a directory on your local machine (outside the docker) where the images and data products will be stored.
    5. When you're done, type `exit` to leave the Docker.

@@ -4,6 +4,7 @@ ENV iraf /iraf/iraf/
 ENV IRAFARCH linux64
 ENV LCOSNDIR /supernova
 ENV LCOSNPIPE $LCOSNDIR/github/lcogtsnpipe
+ENV DISPLAY host.docker.internal:0
 
 RUN apt-get update \
         && apt -y install gcc make flex git \

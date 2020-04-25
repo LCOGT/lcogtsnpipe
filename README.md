@@ -94,7 +94,7 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
         ```
     7. Install mysqldb
         ```
-        pip install MySQL-python
+        conda install MySQL-python
         ```
 5. Install the pipeline
     1. Install git if you do not already have it (https://ucdavis.github.io/DS4S/#setup)

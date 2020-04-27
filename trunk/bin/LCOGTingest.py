@@ -298,11 +298,15 @@ if __name__ == "__main__":
 
     print 'Total number of frames:', len(frames)
 
+    fullpaths = []
     for frame in frames:
         if '.tar.gz' not in frame['filename']:
             filepath, filename = download_frame(frame, args.force_dl)
             dbdict = db_ingest(filepath, filename, args.force_db)
-            if '-en' in filename and '-e00.fits' in filename:
+            if '-en' not in filename:
+                fullpaths.append(filepath + filename)
+            elif '-e00.fits' in filename:
                 fits2png(filepath + filename, args.force_tn)
         else:
             record_floyds_tar_link(authtoken, frame, args.force_gl)
+    lsc.mysqldef.ingestredu(fullpaths)  # ingest new data into photlco

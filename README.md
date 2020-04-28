@@ -353,6 +353,8 @@ The pipeline itself will run inside the Docker container and forward graphics to
 These instructions only need to be run once, when you set up the pipeline.
 
    1. Install [MySQL](https://dev.mysql.com/downloads/mysql/). You'll set a root password that you'll need to remember later.
+       * Make sure to use Legacy Password Encryption. On Mac, this is System Preferences &rarr; MySQL &rarr; Initialize Database &rarr; Use Legacy Password Encryption.
+       * Also make sure MySQL is correctly added to your `PATH`.
    2. Install [Docker](https://docs.docker.com/get-docker/).
    3. (MacOS only) Install [XQuartz](https://www.xquartz.org).
    4. Clone this repository: `git clone https://github.com/svalenti/lcogtsnpipe`

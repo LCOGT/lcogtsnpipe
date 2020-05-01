@@ -40,7 +40,7 @@ if __name__ == "__main__":
                     process = subprocess.Popen("funpack {}".format(ifile), shell=True)
                     process.wait()
             imglist = glob.glob(os.path.join(args.file, '*.fits'))
-        #ingest_files(imglist, force=args.force_db)
+        ingest_files(imglist, force=args.force_db)
     else:
         print("you must specify a tar or zip file or directory with the -f or --file")
     

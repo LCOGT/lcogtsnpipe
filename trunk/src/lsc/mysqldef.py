@@ -401,21 +401,28 @@ def targimg(img='', hdrt=None):
     from lsc.mysqldef import getfromcoordinate
     from lsc import conn
     import string
+    import os, json, requests
     _targetid=''
     _group=''
     if hdrt is None:
         hdrt=lsc.util.readhdr(img)
-    if ('CAT-RA' in hdrt and 'CAT-DEC' in hdrt and 
-        hdrt['CAT-RA'] not in lsc.util.missingvalues and hdrt['CAT-DEC'] not in lsc.util.missingvalues):
+    
+    try:
         _ra=lsc.util.readkey3(hdrt,'CAT-RA')
         _dec=lsc.util.readkey3(hdrt,'CAT-DEC')
-    elif ('RA' in hdrt and 'DEC' in hdrt and 
-        hdrt['RA'] not in lsc.util.missingvalues and hdrt['DEC'] not in lsc.util.missingvalues):
-        _ra=lsc.util.readkey3(hdrt,'RA')
-        _dec=lsc.util.readkey3(hdrt,'DEC')
-    else:
-        _ra = None
-        _dec = None
+
+    except:
+        # No CAT RA and dec, so send a warning message to slack and return exception
+        # Send Slack message
+        post_url = os.environ['SLACK_CHANNEL_WEBHOOK']
+        payload = {'text': 'CAT-RA and CAT-DEC could not be found for {}'.format(img)}
+        json_data = json.dumps(payload)
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(post_url, data=json_data.encode('ascii'), headers=headers)
+
+        # Raise exception so pipeline moves on to ingesting the next image
+        raise
+
     _object=lsc.util.readkey3(hdrt,'object')
     if ':' in str(_ra):        
        _ra,_dec=lsc.deg2HMS(_ra,_dec)
@@ -448,15 +455,7 @@ def targimg(img='', hdrt=None):
                           'columnmodified': 'New Row', 'newvalue': 'Multiple'}
             lsc.mysqldef.insert_values(conn,'useractionlog',dictionary3)
         else:
-            print '# try to find target at ofst RA and dec'
-            if ('OFST-RA' in hdrt and 'OFST-DEC' in hdrt and 
-                hdrt['OFST-RA'] not in lsc.util.missingvalues and hdrt['OFST-DEC'] not in lsc.util.missingvalues):
-                _ofst_ra = lsc.util.readkey3(hdrt, 'OFST-RA')
-                _ofst_dec = lsc.util.readkey3(hdrt, 'OFST-DEC')
-                _targetid = lsc.mysqldef.gettargetid('',_ofst_ra,_ofst_dec,conn,.01,False)
-
-                if not _targetid:
-                    print 'not found targetid with ra and dec '+str(_ra)+' '+str(_dec)
+            print 'not found targetid with ra and dec '+str(_ra)+' '+str(_dec)
 
     else:
         print 'found name= '+_object+'  targetid= '+str(_targetid)

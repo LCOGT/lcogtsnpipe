@@ -12,12 +12,10 @@ from optparse import OptionParser
 _dir = os.environ['LCOSNDIR']
 
 def unpack_zip(_zipfile):
-    #_targetid = re.sub('.zip','',string.split(_tarfile,'_')[-1])
-    my_zip = zipfile.open(_zipfile)
-    imglist = my_tar.namelist()
-    my_zip.extractall(_dir)
-    my_zip.close()
-    return imglist
+    with zipfile.ZipFile(_zipfile) as myzip:
+        imglist = myzip.namelist()
+        myzip.extractall()
+        return imglist
 
 def ingest_files(imglist,force=False):
     if force:       
@@ -42,7 +40,7 @@ if __name__ == "__main__":
                     process = subprocess.Popen("funpack {}".format(ifile), shell=True)
                     process.wait()
             imglist = glob.glob(os.path.join(args.file, '*.fits'))
-        ingest_files(imglist, force=args.force_db)
+        #ingest_files(imglist, force=args.force_db)
     else:
         print("you must specify a tar or zip file or directory with the -f or --file")
     

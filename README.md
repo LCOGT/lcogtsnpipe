@@ -357,10 +357,11 @@ These instructions only need to be run once, when you set up the pipeline.
        * Also make sure MySQL is correctly added to your `PATH`.
    2. Install [Docker](https://docs.docker.com/get-docker/).
    3. (MacOS only) Install [XQuartz](https://www.xquartz.org).
-   4. Clone this repository: `git clone https://github.com/svalenti/lcogtsnpipe`
-   5. Initialize the database: `mysql -u root -p < lcogtsnpipe/supernova.sql`. You'll need to type the MySQL root password.
-   6. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
-   7. Create directories on your local machine (outside the Docker) where the images and data products will be stored:
+   4. (MacOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
+   5. Clone this repository: `git clone https://github.com/svalenti/lcogtsnpipe`
+   6. Initialize the database: `mysql -u root -p < lcogtsnpipe/supernova.sql`. You'll need to type the MySQL root password.
+   7. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
+   8. Create directories on your local machine (outside the Docker) where the images and data products will be stored:
       ```
       mkdir /your/data/directory
       cd /your/data/directory

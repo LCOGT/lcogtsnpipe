@@ -152,7 +152,8 @@ if __name__ == "__main__":
             lista2 = f.read().splitlines()
         standards = get_image_data(lista2)
         standards = standards.group_by(['dayobs', 'shortname', 'instrument', 'filter', 'zcol1', 'zcol2'])
-        targets[['zcol1', 'z1', 'dz1', 'c1', 'dc1', 'zcol2', 'z2', 'dz2', 'c2', 'dc2']].mask = True
+        for icol in ['zcol1', 'z1', 'dz1', 'c1', 'dc1', 'zcol2', 'z2', 'dz2', 'c2', 'dc2']:
+            targets[icol].mask = True
         for group in standards.groups:
             matches_in_targets = ((targets['dayobs'] == group['dayobs'][0]) & (targets['shortname'] == group['shortname'][0])
                                    & (targets['instrument'] == group['instrument'][0]) & (targets['filter'] == group['filter'][0]))

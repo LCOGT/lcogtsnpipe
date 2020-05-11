@@ -94,7 +94,7 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
         ```
     7. Install mysqldb
         ```
-        pip install MySQL-python
+        conda install MySQL-python
         ```
 5. Install the pipeline
     1. Install git if you do not already have it (https://ucdavis.github.io/DS4S/#setup)
@@ -312,32 +312,31 @@ Liberally adopted from: https://iraf-community.github.io/install
     * *PyZOGY* https://github.com/dguevel/PyZOGY/tree/v0.0.1  
         **Note:** I had to also install statsmodels (via conda install) and sep (via pip install) and numpy version >=1.12 
 
-# Appendix D: Installing Source Extractor:
-    In the directions below, <your username> is used repeatedly as a place holder for your actual username (e.g. bostroem)
-    1. Install FFTW from source:  
-        * Download: http://www.fftw.org/download.html  
-        * Install:  
-        ```
-        ./configure --prefix=/Users/<your username>
-        make
-        make install
-        ```
-    2. Install OpenBLAS from source:
-        * Download tar.gz file from link at top of page: https://www.openblas.net
-        * Install:
-        ```
-        make PREFIX=/Users/<your username> install
-        ```
-    3. Install Source Extractor:
-        * Download: http://www.astromatic.net/software/sextractor
-        * Install:
-        ```
-        sh autogen.sh
-
-        ./configure  --with-fftw-incdir=/Users/<your username>/include --with-fftw-libdir=/Users/<your username>/lib --with-openblas-incdir=/Users/<your username/include --with-openblas-libdir=/Users/<your username>/lib --with-atlas-incdir=/Users/<your username>/include --with-atlas-libdir=/Users/<your username>/lib --enable-openblas
-
-        make -j
-
-        sudo make PREFIX=/Users/<your username> install
-        ```
-        **Note:** with these direction you do NOT need ATLAS
+# Appendix D: Installing Source Extractor
+In the directions below, <your username> is used repeatedly as a place holder for youractual username (e.g. bostroem)
+1. Install *FFTW* from source:  
+    * Download: http://www.fftw.org/download.html  
+    * Install:  
+    ```
+    ./configure --prefix=/Users/<your username>
+    make
+    make install
+    ```
+2. Install *OpenBLAS* from source:
+    * Download tar.gz file from link at top of page: https://www.openblas.net
+    * Install:
+    ```
+    make PREFIX=/Users/<your username> install
+    ```
+3. Install *Source Extractor*:
+    * Download: http://www.astromatic.net/software/sextractor
+    * Install:
+    ```
+    sh autogen.sh
+    ./configure  --with-fftw-incdir=/Users/<your username>/include --with-fftw-libdir=/Users/<your username>/lib --with-openblas-incdir=/Users/<your username/include --with-openblas-libdir=/Users/<your username>/lib --with-atlas-incdir=/Users/<your username>/include --with-atlas-libdir=/Users/<your username>/lib --enable-openblas
+    make -j
+    sudo make PREFIX=/Users/<your username> install
+    ```
+    **Note:** with these direction you do **NOT** need ATLAS
+4. Install *vizquery*:
+    * Download and follow installation directions: http://cdsarc.u-strasbg.fr/vizier/doc/cdsclient.html

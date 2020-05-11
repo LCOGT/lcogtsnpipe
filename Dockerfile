@@ -29,8 +29,9 @@ RUN apt-get update \
 
 RUN ln -s /usr/bin/sextractor /usr/bin/sex
 
-RUN pip install numpy>=1.12 astropy matplotlib pyraf mysql-python scipy astroquery statsmodels==0.10 sep \
-        git+git://github.com/dguevel/PyZOGY.git && rm -rf ~/.cache/pip
+RUN pip install numpy>=1.12 astropy matplotlib pyraf mysql-python scipy astroquery statsmodels==0.10 cython
+
+RUN pip install git+git://github.com/kbarbary/sep.git@master git+git://github.com/dguevel/PyZOGY.git && rm -rf ~/.cache/pip
 
 RUN wget http://ds9.si.edu/download/debian9/ds9.debian9.8.0.1.tar.gz \
         && tar -xzvf ds9.debian9.8.0.1.tar.gz -C /usr/local/bin \
@@ -57,7 +58,7 @@ WORKDIR $LCOSNPIPE/trunk
 
 RUN python setup.py install
 
-RUN ln -s $LCOSNDIR/data/apass/ $LCOSNDIR/data/sloan/ /usr/local/lib/python2.7/site-packages/lsc/standard/cat/
+#RUN ln -s $LCOSNDIR/data/apass/ $LCOSNDIR/data/sloan/ /usr/local/lib/python2.7/site-packages/lsc/standard/cat/
 
 WORKDIR /home/supernova/iraf
 

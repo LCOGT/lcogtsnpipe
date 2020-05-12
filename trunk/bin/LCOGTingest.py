@@ -205,14 +205,14 @@ def db_ingest(filepath, filename, force=False):
                     dbdict[dbcol] = hdr[hdrkey]
         if hdr['TELESCOP'] not in telescopeids:
             logger.info('{} not recognized. Adding to telescopes table.'.format(hdr['TELESCOP']))
-            lsc.mysqldef.insert_values(conn, 'telescopes', {'name': hdr['TELESCOP'],
-                                                            'shortname': hdr['SITEID']})
+            lsc.mysqldef.insert_values(conn, 'telescopes', {'name': hdr['TELESCOP'], 'shortname': hdr['SITEID']})
             telescopes = lsc.mysqldef.query(['select id, name from telescopes'], conn)
             telescopeids = {tel['name']: tel['id'] for tel in telescopes}
         dbdict['telescopeid'] = telescopeids[hdr['TELESCOP']]
         if hdr['INSTRUME'] not in instrumentids:
             logger.info('{} not recognized. Adding to instruments table.'.format(hdr['INSTRUME']))
-            lsc.mysqldef.insert_values(conn, 'instruments', {'name': hdr['INSTRUME']})
+            insttype = lsc.mysqldef.guess_instrument_type(hdr['INSTRUME'])
+            lsc.mysqldef.insert_values(conn, 'instruments', {'name': hdr['INSTRUME'], 'type': insttype})
             instruments = lsc.mysqldef.query(['select id, name from instruments'], conn)
             instrumentids = {inst['name']: inst['id'] for inst in instruments}
         dbdict['instrumentid'] = instrumentids[hdr['INSTRUME']]

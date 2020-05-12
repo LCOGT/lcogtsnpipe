@@ -4,8 +4,10 @@ import lsc
 import os
 import argparse
 
-gitdir = os.path.join(lsc.util.workdirectory, 'github/lcogtsnpipe/trunk/')
+gitdir = os.path.join(os.getenv('LCOSNPIPE', os.path.join(lsc.util.workdirectory, 'github/lcogtsnpipe/')), 'trunk')
 catdir = os.path.join(gitdir, 'src/lsc/standard/cat/')
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-F', '--force', action='store_true', help="try to download catalog even if we've tried before")

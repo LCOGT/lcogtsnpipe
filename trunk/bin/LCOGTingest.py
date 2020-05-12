@@ -205,13 +205,14 @@ def db_ingest(filepath, filename, force=False):
                     dbdict[dbcol] = hdr[hdrkey]
         if hdr['TELESCOP'] not in telescopeids:
             logger.info('{} not recognized. Adding to telescopes table.'.format(hdr['TELESCOP']))
-            lsc.mysqldef.insert_values(conn, 'telescopes', {'name': hdr['TELESCOP']})
+            lsc.mysqldef.insert_values(conn, 'telescopes', {'name': hdr['TELESCOP'], 'shortname': hdr['SITEID']})
             telescopes = lsc.mysqldef.query(['select id, name from telescopes'], conn)
             telescopeids = {tel['name']: tel['id'] for tel in telescopes}
         dbdict['telescopeid'] = telescopeids[hdr['TELESCOP']]
         if hdr['INSTRUME'] not in instrumentids:
             logger.info('{} not recognized. Adding to instruments table.'.format(hdr['INSTRUME']))
-            lsc.mysqldef.insert_values(conn, 'instruments', {'name': hdr['INSTRUME']})
+            insttype = lsc.mysqldef.guess_instrument_type(hdr['INSTRUME'])
+            lsc.mysqldef.insert_values(conn, 'instruments', {'name': hdr['INSTRUME'], 'type': insttype})
             instruments = lsc.mysqldef.query(['select id, name from instruments'], conn)
             instrumentids = {inst['name']: inst['id'] for inst in instruments}
         dbdict['instrumentid'] = instrumentids[hdr['INSTRUME']]
@@ -298,11 +299,15 @@ if __name__ == "__main__":
 
     print 'Total number of frames:', len(frames)
 
+    fullpaths = []
     for frame in frames:
         if '.tar.gz' not in frame['filename']:
             filepath, filename = download_frame(frame, args.force_dl)
             dbdict = db_ingest(filepath, filename, args.force_db)
-            if '-en' in filename and '-e00.fits' in filename:
+            if '-en' not in filename:
+                fullpaths.append(filepath + filename)
+            elif '-e00.fits' in filename:
                 fits2png(filepath + filename, args.force_tn)
         else:
             record_floyds_tar_link(authtoken, frame, args.force_gl)
+    lsc.mysqldef.ingestredu(fullpaths)  # ingest new data into photlco

@@ -56,9 +56,13 @@ USER supernova
 
 WORKDIR $LCOSNPIPE/trunk
 
-RUN python setup.py install
+RUN mv src/lsc/standard/cat/apass/*.cat $LCOSNDIR/data/apass/ 2> /dev/null || true
 
-#RUN ln -s $LCOSNDIR/data/apass/ $LCOSNDIR/data/sloan/ /usr/local/lib/python2.7/site-packages/lsc/standard/cat/
+RUN mv src/lsc/standard/cat/sloan/*.cat $LCOSNDIR/data/sloan/ 2> /dev/null || true
+
+RUN python setup.py build -f && python setup.py install -f
+
+RUN ln -s $LCOSNDIR/data/apass/ $LCOSNDIR/data/sloan/ /usr/local/lib/python2.7/site-packages/lsc/standard/cat/
 
 WORKDIR /home/supernova/iraf
 

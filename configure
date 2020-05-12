@@ -1,0 +1,14 @@
+hostname           host.docker.internal
+database           supernova
+mysqluser          supernova
+mysqlpasswd        ''
+proposal           ['']
+users              ['']
+triggerpass        ''
+extraobject        ['']
+skipobjects        ['auto_focus']
+proposalingestion  ['']
+ptfhost            ''
+ptfdatabase        ''
+ptfpasswd          '''
+ptfuser            ''

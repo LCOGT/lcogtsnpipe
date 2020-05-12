@@ -8,6 +8,8 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 - [Appendix A: Expected output from show tables](#appendix-a-expected-output-from-show-tables)
 - [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina)
 - [Appendix C: Other packages you may need to install](#appendix-c-other-packages-you-may-need-to-install)
+- [Appendix D: Installing Source Extractor](#appendix-d-installing-source-extractor)
+- [Appendix E: Using the Pipeline with Docker](#appendix-e-using-the-pipeline-with-docker)
 
 # Pipeline Documentation:
 1. Image Subtraction: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
@@ -22,7 +24,7 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
     ```
     mysql -uroot -p
 
-    mysql> set session sql_mode = ‘NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';
+    mysql> set session sql_mode = 'NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';
 
     mysql> set global sql_mode = 'NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';
 
@@ -340,3 +342,37 @@ In the directions below, <your username> is used repeatedly as a place holder fo
     **Note:** with these direction you do **NOT** need ATLAS
 4. Install *vizquery*:
     * Download and follow installation directions: http://cdsarc.u-strasbg.fr/vizier/doc/cdsclient.html
+
+# Appendix E: Using the Pipeline with Docker
+You can also run the pipeline from within a Docker container.
+In the following instructions, the database server and image directories will live locally on your computer, so they will persist outside the Docker.
+The pipeline itself will run inside the Docker container and forward graphics to your local computer.
+
+## Installation
+These instructions only need to be run once, when you set up the pipeline.
+
+   1. Install [MySQL](https://dev.mysql.com/downloads/mysql/). You'll set a root password that you'll need to remember later.
+       * Make sure to use Legacy Password Encryption. On Mac, this is System Preferences &rarr; MySQL &rarr; Initialize Database &rarr; Use Legacy Password Encryption.
+       * Also make sure MySQL is correctly added to your `PATH`.
+   2. Install [Docker](https://docs.docker.com/get-docker/).
+   3. (MacOS only) Install [XQuartz](https://www.xquartz.org).
+   4. (MacOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
+   5. Clone this repository: `git clone https://github.com/svalenti/lcogtsnpipe`
+   6. Initialize the database: `mysql -u root -p < lcogtsnpipe/supernova.sql`. You'll need to type the MySQL root password.
+   7. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
+   8. Create directories on your local machine (outside the Docker) where the images and data products will be stored:
+      ```
+      mkdir /your/data/directory
+      cd /your/data/directory
+      mkdir lsc fts 0m4 floyds extdata apass sloan
+      ```
+
+## Use
+Follow these instructions each time you want to use the pipeline.
+
+   1. Make sure the MySQL server and Docker daemon are running.
+   2. (MacOS only) Run XQuartz from the Finder.
+   3. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &`
+   4. Run the Docker container: `docker run -it --rm -v /your/data/directory:/supernova/data lcogtsnpipe`.
+      Replace `/your/data/directory` with the directory you created above.
+   5. When you're done, type `exit` to leave the Docker.

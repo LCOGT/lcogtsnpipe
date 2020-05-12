@@ -7,7 +7,10 @@
 
 # Ingest data
 * Download observations from SNEx and run ingesttar.py
-* Download observations from archive.lco.global and run ingestzip.py
+* Download observations from archive.lco.global using LCOGTingest.py. This will only work for public data (e.g., standard stars images and observations from over 1 year ago) unless you have an account for the observing portal. For example (all arguments optional; see ```LCOGTingest.py -h``` for options):
+```
+LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public
+```
 
 # Create apass and sloan catalogs for new objects
 * run comparecatalogs.py to generate new catalogs

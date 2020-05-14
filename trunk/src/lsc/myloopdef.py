@@ -931,12 +931,14 @@ def make_psf_plot(psf_filename):
     Z = analytic + residual
 
     ax = plt.subplot(1, 1, 1, projection='3d')
+    """
+    # the transparency makes this challenging to interpret
     ax.plot_wireframe(X, Y, Z, rcount=2 * psfrad + 1, ccount=2 * psfrad + 1)
     """
     # replicate iraf look, much slower than wireframe
     ax.plot_surface(X,Y,Z,rcount=2*psfrad+1,ccount=2*psfrad+1,
             antialiased=True,linewidth=.25,color='black',edgecolor='white')
-    """
+    
 
     ax.view_init(elev=40, azim=330)  # replicating starting view of iraf PSF
     ax.set_axis_off()

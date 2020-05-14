@@ -8,7 +8,7 @@ def make_cat(filename,datamax=75000,b_sigma=3.0,b_crlim=3.0):
 	if datamax == None: datamax = 75000
 
 	hdul = fits.open(filename)
-	banzai_cat = hdul[1].data
+	banzai_cat = hdul['CAT'].data
 
 	print "Total number of sources in BANZAI catalog: {0}".format(len(banzai_cat))
 

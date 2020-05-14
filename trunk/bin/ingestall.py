@@ -53,6 +53,9 @@ fullpaths = []
 for frame in frames:
     try:
         filepath, filename = download_frame(frame)
+        if 'g00' in filename:
+            # Don't ingest guider frames
+            continue
         if '-en' not in filename:
             fullpaths.append(filepath + filename)
     except:

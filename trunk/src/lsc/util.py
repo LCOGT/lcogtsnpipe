@@ -312,7 +312,8 @@ def updateheader(filename, dimension, headerdict):
 def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,_erase='yes'):
     goon='True'
     import glob, subprocess, os, time
-    ds9 = subprocess.Popen("ps -U {:d} u | grep -v grep | grep ds9".format(os.getuid()),shell=True,stdout=subprocess.PIPE).stdout.readlines()
+    # removing u : this option does not work on mac
+    ds9 = subprocess.Popen("ps -U {:d} | grep -v grep | grep ds9".format(os.getuid()),shell=True,stdout=subprocess.PIPE).stdout.readlines()
     if len(ds9)== 0 :   
        subproc = subprocess.Popen('ds9',shell=True)
        time.sleep(3)

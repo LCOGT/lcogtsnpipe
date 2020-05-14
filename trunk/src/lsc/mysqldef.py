@@ -179,6 +179,18 @@ def insert_values(conn,table,values):
 
 ########################################################################
 
+def guess_instrument_type(name):
+    prefix = name[:2]
+    if prefix == 'fl' or prefix == 'fa':
+        insttype = 'Sinistro'
+    elif prefix == 'kb':
+        insttype = 'SBIG'
+    elif prefix == 'fs':
+        insttype = 'Spectral'
+    else:
+        insttype = None
+    return insttype
+
 def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
    import string,re,os,sys
    import lsc
@@ -231,7 +243,9 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
          _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
          if not _telid:
            print 'Telescope ',_tel,' not recognized.  Adding to telescopes table.'
-           lsc.mysqldef.insert_values(conn,'telescopes',{'name':_tel})
+           # the short name is needed to calibrate the magnitude with extinction
+           lsc.mysqldef.insert_values(conn, 'telescopes', {'name': _tel, 'shortname': readkey3(hdr,'SITEID')})
+           
            _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
          telid=_telid[0]['id']
          dictionary['telescopeid']=str(telid)
@@ -239,7 +253,7 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
          _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
          if not _instid:
            print 'Instrument ',_inst,' not recognized.  Adding to instruments table.'
-           lsc.mysqldef.insert_values(conn,'instruments',{'name':_inst})
+           lsc.mysqldef.insert_values(conn, 'instruments', {'name': _inst, 'type': guess_instrument_type(_inst)})
            _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
          instid=_instid[0]['id']
          dictionary['instrumentid']=str(instid)

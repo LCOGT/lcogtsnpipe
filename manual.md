@@ -13,7 +13,7 @@ LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public
 ```
 
 # Create apass and sloan catalogs for new objects
-* run comparecatalogs.py to generate new catalogs
+* run `comparecatalogs.py` to generate new catalogs
 * Note if you are trying to reduce U band, you need to generate a local catalog. See [Creating an Landolt Catalog](#Creating-a-Landolt-Catalog) for details.
 
 # Running the pipeline:

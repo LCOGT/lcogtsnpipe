@@ -310,4 +310,4 @@ if __name__ == "__main__":
                 fits2png(filepath + filename, args.force_tn)
         else:
             record_floyds_tar_link(authtoken, frame, args.force_gl)
-    lsc.mysqldef.ingestredu(fullpaths)  # ingest new data into photlco
+    lsc.mysqldef.ingestredu(fullpaths, force='yes' if args.force_db else 'no')  # ingest new data into photlco

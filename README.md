@@ -13,6 +13,7 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 
 # Pipeline Documentation:
 1. Image Subtraction: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
+2. [Manual (beta)](manual.md) 
 
 # Installing the Pipeline and Database
 1. Install msql  

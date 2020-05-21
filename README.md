@@ -170,7 +170,7 @@ https://www.dropbox.com/s/o3ls0zcqd64f49f/snexdata_2020-01-30_07%3A37%3A02.45516
     ```
 5. Generate a PSF model for images:
     ```
-    lscloop.py -e 20200101-20200130 -f apass —catalog=<path-to-your-conda>/envs/lcogtsnpipe/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2020oi_apass.cat -s psf
+    lscloop.py -e 20200101-20200130 -f apass --catalog=<path-to-your-conda>/envs/lcogtsnpipe/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2020oi_apass.cat -s psf
     ```
     Where \<path-to-your-conda> is the path to your anaconda installation
 6. Calculate instrumental magnitudes with PSF photometry, displaying output in DS9
@@ -181,7 +181,7 @@ https://www.dropbox.com/s/o3ls0zcqd64f49f/snexdata_2020-01-30_07%3A37%3A02.45516
     ```
 7. Find the zeropoint of the image:
     ```
-    lscloop.py -e 20200101-20200130 -f apass —catalog=<path-to-your-conda>/envs/lcogtsnpipe/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2020oi_apass.cat -s zcat
+    lscloop.py -e 20200101-20200130 -f apass --catalog=<path-to-your-conda>/envs/lcogtsnpipe/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2020oi_apass.cat -s zcat
     ```
     Where \<path-to-your-conda> is the path to your anaconda installation
 8. Find the apparent magnitude using zeropoint
@@ -191,7 +191,7 @@ https://www.dropbox.com/s/o3ls0zcqd64f49f/snexdata_2020-01-30_07%3A37%3A02.45516
     **Note:** this step may give you a warning at the end: Error 1364: Field 'targetid' doesn't have a default value
 9. Check the magnitudes you just calculated by plotting them
     ```
-    lscloop.py -e 20200101-20200129 -s getmag --type mag —show
+    lscloop.py -e 20200101-20200129 -s getmag --type mag --show
     ```
 
 # Appendix A: Expected output from show tables

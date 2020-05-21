@@ -312,8 +312,7 @@ Liberally adopted from: https://iraf-community.github.io/install
 * For difference image photometry:
     * *hotpants*  https://github.com/acbecker/hotpants  
         **Note:** There is a pull request submitted to this repo to fix issues with mac installation. I ended up cloning https://github.com/exowanderer/hotpants.git, checking out the remote 
-    * *PyZOGY* https://github.com/dguevel/PyZOGY/tree/v0.0.1  
-        **Note:** I had to also install statsmodels (via conda install) and sep (via pip install) and numpy version >=1.12 
+    * *PyZOGY* https://github.com/dguevel/PyZOGY
 
 # Appendix D: Installing Source Extractor
 In the directions below, <your username> is used repeatedly as a place holder for youractual username (e.g. bostroem)

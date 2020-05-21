@@ -22,7 +22,7 @@ RUN mkdir -p $iraf \
         && make sysgen
 
 RUN apt-get update \
-        && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor \
+        && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor procps \
         mysql-client libmariadbclient-dev openssh-client wcstools libxml2 vim libssl1.0.2 zip \
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*

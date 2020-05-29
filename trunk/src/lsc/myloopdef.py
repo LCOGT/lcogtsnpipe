@@ -140,21 +140,35 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     for filt in 'UBVRIugriz':
         if filt in filters_used:
             filters.append(filt)
+    #
+    #  2018/12/09  SV
+    #  write output one mag per line 
+    #  
+    #
+    line0 = '# %15s%15s%15s%15s%15s%15s%15s' % ('dateobs', 'jd','mag','magerr','filter', 'magtype', 'telescope')
     for _tel in setup:
-        line0 = '# %15s%15s' % ('dateobs', 'jd')
-        for filt in filters:
-            if filt in [lsc.sites.filterst1[key] for key in setup[_tel]]:
-                line0 += '%12s%12s ' % (str(filt), str(filt) + 'err')
         for _fil in setup[_tel]:
             for j in range(0, len(setup[_tel][_fil]['mjd'])):
                 line = '  %10s %12.4f ' % (str(setup[_tel][_fil]['date'][j]), setup[_tel][_fil]['jd'][j])
-                for filt in filters:
-                    if _fil in lsc.sites.filterst[filt]:
-                        line += '%12.4f %12.4f ' % (setup[_tel][_fil]['mag'][j], setup[_tel][_fil]['dmag'][j])
-                    else:
-                        line += '%12s %12s ' % ('9999', '0.0')
-                line += '%6s %2s\n' % (_tel, lsc.sites.filterst1[_fil])
+                line += '%12.4f %12.4f ' % (setup[_tel][_fil]['mag'][j], setup[_tel][_fil]['dmag'][j])
+                line += '%12s  %12s ' % (str(_fil), setup[_tel][_fil]['magtype'][j])
+                line += '%12s\n' % (str(_tel))
                 linetot[setup[_tel][_fil]['mjd'][j]] = line
+
+#        line0 = '# %15s%15s' % ('dateobs', 'jd')
+ #       for filt in filters:
+ #           if filt in [lsc.sites.filterst1[key] for key in setup[_tel]]:
+ #               line0 += '%12s%12s ' % (str(filt), str(filt) + 'err')
+ #       for _fil in setup[_tel]:
+ #           for j in range(0, len(setup[_tel][_fil]['mjd'])):
+ #               line = '  %10s %12.4f ' % (str(setup[_tel][_fil]['date'][j]), setup[_tel][_fil]['jd'][j])
+ #               for filt in filters:
+ #                   if _fil in lsc.sites.filterst[filt]:
+ #                       line += '%12.4f %12.4f ' % (setup[_tel][_fil]['mag'][j], setup[_tel][_fil]['dmag'][j])
+ #                   else:
+ #                       line += '%12s %12s ' % ('9999', '0.0')
+ #               line += '%6s %2s\n' % (_tel, lsc.sites.filterst1[_fil])
+ #               linetot[setup[_tel][_fil]['mjd'][j]] = line
     aaa = linetot.keys()
     if _output:
         for gg in np.sort(aaa):

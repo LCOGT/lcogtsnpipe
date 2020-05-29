@@ -903,7 +903,7 @@ def checkpsf(imglist, database='photlco'):
 def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
-    iraf.set(stdimage='imt1024')
+    iraf.set(stdimage='imt2048')
     print force
     print _z1, _z2
     for img in imglist:
@@ -1165,7 +1165,7 @@ def display_subtraction(img):
 def checkdiff(imglist, database='photlco'):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
-    iraf.set(stdimage='imt1024')
+    iraf.set(stdimage='imt2048')
     for img in imglist:
         status = checkstage(img, 'wcs')
         if status >= 0:
@@ -1276,7 +1276,7 @@ def checkpos(imglist, _ra, _dec, database='photlco'):
 def checkquality(imglist, database='photlco'):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
-    iraf.set(stdimage='imt1024')
+    iraf.set(stdimage='imt2048')
     for img in imglist:
         status = checkstage(img, 'checkquality')
         if status == -4:

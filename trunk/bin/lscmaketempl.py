@@ -123,19 +123,22 @@ if __name__ == "__main__":
                     iraf.imexamine(img, 1, wcs='logical', logfile='tmp.log', keeplog=True)
                     xytargets = iraf.fields('tmp.log', '1,2', Stdout=1)
                     _xpos, _ypos = string.split(xytargets[0])[0], string.split(xytargets[0])[1]
-                elif not _ra or not _dec:
-                    print 'use ra and dec from input database !!! '
-                    _ra, _dec, _ = lsc.util.checksndb(img0)
+                    goon = True
+                else:
+                    if not _ra or not _dec:
+                        print 'use ra and dec from input database !!! '
+                        _ra, _dec, _ = lsc.util.checksndb(img0)
 
-                if _ra and _dec:
-                    print 'convert RA, dec to xpos, ypos using header'
-                    hdr0 = lsc.util.readhdr(img0)
-                    wcs = WCS(hdr0)
-                    pix1 = wcs.wcs_world2pix([(_ra, _dec)], 1)
-                    _xpos, _ypos = pix1[0][0], pix1[0][1]
-                elif _mag != 0:
-                    sys.exit('need to define coordinates for subtraction')
-
+                    if _ra and _dec:
+                        print 'convert RA, dec to xpos, ypos using header'
+                        hdr0 = lsc.util.readhdr(img0)
+                        wcs = WCS(hdr0)
+                        pix1 = wcs.wcs_world2pix([(float(_ra), float(_dec))], 1)
+                        _xpos, _ypos = pix1[0][0], pix1[0][1]
+                        goon = True
+                    elif _mag != 0:
+                        goon = False
+                        sys.exit('need to define coordinates for subtraction')
             if goon:
                 print 'pixel coordinates to subtract:', _xpos, _ypos
                 print img0, psfimg
@@ -166,6 +169,7 @@ if __name__ == "__main__":
                             z22 = _z22
                         else:
                             z22 = float(z22)
+
                         _z11, _z22, goon = lsc.util.display_image(img0, 1, z11, z22, False)
                         answ = raw_input(">>>>> Cuts OK [y/n] [y]?")
                         if not answ:
@@ -176,6 +180,7 @@ if __name__ == "__main__":
                         z22 = float(_z22)
                 else:
                     z11, z22 = '', ''
+
                 answ = 'n'
                 while answ == 'n':
                     coordlist = str(_xpos) + '   ' + str(_ypos) + '    ' + str(_mag)

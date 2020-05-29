@@ -3,7 +3,8 @@
 * [Create apass and sloan catalogs](#Create-apass-and-sloan-catalogs-for-new-objects)
 * [Running the pipeline](#Running-the-pipeline)
 * [Creating a Landolt Catalog](#Creating-a-Landolt-Catalog)
-* [Telescopes](#Telescopes)
+* [Difference Imaging](#Difference-Imaging)
+* [Definitions](#Definitions)
 
 # Ingest data
 * Download observations from SNEx and run ingesttar.py
@@ -173,18 +174,42 @@ Where STANDARD is the standard you calibrated previously and CATALOG is the name
 ### Run the photometry as usual 
 * e.g. ```lscloop.py -n 'SN 2018zd' -e 20180302-20190419 -f landolt -s zcat```
 
-# Telescopes
+# Difference Imaging
+* An outline of the steps to perform difference imaging can be found here: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
+* When running the `zcat` stage, `--field` is used to select the catalog to which you will calibrate the magnitudes of those images. If you do not give `--field`, it uses whatever you put in `-f` by default (which is correct for Sloan, for example).
 
-| Number | Short Name   | Long Name                         | ?             | lscloop keyword|
-|--------|--------------|-----------------------------------|---------------|----------------|
-|1       | OGG 2m       | Haleakala Observatory - 2m        | ogg2m001-fs02 | 2m0            |
-|2       | COJ 2m       | Siding Springs Observatory - 2m   | coj2m002-fs03 | 2m0            |
-|3       | COJ 1m       | Siding Springs Observatory - 1m   | coj1m003-kb71 | 1m0            |
-|4       | LSC 1m       | CTIO - Region IV                  | lsc1m004-kb77 | 1m0            |
-|5       | LSC 1m       | CTIO - Region IV                  | lsc1m005-kb78 | 1m0            |
-|8       | ELP 1m       | McDonald Observatory - 1m         | elp1m008-kb74 | 1m0            |
-|9       | LSC 1m       | CTIO - Region IV                  | lsc1m009-fl03 | 1m0            |
-|10      | CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m010      | 1m0            |
-|11      | COJ 1m       | Siding Springs Observatory - 1m   | coj1m011-kb05 | 1m0            |
-|12      | CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m012-kb75 | 1m0            |
-|13      | CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m013-kb76 | 1m0            |
+# Definitions
+## Telescopes
+| Short Name   | Long Name                         | ?             | lscloop keyword|
+|--------------|-----------------------------------|---------------|----------------|
+| OGG 2m       | Haleakala Observatory - 2m        | ogg2m001-fs02 | 2m0            |
+| COJ 2m       | Siding Springs Observatory - 2m   | coj2m002-fs03 | 2m0            |
+| COJ 1m       | Siding Springs Observatory - 1m   | coj1m003-kb71 | 1m0            |
+| LSC 1m       | CTIO - Region IV                  | lsc1m004-kb77 | 1m0            |
+| LSC 1m       | CTIO - Region IV                  | lsc1m005-kb78 | 1m0            |
+| ELP 1m       | McDonald Observatory - 1m         | elp1m008-kb74 | 1m0            |
+| LSC 1m       | CTIO - Region IV                  | lsc1m009-fl03 | 1m0            |
+| CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m010      | 1m0            |
+| COJ 1m       | Siding Springs Observatory - 1m   | coj1m011-kb05 | 1m0            |
+| CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m012-kb75 | 1m0            |
+| CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m013-kb76 | 1m0            |
+
+## Filetype:
+| Number | Meaning         |
+|--------|-----------------|
+|1       | Original image  |
+|2       | Merged image    |
+|3       | Difference image|
+|4       | Reference image |
+
+## Status
+| Status | Meaning |
+|--------|----------|
+| -4     | bad quality |
+| -3     | image not ingested in the data table |
+| -2     | image not in working directory |
+| -1     | sn2.fits (fits table with all psf and aperture measurements created by the psfmag step) not in working directory |
+| 0      | not done and previous stage not done |
+| 1      | not done and possible since previous stage is done |
+| 2      | done and possible to do again |
+| 3      | local sequence catalog available |

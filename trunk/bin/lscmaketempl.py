@@ -65,6 +65,7 @@ if __name__ == "__main__":
     from pyraf import iraf
     from iraf import digiphot
     from iraf import daophot
+    iraf.set(stdimage='imt2048')
     from astropy.wcs import WCS
     ##################################
     goon = False

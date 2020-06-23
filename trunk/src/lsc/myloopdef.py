@@ -586,7 +586,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     for key in ll2.keys():
         ll1[key] = ll2[key][:]
 
-    if len(_difftype) > 0:
+    if _bad != 'diff' and len(_difftype) > 0:
         ww = np.array([i for i in range(len(ll1['difftype'])) if ((str(ll1['difftype'][i]) in str(_difftype)))])
         if len(ww) > 0:
             for jj in ll1.keys():
@@ -711,8 +711,14 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                             for filepath, filename in zip(ll1['filepath'], ll1['filename'])]
             ww = np.flatnonzero(np.logical_not(maskexists))
         elif _bad == 'diff':
+            if _difftype == '1':
+                suffix = '.optimal.{}.diff.fits'.format(_temptel).replace('..', '.')
+            elif _difftype == '0':
+                suffix = '.{}.diff.fits'.format(_temptel).replace('..', '.')
+            else:
+                suffix = '*.diff.fits'
             ww = np.array([i for i, (filepath, filename) in enumerate(zip(ll1['filepath'], ll1['filename']))
-                          if not glob(filepath+filename.replace('.fits', '*.diff.fits'))])
+                          if not glob(filepath+filename.replace('.fits', suffix))])
         elif _bad == 'mag':
             ww = np.array([i for i in range(len(ll1['mag'])) if (ll1['mag'][i] >= 1000 or ll1[_bad][i] < 0)])
         else:

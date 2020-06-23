@@ -102,12 +102,8 @@ if __name__ == "__main__":   # main program
     
     filters = ','.join(args.filter)
 
-    if args.stage == 'diff':
-        ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
-                                    'photlco', filetype, args.groupidcode, args.instrument)
-    else:
-        ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC, 
-                                    'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
+    ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
+                                'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
     if ll:
         if args.stage != 'merge':
             print '##' * 50

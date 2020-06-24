@@ -586,7 +586,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     for key in ll2.keys():
         ll1[key] = ll2[key][:]
 
-    if _bad != 'diff' and len(_difftype) > 0:
+    if _filetype == 3 and len(_difftype) > 0:
         ww = np.array([i for i in range(len(ll1['difftype'])) if ((str(ll1['difftype'][i]) in str(_difftype)))])
         if len(ww) > 0:
             for jj in ll1.keys():

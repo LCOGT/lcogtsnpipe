@@ -177,6 +177,7 @@ Where STANDARD is the standard you calibrated previously and CATALOG is the name
 # Difference Imaging
 * An outline of the steps to perform difference imaging can be found here: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
 * When running the `zcat` stage, `--field` is used to select the catalog to which you will calibrate the magnitudes of those images. If you do not give `--field`, it uses whatever you put in `-f` by default (which is correct for Sloan, for example).
+* When the `-s diff --difftype 1` fails with the error message `ERROR:root:Too few stars in common at 5-sigma; lower and try again` this could be the result of bad WCS, bad background subtraction, bad cosmic ray mask, bad quality image. Regardless, most of these issues are solved by adding the `--unmask` flag to ignore the bad pixel mask when looking for stars
 
 # Definitions
 ## Telescopes

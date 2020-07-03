@@ -1,7 +1,7 @@
 from astropy.table import Table
 
 def vizq(_ra,_dec,catalogue,radius):
-    import os,string,re
+    import os,string,re,subprocess
     _site='vizier.u-strasbg.fr'
 #    _site='vizier.cfa.harvard.edu'
     cat={'usnoa2':['I/252/out','USNO-A2.0','Rmag'],\
@@ -9,10 +9,16 @@ def vizq(_ra,_dec,catalogue,radius):
          'usnob1':['I/284/out','USNO-B1.0','R2mag'],\
          'apass':['I/322A/out','UCAC4','rmag,UCAC4'],\
          'sdss7':['II/294/sdss7','rmag','rmag']}
-    a=os.popen('vizquery -mime=tsv  -site='+_site+' -source='+cat[catalogue][0]+\
-                   ' -c.ra='+str(_ra)+' -c.dec='+str(_dec)+' -c.eq=J2000 -c.rm='+str(radius)+\
-                   ' -c.geom=b -oc.form=h -sort=_RA*-c.eq -out.add=_RAJ2000,_DEJ2000 -out.max=10000 -out='+\
-                   cat[catalogue][1]+' -out='+cat[catalogue][2]+'').read()
+    #a=os.popen('vizquery -mime=tsv  -site='+_site+' -source='+cat[catalogue][0]+\
+    #               ' -c.ra='+str(_ra)+' -c.dec='+str(_dec)+' -c.eq=J2000 -c.rm='+str(radius)+\
+    #               ' -c.geom=b -oc.form=h -sort=_RA*-c.eq -out.add=_RAJ2000,_DEJ2000 -out.max=10000 -out='+\
+    #               cat[catalogue][1]+' -out='+cat[catalogue][2]+'').read()
+    process=subprocess.popen(['vizquery', '-mime=tsv',  '-site='+_site,'-source='+cat[catalogue][0],\
+                   '-c.ra='+str(_ra), '-c.dec='+str(_dec),'-c.eq=J2000', '-c.rm='+str(radius),\
+                   '-c.geom=b', '-oc.form=h', '-sort=_RA*-c.eq', '-out.add=_RAJ2000,_DEJ2000', '-out.max=10000',\
+                   '-out='+cat[catalogue][1],'-out='+cat[catalogue][2]], shell=True, stdout=subprocess.PIPE)
+    a,_ = process.communicate()
+    
     aa=a.split('\n')
     bb=[]
     for i in aa:

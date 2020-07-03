@@ -2,8 +2,9 @@ from astropy.table import Table
 
 def vizq(_ra,_dec,catalogue,radius):
     import os,string,re,subprocess
-    _site='vizier.u-strasbg.fr'
-#    _site='vizier.cfa.harvard.edu'
+    #_site='vizier.u-strasbg.fr'
+    #_site='vizier.cfa.harvard.edu'
+    _site='vizir.cfa.harvard.edu'
     cat={'usnoa2':['I/252/out','USNO-A2.0','Rmag'],\
          '2mass':['II/246/out','2MASS','Jmag'],\
          'usnob1':['I/284/out','USNO-B1.0','R2mag'],\
@@ -17,6 +18,7 @@ def vizq(_ra,_dec,catalogue,radius):
                    '-c.ra='+str(_ra), '-c.dec='+str(_dec),'-c.eq=J2000', '-c.rm='+str(radius),\
                    '-c.geom=b', '-oc.form=h', '-sort=_RA*-c.eq', '-out.add=_RAJ2000,_DEJ2000', '-out.max=10000',\
                    '-out='+cat[catalogue][1],'-out='+cat[catalogue][2]], shell=True, stdout=subprocess.PIPE)
+    import pdb; pdb.set_trace()
     a,_ = process.communicate()
     
     aa=a.split('\n')

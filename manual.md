@@ -38,7 +38,7 @@ Where:
 ## Steps:
 ### Cosmic ray rejection:
 * **Call**: ```-s cosmic```
-* **Description**: Runs lacosmic to clean the images
+* **Description**: Runs lacosmic to clean the images. This stage only needs to be run prior to the `-s diff` stage as that is the only step that uses the cosmic ray mask
 * **Recommended Options**:
 * **Other Options**: 
 

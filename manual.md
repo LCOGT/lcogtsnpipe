@@ -44,7 +44,7 @@ Where:
 
 ### WCS solution
 * **Call**: ```-s wcs```
-* **Description**: Generate a WCS solution for a given observation
+* **Description**: Generate a WCS solution for a given observation. In general, this stage does not need to be run when starting analysis from observations that have been reduced with Banzai (which is recommended) as Banzai solves the WCS solution.
 * **Recommended Options**: 
 
 * **Other Options**: 

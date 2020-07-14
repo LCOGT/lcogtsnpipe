@@ -126,8 +126,9 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
             setup[_tel][_fil]['jd'] = list(np.array(mjd1) + 2400000.5)
             setup[_tel][_fil]['date'] = date1
             setup[_tel][_fil]['filename'] = filename1
-            table = Table([date1, mjd1, mag1, dmag1, magtype1], names=['dateobs', 'mjd', 'mag', 'dmag', 'magtype'])
-            table['filter'] = _fil
+            table = Table([date1, mjd1, mag1, dmag1, magtype1], names=['dateobs', 'jd', 'mag', 'dmag', 'magtype'])
+            table['jd'] += 2400000.5
+            table['filter'] = lsc.sites.filterst1[_fil]
             table['telescope'] = _tel
             tables.append(table)
 
@@ -137,11 +138,10 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
         plotfast(setup, _output)
 
     output_table = vstack(tables)
-    output_table.sort('mjd')
-    output_table['mjd'].format = '%.5f'
-    output_table[mtype].format = '%.3f'
-    output_table[mtypeerr].format = '%.3f'
-    output_table['filter'].format = '%2s'
+    output_table.sort('jd')
+    output_table['jd'].format = '%.5f'
+    output_table['mag'].format = '%.4f'
+    output_table['dmag'].format = '%.4f'
     if _output:
         output_table.write(_output, format='ascii')
     else:

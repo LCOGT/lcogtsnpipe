@@ -31,7 +31,6 @@ def get_metadata(authtoken={}, limit=None, **kwargs):
             [key + '=' + str(val) for key, val in kwargs.items() if val is not None])
     url = url.replace('False', 'false')
     url = url.replace('True', 'true')
-    print url
     logger.info(url)
 
     response = requests.get(url, headers=authtoken, stream=True).json()
@@ -267,8 +266,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--name", help="target name")
     parser.add_argument("-s", "--start", help="start date")
     parser.add_argument("-e", "--end", help="end date")
-    parser.add_argument("--ra", help="ra")
-    parser.add_argument("--dec", help="dec")
+    parser.add_argument("-c", "--coords", nargs=2, help="target coordinates in degrees, space separated")
 
     parser.add_argument("-t", "--obstype", choices=['ARC', 'BIAS', 'CATALOG', 'DARK', 'EXPERIMENTAL',
                                         'EXPOSE', 'LAMPFLAT', 'SKYFLAT', 'SPECTRUM', 'STANDARD'])
@@ -296,17 +294,10 @@ if __name__ == "__main__":
     else:
         rlevel = None
 
-
-    if args.ra and args.dec:
-        _ra = args.ra
-        _dec = args.dec
-        frames = get_metadata(authtoken, limit=args.limit, SITEID=args.site, TELID=args.telescope,
-                          INSTRUME=args.instrument, FILTER=args.filter, PROPID=args.proposal, OBJECT=args.name,covers= 'POINT('+str(_ra)+'%20'+str(_dec)+')',\
-                          start=args.start, end=args.end, OBSTYPE=args.obstype, RLEVEL=rlevel, public=args.public)
-    else:
-        frames = get_metadata(authtoken, limit=args.limit, SITEID=args.site, TELID=args.telescope,
-                              INSTRUME=args.instrument, FILTER=args.filter, PROPID=args.proposal, OBJECT=args.name,
-                              start=args.start, end=args.end, OBSTYPE=args.obstype, RLEVEL=rlevel, public=args.public)
+    frames = get_metadata(authtoken, limit=args.limit, SITEID=args.site, TELID=args.telescope,
+                          INSTRUME=args.instrument, FILTER=args.filter, PROPID=args.proposal, OBJECT=args.name,
+                          start=args.start, end=args.end, OBSTYPE=args.obstype, RLEVEL=rlevel, public=args.public,
+                          covers='POINT({} {})'.format(*args.coords) if args.coords else None)
 
     print 'Total number of frames:', len(frames)
 

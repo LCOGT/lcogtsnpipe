@@ -1477,7 +1477,7 @@ def plotfast2(setup):
         print 'mjd = {:.2f}\tmag = {:.2f} (from database)'.format(dbrow['mjd'], dbrow['mag'])
         plt.figure(2)
         display_psf_fit(filenames[i])
-        if dbrow['filetype'] == '3':
+        if dbrow['filetype'] == 3:
             plt.figure(3, figsize=(8, 8))
             display_subtraction(filenames[i])
 
@@ -1491,7 +1491,7 @@ def plotfast2(setup):
 
     def bad_hook(i):
         dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, filetype')[0]
-        if dbrow['filetype'] == '3':
+        if dbrow['filetype'] == 3:
             os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.fits', '*'))
             os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.diff', '.ref'))
             lsc.mysqldef.deleteredufromarchive(filenames[i], 'photlco', 'filename')

@@ -126,10 +126,10 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
             setup[_tel][_fil]['jd'] = list(np.array(mjd1) + 2400000.5)
             setup[_tel][_fil]['date'] = date1
             setup[_tel][_fil]['filename'] = filename1
-            table = Table([date1, mjd1, mag1, dmag1, magtype1], names=['dateobs', 'jd', 'mag', 'dmag', 'magtype'])
-            table['jd'] += 2400000.5
-            table['filter'] = lsc.sites.filterst1[_fil]
+            table = Table([date1, np.array(mjd1) + 2400000.5, mag1, dmag1], names=['dateobs', 'jd', 'mag', 'dmag'])
             table['telescope'] = _tel
+            table['filter'] = lsc.sites.filterst1[_fil]
+            table['magtype'] = magtype1
             tables.append(table)
 
     if _show:

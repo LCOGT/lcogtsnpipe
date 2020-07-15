@@ -6,7 +6,7 @@ import numpy as np
 from argparse import ArgumentParser
 from datetime import datetime, timedelta
 import lsc
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 import os
 
 def multi_run_cosmic(args):
@@ -90,6 +90,9 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--b_crlim", type=float, default=3.0, help="lower limit used to reject CRs identified as BANZAI sources")
 
     args = parser.parse_args()
+    if args.multicore >= cpu_count():
+        args.multicore = cpu_count()-1 if cpu_count() > 1 else 1
+        print 'Attempting to run on too many cores, reducing to', args.multicore
 
     if args.stage == 'checkdiff':
         filetype = 3

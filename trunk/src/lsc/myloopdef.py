@@ -599,7 +599,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
 
     if _filetype:
         if int(_filetype) in [1, 2, 3, 4]:
-            ww = np.array([i for i in range(len(ll1['filetype'])) if ((ll1['filetype'][i] == _filetype))])
+            ww = np.array([i for i in range(len(ll1['filetype'])) if ((ll1['filetype'][i] == int(_filetype)))])
             if len(ww) > 0:
                 for jj in ll1.keys():
                     ll1[jj] = np.array(ll1[jj])[ww]
@@ -682,7 +682,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             for jj in ll1.keys():
                 ll1[jj] = []
 
-    if _filetype == 3 and _temptel:
+    if int(_filetype) == 3 and _temptel:
         temptels = np.array([fn.replace('.optimal', '').split('.')[1].replace('diff', inst[:2])
 #                             if fn.replace('.optimal', '').count('.') == 3 else inst[0:2]
                              for fn, inst in zip(ll1['filename'], ll1['instrument'])], dtype=str)
@@ -1477,7 +1477,7 @@ def plotfast2(setup):
         print 'mjd = {:.2f}\tmag = {:.2f} (from database)'.format(dbrow['mjd'], dbrow['mag'])
         plt.figure(2)
         display_psf_fit(filenames[i])
-        if dbrow['filetype'] == 3:
+        if int(dbrow['filetype']) == 3:
             plt.figure(3, figsize=(8, 8))
             display_subtraction(filenames[i])
 
@@ -1491,7 +1491,7 @@ def plotfast2(setup):
 
     def bad_hook(i):
         dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, filetype')[0]
-        if dbrow['filetype'] == 3:
+        if int(dbrow['filetype']) == 3:
             os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.fits', '*'))
             os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.diff', '.ref'))
             lsc.mysqldef.deleteredufromarchive(filenames[i], 'photlco', 'filename')
@@ -1643,7 +1643,7 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
             ll0['ra'] = ll0['ra0']
             ll0['dec'] = ll0['dec0']
         ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad,
-             filetype, _groupid, _instrument, _temptel, _difftype, classid)
+             int(filetype), _groupid, _instrument, _temptel, _difftype, classid)
     else:
         ll = ''
     return ll

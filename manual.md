@@ -64,7 +64,7 @@ Where:
         * if you run this step without ```-b wcs``` then you can inspect all observations
 * **How to fix this step if the image looks ok but the wcs failed**
     * rerun lscloop.py with the step ```-s wcs -b wcs``` to run only on those files for which the wcs failed
-    * try running with the --catalog option. You can pass it the apass or sloan catalog that you created with compare catalogs
+    * try running with the --catalog option
     * try using ```--use_sextractor``` flag TODO: describe this
 
 ### Generate a PSF model

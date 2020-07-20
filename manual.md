@@ -2,13 +2,14 @@
 * [Ingest Data](#Ingest-data)
 * [Create apass and sloan catalogs](#Create-apass-and-sloan-catalogs-for-new-objects)
 * [Running the pipeline](#Running-the-pipeline)
+* [Cookbook] (#Cookbook)
 * [Creating a Landolt Catalog](#Creating-a-Landolt-Catalog)
 * [Difference Imaging](#Difference-Imaging)
 * [Definitions](#Definitions)
 
 # Ingest data
-* Download observations from SNEx and run ingesttar.py
-* Download observations from archive.lco.global using LCOGTingest.py. This will only work for public data (e.g., standard stars images and observations from over 1 year ago) unless you have an account for the observing portal. For example (all arguments optional; see ```LCOGTingest.py -h``` for options):
+* Download observations from SNEx and run ingesttar.py. This data will have already been reduced with BANZAI.
+* Download observations from archive.lco.global using LCOGTingest.py. It is recommended that you download data reduced with BANZAI. This will only work for public data (e.g., standard stars images and observations from over 1 year ago) unless you have an account for the observing portal. For example (all arguments optional; see ```LCOGTingest.py -h``` for options):
 ```
 LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public
 ```
@@ -16,6 +17,53 @@ LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public
 # Create apass and sloan catalogs for new objects
 * run `comparecatalogs.py` to generate new catalogs
 * Note if you are trying to reduce U band, you need to generate a local catalog. See [Creating an Landolt Catalog](#Creating-a-Landolt-Catalog) for details.
+
+# Cookbook
+This is a description of the stream-lined steps that are recommended for processing most data. This cookbook assumes that you have downloaded reduced data and have created catalogs for each object as described above.
+
+1. Verify your PSF catalog. It is recommended that the `psf` stage be run with the catalog option pointing to one of the catalogs you downloaded (usually apass or sloan) so that the same stars are used for build the PSF for every image. You should run the `psf` stage using the `--show` option on a few images in each filter to verify that the star selected from the catalog are good (e.g. not double stars, near a hot pixel, or saturated). In addition to showing you the model PSF, if a DS9 window is open prior to running, the image will be shown with the stars using to build the PSF circled in cyan. Note that these ID number represent the line number (after the header) in the catalog file and not the catalog ID numbers. Remove any stars that are being selected and are not good from the catalog in `$LCOSNPIPE/trunk/src/lsc/standards/cat/...`. Additionally, you copy the file to the installation directory. The easiest way to do this is to re-install the pipelines `python setup.py install`. Repeat this stage until you are satisfied with the stars selected for the catalog.  
+**Example:**
+    ```
+    ds9&
+    lscloop.py -n 2016cok -e 20160528-20160530 -s psf --show --catalog /dark/anaconda/anaconda27/envs/halenv/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2016cok_apass.cat
+    ```
+
+2. Run the `psf` stage on all of the data without the `--show` option  
+**Example**
+    ```
+    lscloop.py -n 2016cok -e 20160528-20180104 -s psf --catalog /dark/anaconda/anaconda27/envs/halenv/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2016cok_apass.cat
+    ```
+
+3. Check the PSF and image quality. Run the `checkpsf` stage with the `--show`. I like to do this by filter so I can develop a good baseline of what a field should look like in a given filter. Inspect each PSF and each image. Mark the PSFs that you want to redo with `n` and the images that you never want to see again as `b`. At this stage the only PSFs that I've redone are ones with exceptional seeing, where stars that normally wouldn't were saturated. See https://www.overleaf.com/read/sccbqgnhwyfh for a description of different PSF shapes you may see.  
+**Example for checking r-band images**
+    ```
+    ds9&
+    lscloop.py -n 2016cok -e 20160528-20180104 -s checkpsf --show -f B
+    ```
+4. Redo the PSF for any images you marked with `n`. These are selected using the `-b psf` option.  
+**Example** 
+lscloop.py -n 2016cok -e 20160528-20180104 -s psf -b psf --catalog /dark/anaconda/anaconda27/envs/halenv/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2016cok_apass.cat
+
+5. Calculate instrumental magnitudes by running the `psfmag` stage. This will derive aperture and psf photometry.   
+**Example**
+```
+lscloop.py -n 2016cok -e 20160528-20180104 -s psfmag
+```
+
+6. Calculate the photometric zeropoint for each image. The `zcat` stage should be run for at least two filters at a time so that the color term can be evaluated.  
+**Example**
+```
+lscloop.py -n 2016cok -e 20160528-20180104 -s zcat
+```
+
+7. Calculate the apparent magnitude for an image using the instrumental magnitude derived from PSF photometry using the `--type fit` option. This is another stage that should be run on more than one filter so the color term can be used.  
+**Example**
+```
+lscloop.py -n 2016cok -e 20160528-20180104 -s mag --type fit
+```
+
+8. Visually inspect your light curve using `getmag` stage with the `--show` option. This will bring up a plot with your light curve (I like to do this one filter at a time). You can click on individual points to bring up a second window which shows a cut out of the supernova on the left and the residual after the PSF subtraction on the right. You are given the option to remove bad points from the light curve. It is recommended that you use the `n` option at this stage, allowing you to easily redo these observations from any stage using the `-b mag` option. In general, however, this is used to eliminate points with a lot of scatter due to poor observing conditions.
+
 
 # Running the pipeline:
 In general, the pipeline is called as a series of stages. Each stage should be called with the general format:

@@ -38,13 +38,13 @@ Where:
 ## Steps:
 ### Cosmic ray rejection:
 * **Call**: ```-s cosmic```
-* **Description**: Runs lacosmic to clean the images
+* **Description**: Runs lacosmic to clean the images. This stage only needs to be run prior to the `-s diff` stage as that is the only step that uses the cosmic ray mask
 * **Recommended Options**:
 * **Other Options**: 
 
 ### WCS solution
 * **Call**: ```-s wcs```
-* **Description**: Generate a WCS solution for a given observation
+* **Description**: Generate a WCS solution for a given observation. In general, this stage does not need to be run when starting analysis from observations that have been reduced with Banzai (which is recommended) as Banzai solves the WCS solution.
 * **Recommended Options**: 
 
 * **Other Options**: 

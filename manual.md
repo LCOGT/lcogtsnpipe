@@ -19,6 +19,7 @@ LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public
 * Note if you are trying to reduce U band, you need to generate a local catalog. See [Creating an Landolt Catalog](#Creating-a-Landolt-Catalog) for details.
 
 # Cookbook
+## Basic reduction
 This is a description of the stream-lined steps that are recommended for processing most data. This cookbook assumes that you have downloaded reduced data and have created catalogs for each object as described above.
 
 1. Verify your PSF catalog. It is recommended that the `psf` stage be run with the catalog option pointing to one of the catalogs you downloaded (usually apass or sloan) so that the same stars are used for build the PSF for every image. You should run the `psf` stage using the `--show` option on a few images in each filter to verify that the star selected from the catalog are good (e.g. not double stars, near a hot pixel, or saturated). In addition to showing you the model PSF, if a DS9 window is open prior to running, the image will be shown with the stars using to build the PSF circled in cyan. Note that these ID number represent the line number (after the header) in the catalog file and not the catalog ID numbers. Remove any stars that are being selected and are not good from the catalog in `$LCOSNPIPE/trunk/src/lsc/standards/cat/...`. Additionally, you copy the file to the installation directory. The easiest way to do this is to re-install the pipelines `python setup.py install`. Repeat this stage until you are satisfied with the stars selected for the catalog.  

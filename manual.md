@@ -2,7 +2,7 @@
 * [Ingest Data](#Ingest-data)
 * [Create apass and sloan catalogs](#Create-apass-and-sloan-catalogs-for-new-objects)
 * [Running the pipeline](#Running-the-pipeline)
-* [Cookbook] (#Cookbook)
+* [Cookbook](#Cookbook)
 * [Creating a Landolt Catalog](#Creating-a-Landolt-Catalog)
 * [Difference Imaging](#Difference-Imaging)
 * [Definitions](#Definitions)

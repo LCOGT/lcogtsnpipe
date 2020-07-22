@@ -13,6 +13,7 @@ services:
     network_mode: "bridge"
     container_name: lcosnpipe
     mem_limit: '8g'
+    entrypoint: ['/bin/bash/', 'c', '"while [ true ]; do sleep 180; done"']
     environment:
       LCOSNDBHOST: ${LCOSNDBHOST:-supernovadb}
       LCOSNDBNAME: ${LCOSNDBNAME:-supernova}

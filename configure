@@ -1,7 +1,7 @@
-hostname           host.docker.internal
-database           supernova
-mysqluser          supernova
-mysqlpasswd        ''
+hostname           os.getenv('LCOSNDBHOST', 'host.docker.internal')
+database           os.getenv('LCOSNDBNAME', 'supernova')
+mysqluser          os.getenv('LCOSNDBUSER', 'supernova')
+mysqlpasswd        os.getenv('LCOSNDBPASS', '')
 proposal           ['']
 users              ['']
 triggerpass        ''

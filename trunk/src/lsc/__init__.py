@@ -10,6 +10,8 @@ from myloopdef import *
 from cosmics import *
 from lscpsfdef import *
 from banzaicat import *
+from lscartstardef import *
+from zscale import *
 
 __version__ = "unknown"
 try:

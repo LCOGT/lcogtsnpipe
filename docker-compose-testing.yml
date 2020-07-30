@@ -19,5 +19,8 @@ services:
       LCOSNDBNAME: "${LCOSNDBNAME:-supernova}"
       LCOSNDBUSER: "${LCOSNDBUSER:-supernova}"
       LCOSNDBPASS: "${LCOSNDBPASS:-''}"
+      LCOSNDIR: "${LCOSNDIR:-/data}"
     links:
       - sn-db:supernovadb
+    volumes:
+      - ${LCOSNDIR:-data}:${LCOSNDIR:-/data}

@@ -19,16 +19,6 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-SET SESSION SQL_MODE = 'NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
-SET GLOBAL SQL_MODE = 'NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
-CREATE DATABASE supernova;
-CREATE USER supernova;
-GRANT ALL PRIVILEGES ON supernova.* TO supernova;
-USE supernova;
-
-# Dump of table aseatide
-# ------------------------------------------------------------
-
 DROP TABLE IF EXISTS `aseatide`;
 
 CREATE TABLE `aseatide` (
@@ -115,7 +105,7 @@ CREATE TABLE `atels` (
   `title` text,
   `keywords` text,
   `authors` text,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -169,7 +159,7 @@ CREATE TABLE `datarequests` (
   `ids` text,
   `maxfilesize` float DEFAULT '2000',
   `status` varchar(11) DEFAULT 'new',
-  `datecreated` timestamp NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -223,8 +213,8 @@ CREATE TABLE `favorites` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `targetid` bigint(20) NOT NULL,
   `userid` bigint(20) NOT NULL,
-  `favorited` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `unfavorited` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `favorited` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `unfavorited` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -344,7 +334,7 @@ CREATE TABLE `groups` (
   `description` text,
   `idcode` bigint(20) NOT NULL,
   `sharing` int(11) DEFAULT NULL,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='User groups';
@@ -401,7 +391,7 @@ CREATE TABLE `iaunames` (
   `discoveryref` text,
   `positionref` text,
   `discoverer` text,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -418,7 +408,7 @@ CREATE TABLE `instruments` (
   `name` text NOT NULL,
   `type` text,
   `webpage` text,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -434,8 +424,8 @@ CREATE TABLE `interests` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `targetid` bigint(20) NOT NULL,
   `userid` bigint(20) NOT NULL,
-  `interested` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `uninterested` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `interested` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `uninterested` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -483,10 +473,10 @@ CREATE TABLE `notes` (
   `note` text NOT NULL,
   `tablename` text COMMENT 'Table to which the comment refers',
   `tableid` bigint(20) DEFAULT NULL COMMENT 'ID in the table to which the comment refers',
-  `posttime` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `posttime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `userid` bigint(20) NOT NULL,
   `groupidcode` bigint(20) DEFAULT NULL COMMENT 'Which groups can see this',
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Notes on targets, images, spectra, atels, etc.';
@@ -559,11 +549,11 @@ CREATE TABLE `obsrequests` (
   `guiderexptime` int(11) DEFAULT '10',
   `priority` varchar(50) DEFAULT NULL,
   `approved` int(11) DEFAULT '0',
-  `nextreminder` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `nextreminder` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `groupidcode` bigint(20) DEFAULT NULL COMMENT 'Which groups can see this',
   `dismissed` int(11) NOT NULL DEFAULT '0',
   `autostop` int(11) NOT NULL DEFAULT '0',
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `combo` (`targetid`,`sequenceend`,`cadence`,`filters`,`exptimes`,`expnums`,`blocknums`,`site`,`instrument`,`airmass`,`slit`,`priority`,`groupidcode`)
@@ -596,7 +586,7 @@ CREATE TABLE `papers` (
   `reference` text,
   `status` text,
   `contents` text,
-  `datecreated` timestamp NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -641,7 +631,7 @@ CREATE TABLE `phot_deprecated` (
   `reducer` text,
   `pipeline` text,
   `groupidcode` bigint(20) DEFAULT NULL,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `targetid` (`targetid`,`photlcoid`)
@@ -704,7 +694,7 @@ CREATE TABLE `photlco` (
   `filepath` text COMMENT 'Path to image file',
   `filetype` text,
   `groupidcode` bigint(20) DEFAULT NULL COMMENT 'Which groups can see this',
-  `datecreated` timestamp NOT NULL DEFAULT '2000-01-01 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `apflux` double DEFAULT '9999' COMMENT 'Aperture flux',
   `dapflux` double DEFAULT '9999' COMMENT 'Aperture flux error',
@@ -754,7 +744,7 @@ CREATE TABLE `photlcoraw` (
   `filename` varchar(100) DEFAULT NULL COMMENT 'Image fits file',
   `filepath` text COMMENT 'Path to image file',
   `groupidcode` bigint(20) DEFAULT NULL COMMENT 'Which groups can see this',
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `moonfrac` float DEFAULT NULL,
   `moondist` float DEFAULT NULL,
@@ -779,7 +769,7 @@ CREATE TABLE `photpairing` (
   `tableout` text COMMENT 'Tablename of combined/subtracted image',
   `nametemplate` text COMMENT 'Filename of template image',
   `tabletemplate` text COMMENT 'Tablename of template image',
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Connecting combined / subtracted images to their original fi';
@@ -806,7 +796,7 @@ CREATE TABLE `programs` (
   `programend` timestamp NULL DEFAULT NULL,
   `timecritical_idcode` varchar(20) DEFAULT NULL,
   `replacedwith` int(11) DEFAULT NULL,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idcode` (`idcode`)
@@ -914,7 +904,7 @@ CREATE TABLE `spec` (
   `filename` varchar(100) DEFAULT NULL COMMENT 'Spectrum fits file',
   `filepath` text COMMENT 'Path to image file',
   `groupidcode` bigint(20) DEFAULT NULL COMMENT 'Which groups can see this',
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `uploadedby` int(11) DEFAULT '0',
   `deleted` int(11) NOT NULL DEFAULT '0',
@@ -983,7 +973,7 @@ CREATE TABLE `speclcoraw` (
   `markedasbad` tinyint(1) DEFAULT '0',
   `markedasbad_by` varchar(50) DEFAULT NULL,
   `markedasbad_because` text,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `filename` (`filename`),
@@ -1017,7 +1007,7 @@ CREATE TABLE `targetnames` (
   `targetid` bigint(20) NOT NULL,
   `name` varchar(50) NOT NULL,
   `groupidcode` bigint(20) DEFAULT NULL COMMENT 'Which groups can see this',
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `name` (`name`)
@@ -1043,7 +1033,7 @@ CREATE TABLE `targets` (
   `pm_ra` double NOT NULL DEFAULT '0' COMMENT 'proper motion RA times cos(dec)',
   `pm_dec` double NOT NULL DEFAULT '0' COMMENT 'proper motion Dec',
   `groupidcode` bigint(20) NOT NULL DEFAULT '32769' COMMENT 'Which groups can see this',
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Info about targets';
@@ -1064,7 +1054,7 @@ CREATE TABLE `telescopes` (
   `elevation` double DEFAULT NULL,
   `diameter` double DEFAULT NULL,
   `webpage` text,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -1106,7 +1096,7 @@ CREATE TABLE `useractionlog` (
   `columnmodified` varchar(50) DEFAULT NULL,
   `prevvalue` text,
   `newvalue` text,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Log of user actions';
@@ -1146,7 +1136,7 @@ CREATE TABLE `users` (
   `firstname` text,
   `lastname` text,
   `email` text,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
@@ -1207,7 +1197,7 @@ CREATE TABLE `voevent_amon` (
   `importance` text,
   `inference_probability` text,
   `concept` text,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -1280,7 +1270,7 @@ CREATE TABLE `voevent_lvc` (
   `importance` text,
   `inference_probability` text,
   `concept` text,
-  `datecreated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `datecreated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

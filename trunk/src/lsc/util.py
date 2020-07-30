@@ -5,11 +5,14 @@ from astropy.nddata import Cutout2D
 from astropy.wcs import WCS
 import lsc
 from glob import glob
+import pkg_resources
 
-workdirectory = os.getenv('LCOSNDIR')
-if workdirectory is None:
-    workdirectory = '/supernova/'
+workdirectory = os.getenv('LCOSNDIR', '/supernova/')
+
 configfile = os.path.join(workdirectory, 'configure')
+if not os.path.exists(configfile):
+    configfile = pkg_resources.resource_filename('lsc', '../configure')
+
 
 def readpasswd(configfile):
    """ read all information to connect to database from configuration file  

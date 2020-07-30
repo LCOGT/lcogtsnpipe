@@ -8,7 +8,7 @@ ENV DISPLAY host.docker.internal:0
 
 RUN apt-get update \
         && apt -y install gcc make flex git \
-        && apt -y install libcurl4-openssl-dev libexpat-dev libreadline-dev \
+        && apt -y install libcurl4-openssl-dev libexpat-dev libreadline-dev gettext\
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*
 
@@ -46,7 +46,7 @@ RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
         && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \
         && cd /usr/src/cdsclient-* && ./configure && make && make install
 
-COPY ./configure $LCOSNDIR
+COPY ./trunk/configure $LCOSNDIR
 
 COPY . $LCOSNPIPE
 

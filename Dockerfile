@@ -2,9 +2,6 @@ FROM python:2.7.16-slim-stretch
 
 ENV iraf /iraf/iraf/
 ENV IRAFARCH linux64
-ENV LCOSNDIR /supernova
-ENV LCOSNPIPE $LCOSNDIR/github/lcogtsnpipe
-ENV DISPLAY host.docker.internal:0
 
 RUN apt-get update \
         && apt -y install gcc make flex git \
@@ -37,14 +34,18 @@ RUN wget http://ds9.si.edu/download/debian9/ds9.debian9.8.0.1.tar.gz \
         && tar -xzvf ds9.debian9.8.0.1.tar.gz -C /usr/local/bin \
         && rm -rf ds9.debian9.8.0.1.tar.gz
 
+RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
+        && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \
+        && cd /usr/src/cdsclient-* && ./configure && make && make install
+
+ENV LCOSNDIR /supernova
+ENV LCOSNPIPE $LCOSNDIR/github/lcogtsnpipe
+ENV DISPLAY host.docker.internal:0
+
 RUN mkdir -p /home/supernova/iraf && /usr/sbin/groupadd -g 20000 "domainusers" \
         && /usr/sbin/useradd -g 20000 -d /home/supernova -M -N -u 10197 supernova \
         && chown -R supernova:domainusers /home/supernova \
         && mkdir -p $LCOSNDIR
-
-RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
-        && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \
-        && cd /usr/src/cdsclient-* && ./configure && make && make install
 
 COPY ./trunk/configure $LCOSNDIR
 

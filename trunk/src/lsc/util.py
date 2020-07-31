@@ -11,7 +11,7 @@ workdirectory = os.getenv('LCOSNDIR', '/supernova/')
 
 configfile = os.path.join(workdirectory, 'configure')
 if not os.path.exists(configfile):
-    configfile = pkg_resources.resource_filename('lsc', '../configure')
+    configfile = pkg_resources.resource_filename('lsc', 'configure')
 
 
 def readpasswd(configfile):

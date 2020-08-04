@@ -1,7 +1,7 @@
-FROM python:2.7.16-slim-stretch
+FROM i386/python:2.7.18-slim-stretch
 
 ENV iraf /iraf/iraf/
-ENV IRAFARCH linux64
+ENV IRAFARCH linux
 
 RUN apt-get update \
         && apt -y install gcc make flex git \
@@ -13,20 +13,21 @@ RUN mkdir -p $iraf \
         && cd /iraf \
         && git clone https://github.com/iraf-community/iraf.git \
         && cd $iraf \
-        && git checkout 567961f \
+        && git checkout ba22d13 \
         && ./install < /dev/null \
-        && make linux64 \
+        && make $IRAFARCH \
         && make sysgen
 
 RUN apt-get update \
-        && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor procps \
-        mysql-client libmariadbclient-dev openssh-client wcstools libxml2 vim libssl1.0.2 zip \
+        && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor procps g++ \
+        mysql-client libmariadbclient-dev openssh-client wcstools libxml2 vim libssl1.0.2 zip pkg-config \
+        libpng-dev libfreetype6-dev \
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/bin/sextractor /usr/bin/sex
 
-RUN pip install numpy>=1.12 astropy matplotlib pyraf mysql-python scipy astroquery==v0.4 statsmodels==0.10 cython
+RUN pip install cryptography==2.4.1 numpy>=1.12 astropy matplotlib==2.2.5 pyraf mysql-python scipy astroquery==v0.4 statsmodels==0.10 cython
 
 RUN pip install git+git://github.com/kbarbary/sep.git@master git+git://github.com/dguevel/PyZOGY.git && rm -rf ~/.cache/pip
 

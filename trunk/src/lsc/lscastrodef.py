@@ -1316,7 +1316,7 @@ def run_astrometry(im, clobber=True,redo=False):
         cmd += '--no-plots -N tmpwcs.fits --extension 0 '
         if clobber: cmd += '--overwrite '
         cmd += '--solved none --match none --rdls none --wcs none --corr none '
-        cmd += ' --use-sextractor --fits-image {}'.format(im)
+        cmd += ' --use-source-extractor --fits-image {}'.format(im)
         print cmd
         os.system(cmd)
         basename = im[:-5]

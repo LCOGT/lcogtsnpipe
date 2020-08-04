@@ -782,6 +782,9 @@ if __name__ == "__main__":
                     lsc.mysqldef.updatevalue('photlco', 'psfy', centy[0] + y1 - 1, string.split(img, '/')[-1] + '.fits')
                     lsc.mysqldef.updatevalue('photlco', 'apmag', apmag3[0], string.split(img, '/')[-1] + '.fits')
                     lsc.mysqldef.updatevalue('photlco', 'dapmag', dapmag3[0], string.split(img, '/')[-1] + '.fits')
+                    # Update the aperture correction to reflect what is actually applied to the data 
+                    # (difference imaging can change the sn2 file leading to a different aperture correction)
+                    lsc.mysqldef.updatevalue('photlco', 'apercorr', apco0, , string.split(img, '/')[-1] + '.fits')
                 except:
                     print 'module mysqldef not found'
             else:

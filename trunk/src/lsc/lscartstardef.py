@@ -53,7 +53,6 @@ def artstar(img,_ra,_dec,_num=1, _app = 17 , _random=False,_verbose=True):
         sys.exit('exptime not found')
         
     if _zeropoint is not None:
-        #_mag =  _app  - (np.log10(_exptime) * 2.5 + _zeropoint)
         _mag =  _app  - _zeropoint
         print _app, _mag, _zeropoint
     else:

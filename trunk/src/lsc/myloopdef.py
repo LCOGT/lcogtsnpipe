@@ -287,13 +287,14 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
         pp = ' -p ' + str(nstars) + ' '
 
         status = checkstage(img, 'psf')
-        print status
+        print('status: ',status)
         if status == 1:
             rr = '-r'
         if status >= 1:
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
+            print(ggg)
             _dir = ggg[0]['filepath']
-            if ggg[0]['filetype'] == '3' and ggg[0]['difftype'] == 0: # HOTPANTS difference images
+            if ggg[0]['filetype'] == int(3) and ggg[0]['difftype'] == 0: # HOTPANTS difference images
                 ##################################################################################
                 print '\n### get parameters for difference image'
                 hdrdiff=lsc.util.readhdr(_dir+img)
@@ -596,7 +597,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                 ll1[jj] = []
 
     if _filetype:
-        if int(_filetype) in [1, 2, 3, 4]:
+        if int(_filetype) in [1, 2, 3, 4, 5]:
             #ww = np.array([i for i in range(len(ll1['filetype'])) if ((str(ll1['filetype'][i]) == str(_filetype)))])
             ww = np.array([i for i in range(len(ll1['filetype'])) if ((str(ll1['filetype'][i]) == str(_filetype)))])
             if len(ww) > 0:

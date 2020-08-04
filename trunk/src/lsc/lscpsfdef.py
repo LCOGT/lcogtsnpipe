@@ -480,7 +480,8 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
             thdulist = fits.HDUList([hdu, tbhdu])
             lsc.util.delete(img + '.sn2.fits')
             thdulist.writeto(img + '.sn2.fits')
-            lsc.util.updateheader(img + '.sn2.fits', 0, {'APCO': (np.mean(_dmag), 'Aperture correction')})
+            aperture_correction = np.mean(_dmag)
+            lsc.util.updateheader(img + '.sn2.fits', 0, {'APCO': (aperture_correction, 'Aperture correction')})
             lsc.util.updateheader(img + '.sn2.fits', 0, {'APCOERR': (np.std(_dmag), 'Aperture correction error')})
             lsc.util.updateheader(img + '.sn2.fits', 0, {'XDIM': (lsc.util.readkey3(hdr, 'naxis1'), 'x number of pixels')})
             lsc.util.updateheader(img + '.sn2.fits', 0, {'YDIM': (lsc.util.readkey3(hdr, 'naxis2'), 'y number of pixels')})
@@ -492,4 +493,4 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
         result = 0
         fwhm = 0.0
         traceback.print_exc()
-    return result, fwhm * scale
+    return result, fwhm * scale, aperture_correction

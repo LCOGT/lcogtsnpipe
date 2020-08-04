@@ -235,7 +235,7 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
          elif _tel in ['Faulkes Telescope North','ftn']: 
             _tel='2m0-01'
          _inst=hdr.get('instrume')
-         dictionary={'dateobs':readkey3(hdr,'date-obs'),'dayobs':readkey3(hdr,'DAY-OBS'),'filename':img,'filepath':path,'filetype':filetype,'targetid':_targetid,\
+         dictionary={'dateobs':readkey3(hdr,'date-obs'),'dayobs':readkey3(hdr,'DAY-OBS'),'filename':img,'filepath':path,'filetype': int(filetype), 'targetid':_targetid,\
                      'exptime':readkey3(hdr,'exptime'), 'filter':readkey3(hdr,'filter'),'mjd':readkey3(hdr,'mjd'),'tracknumber':_tracknumber,'groupidcode':_groupidcode,\
                      'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),\
                      'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}

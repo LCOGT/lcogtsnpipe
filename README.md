@@ -3,7 +3,8 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 
 # Table of Contents
 - [ Pipeline Documentation](#pipeline-documentation)
-- [Installing the Pipeline and Database](#installing-the-pipeline-and-database)
+- [Docker-compose Installation](#docker-compose-installation)
+- [Manual Installation: Installing the Pipeline and Database](#manual-installation-installing-the-pipeline-and-database)
 - [Testing your installation](#testing-your-installation)
 - [Appendix A: Expected output from show tables](#appendix-a-expected-output-from-show-tables)
 - [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina)
@@ -52,7 +53,7 @@ These instructions only need to be run once, when you set up the pipeline.
         xeyes
         ```
         If a window appears, your computer is configured correctly. You only have to do this once.
-   7. Clone this repository: `git clone https://github.com/svalenti/lcogtsnpipe`
+   7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe`
    8. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
    9. Create directories on your local machine (outside the Docker) where the images and data products will be stored:
         ```

@@ -175,7 +175,7 @@ def querycatalogue(catalogue,img,method='iraf'):
         toforget = ['imcoords','astcat','tv']
         iraf.noao.astcat.aregpars.rcrauni=''
         iraf.noao.astcat.aregpars.rcdecuni=''
-        iraf.noao.astcat.catdb=lsc.__path__[0]+'/standard/cat/catalogue.dat'
+        iraf.noao.astcat.catdb = os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'standard', 'cat', 'catalogue.dat')
         iraf.noao.astcat.aregpars.rcra=_ra/15
         iraf.noao.astcat.aregpars.rcdec=_dec
         iraf.noao.astcat.aregpars.rrawidt=_size
@@ -570,11 +570,12 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
         print _siteid
         sys.exit('siteid not in lsc.sites.extinction')
     if catalogue:
-        stdcooC=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/'+catalogue+'.cat')
+        catalog_path = os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'standard', 'cat', catalogue+'.cat')
+        stdcooC=lsc.lscastrodef.readtxt(catalog_path)
         rastdC,decstdC=array(stdcooC['ra'],float),array(stdcooC['dec'],float)
         delete('tmp.stdC.pix')
-        iraf.wcsctran(lsc.__path__[0]+'/standard/cat/'+catalogue+'.cat','tmp.stdC.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
-                          columns='1 2',formats='%10.1f %10.1f',verbose='no')
+        iraf.wcsctran(catalog_path,'tmp.stdC.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
+                      columns='1 2',formats='%10.1f %10.1f',verbose='no')
         standardpixC=lsc.lscastrodef.readtxt('tmp.stdC.pix')
         xstdC=standardpixC['ra']
         ystdC=standardpixC['dec']

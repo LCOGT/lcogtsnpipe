@@ -824,7 +824,7 @@ def getcatalog(name_or_filename, field='', return_field=False):
             entry = entries[0] # choose first one
             # if you searched by image, check that the filter is compatible with this field
             if 'filter' not in entry or entry['filter'] in lsc.sites.filterst[field]:
-                catalog_path = lsc.__path__[0] + '/standard/cat/' + field + '/'
+                catalog_path = os.path.join(os.getenv('LCOSNDIR', workdirectory), 'standard', 'cat', field, '')
                 if entry[field + '_cat']:
                     catalog = catalog_path + entries[0][field + '_cat']
                     break

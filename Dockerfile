@@ -39,32 +39,23 @@ RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
         && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \
         && cd /usr/src/cdsclient-* && ./configure && make && make install
 
-ENV LCOSNDIR /supernova
-ENV LCOSNPIPE $LCOSNDIR/github/lcogtsnpipe
+ENV LCOSNPIPE /lcogtsnpipe
 ENV DISPLAY host.docker.internal:0
 
 RUN mkdir -p /home/supernova/iraf && /usr/sbin/groupadd -g 20000 "domainusers" \
         && /usr/sbin/useradd -g 20000 -d /home/supernova -M -N -u 10197 supernova \
         && chown -R supernova:domainusers /home/supernova \
-        && mkdir -p $LCOSNDIR
+        && mkdir -p $LCOSNPIPE
 
-COPY ./trunk/configure $LCOSNDIR
-
-COPY . $LCOSNPIPE
-
-RUN chown -R supernova:domainusers $LCOSNDIR /usr/local
+RUN chown -R supernova:domainusers $LCOSNPIPE /usr/local
 
 USER supernova
 
+COPY . $LCOSNPIPE
+
 WORKDIR $LCOSNPIPE/trunk
 
-RUN mv src/lsc/standard/cat/apass/*.cat $LCOSNDIR/data/apass/ 2> /dev/null || true
-
-RUN mv src/lsc/standard/cat/sloan/*.cat $LCOSNDIR/data/sloan/ 2> /dev/null || true
-
 RUN python setup.py build -f && python setup.py install -f
-
-RUN ln -s $LCOSNDIR/data/apass/ $LCOSNDIR/data/sloan/ /usr/local/lib/python2.7/site-packages/lsc/standard/cat/
 
 WORKDIR /home/supernova/iraf
 

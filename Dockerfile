@@ -51,7 +51,7 @@ RUN chown -R supernova:domainusers $LCOSNPIPE /usr/local
 
 USER supernova
 
-COPY . $LCOSNPIPE
+COPY --chown=supernova:domainusers . $LCOSNPIPE
 
 WORKDIR $LCOSNPIPE/trunk
 

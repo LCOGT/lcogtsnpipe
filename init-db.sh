@@ -3,5 +3,6 @@ LCOSNDBNAME=${LCOSNDBNAME:-supernova};
 LCODBSNUSER=${LCOSNDBUSER:-supernova}
 LCOSNDBPASS=${LCOSNDBPASS:-supernova}
 
-envsubst < /supernova/github/lcogtsnpipe/supernova.sql > test.sql
-mysql -h ${LCOSNDBHOST:-supernovadb} -u root -p${LCOSNDBROOTPASS-password} < test.sql
+envsubst < ${LCOSNPIPE:-/lcogtsnpipe}/supernova.sql > tmp.sql
+mysql -h ${LCOSNDBHOST:-supernovadb} -u root -p${LCOSNDBROOTPASS-password} < tmp.sql
+rm -rf tmp.sql

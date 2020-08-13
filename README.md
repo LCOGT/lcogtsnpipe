@@ -90,9 +90,13 @@ Follow these instructions each time you want to use the pipeline.
    1. Make sure the MySQL server and Docker daemon are running.
    2. (MacOS only) Run XQuartz from the Finder.
    3. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &`
-   4. Run the Docker container: `docker run -it --rm -v /your/data/directory:/supernova/data lcogtsnpipe`.
-      Replace `/your/data/directory` with the directory you created above.
-   5. When you're done, type `exit` to leave the Docker.
+   4. Make sure your `$LCOSNDIR` and `$LCOSNDBDIR` environment variables are set correctly. 
+   5. From inside the `lcogtsnpipe` directory, run `docker-compose up`
+   6. From a separate terminal you can enter the docker container using `docker exec -it lcosnpipe /bin/bash`
+   7. Run your desired pipeline processing commands
+   8. When you're done, type `exit` to leave the Docker container.
+   9. To stop the set of docker containers (your "pipeline server"), use `control-c` in the terminal you ran `docker-compose up`.
+   10. To fully remove the containers (though not your mysql or data directories), you can run `docker-compose down` in the `lcogtsnpipe` directory.
 
 
 # Manual Installation: Installing the Pipeline and Database

@@ -40,7 +40,6 @@ RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
         && cd /usr/src/cdsclient-* && ./configure && make && make install
 
 ENV LCOSNPIPE /lcogtsnpipe
-ENV DISPLAY host.docker.internal:0
 
 RUN mkdir -p /home/supernova/iraf && /usr/sbin/groupadd -g 20000 "domainusers" \
         && /usr/sbin/useradd -g 20000 -d /home/supernova -M -N -u 10197 supernova \

@@ -90,15 +90,23 @@ Follow these instructions each time you want to use the pipeline.
    1. Make sure the MySQL server and Docker daemon are running.
    2. (MacOS only) Run XQuartz from the Finder.
    3. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &`
-   4. Make sure your `$LCOSNDIR` and `$LCOSNDBDIR` environment variables are set correctly. 
-   5. From inside the `lcogtsnpipe` directory, run `docker-compose up`
-   6. From a separate terminal you can enter the docker container using `docker exec -it lcosnpipe /bin/bash`
-   7. Run your desired pipeline processing commands
-   8. When you're done, type `exit` to leave the Docker container.
-   9. To stop the set of docker containers (your "pipeline server"), use `control-c` in the terminal you ran `docker-compose up`.
-   10. To fully remove the containers (though not your mysql or data directories), you can run `docker-compose down` in the `lcogtsnpipe` directory.
+   4. (Linux only) Set you display environment variable to point to the docker connection using 
+   ```
+   export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
+   ```
+   5. Make sure your `$LCOSNDIR` and `$LCOSNDBDIR` environment variables are set correctly. 
+   6. From inside the `lcogtsnpipe` directory, run `docker-compose up`
+   7. From a separate terminal you can enter the docker container using `docker exec -it lcosnpipe /bin/bash`
+   8. Run your desired pipeline processing commands
+   9. When you're done, type `exit` to leave the Docker container.
+   10. To stop the set of docker containers (your "pipeline server"), use `control-c` in the terminal you ran `docker-compose up`.
+   11. To fully remove the containers (though not your mysql or data directories), you can run `docker-compose down` in the `lcogtsnpipe` directory.
 
+Note that you can access the mysql database directly by using `-h supernovadb` inside the lcosnpipe container.
+You can access the database from your host machine, e.g. with sequelpro by setting the host to be 127.0.0.1 and the port to be
+4306. We choose this port so that it does not conflict with and existing mysql installation.
 
+ 
 # Manual Installation: Installing the Pipeline and Database
 1. Install msql  
     1. Install MySQL server from: https://dev.mysql.com/downloads/mysql/  

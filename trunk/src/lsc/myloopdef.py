@@ -813,7 +813,7 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
     fig.clf()
     ax = fig.add_subplot(1, 1, 1)
     norm = ImageNormalize(data, interval=ZScaleInterval())
-    ax.imshow(data, norm=norm)
+    ax.imshow(data, norm=norm, origin='lower')
     wcs = WCS(hdr)
     if catfile.endswith('fits'):
         cat = Table.read(catfile)
@@ -823,6 +823,7 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
     i, j = wcs.wcs_world2pix(coords.ra, coords.dec, 0)
     ax.autoscale(False)
     ax.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
+    ax.set_title(os.path.basename(imgfile))
     fig.tight_layout()
 
 
@@ -959,7 +960,7 @@ def make_psf_plot(psf_filename, fig=None):
 
     ax.view_init(elev=40, azim=330)  # replicating starting view of iraf PSF
     ax.set_axis_off()
-    ax.set_title('PSF for {psf_filename}'.format(psf_filename=psf_filename))
+    ax.set_title('PSF for {psf_filename}'.format(psf_filename=os.path.basename(psf_filename)))
     fig.tight_layout()
 
     #############################################################################

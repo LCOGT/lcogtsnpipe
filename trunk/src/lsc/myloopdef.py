@@ -805,13 +805,15 @@ def position(imglist, ra1, dec1, show=False):
 
 
 #########################################################################
-def mark_stars_on_image(imgfile, catfile):
+def mark_stars_on_image(imgfile, catfile, fig=None):
     data, hdr = fits.getdata(imgfile, header=True)
     vmin = np.percentile(data, 0.1)
     vmax = np.percentile(data, 99.9)
-    plt.clf()
-    plt.imshow(data, vmin=vmin, vmax=vmax)
-    plt.tight_layout()
+    if fig is None:
+        fig = plt.gcf()
+    fig.clf()
+    ax = fig.axes()
+    ax.imshow(data, vmin=vmin, vmax=vmax)
     wcs = WCS(hdr)
     if catfile.endswith('fits'):
         cat = Table.read(catfile)
@@ -819,7 +821,8 @@ def mark_stars_on_image(imgfile, catfile):
         cat = Table.read(catfile, format='ascii.commented_header', header_start=1, delimiter='\s')
     coords = SkyCoord(cat['ra'], cat['dec'], unit=(u.hourangle, u.deg))
     i, j = wcs.wcs_world2pix(coords.ra, coords.dec, 0)
-    plt.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
+    ax.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
+    fig.tight_layout()
 
 
 def checkcat(imglist, database='photlco'):
@@ -867,7 +870,10 @@ def checkcat(imglist, database='photlco'):
 def checkpsf(imglist, no_iraf, database='photlco'):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
-    plt.ion()
+    if no_iraf:
+        plt.ion()
+        img_fig = plt.figure(figsize=(6, 6))
+        psf_fig = plt.figure(figsize=(8, 4))
     for img in imglist:
         status = checkstage(img, 'checkpsf')
         print img, status
@@ -878,7 +884,7 @@ def checkpsf(imglist, no_iraf, database='photlco'):
             if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
                 print img
                 if no_iraf:
-                    mark_stars_on_image(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
+                    mark_stars_on_image(_dir + img, _dir + img.replace('.fits', '.sn2.fits'), fig=img_fig)
                     psf_filename = _dir + img.replace('.fits', '.psf.fits')
                     make_psf_plot(psf_filename)
                 else:
@@ -912,12 +918,14 @@ def checkpsf(imglist, no_iraf, database='photlco'):
             print 'status ' + str(status) + ': unknown status'
 
 
-def make_psf_plot(psf_filename):
+def make_psf_plot(psf_filename, fig=None):
     """
     Displays plots of PSFs for the checkpsf stage without using iraf
     :param psf_filename: filepath+filename of psf file
     """
-    plt.clf()
+    if fig is None:
+        fig = plt.gcf()
+    fig.clf()
 
     psf_hdul = fits.open(psf_filename)
     N = psf_hdul[0].header['PSFHEIGH'] / psf_hdul[0].header['NPSFSTAR']
@@ -938,7 +946,7 @@ def make_psf_plot(psf_filename):
     residual = psf_hdul[0].data
     Z = analytic + residual
 
-    ax = plt.subplot(1, 1, 1, projection='3d')
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
     """
     # the transparency makes this challenging to interpret
     ax.plot_wireframe(X, Y, Z, rcount=2 * psfrad + 1, ccount=2 * psfrad + 1)
@@ -951,8 +959,7 @@ def make_psf_plot(psf_filename):
     ax.view_init(elev=40, azim=330)  # replicating starting view of iraf PSF
     ax.set_axis_off()
     ax.set_title('PSF for {psf_filename}'.format(psf_filename=psf_filename))
-    plt.gcf().set_size_inches(8,4)
-    plt.gcf().tight_layout()
+    fig.tight_layout()
 
     #############################################################################
 

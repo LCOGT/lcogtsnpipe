@@ -8,7 +8,7 @@ import datetime
 import astropy.units as u
 from astropy.io import fits
 from astropy.wcs import WCS
-from astropy.table import Table
+from astropy.table import Table, vstack
 from astropy.coordinates import SkyCoord
 
 def weighted_avg_and_std(values, weights):
@@ -69,6 +69,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                 if tel[-1] not in setup:  setup[tel[-1]] = {}
                 if filt[-1] not in setup[tel[-1]]:  setup[tel[-1]][filt[-1]] = {}
 
+    tables = []
     for _tel in setup:
         for _fil in setup[_tel]:
             mjd0 = np.compress((np.array(filt) == _fil) & (np.array(tel) == _tel), np.array(mjd))
@@ -125,45 +126,26 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
             setup[_tel][_fil]['jd'] = list(np.array(mjd1) + 2400000.5)
             setup[_tel][_fil]['date'] = date1
             setup[_tel][_fil]['filename'] = filename1
+            table = Table([date1, np.array(mjd1) + 2400000.5, mag1, dmag1], names=['dateobs', 'jd', 'mag', 'dmag'])
+            table['telescope'] = _tel
+            table['filter'] = lsc.sites.filterst1[_fil]
+            table['magtype'] = magtype1
+            tables.append(table)
 
     if _show:
         plotfast2(setup)
     elif _output:
         plotfast(setup, _output)
 
-    linetot = {}
+    output_table = vstack(tables)
+    output_table.sort('jd')
+    output_table['jd'].format = '%.5f'
+    output_table['mag'].format = '%.4f'
+    output_table['dmag'].format = '%.4f'
     if _output:
-        ff = open(_output, 'w')
-
-    filters_used = sum([[lsc.sites.filterst1[filt] for filt in setup[_tel].keys()] for _tel in setup], [])
-    filters = []
-    for filt in 'UBVRIugriz':
-        if filt in filters_used:
-            filters.append(filt)
-    for _tel in setup:
-        line0 = '# %15s%15s' % ('dateobs', 'jd')
-        for filt in filters:
-            if filt in [lsc.sites.filterst1[key] for key in setup[_tel]]:
-                line0 += '%12s%12s ' % (str(filt), str(filt) + 'err')
-        for _fil in setup[_tel]:
-            for j in range(0, len(setup[_tel][_fil]['mjd'])):
-                line = '  %10s %12.4f ' % (str(setup[_tel][_fil]['date'][j]), setup[_tel][_fil]['jd'][j])
-                for filt in filters:
-                    if _fil in lsc.sites.filterst[filt]:
-                        line += '%12.4f %12.4f ' % (setup[_tel][_fil]['mag'][j], setup[_tel][_fil]['dmag'][j])
-                    else:
-                        line += '%12s %12s ' % ('9999', '0.0')
-                line += '%6s %2s\n' % (_tel, lsc.sites.filterst1[_fil])
-                linetot[setup[_tel][_fil]['mjd'][j]] = line
-    aaa = linetot.keys()
-    if _output:
-        for gg in np.sort(aaa):
-            ff.write(linetot[gg])
+        output_table.write(_output, format='ascii')
     else:
-        for gg in np.sort(aaa):
-            print linetot[gg]
-    if _output:
-        ff.close()
+        output_table.pprint(max_lines=-1)
 
 def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit', database='photlco', field=None, refcat=None, force=False, minstars=0):
     if len(extlist) > 0:

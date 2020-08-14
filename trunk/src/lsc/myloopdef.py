@@ -11,6 +11,7 @@ from astropy.io import fits
 from astropy.wcs import WCS
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
+from astropy.visualization import ImageNormalize, ZScaleInterval
 
 def weighted_avg_and_std(values, weights):
     """
@@ -807,13 +808,12 @@ def position(imglist, ra1, dec1, show=False):
 #########################################################################
 def mark_stars_on_image(imgfile, catfile, fig=None):
     data, hdr = fits.getdata(imgfile, header=True)
-    vmin = np.percentile(data, 0.1)
-    vmax = np.percentile(data, 99.9)
     if fig is None:
         fig = plt.gcf()
     fig.clf()
-    ax = fig.axes()
-    ax.imshow(data, vmin=vmin, vmax=vmax)
+    ax = fig.add_subplot(1, 1, 1)
+    norm = ImageNormalize(data, interval=ZScaleInterval())
+    ax.imshow(data, norm=norm)
     wcs = WCS(hdr)
     if catfile.endswith('fits'):
         cat = Table.read(catfile)
@@ -821,6 +821,7 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
         cat = Table.read(catfile, format='ascii.commented_header', header_start=1, delimiter='\s')
     coords = SkyCoord(cat['ra'], cat['dec'], unit=(u.hourangle, u.deg))
     i, j = wcs.wcs_world2pix(coords.ra, coords.dec, 0)
+    ax.autoscale(False)
     ax.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
     fig.tight_layout()
 

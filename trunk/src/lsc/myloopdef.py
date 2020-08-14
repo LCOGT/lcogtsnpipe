@@ -868,28 +868,28 @@ def checkcat(imglist, database='photlco'):
             print 'status ' + str(status) + ': unknown status'
 
 
-def checkpsf(imglist, no_iraf, database='photlco'):
-    iraf.digiphot(_doprint=0)
-    iraf.daophot(_doprint=0)
+def checkpsf(imglist, no_iraf=False, database='photlco'):
     if no_iraf:
         plt.ion()
         img_fig = plt.figure(figsize=(6, 6))
         psf_fig = plt.figure(figsize=(8, 4))
+    else:
+        iraf.digiphot(_doprint=0)
+        iraf.daophot(_doprint=0)
     for img in imglist:
         status = checkstage(img, 'checkpsf')
         print img, status
         if status >= 1:
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
-            iraf.delete('_psf.psf.fits', verify=False)
             if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
-                print img
                 if no_iraf:
                     mark_stars_on_image(_dir + img, _dir + img.replace('.fits', '.sn2.fits'), fig=img_fig)
                     psf_filename = _dir + img.replace('.fits', '.psf.fits')
-                    make_psf_plot(psf_filename)
+                    make_psf_plot(psf_filename, fig=psf_fig)
                 else:
                     lsc.util.marksn2(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
+                    iraf.delete('_psf.psf.fits', verify=False)
                     iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
                     iraf.surface('_psf.psf')
                 aa = raw_input('>>>good psf [[y]/n] or [b] bad quality ? ')

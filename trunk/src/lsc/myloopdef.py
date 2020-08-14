@@ -805,6 +805,23 @@ def position(imglist, ra1, dec1, show=False):
 
 
 #########################################################################
+def mark_stars_on_image(imgfile, catfile):
+    data, hdr = fits.getdata(imgfile, header=True)
+    vmin = np.percentile(data, 0.1)
+    vmax = np.percentile(data, 99.9)
+    plt.clf()
+    plt.imshow(data, vmin=vmin, vmax=vmax)
+    plt.tight_layout()
+    wcs = WCS(hdr)
+    if catfile.endswith('fits'):
+        cat = Table.read(catfile)
+    else:
+        cat = Table.read(catfile, format='ascii.commented_header', header_start=1, delimiter='\s')
+    coords = SkyCoord(cat['ra'], cat['dec'], unit=(u.hourangle, u.deg))
+    i, j = wcs.wcs_world2pix(coords.ra, coords.dec, 0)
+    plt.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
+
+
 def checkcat(imglist, database='photlco'):
     plt.ion()
     plt.figure(figsize=(6, 6))
@@ -821,17 +838,7 @@ def checkcat(imglist, database='photlco'):
                     lines = f.readlines()
                 print len(lines) - 2, 'stars in catalog'
                 if len(lines) > 2:
-                    data, hdr = fits.getdata(_dir + img, header=True)
-                    vmin = np.percentile(data, 0.1)
-                    vmax = np.percentile(data, 99.9)
-                    plt.clf()
-                    plt.imshow(data, vmin=vmin, vmax=vmax)
-                    plt.tight_layout()
-                    wcs = WCS(hdr)
-                    cat = Table.read(catfile, format='ascii.commented_header', header_start=1, delimiter='\s')
-                    coords = SkyCoord(cat['ra'], cat['dec'], unit=(u.hourangle, u.deg))
-                    i, j = wcs.wcs_world2pix(coords.ra, coords.dec, 0)
-                    plt.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
+                    mark_stars_on_image(_dir + img, catfile)
                     aa = raw_input('>>>good catalogue [[y]/n] or [b] bad quality ? ')
                     if not aa: aa = 'y'
                 else: # automatically delete the file if is is only a header
@@ -870,11 +877,12 @@ def checkpsf(imglist, no_iraf, database='photlco'):
             iraf.delete('_psf.psf.fits', verify=False)
             if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
                 print img
-                lsc.util.marksn2(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
                 if no_iraf:
+                    mark_stars_on_image(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
                     psf_filename = _dir + img.replace('.fits', '.psf.fits')
                     make_psf_plot(psf_filename)
                 else:
+                    lsc.util.marksn2(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
                     iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
                     iraf.surface('_psf.psf')
                 aa = raw_input('>>>good psf [[y]/n] or [b] bad quality ? ')

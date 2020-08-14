@@ -1,7 +1,7 @@
-FROM i386/python:2.7.18-slim-stretch
+FROM python:2.7.18-slim-stretch
 
 ENV iraf /iraf/iraf/
-ENV IRAFARCH linux
+ENV IRAFARCH linux64
 
 RUN apt-get update \
         && apt -y install gcc make flex git \

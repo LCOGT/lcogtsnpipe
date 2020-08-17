@@ -2,6 +2,7 @@ import os
 import lsc
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from pyraf import iraf
 from glob import glob
 import datetime
@@ -10,6 +11,7 @@ from astropy.io import fits
 from astropy.wcs import WCS
 from astropy.table import Table, vstack
 from astropy.coordinates import SkyCoord
+from astropy.visualization import ImageNormalize, ZScaleInterval
 
 def weighted_avg_and_std(values, weights):
     """
@@ -788,6 +790,27 @@ def position(imglist, ra1, dec1, show=False):
 
 
 #########################################################################
+def mark_stars_on_image(imgfile, catfile, fig=None):
+    data, hdr = fits.getdata(imgfile, header=True)
+    if fig is None:
+        fig = plt.gcf()
+    fig.clf()
+    ax = fig.add_subplot(1, 1, 1)
+    norm = ImageNormalize(data, interval=ZScaleInterval())
+    ax.imshow(data, norm=norm, origin='lower')
+    wcs = WCS(hdr)
+    if catfile.endswith('fits'):
+        cat = Table.read(catfile)
+    else:
+        cat = Table.read(catfile, format='ascii.commented_header', header_start=1, delimiter='\s')
+    coords = SkyCoord(cat['ra'], cat['dec'], unit=(u.hourangle, u.deg))
+    i, j = wcs.wcs_world2pix(coords.ra, coords.dec, 0)
+    ax.autoscale(False)
+    ax.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
+    ax.set_title(os.path.basename(imgfile))
+    fig.tight_layout()
+
+
 def checkcat(imglist, database='photlco'):
     plt.ion()
     plt.figure(figsize=(6, 6))
@@ -804,17 +827,7 @@ def checkcat(imglist, database='photlco'):
                     lines = f.readlines()
                 print len(lines) - 2, 'stars in catalog'
                 if len(lines) > 2:
-                    data, hdr = fits.getdata(_dir + img, header=True)
-                    vmin = np.percentile(data, 0.1)
-                    vmax = np.percentile(data, 99.9)
-                    plt.clf()
-                    plt.imshow(data, vmin=vmin, vmax=vmax)
-                    plt.tight_layout()
-                    wcs = WCS(hdr)
-                    cat = Table.read(catfile, format='ascii.commented_header', header_start=1, delimiter='\s')
-                    coords = SkyCoord(cat['ra'], cat['dec'], unit=(u.hourangle, u.deg))
-                    i, j = wcs.wcs_world2pix(coords.ra, coords.dec, 0)
-                    plt.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
+                    mark_stars_on_image(_dir + img, catfile)
                     aa = raw_input('>>>good catalogue [[y]/n] or [b] bad quality ? ')
                     if not aa: aa = 'y'
                 else: # automatically delete the file if is is only a header
@@ -840,21 +853,30 @@ def checkcat(imglist, database='photlco'):
             print 'status ' + str(status) + ': unknown status'
 
 
-def checkpsf(imglist, database='photlco'):
-    iraf.digiphot(_doprint=0)
-    iraf.daophot(_doprint=0)
+def checkpsf(imglist, no_iraf=False, database='photlco'):
+    if no_iraf:
+        plt.ion()
+        img_fig = plt.figure(figsize=(6, 6))
+        psf_fig = plt.figure(figsize=(8, 4))
+    else:
+        iraf.digiphot(_doprint=0)
+        iraf.daophot(_doprint=0)
     for img in imglist:
         status = checkstage(img, 'checkpsf')
         print img, status
         if status >= 1:
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
-            iraf.delete('_psf.psf.fits', verify=False)
             if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
-                print img
-                lsc.util.marksn2(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
-                iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
-                iraf.surface('_psf.psf')
+                if no_iraf:
+                    mark_stars_on_image(_dir + img, _dir + img.replace('.fits', '.sn2.fits'), fig=img_fig)
+                    psf_filename = _dir + img.replace('.fits', '.psf.fits')
+                    make_psf_plot(psf_filename, fig=psf_fig)
+                else:
+                    lsc.util.marksn2(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
+                    iraf.delete('_psf.psf.fits', verify=False)
+                    iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
+                    iraf.surface('_psf.psf')
                 aa = raw_input('>>>good psf [[y]/n] or [b] bad quality ? ')
                 if not aa: aa = 'y'
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
@@ -880,6 +902,50 @@ def checkpsf(imglist, database='photlco'):
             print 'status ' + str(status) + ': bad quality image'
         else:
             print 'status ' + str(status) + ': unknown status'
+
+
+def make_psf_plot(psf_filename, fig=None):
+    """
+    Displays plots of PSFs for the checkpsf stage without using iraf
+    :param psf_filename: filepath+filename of psf file
+    """
+    if fig is None:
+        fig = plt.gcf()
+    fig.clf()
+
+    psf_hdul = fits.open(psf_filename)
+    N = psf_hdul[0].header['PSFHEIGH'] / psf_hdul[0].header['NPSFSTAR']
+    sigma_x = psf_hdul[0].header['PAR1']
+    sigma_y = psf_hdul[0].header['PAR2']
+    psfrad = psf_hdul[0].header['PSFRAD']
+    NAXIS1 = psf_hdul[0].header['NAXIS1']
+    NAXIS2 = psf_hdul[0].header['NAXIS2']
+
+    x = np.linspace(-psfrad, psfrad, num=NAXIS1)
+    y = np.linspace(-psfrad, psfrad, num=NAXIS2)
+    X, Y = np.meshgrid(x, y)
+    # PSF is elliptical gaussian (from header) + residuals (from img data)
+    # in description https://iraf.net/irafhelp.php?val=seepsf
+    # not 100% sure normalization is correct, but tested on
+    #       good and bad psfs and I think it's right
+    analytic = N * np.exp(-(((X ** 2) / (sigma_x ** 2)) + ((Y ** 2) / (sigma_y ** 2))) / 2)
+    residual = psf_hdul[0].data
+    Z = analytic + residual
+
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    """
+    # the transparency makes this challenging to interpret
+    ax.plot_wireframe(X, Y, Z, rcount=2 * psfrad + 1, ccount=2 * psfrad + 1)
+    """
+    # replicate iraf look, much slower than wireframe
+    ax.plot_surface(X,Y,Z,rcount=2*psfrad+1,ccount=2*psfrad+1,
+            antialiased=True,linewidth=.25,color='black',edgecolor='white')
+    
+
+    ax.view_init(elev=40, azim=330)  # replicating starting view of iraf PSF
+    ax.set_axis_off()
+    ax.set_title('PSF for {psf_filename}'.format(psf_filename=os.path.basename(psf_filename)))
+    fig.tight_layout()
 
     #############################################################################
 

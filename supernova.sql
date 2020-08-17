@@ -702,7 +702,7 @@ CREATE TABLE `photlco` (
   `filename` varchar(100) DEFAULT NULL COMMENT 'Image fits file',
   `difftype` tinyint(4) DEFAULT NULL COMMENT 'Type of difference algorithm used (0: Hotpants, 1: Optimal)',
   `filepath` text COMMENT 'Path to image file',
-  `filetype` text,
+  `filetype` tinyint(4) DEFAULT NULL COMMENT 'standard (1), merged (2), difference image (3), template (4)',
   `groupidcode` bigint(20) DEFAULT NULL COMMENT 'Which groups can see this',
   `datecreated` timestamp NOT NULL DEFAULT '2000-01-01 00:00:00',
   `lastmodified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

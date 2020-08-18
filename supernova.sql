@@ -711,7 +711,7 @@ CREATE TABLE `photlco` (
   `dapflux` double DEFAULT '9999' COMMENT 'Aperture flux error',
   `dapmag` double DEFAULT '9999' COMMENT 'Aperture magnitude error',
   `limmag` double DEFAULT NULL COMMENT 'Three sigma limiting magnitude of the image as a whole',
-  `lastunpacked` timestamp NULL DEFAULT '1970-01-01 00:00:01',
+  `lastunpacked` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `filename` (`filename`),
   KEY `targetid` (`targetid`),

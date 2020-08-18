@@ -1310,14 +1310,14 @@ def run_astrometry(im, clobber=True,redo=False):
         dec = lsc.readkey3(hdr,'DEC')
         #    ra = fits.getval(im, 'RA')
         #    dec = fits.getval(im, 'DEC')
-        cmd = 'solve-field --crpix-center --no-verify --no-fits2fits --no-tweak -l 30 '
+        cmd = 'solve-field --crpix-center --no-verify --no-tweak -l 30 '
         cmd += '--backend-config {} '.format(os.path.join(lsc.util.workdirectory, 'usr/backend.cfg'))
         cmd += '--radius 1.0 --ra {} --dec {} --guess-scale '.format(ra, dec)
         cmd += '--scale-units arcsecperpix --scale-low 0.1 --scale-high .7 '
         cmd += '--no-plots -N tmpwcs.fits --extension 0 '
         if clobber: cmd += '--overwrite '
         cmd += '--solved none --match none --rdls none --wcs none --corr none '
-        cmd += ' --use-sextractor --fits-image {}'.format(im)
+        cmd += ' --use-source-extractor --fits-image {}'.format(im)
         print cmd
         os.system(cmd)
         basename = im[:-5]

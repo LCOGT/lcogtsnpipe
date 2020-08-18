@@ -88,6 +88,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--banzai", action="store_true", help="Use souces from BANZAI catalogs stored in image headers for PSF")
     parser.add_argument("--b_sigma", type=float, default=3.0, help="value used to sigma-clip BANZAI sources")
     parser.add_argument("--b_crlim", type=float, default=3.0, help="lower limit used to reject CRs identified as BANZAI sources")
+    parser.add_argument("--no_iraf", action="store_true", help="Don't use iraf (currently only option in checkpsf stage)")
 
     args = parser.parse_args()
 
@@ -279,7 +280,7 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'mergeall':  #    merge images using lacos and swarp
                 lsc.myloopdef.run_merge(listfile, args.force)
             elif args.stage == 'checkpsf':
-                lsc.myloopdef.checkpsf(ll['filename'])
+                lsc.myloopdef.checkpsf(ll['filename'],args.no_iraf)
             elif args.stage == 'checkmag':
                 lsc.myloopdef.checkmag(ll['filename'], args.datamax)
             elif args.stage == 'checkwcs':

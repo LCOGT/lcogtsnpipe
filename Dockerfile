@@ -1,6 +1,8 @@
+# To make this a 32 bit version python:2.7.18-slim-stretch -> i386/python:2.7.18-slim-stretch
 FROM python:2.7.18-slim-stretch
 
 ENV iraf /iraf/iraf/
+# To make this a 32 bit version linux64 -> linux
 ENV IRAFARCH linux64
 
 RUN apt-get update \

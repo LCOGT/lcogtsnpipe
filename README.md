@@ -53,34 +53,37 @@ These instructions only need to be run once, when you set up the pipeline.
         xeyes
         ```
         If a window appears, your computer is configured correctly. You only have to do this once.
-   7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe`
+   7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe` and `cd lcogtsnpipe`
    8. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
-   9. Create directories on your local machine (outside the Docker) where the images and data products will be stored:
-        ```
-        mkdir /your/data/directory
-        cd /your/data/directory
-        mkdir -p lsc fts 0m4 floyds extdata standard/cat/apass standard/cat/sloan
-        ```
-   10. Set you environment variables to point to where your data and catalogs are e.g. 
+   9. Set you environment variables to point to where you want to store data and catalogs are e.g. 
        ```
        export LCOSNDIR=/your/data/directory
        export LCOSNDBPATH=/your/data/directory/mysql
        ```  
-   11. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
+       These directories do not need to exist. In fact, it is easier if they do not. Docker will automatically create them
+       with the correct permissions. If you need to use a pre-existing directory, you may have to update the permissions using
+       `chmod -R 777 /path/to/data/`. If you do not set these environment variables, they default to being in `data` and `mysql`
+       in repo directory.
+   10. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
        this mental picture is close enough).
        ```
        docker-compose -f lcogtsnpipe/docker-compose.yml up
        ```
        This will take over your current terminal. Eventually, the terminal will print that the mysql host is ready to 
        accept connections
-   12. In a new terminal, log in to the pipeline container: 
+   11. In a new terminal, log in to the pipeline container: 
        ```
        docker exec -it lcosnpipe /bin/bash
        ```
-   13. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
+   12. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
        the first time you setup the db.
-   
-   
+   13. From inside the container, run 
+       ```
+       cd $LCOSNDIR
+       mkdir -p lsc fts 0m4 floyds extdata standard/cat/apass standard/cat/sloan
+       ```   
+       This only needs to be done the first time you populate data in this directory. 
+
    You are now ready to use the pipeline!
 
 

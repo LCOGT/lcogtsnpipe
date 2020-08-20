@@ -417,17 +417,25 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
 
             print '>>> Aperture correction (phot)   %6.3f +/- %5.3f %3d ' % \
                   (np.mean(_dmag), np.std(_dmag), len(_dmag))
+            aperture_correction = np.mean(_dmag)
             if len(_dmag) > 3:
                 _dmag = np.compress(np.abs(_dmag - np.median(_dmag)) < 2 * np.std(_dmag), _dmag)
                 print '>>>         2 sigma rejection)   %6.3f +/- %5.3f %3d  [default]' \
                       % (np.mean(_dmag), np.std(_dmag), len(_dmag))
                 print '>>>     fwhm   %s  ' % (str(fwhm))
+                aperture_correction = np.mean(_dmag)
             for i in range(len(dmag)):
                 if dmag[i] == 9.99:
                     dmag[i] = ''
                 else:
                     dmag[i] = '%6.3f' % (dmag[i])
-
+            # Fail to create a PSF is the aperture correction is too big
+            max_aperture_correction = 0.1 #mag
+            if aperture_correction > max_aperture_correction:
+                result = 0
+                fwhm = 0.0
+                traceback.print_exc()
+                return result, fwhm * scale
             #######################################
             rap, decp, magp2, magp3, magp4, smagf, merrp3, smagerrf = [], [], [], [], [], [], [], []
             rap0, decp0 = [], []

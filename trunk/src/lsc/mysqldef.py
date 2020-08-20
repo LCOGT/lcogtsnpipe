@@ -217,8 +217,10 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
             print img,database
             lsc.mysqldef.deleteredufromarchive(string.split(img,'/')[-1],dataredutable)
             print 'delete line from '+str(database)
-            exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
-
+            exist = ()
+#            exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
+#            print(exist)
+            
       if not exist or force =='update':
          hdr=readhdr(fullpath)
          _targetid=lsc.mysqldef.targimg(fullpath)
@@ -261,6 +263,11 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
 
          print dictionary
          print 'insert reduced'
+
+         # we need to update the connection before quering again the database
+         hostname, username, passwd, database=lsc.mysqldef.getconnection('lcogt2')
+         conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
+         
          ggg=lsc.mysqldef.getfromdataraw(conn, dataredutable, 'filename',str(img), '*')
          if not ggg:
             lsc.mysqldef.insert_values(conn,dataredutable,dictionary)

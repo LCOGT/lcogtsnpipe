@@ -414,16 +414,19 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                         break
 
             _dmag = np.compress(np.array(dmag) < 9.99, np.array(dmag))
-
-            print '>>> Aperture correction (phot)   %6.3f +/- %5.3f %3d ' % \
-                  (np.mean(_dmag), np.std(_dmag), len(_dmag))
             aperture_correction = np.mean(_dmag)
+            aperture_correction_err = np.std(_dmag)
+            print '>>> Aperture correction (phot)   %6.3f +/- %5.3f %3d ' % \
+                  (aperture_correction, aperture_correction_err, len(_dmag))
+            #Sigma clip if there are enough points
             if len(_dmag) > 3:
                 _dmag = np.compress(np.abs(_dmag - np.median(_dmag)) < 2 * np.std(_dmag), _dmag)
-                print '>>>         2 sigma rejection)   %6.3f +/- %5.3f %3d  [default]' \
-                      % (np.mean(_dmag), np.std(_dmag), len(_dmag))
-                print '>>>     fwhm   %s  ' % (str(fwhm))
                 aperture_correction = np.mean(_dmag)
+                aperture_correction_err = np.std(_dmag)
+                print '>>>         2 sigma rejection)   %6.3f +/- %5.3f %3d  [default]' \
+                      % (aperture_correction, aperture_correction_err, len(_dmag))
+                print '>>>     fwhm   %s  ' % (str(fwhm))
+                
             for i in range(len(dmag)):
                 if dmag[i] == 9.99:
                     dmag[i] = ''
@@ -461,6 +464,12 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                         break
                 smagf.append(_smagf)
                 smagerrf.append(_smagerrf)
+            #Add the aperture correction to the sn2 file magnitudes
+            smagf = np.array(smagf)
+            smagerrf = np.array(smagerrf)
+            good_indx = smagf != 'INDEF'
+            smagf[good_indx] = smagf[good_indx] + aperture_correction
+            smagerrf[good_indx] = np.sqrt(smagerrf[good_indx]**2 + aperture_correction_err**2)
             tbhdu = fits.BinTableHDU.from_columns(fits.ColDefs([fits.Column(name='ra', format='20A', array=np.array(rap)),
                                                    fits.Column(name='dec', format='20A', array=np.array(decp)),
                                                    fits.Column(name='ra0', format='E', array=np.array(rap0)),
@@ -490,8 +499,8 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
             thdulist = fits.HDUList([hdu, tbhdu])
             lsc.util.delete(img + '.sn2.fits')
             thdulist.writeto(img + '.sn2.fits')
-            lsc.util.updateheader(img + '.sn2.fits', 0, {'APCO': (np.mean(_dmag), 'Aperture correction')})
-            lsc.util.updateheader(img + '.sn2.fits', 0, {'APCOERR': (np.std(_dmag), 'Aperture correction error')})
+            lsc.util.updateheader(img + '.sn2.fits', 0, {'APCO': (aperture_correction, 'Aperture correction')})
+            lsc.util.updateheader(img + '.sn2.fits', 0, {'APCOERR': (aperture_correction_err, 'Aperture correction error')})
             lsc.util.updateheader(img + '.sn2.fits', 0, {'XDIM': (lsc.util.readkey3(hdr, 'naxis1'), 'x number of pixels')})
             lsc.util.updateheader(img + '.sn2.fits', 0, {'YDIM': (lsc.util.readkey3(hdr, 'naxis2'), 'y number of pixels')})
             lsc.util.updateheader(img + '.sn2.fits', 0,

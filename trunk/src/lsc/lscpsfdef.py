@@ -465,11 +465,10 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                 smagf.append(_smagf)
                 smagerrf.append(_smagerrf)
             #Add the aperture correction to the sn2 file magnitudes
-            smagf = np.array(smagf)
-            smagerrf = np.array(smagerrf)
-            good_indx = smagf != 'INDEF'
-            smagf[good_indx] = smagf[good_indx] + aperture_correction
-            smagerrf[good_indx] = np.sqrt(smagerrf[good_indx]**2 + aperture_correction_err**2)
+            for indx in range(len(smagf)):
+                if smagf[indx] != 'INDEF':
+                    smagf[indx] = '{:2.2f}'.format(float(smagf[indx])+aperture_correction)
+                    smagerrf[indx] = '{:2.2f}'.format(float(np.sqrt(float(smagerrf[indx])**2+aperture_correction_err**2)))
             tbhdu = fits.BinTableHDU.from_columns(fits.ColDefs([fits.Column(name='ra', format='20A', array=np.array(rap)),
                                                    fits.Column(name='dec', format='20A', array=np.array(decp)),
                                                    fits.Column(name='ra0', format='E', array=np.array(rap0)),

@@ -438,7 +438,7 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                 result = 0
                 fwhm = 0.0
                 traceback.print_exc()
-                print('The difference between the aperture and psf magnitudes exceeds the maximum allowed'+ \
+                print('The difference between the aperture and psf magnitudes exceeds the maximum allowed '+ \
                       '{:2.2f}>{:2.2f}'.format(aperture_correction, max_aperture_correction))
                 return result, fwhm * scale
             #######################################

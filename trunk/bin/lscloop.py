@@ -215,6 +215,9 @@ if __name__ == "__main__":   # main program
                     for img in listfile:
                         run_absphot(img)
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
+                # Don't allow PSF photometry to be performed on difference images becaues of complications with aperture correction
+                if args.filetype == 3 and args.stage == 'mag' and args.type =='fit':
+                    raise Exception ('Use aperture photometry on difference images (--type ph)')
                 if args.catalogue:
                     catalogue = args.catalogue
                 elif args.field:

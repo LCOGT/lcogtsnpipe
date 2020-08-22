@@ -176,12 +176,12 @@ if __name__ == "__main__":
                         if 'CONVOL00' in hdr:
                             convolve_value = lsc.util.readkey3(hdr, 'CONVOL00')
                             if convolve_value == 'TEMPLATE': #Read template aperture correction if template PSF is used
-                                hdr_apco = lsc.util.readhdr(os.path.join(os.path.dirname(imglong),hdr['TEMPLATE'].replace('.fits', '.sn2.fits')))
-                            elif convolve_value == 'IMAGE': #Read image aperture correction if image PSF is used
-                                template_filename = hdr['TARGET']
+                                template_filename = hdr['TEMPLATE']
                                 template_db_info = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(template_filename), '*')
                                 template_filepath = template_db_info[0]['filepath']  
-                                hdr_apco = lsc.util.readhdr(os.path.join(template_filepath, hdr['TARGET'].replace('.fits', '.sn2.fits')))
+                                hdr_apco = lsc.util.readhdr(os.path.join(template_filepath, template_filename.replace('.fits', '.sn2.fits')))
+                            elif convolve_value == 'IMAGE': #Read image aperture correction if image PSF is used
+                                hdr_apco = lsc.util.readhdr(os.path.join(os.path.dirname(imglong), hdr['TARGET'].replace('.fits', '.sn2.fits')))
                             apco0 = lsc.util.readkey3(hdr_apco, 'APCO')
                 else: #For all non-difference imaging, the sn2 file should correspond to the PSF used filetype 1, 2, and 4
                     apco0 = lsc.util.readkey3(hdr2, 'APCO')

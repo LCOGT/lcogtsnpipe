@@ -188,7 +188,7 @@ if __name__ == "__main__":
                                     print e
                                     print '### warning: problem connecting to the database'
                                 template_filename = hdr['TEMPLATE']
-                                template_db_info = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(template_filename), '*')
+                                template_db_info = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', str(template_filename), '*')
                                 template_filepath = template_db_info[0]['filepath']  
                                 hdr_apco = lsc.util.readhdr(os.path.join(template_filepath, template_filename.replace('.fits', '.sn2.fits')))
                             elif convolve_value == 'IMAGE': #Read image aperture correction if image PSF is used

@@ -177,7 +177,7 @@ if __name__ == "__main__":
                             convolve_value = lsc.util.readkey3(hdr, 'CONVOL00')
                             if convolve_value == 'TEMPLATE': #Read template aperture correction if template PSF is used
                                 hdr_apco = lsc.util.readhdr(os.path.join(os.path.dirname(imglong),hdr['TEMPLATE'].replace('.fits', '.sn2.fits')))
-                            elif convolve_value == 'IMAGE': #Read image aperture correction if image PSF is used
+                            elif convolve_value == 'TARGET': #Read image aperture correction if image PSF is used
                                 hdr_apco = lsc.util.readhdr(os.path.join(os.path.dirname(imglong), hdr['IMAGE'].replace('.fits', '.sn2.fits')))
                             apco0 = lsc.util.readkey3(hdr_apco, 'APCO')
                 else: #For all non-difference imaging, the sn2 file should correspond to the PSF used filetype 1, 2, and 4

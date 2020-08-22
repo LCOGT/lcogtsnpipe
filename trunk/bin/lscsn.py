@@ -176,6 +176,17 @@ if __name__ == "__main__":
                         if 'CONVOL00' in hdr:
                             convolve_value = lsc.util.readkey3(hdr, 'CONVOL00')
                             if convolve_value == 'TEMPLATE': #Read template aperture correction if template PSF is used
+                                try:
+                                    hostname, username, passwd, database = lsc.mysqldef.getconnection('lcogt2')
+                                    conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
+                                except ImportError as e:
+                                    print e
+                                    print 'try running one of these:'
+                                    print 'pip install mysql-python'
+                                    print 'conda install mysql-python'
+                                except Exception as e:
+                                    print e
+                                    print '### warning: problem connecting to the database'
                                 template_filename = hdr['TEMPLATE']
                                 template_db_info = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(template_filename), '*')
                                 template_filepath = template_db_info[0]['filepath']  

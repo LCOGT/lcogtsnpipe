@@ -181,7 +181,7 @@ if __name__ == "__main__":
                                 template_filename = hdr['TARGET']
                                 template_db_info = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(template_filename), '*')
                                 template_filepath = template_db_info[0]['filepath']  
-                                hdr_apco = lsc.util.readhdr(template_filepath, hdr['TARGET'].replace('.fits', '.sn2.fits')))
+                                hdr_apco = lsc.util.readhdr(os.path.join(template_filepath, hdr['TARGET'].replace('.fits', '.sn2.fits')))
                             apco0 = lsc.util.readkey3(hdr_apco, 'APCO')
                 else: #For all non-difference imaging, the sn2 file should correspond to the PSF used filetype 1, 2, and 4
                     apco0 = lsc.util.readkey3(hdr2, 'APCO')

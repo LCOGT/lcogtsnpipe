@@ -26,13 +26,13 @@ This is a description of the stream-lined steps that are recommended for process
 **Example:**
     ```
     ds9&
-    lscloop.py -n 2016cok -e 20160528-20160530 -s psf --show --catalog /dark/anaconda/anaconda27/envs/halenv/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2016cok_apass.cat
+    lscloop.py -n 2016cok -e 20160528-20160530 -s psf --show --catalog $LCOSNDIR/standard/cat/apass/AT2016cok_apass.cat
     ```
 
 2. Run the `psf` stage on all of the data without the `--show` option  
 **Example**
     ```
-    lscloop.py -n 2016cok -e 20160528-20180104 -s psf --catalog /dark/anaconda/anaconda27/envs/halenv/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2016cok_apass.cat
+    lscloop.py -n 2016cok -e 20160528-20180104 -s psf --catalog $LCOSNDIR/standard/cat/apass/AT2016cok_apass.cat
     ```
 
 3. Check the PSF and image quality. Run the `checkpsf` stage with the `--show`. I like to do this by filter so I can develop a good baseline of what a field should look like in a given filter. Inspect each PSF and each image. Mark the PSFs that you want to redo with `n` and the images that you never want to see again as `b`. At this stage the only PSFs that I've redone are ones with exceptional seeing, where stars that normally wouldn't were saturated. See https://www.overleaf.com/read/sccbqgnhwyfh for a description of different PSF shapes you may see.  
@@ -43,7 +43,7 @@ This is a description of the stream-lined steps that are recommended for process
     ```
 4. Redo the PSF for any images you marked with `n`. These are selected using the `-b psf` option.  
 **Example** 
-lscloop.py -n 2016cok -e 20160528-20180104 -s psf -b psf --catalog /dark/anaconda/anaconda27/envs/halenv/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2016cok_apass.cat
+lscloop.py -n 2016cok -e 20160528-20180104 -s psf -b psf --catalog $LCOSNDIR/standard/cat/apass/AT2016cok_apass.cat
 
 5. Calculate instrumental magnitudes by running the `psfmag` stage. This will derive aperture and psf photometry.   
 **Example**
@@ -189,7 +189,7 @@ Where:
 # Creating a Landolt Catalog:
 ### Download landolt standard star catalogs
 * These need to be obtained from LCO (Jamie gave me a zip file with them)
-* Put these files in the directory $LCOSNPIPE/trunk/src/lsc/standard/cat/landolt
+* Put these files in the directory $LCOSNDIR/standard/cat/landolt
 * Reinstall the pipeline ```python setup.py install```
 
 ### Download and Calibrate the Standard Star Observations
@@ -199,7 +199,7 @@ Where:
 * Download the reduced observations
 * run python ingestzip.py -f downloaded_directory_or_zip_filename
 * Use the standard star image to find the nightly zeropoint for the nights on which you observed your target and the standard (run cosmic, wcs, psf, psfmag, zcat)
-    * When running the zcat step, use ```--catalog=<path to anaconda>/envs/lcogtsnpipe/lib/python2.7/site-packages/lsc/standard/cat/landolt/<standard catalog name>```
+    * When running the zcat step, use ```--catalog=$LCOSNDIR/standard/cat/landolt/<standard catalog name>```
 * When you run -s local on the SN (in the next step), it queries the database for any standards in the same filter-site-night as the SN observations. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard STANDARD``` where STANDARD is the name of your standard (e.g. L95)
 
 ### Create a catalog of stars (local sequence) in SN field for Landolt filters

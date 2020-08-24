@@ -3,7 +3,8 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 
 # Table of Contents
 - [ Pipeline Documentation](#pipeline-documentation)
-- [Installing the Pipeline and Database](#installing-the-pipeline-and-database)
+- [Docker-compose Installation](#docker-compose-installation)
+- [Manual Installation: Installing the Pipeline and Database](#manual-installation-installing-the-pipeline-and-database)
 - [Testing your installation](#testing-your-installation)
 - [Appendix A: Expected output from show tables](#appendix-a-expected-output-from-show-tables)
 - [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina)
@@ -15,7 +16,101 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 1. Image Subtraction: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
 2. [Manual (beta)](manual.md) 
 
-# Installing the Pipeline and Database
+# Docker-compose Installation:
+This is likely the quickest way to get the pipeline up and running and requires the least amount of installation.
+In the following instructions, the database server and data directories will live locally on your computer, so they will persist outside the Docker.
+The pipeline itself will run inside the Docker container and forward graphics to your local computer.
+
+## Installation
+These instructions only need to be run once, when you set up the pipeline.
+
+   1. Install [Docker](https://docs.docker.com/get-docker/).
+   2. Install [docker-compose](https://docs.docker.com/compose/install/)
+   3. (MacOS only) Install [XQuartz](https://www.xquartz.org).
+   4. (MacOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
+   5. Allow X11 connections (may be only necessary on Linux): `xhost +`
+   6. (Linux Only) Modify your X11 config files to allow TCP connections: 
+        1. If you are running gdm or gdm3 for your display manager add the following to `/etc/gdm<3>/custom.conf`
+        ```
+        [security]
+        DisallowTCP=false
+        ```
+        2. If you are running lightdm, add the following to `/usr/share/lightdm/lightdm.conf.d/50-xserver-command.conf`
+        ```
+        [Seat:*]
+        xserver-command=X -core -listen tcp
+        2) /etc/lightdm/lightdm.conf
+        This file probably won't exist, you may create it if it is missing.
+        [Seat:*]
+        xserver-allow-tcp=true
+        xserver-command=X -listen tcp
+        ```
+        3. Reboot your machine after updating the necessary config file.
+        4. To test your X11 setup run
+        ```
+        docker run --rm -it centos:7 /bin/bash
+        yum install -y xorg-x11-apps
+        xeyes
+        ```
+        If a window appears, your computer is configured correctly. You only have to do this once.
+   7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe` and `cd lcogtsnpipe`
+   8. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
+   9. Set you environment variables to point to where you want to store data and catalogs are e.g. 
+       ```
+       export LCOSNDIR=/your/data/directory
+       export LCOSNDBPATH=/your/data/directory/mysql
+       ```  
+       These directories do not need to exist. In fact, it is easier if they do not. Docker will automatically create them
+       with the correct permissions. If you need to use a pre-existing directory, you may have to update the permissions using
+       `chmod -R 777 /path/to/data/`. If you do not set these environment variables, they default to being in `data` and `mysql`
+       in repo directory.
+   10. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
+       this mental picture is close enough).
+       ```
+       docker-compose -f lcogtsnpipe/docker-compose.yml up
+       ```
+       This will take over your current terminal. Eventually, the terminal will print that the mysql host is ready to 
+       accept connections
+   11. In a new terminal, log in to the pipeline container: 
+       ```
+       docker exec -it lcosnpipe /bin/bash
+       ```
+   12. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
+       the first time you setup the db.
+   13. From inside the container, run 
+       ```
+       cd $LCOSNDIR
+       mkdir -p lsc fts 0m4 floyds extdata standard/cat/apass standard/cat/sloan
+       ```   
+       This only needs to be done the first time you populate data in this directory. 
+
+   You are now ready to use the pipeline!
+
+
+## Use
+Follow these instructions each time you want to use the pipeline.
+
+   1. Make sure the MySQL server and Docker daemon are running.
+   2. (MacOS only) Run XQuartz from the Finder.
+   3. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &`
+   4. (Linux only) Set you display environment variable to point to the docker connection using 
+   ```
+   export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
+   ```
+   5. Make sure your `$LCOSNDIR` and `$LCOSNDBDIR` environment variables are set correctly. 
+   6. From inside the `lcogtsnpipe` directory, run `docker-compose up`
+   7. From a separate terminal you can enter the docker container using `docker exec -it lcosnpipe /bin/bash`
+   8. Run your desired pipeline processing commands
+   9. When you're done, type `exit` to leave the Docker container.
+   10. To stop the set of docker containers (your "pipeline server"), use `control-c` in the terminal you ran `docker-compose up`.
+   11. To fully remove the containers (though not your mysql or data directories), you can run `docker-compose down` in the `lcogtsnpipe` directory.
+
+Note that you can access the mysql database directly by using `-h supernovadb` inside the lcosnpipe container.
+You can access the database from your host machine, e.g. with sequelpro by setting the host to be 127.0.0.1 and the port to be
+4306. We choose this port so that it does not conflict with and existing mysql installation.
+
+ 
+# Manual Installation: Installing the Pipeline and Database
 1. Install msql  
     1. Install MySQL server from: https://dev.mysql.com/downloads/mysql/  
     **Note:** you don’t need an Oracle account to sign up, there is a just start download link at the bottom of the page. Links from here were very useful: https://dev.mysql.com/doc/refman/5.6/en/installing.html
@@ -170,7 +265,7 @@ https://www.dropbox.com/s/o3ls0zcqd64f49f/snexdata_2020-01-30_07%3A37%3A02.45516
     ```
 5. Generate a PSF model for images:
     ```
-    lscloop.py -e 20200101-20200130 -f apass --catalog=<path-to-your-conda>/envs/lcogtsnpipe/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2020oi_apass.cat -s psf
+    lscloop.py -e 20200101-20200130 -f apass --catalog=$LCOSNDIR/standard/cat/apass/AT2020oi_apass.cat -s psf
     ```
     Where \<path-to-your-conda> is the path to your anaconda installation
 6. Calculate instrumental magnitudes with PSF photometry, displaying output in DS9
@@ -181,7 +276,7 @@ https://www.dropbox.com/s/o3ls0zcqd64f49f/snexdata_2020-01-30_07%3A37%3A02.45516
     ```
 7. Find the zeropoint of the image:
     ```
-    lscloop.py -e 20200101-20200130 -f apass --catalog=<path-to-your-conda>/envs/lcogtsnpipe/lib/python2.7/site-packages/lsc/standard/cat/apass/AT2020oi_apass.cat -s zcat
+    lscloop.py -e 20200101-20200130 -f apass --catalog=$LCOSNDIR/standard/cat/apass/AT2020oi_apass.cat -s zcat
     ```
     Where \<path-to-your-conda> is the path to your anaconda installation
 8. Find the apparent magnitude using zeropoint
@@ -342,37 +437,3 @@ In the directions below, <your username> is used repeatedly as a place holder fo
     **Note:** with these direction you do **NOT** need ATLAS
 4. Install *vizquery*:
     * Download and follow installation directions: http://cdsarc.u-strasbg.fr/vizier/doc/cdsclient.html
-
-# Appendix E: Using the Pipeline with Docker
-You can also run the pipeline from within a Docker container.
-In the following instructions, the database server and image directories will live locally on your computer, so they will persist outside the Docker.
-The pipeline itself will run inside the Docker container and forward graphics to your local computer.
-
-## Installation
-These instructions only need to be run once, when you set up the pipeline.
-
-   1. Install [MySQL](https://dev.mysql.com/downloads/mysql/). You'll set a root password that you'll need to remember later.
-       * Make sure to use Legacy Password Encryption. On Mac, this is System Preferences &rarr; MySQL &rarr; Initialize Database &rarr; Use Legacy Password Encryption.
-       * Also make sure MySQL is correctly added to your `PATH`.
-   2. Install [Docker](https://docs.docker.com/get-docker/).
-   3. (MacOS only) Install [XQuartz](https://www.xquartz.org).
-   4. (MacOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
-   5. Clone this repository: `git clone https://github.com/svalenti/lcogtsnpipe`
-   6. Initialize the database: `mysql -u root -p < lcogtsnpipe/supernova.sql`. You'll need to type the MySQL root password.
-   7. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
-   8. Create directories on your local machine (outside the Docker) where the images and data products will be stored:
-      ```
-      mkdir /your/data/directory
-      cd /your/data/directory
-      mkdir lsc fts 0m4 floyds extdata apass sloan
-      ```
-
-## Use
-Follow these instructions each time you want to use the pipeline.
-
-   1. Make sure the MySQL server and Docker daemon are running.
-   2. (MacOS only) Run XQuartz from the Finder.
-   3. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &`
-   4. Run the Docker container: `docker run -it --rm -v /your/data/directory:/supernova/data lcogtsnpipe`.
-      Replace `/your/data/directory` with the directory you created above.
-   5. When you're done, type `exit` to leave the Docker.

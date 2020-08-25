@@ -10,7 +10,7 @@ from optparse import OptionParser
 _dir = os.environ['LCOSNDIR']
 
 def ingesttar(_tarfile,force=False):
-    if 'gz' in _tarfile:
+    if '.gz' in _tarfile:
         _targetid = re.sub('.tar.gz','',string.split(_tarfile,'_')[-1])
     else:
         _targetid = re.sub('.tar','',string.split(_tarfile,'_')[-1])

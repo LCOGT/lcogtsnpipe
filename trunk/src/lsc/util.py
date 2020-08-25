@@ -5,11 +5,14 @@ from astropy.nddata import Cutout2D
 from astropy.wcs import WCS
 import lsc
 from glob import glob
+import pkg_resources
 
-workdirectory = os.getenv('LCOSNDIR')
-if workdirectory is None:
-    workdirectory = '/supernova/'
+workdirectory = os.getenv('LCOSNDIR', '/supernova/')
+
 configfile = os.path.join(workdirectory, 'configure')
+if not os.path.exists(configfile):
+    configfile = pkg_resources.resource_filename('lsc', 'configure')
+
 
 def readpasswd(configfile):
    """ read all information to connect to database from configuration file  
@@ -821,7 +824,7 @@ def getcatalog(name_or_filename, field='', return_field=False):
             entry = entries[0] # choose first one
             # if you searched by image, check that the filter is compatible with this field
             if 'filter' not in entry or entry['filter'] in lsc.sites.filterst[field]:
-                catalog_path = lsc.__path__[0] + '/standard/cat/' + field + '/'
+                catalog_path = os.path.join(os.getenv('LCOSNDIR', workdirectory), 'standard', 'cat', field, '')
                 if entry[field + '_cat']:
                     catalog = catalog_path + entries[0][field + '_cat']
                     break

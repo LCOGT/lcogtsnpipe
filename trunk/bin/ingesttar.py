@@ -15,15 +15,14 @@ def ingesttar(_tarfile,force=False):
     else:
         _targetid = re.sub('.tar','',string.split(_tarfile,'_')[-1])
     my_tar = tarfile.open(_tarfile)
-    imglist = my_tar.getnames()
-    imglist1 = [_dir +  i for i in imglist]
-    print(imglist1)
+    imglist = [os.path.join(_dir, i) for i in my_tar.getnames()]
+    print(imglist)
     my_tar.extractall(_dir)
     my_tar.close()
     if force:       
-        lsc.mysqldef.ingestredu(imglist1, 'yes') # ingest new data into photlco
+        lsc.mysqldef.ingestredu(imglist, 'yes') # ingest new data into photlco
     else:
-        lsc.mysqldef.ingestredu(imglist1, 'no') # ingest new data into photlco
+        lsc.mysqldef.ingestredu(imglist, 'no') # ingest new data into photlco
 
 if __name__ == "__main__":
     from argparse import ArgumentParser

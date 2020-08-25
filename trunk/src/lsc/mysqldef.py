@@ -217,9 +217,7 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
             print img,database
             lsc.mysqldef.deleteredufromarchive(string.split(img,'/')[-1],dataredutable)
             print 'delete line from '+str(database)
-            exist = ()
-#            exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
-#            print(exist)
+            exist = False
             
       if not exist or force =='update':
          hdr=readhdr(fullpath)

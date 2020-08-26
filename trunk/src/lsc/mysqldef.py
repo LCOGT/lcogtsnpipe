@@ -407,12 +407,11 @@ def targimg(img='', hdrt=None):
     if hdrt is None:
         hdrt=lsc.util.readhdr(img)
     
-    try:
-        _ra=lsc.util.readkey3(hdrt,'CAT-RA')
-        _dec=lsc.util.readkey3(hdrt,'CAT-DEC')
+    _ra=lsc.util.readkey3(hdrt,'CAT-RA')
+    _dec=lsc.util.readkey3(hdrt,'CAT-DEC')
 
-    except:
-        # No CAT RA and dec, so send a warning message to slack and return exception
+    if _ra is None or _dec is None:
+        # No CAT RA or dec, so send a warning message to slack and return exception
         # Send Slack message
         post_url = os.environ['SLACK_CHANNEL_WEBHOOK']
         payload = {'text': 'CAT-RA and CAT-DEC could not be found for {}'.format(img)}
@@ -421,7 +420,7 @@ def targimg(img='', hdrt=None):
         response = requests.post(post_url, data=json_data.encode('ascii'), headers=headers)
 
         # Raise exception so pipeline moves on to ingesting the next image
-        raise
+        raise Exception ('No CAT-RA or CAT-DEC could be found for {}'.format(img))
 
     _object=lsc.util.readkey3(hdrt,'object')
     if ':' in str(_ra):        

@@ -234,19 +234,35 @@ Where STANDARD is the standard you calibrated previously and CATALOG is the name
 
 # Definitions
 ## Telescopes
-| Short Name   | Long Name                         | ?             | lscloop keyword|
-|--------------|-----------------------------------|---------------|----------------|
-| OGG 2m       | Haleakala Observatory - 2m        | ogg2m001-fs02 | 2m0            |
-| COJ 2m       | Siding Springs Observatory - 2m   | coj2m002-fs03 | 2m0            |
-| COJ 1m       | Siding Springs Observatory - 1m   | coj1m003-kb71 | 1m0            |
-| LSC 1m       | CTIO - Region IV                  | lsc1m004-kb77 | 1m0            |
-| LSC 1m       | CTIO - Region IV                  | lsc1m005-kb78 | 1m0            |
-| ELP 1m       | McDonald Observatory - 1m         | elp1m008-kb74 | 1m0            |
-| LSC 1m       | CTIO - Region IV                  | lsc1m009-fl03 | 1m0            |
-| CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m010      | 1m0            |
-| COJ 1m       | Siding Springs Observatory - 1m   | coj1m011-kb05 | 1m0            |
-| CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m012-kb75 | 1m0            |
-| CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m013-kb76 | 1m0            |
+Current facilities can be found at: https://lco.global/observatory/sites/  
+Telescope numbers are unique within a given mirror size
+
+| Short Name   | Long Name                         | Telescope id (-T)  | Telescope Number | Site id (-S)|
+|--------------|-----------------------------------|----------------|------------------|----------------|
+| OGG 2m       | Haleakala Observatory - 2m        | 2m0            | 01               | ogg            |
+| COJ 2m       | Siding Springs Observatory - 2m   | 2m0            | 02               | coj            |
+|--------------|-----------------------------------|----------------|------------------|----------------|
+| COJ 1m       | Siding Springs Observatory - 1m   | 1m0            | 03               | coj            |
+| LSC 1m       | CTIO - Region IV                  | 1m0            | 04               | lsc            |
+| LSC 1m       | CTIO - Region IV                  | 1m0            | 05               | lsc            |
+| ELP 1m       | McDonald Observatory - 1m         | 1m0            | 06               | elp            |
+| ELP 1m       | McDonald Observatory - 1m         | 1m0            | 08               | elp            |
+| LSC 1m       | CTIO - Region IV                  | 1m0            | 09               | lsc            |
+| CPT 1m       | SAAO - Sutherland Facilities - 1m | 1m0            | 10               | cpt            |
+| COJ 1m       | Siding Springs Observatory - 1m   | 1m0            | 11               | coj            |
+| CPT 1m       | SAAO - Sutherland Facilities - 1m | 1m0            | 12               | cpt            |
+| CPT 1m       | SAAO - Sutherland Facilities - 1m | 1m0            | 13               | cpt            |
+|--------------|-----------------------------------|----------------|------------------|----------------|
+| COJ 0.4m     | Siding Springs Observatory - 0.4m | 0m4            | 03               | coj            |
+| OGG 0.4m     | Haleakala Observatory - 0.4m      | 0m4            | 04               | ogg            |
+| COJ 0.4m     | Siding Springs Observatory - 0.4m | 0m4            | 05               | coj            |
+| OGG 0.4m     | Haleakala Observatory - 0.4m      | 0m4            | 06               | ogg            |
+| CPT 0.4m     | SAAO - Sutherland Facilities -0.4m| 0m4            | 07               | cpt            |
+| LSC 0.4m     | CTIO - Region IV                  | 0m4            | 09               | lsc            |
+| TFN 0.4m     | Teide Observatory 0.4m            | 0m4            | 10               | tfn            |
+| ELP 0.4m     | McDonald Observatory - 0.4m       | 0m4            | 11               | elp            |
+| LSC 0.4m     | CTIO - Region IV                  | 0m4            | 12               | lsc            |
+| TFN 0.4m     | Teide Observatory 0.4m            | 0m4            | 14               | tfn            |
 
 ## Filetype:
 | Number | Meaning         |

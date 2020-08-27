@@ -1698,7 +1698,7 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
 
 def get_standards(epoch, name, filters):
     epochs = process_epoch(epoch)
-    flexible_name = name.lower().replace('at20', 'at20%').replace('sn20', 'sn20%').replace(' ', '%')
+    flexible_name = '%{}'.format(name.lower().replace('at20', 'at20%').replace('sn20', 'sn20%').replace(' ', '%'))
     query = '''SELECT DISTINCT std.filepath, std.filename, std.objname, std.filter,
                std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat, std.lastunpacked
                FROM

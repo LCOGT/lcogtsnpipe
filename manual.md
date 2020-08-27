@@ -196,11 +196,15 @@ Where:
 * Find standard stars that were observed during the epoch you need in the filter you need (U). Ideally, you also obtain at least 1 other filter (for color correction) - recommended B and V
 * Search archive.lco.global for obstype=STANDARD, set date range, filter, if applicable telescope and site (e.g. fo 2018zd I set site=elp and telescope=fl05)
 * You will be using standards from the same telescope and observed on the same night as your observations
-* Download the reduced observations
-* run python ingestzip.py -f downloaded_directory_or_zip_filename
-* Use the standard star image to find the nightly zeropoint for the nights on which you observed your target and the standard (run cosmic, wcs, psf, psfmag, zcat)
+* Use LCOGTingest.py to download and ingest observations. For example ``` LCOGTingest.py -S lsc -T 1m0a -f U -s 2019-09-26 -e 2019-10-08  -r reduced -t STANDARD --public``` Where `-S` is the site (if you want to be this specific), `-T` is the telescope, `-f` is the filter, `-s` is the start date, `-e` is the end date, `-r reduced` downloads files that have already been reduced with BANZAI, and `--public` is always required. Note: the date format has dashes and the search is exclusive of the end data
+* If you are downloading a standard for the first time, manually update the targets table so that the standards you downloaded have `classificationid=1`
+    * ```mysql -u supernova -D supernova -p``` (if you are using docker-compose you also need ```-h supernovadb```)
+    * Get the targetid of the standard you want to update: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE name="L107"``` (you should replace L107 with the name of your standard)
+    * Check that you're selecting the right row: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE targetid=55``` (you should replace 55 with the targetid you found in the last step)
+    * If `classificationid` is not 1, update `classificationid` for the row selected: ```UPDATE targets SET classificationid=1 WHERE targetid=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard)
+* Use the standard star image to find the nightly zeropoint for the nights on which you observed your target and the standard (run psf, psfmag, zcat)
     * When running the zcat step, use ```--catalog=$LCOSNDIR/standard/cat/landolt/<standard catalog name>```
-* When you run -s local on the SN (in the next step), it queries the database for any standards in the same filter-site-night as the SN observations. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard STANDARD``` where STANDARD is the name of your standard (e.g. L95)
+* When you run -s local on the SN (in the next step), it queries the database for any standards in the same filter-site-night as the SN observations. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard STANDARD``` where STANDARD is the name of your standard (e.g. L95). Alternately, you can use `--standard all` to find all available standards
 
 ### Create a catalog of stars (local sequence) in SN field for Landolt filters
 * This calculates the apparent magnitude for the stars in a given filter in your SN field and creates a catalog that will be used in the zcat step to generate the zeropoint for each observation. If a single class of telescopes seems to be an outlier, then you should limit the telescopes used to calculate the apparent magnitude to a single class of telescopes with the ```-T 1m0``` flag

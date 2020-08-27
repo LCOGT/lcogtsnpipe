@@ -175,7 +175,7 @@ def querycatalogue(catalogue,img,method='iraf'):
         toforget = ['imcoords','astcat','tv']
         iraf.noao.astcat.aregpars.rcrauni=''
         iraf.noao.astcat.aregpars.rcdecuni=''
-        iraf.noao.astcat.catdb=lsc.__path__[0]+'/standard/cat/catalogue.dat'
+        iraf.noao.astcat.catdb = os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'standard', 'cat', 'catalogue.dat')
         iraf.noao.astcat.aregpars.rcra=_ra/15
         iraf.noao.astcat.aregpars.rcdec=_dec
         iraf.noao.astcat.aregpars.rrawidt=_size
@@ -570,11 +570,12 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
         print _siteid
         sys.exit('siteid not in lsc.sites.extinction')
     if catalogue:
-        stdcooC=lsc.lscastrodef.readtxt(lsc.__path__[0]+'/standard/cat/'+catalogue+'.cat')
+        catalog_path = os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'standard', 'cat', catalogue+'.cat')
+        stdcooC=lsc.lscastrodef.readtxt(catalog_path)
         rastdC,decstdC=array(stdcooC['ra'],float),array(stdcooC['dec'],float)
         delete('tmp.stdC.pix')
-        iraf.wcsctran(lsc.__path__[0]+'/standard/cat/'+catalogue+'.cat','tmp.stdC.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
-                          columns='1 2',formats='%10.1f %10.1f',verbose='no')
+        iraf.wcsctran(catalog_path,'tmp.stdC.pix',img + '[0]',inwcs='world',units='degrees degrees',outwcs='logical',\
+                      columns='1 2',formats='%10.1f %10.1f',verbose='no')
         standardpixC=lsc.lscastrodef.readtxt('tmp.stdC.pix')
         xstdC=standardpixC['ra']
         ystdC=standardpixC['dec']
@@ -1309,14 +1310,14 @@ def run_astrometry(im, clobber=True,redo=False):
         dec = lsc.readkey3(hdr,'DEC')
         #    ra = fits.getval(im, 'RA')
         #    dec = fits.getval(im, 'DEC')
-        cmd = 'solve-field --crpix-center --no-verify --no-fits2fits --no-tweak -l 30 '
+        cmd = 'solve-field --crpix-center --no-verify --no-tweak -l 30 '
         cmd += '--backend-config {} '.format(os.path.join(lsc.util.workdirectory, 'usr/backend.cfg'))
         cmd += '--radius 1.0 --ra {} --dec {} --guess-scale '.format(ra, dec)
         cmd += '--scale-units arcsecperpix --scale-low 0.1 --scale-high .7 '
         cmd += '--no-plots -N tmpwcs.fits --extension 0 '
         if clobber: cmd += '--overwrite '
         cmd += '--solved none --match none --rdls none --wcs none --corr none '
-        cmd += ' --use-sextractor --fits-image {}'.format(im)
+        cmd += ' --use-source-extractor --fits-image {}'.format(im)
         print cmd
         os.system(cmd)
         basename = im[:-5]

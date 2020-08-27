@@ -266,6 +266,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--name", help="target name")
     parser.add_argument("-s", "--start", help="start date")
     parser.add_argument("-e", "--end", help="end date")
+    parser.add_argument("-c", "--coords", nargs=2, help="target coordinates in degrees, space separated")
 
     parser.add_argument("-t", "--obstype", choices=['ARC', 'BIAS', 'CATALOG', 'DARK', 'EXPERIMENTAL',
                                         'EXPOSE', 'LAMPFLAT', 'SKYFLAT', 'SPECTRUM', 'STANDARD'])
@@ -294,8 +295,9 @@ if __name__ == "__main__":
         rlevel = None
 
     frames = get_metadata(authtoken, limit=args.limit, SITEID=args.site, TELID=args.telescope,
-                        INSTRUME=args.instrument, FILTER=args.filter, PROPID=args.proposal, OBJECT=args.name,
-                        start=args.start, end=args.end, OBSTYPE=args.obstype, RLEVEL=rlevel, public=args.public)
+                          INSTRUME=args.instrument, FILTER=args.filter, PROPID=args.proposal, OBJECT=args.name,
+                          start=args.start, end=args.end, OBSTYPE=args.obstype, RLEVEL=rlevel, public=args.public,
+                          covers='POINT({} {})'.format(*args.coords) if args.coords else None)
 
     print 'Total number of frames:', len(frames)
 

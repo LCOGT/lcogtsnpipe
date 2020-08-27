@@ -252,7 +252,7 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
     elif _catalogue[0] in ['/', '.']:
        catalogpath = os.path.realpath(_catalogue)
     else:
-       catalogpath = lsc.__path__[0] + '/standard/cat/' + _catalogue
+       catalogpath = os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'standard', 'cat',  _catalogue)
     if not catalogpath:
         print 'could not find a catalog for', _object, _filter
         return

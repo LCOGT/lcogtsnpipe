@@ -624,12 +624,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                 ll1[jj] = []
     if _name:  # name
         _targetid = lsc.mysqldef.gettargetid(_name, '', '', conn, 0.01, False)
-        if _targetid:
-            print _targetid
-            ww = np.array([i for i in range(len(ll1['filter'])) if ((_targetid == ll1['targetid'][i]))])
-        else:
-            ww = np.array([i for i in range(len(ll1['filter'])) if ((_name in ll1['objname'][i]))])
-
+        ww = np.array([i for i in range(len(ll1['filter'])) if ((_targetid == ll1['targetid'][i]))])
         if len(ww) > 0:
             for jj in ll1.keys():
                 ll1[jj] = np.array(ll1[jj])[ww]
@@ -1725,7 +1720,7 @@ def get_standards(epoch, name, filters):
                AND std.quality = 127
                AND obj.dayobs >= {start}
                AND obj.dayobs <= {end}
-               AND targobj.id = {targetid}
+               AND targobj.targetid = {targetid}
                '''.format(start=epochs[0], end=epochs[-1], targetid=targetid)
     if filters:
         query += 'AND (obj.filter="' + '" OR obj.filter="'.join(lsc.sites.filterst[filters]) + '")'

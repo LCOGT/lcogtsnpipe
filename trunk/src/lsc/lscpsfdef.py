@@ -440,7 +440,7 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                 traceback.print_exc()
                 print('The difference between the aperture and psf magnitudes exceeds the maximum allowed '+ \
                       '{:2.2f}>{:2.2f}'.format(aperture_correction, max_aperture_correction))
-                return result, fwhm * scale
+                return result, fwhm * scale, aperture_correction
             #######################################
             rap, decp, magp2, magp3, magp4, smagf, merrp3, smagerrf = [], [], [], [], [], [], [], []
             rap0, decp0 = [], []

@@ -115,24 +115,13 @@ if __name__ == "__main__":
                 basename = os.path.basename(img)
                 if result == 1:
                     lsc.mysqldef.updatevalue('photlco', 'psf', basename.replace('.fits', '.psf.fits'), basename)
-                    lsc.mysqldef.updatevalue('photlco', 'fwhm', fwhm, basename)
-                    lsc.mysqldef.updatevalue('photlco', 'mag', 9999, basename)
-                    lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, basename)
-                    lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, basename)
-                    if 'diff' not in img and os.path.isfile(img.replace('.fits', '.diff.fits')) and os.path.isfile(img.replace('.fits', '.sn2.fits')):
-                        # update diff info is file available
-                        print('Copying {} to {}'.format(img.replace('.fits','.sn2.fits '), img.replace('.fits','.diff.sn2.fits')))
-                        os.system('cp ' + img.replace('.fits','.sn2.fits ') + img.replace('.fits','.diff.sn2.fits'))
-                        lsc.mysqldef.updatevalue('photlco', 'psf', basename + '.psf.fits', basename.replace('.fits','.diff.fits'))
-                        lsc.mysqldef.updatevalue('photlco', 'fwhm', fwhm, basename.replace('.fits', '.diff.fits'))
-                        lsc.mysqldef.updatevalue('photlco', 'mag', 9999, basename.replace('.fits', '.diff.fits'))
-                        lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, basename.replace('.fits', '.diff.fits'))
-                        lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, basename.replace('.fits', '.diff.fits'))
                 else:
                     print 'psf not good, database not updated '
-                    lsc.mysqldef.updatevalue('photlco', 'psf', 'X', basename)
-                    if os.path.isfile(img.replace('.fits', '.diff.fits')):
-                        lsc.mysqldef.updatevalue('photlco', 'psf', 'X', basename.replace('.fits', '.diff.fits'))
+                    lsc.mysqldef.updatevalue('photlco', 'psf', 'X', basename + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'fwhm', fwhm, basename)
+                lsc.mysqldef.updatevalue('photlco', 'mag', 9999, basename)
+                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, basename)
+                lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, basename)
             except:
                 print 'module mysqldef not found'
 

@@ -434,7 +434,7 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                     dmag[i] = '%6.3f' % (dmag[i])
             # Fail to create a PSF is the aperture correction is too big
             max_aperture_correction = 0.1 #mag
-            if aperture_correction > max_aperture_correction:
+            if np.abs(aperture_correction) > max_aperture_correction:
                 result = 0
                 fwhm = 0.0
                 traceback.print_exc()

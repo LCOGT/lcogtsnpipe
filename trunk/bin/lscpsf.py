@@ -117,7 +117,7 @@ if __name__ == "__main__":
                     lsc.mysqldef.updatevalue('photlco', 'psf', basename.replace('.fits', '.psf.fits'), basename)
                 else:
                     print 'psf not good, database not updated '
-                    lsc.mysqldef.updatevalue('photlco', 'psf', 'X', basename + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'psf', 'X', basename)
                 lsc.mysqldef.updatevalue('photlco', 'fwhm', fwhm, basename)
                 lsc.mysqldef.updatevalue('photlco', 'mag', 9999, basename)
                 lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, basename)

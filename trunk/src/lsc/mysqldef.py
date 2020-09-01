@@ -201,8 +201,18 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
    conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
 
    for fullpath in imglist:
+      print(fullpath)
       path, img = os.path.split(fullpath)
       path += '/'
+
+######  for external users ingesting directly in lcophot ######      
+      if img[-3:] == '.fz':
+         os.system('funpack -D ' + fullpath)
+         img = img[:-3]
+         fullpath = fullpath[:-3]
+         if os.path.isfile(fullpath + '.fz'):
+            os.remove(fullpath + '.fz')
+############################################################
 
       exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
       exist2=lsc.mysqldef.getfromdataraw(conn,'photlcoraw','filename', string.split(img,'/')[-1],column2='filename, groupidcode')
@@ -217,11 +227,11 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
             print img,database
             lsc.mysqldef.deleteredufromarchive(string.split(img,'/')[-1],dataredutable)
             print 'delete line from '+str(database)
-            exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
-
+            exist = False
+            
       if not exist or force =='update':
-         hdr=readhdr(fullpath)
-         _targetid=lsc.mysqldef.targimg(fullpath)
+         hdr = readhdr(fullpath)
+         _targetid = lsc.mysqldef.targimg(fullpath)
          try:
             _tracknumber=int(readkey3(hdr,'TRACKNUM'))
          except:
@@ -261,6 +271,11 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
 
          print dictionary
          print 'insert reduced'
+
+         # we need to update the connection before quering again the database
+         hostname, username, passwd, database=lsc.mysqldef.getconnection('lcogt2')
+         conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
+         
          ggg=lsc.mysqldef.getfromdataraw(conn, dataredutable, 'filename',str(img), '*')
          if not ggg:
             lsc.mysqldef.insert_values(conn,dataredutable,dictionary)

@@ -1,0 +1,8 @@
+build/
+dist/
+*egg*
+mysql/
+data/
+.git/
+trunk/build/
+trunk/dist/*egg*

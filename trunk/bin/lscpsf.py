@@ -87,7 +87,7 @@ if __name__ == "__main__":
                         if catalog:
                             break
             while True:
-                result, fwhm = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
+                result, fwhm, aperture_correction = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
                                                    option.distance, option.interactive, psffun, fixaperture,
                                                    catalog, option.datamin, option.datamax, option.show, make_sn2)
                 print '\n### ' + str(result)
@@ -119,6 +119,7 @@ if __name__ == "__main__":
                     lsc.mysqldef.updatevalue('photlco', 'mag', 9999, basename)
                     lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, basename)
                     lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, basename)
+                    lsc.mysqldef.updatevalue('photlco', 'apercorr', aperture_correction, basename)
                     if 'diff' not in img and os.path.isfile(img + '.diff.fits') and os.path.isfile(img + '.sn2.fits'):
                         # update diff info is file available
                         os.system('cp ' + img + '.sn2.fits ' + img + '.diff.sn2.fits')
@@ -127,6 +128,7 @@ if __name__ == "__main__":
                         lsc.mysqldef.updatevalue('photlco', 'mag', 9999, basename + '.diff.fits')
                         lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, basename + '.diff.fits')
                         lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, basename + '.diff.fits')
+                        lsc.mysqldef.updatevalue('photlco', 'apercorr', aperture_correction, basename+'.diff.fits')
                 else:
                     print 'psf not good, database not updated '
                     lsc.mysqldef.updatevalue('photlco', 'psf', 'X', basename + '.fits')

@@ -1,0 +1,26 @@
+In this directory you should put all the calibration files with extenction .cat
+
+format of the catalog is the following: 
+
+
+# BEGIN CATALOG HEADER
+# nfields 13
+#     ra     1  0 d degrees %10.5f
+#     dec    2  0 d degrees %10.5f
+#     id     3  0 c INDEF %15s
+#     B      4 0 r INDEF %6.2f
+#     Berr   5 0 r INDEF %6.2f
+#     V      6 0 r INDEF %6.2f
+#     Verr   7 0 r INDEF %6.2f
+#     g      8 0 r INDEF %6.2f
+#     gerr   9 0 r INDEF %6.2f
+#     r      10 0 r INDEF %6.2f
+#     rerr   11 0 r INDEF %6.2f
+#     i      12 0 r INDEF %6.2f
+#     ierr   13 0 r INDEF %6.2f
+# END CATALOG HEADER
+#
+     226.39613       +3.53545    1   11.379  0.039   10.171  0.008   10.758  0.022    9.842  0.104    9.342  0.037  
+     226.56375       +3.54076    2   15.839  0.114   15.112  0.039   15.422  0.102   14.929  0.014   14.724  0.017  
+     226.63495       +3.54577    3   15.259  0.059   14.583  0.015   14.748  0.252   14.463  0.016   14.350  0.115  
+     226.52035       +3.54736    4   16.559 -0.000   15.930 -0.000   16.314  0.058   15.757 -0.000   15.492 -0.000  

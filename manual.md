@@ -221,6 +221,7 @@ Where STANDARD is the standard you calibrated previously and CATALOG is the name
     - if there is a big difference between the BV filters of Landolt and APASS for a large number of stars (a few stars will be variable)
     - I guess the main thing is that some of the standard field observations will be bad because of clouds or whatever, so make sure they are not pulling the median zero point away too much
 * This outputs a catalog (the name of which is printed to the screen)
+* Your catalog needs at least B-band magnitudes, in addition to U, to perform color corrections. If there were no B-band standards taken for your dates/site, you'll need to manually add the B-band magnitudes of the stars into your new catalog. The id's should match those in the APASS catalog for your SN, so you can add the appropriate values to the B and Berr columns in your new landolt catalog before proceding. 
 
 ### Move the catalog to the catalog directory:
 * Move the catalog created in the previous step to the directory $LCOSNPIPE/trunk/src/lsc/standard/cat/landolt

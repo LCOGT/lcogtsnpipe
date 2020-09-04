@@ -6,6 +6,10 @@
 * [Creating a Landolt Catalog](#Creating-a-Landolt-Catalog)
 * [Difference Imaging](#Difference-Imaging)
 * [Definitions](#Definitions)
+    * [Telescopes](##Telescopes)
+    * [Filetype](##Filetype)
+    * [Status](##Status)
+    * [Database](##Database)
 
 # Ingest data
 * Download observations from SNEx and run ingesttar.py. This data will have already been reduced with BANZAI.
@@ -284,3 +288,11 @@ sn2.fits is a table with aperture and psf photometry measurements created by the
 | 1      | not done and possible since previous stage is done |
 | 2      | done and possible to do again |
 | 3      | local sequence catalog available |
+
+## Database
+### apercorr column in photlco
+The aperture correction column as was added to the photlco table with [PR 52](https://github.com/LCOGT/lcogtsnpipe/pull/52); see also [PR 59](https://github.com/LCOGT/lcogtsnpipe/pull/59) which fixes a number of bugs related to the aperture correction . Note that despite its name, this correction has a different definition from what is usually referred to as an aperture correction. During the PSF stage, both aperture and PSF photometry is performed on the catalog stars. The aperture photometry calculated with an aperture that is int(fwhm * 3 + 0.5) is compared to the PSF photometry for all of the catalog stars. The assumption is that the aperture contains all of the stellar flux and the aperture photometry therefore represents the true photometry. On the otherhand, small differences between the model and true PSF may lead to errors in the PSF photometry. For this reason, the aperture correction is calculated as the sigma-clipped mean difference between the aperture and PSF photometry and the error is the sigma-clipped standard deviation for the catalog stars. If the aperture correction exceeds a pre-defined threshold, the psf stage will fail under the assumption that a large aperture correction indicates a poor PSF model.
+
+The aperture correction is applied to the PSF photometry in the sn2 catalog file (which will be used to calculate the zeropoint during the zcat stage) and to the supernova photometry during the psfmag stage. For this reason, for standard PSF photometry on filetype 1 objects when the PSF photometry is used to calculate the zeropoint, the apparent magnitudes is independent of the aperture correction as the aperture correction that is applied during the psfmag stage is undone by the zeropoint. 
+
+This situation is more complicated for difference imaging as for PyZOGY the PSF is a model that neither represents the original nor the template PSF and for HOTPANTS the PSF can either be from the template or the original image. For this reason and the fact that aperture photometry should be sufficient for difference imaging, the ability to run PSF photometry on difference imaging has been disabled. However, should it ever be enabled again, the following decisions have been made. When the PSF stage is run for PyZOGY, an "image" of the model PSF is created and the PSF stage is run as if that is the image with a catalog of one star centered on the middle of the frame. In this case, the aperture correction is meaningless and the pipeline sets the aperture correction to 0. For HOTPANTS, the CONVOL00 keyword is read from the header to determine which PSF was used for difference imaging. The aperture correction is then read from the sn2 file corresponding to the original image or the template image. This is because the sn2 file from the difference image is copied from the original or the template based on the normalization keyword and not the PSF keyword.

@@ -629,9 +629,8 @@ def gettargetid(_name,_ra,_dec,conn,_radius=.01,verbose=False):
    import lsc
    from numpy import argmin
    if _name:
-        _name = _name.lower().replace('at20', 'at20%').replace('sn20', 'sn20%').replace(' ', '%')
-        command=['select distinct(r.name), r.targetid, t.id, t.ra0, t.dec0 from targetnames as r join targets as t where r.name like "'+\
-                 _name +'" and t.id=r.targetid']
+        command=['select distinct(r.name), r.targetid, t.id, t.ra0, t.dec0 from targetnames as r join targets as t where r.name like "%'+\
+                 _name.replace(' ', '%') +'" and t.id=r.targetid']
         lista=lsc.mysqldef.query(command,conn)
    elif _ra and _dec:
       if ':' in  str(_ra):

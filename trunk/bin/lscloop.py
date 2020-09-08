@@ -92,7 +92,7 @@ if __name__ == "__main__":   # main program
     args = parser.parse_args()
     if args.multicore >= cpu_count():
         args.multicore = cpu_count()-1 if cpu_count() > 1 else 1
-        print 'Attempting to run on too many cores, reducing to', args.multicore
+        print('Attempting to run on too many cores, reducing to {n}'.format(n=args.multicore))
 
     if args.stage == 'checkdiff':
         filetype = 3

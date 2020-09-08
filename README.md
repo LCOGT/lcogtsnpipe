@@ -10,7 +10,6 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 - [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina)
 - [Appendix C: Other packages you may need to install](#appendix-c-other-packages-you-may-need-to-install)
 - [Appendix D: Installing Source Extractor](#appendix-d-installing-source-extractor)
-- [Appendix E: Using the Pipeline with Docker](#appendix-e-using-the-pipeline-with-docker)
 
 # Pipeline Documentation:
 1. Image Subtraction: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
@@ -25,6 +24,7 @@ The pipeline itself will run inside the Docker container and forward graphics to
 These instructions only need to be run once, when you set up the pipeline.
 
    1. Install [Docker](https://docs.docker.com/get-docker/).
+        * Make sure to increase the amount of memory Docker can access (recommended 8 GB). This is needed for certain stages (like `-s cosmic`) to run. On Mac, press the Docker icon in the toolbar, then click Preferences, then Resources, and increase Memory to 8 GB.
    2. Install [docker-compose](https://docs.docker.com/compose/install/)
    3. (MacOS only) Install [XQuartz](https://www.xquartz.org).
    4. (MacOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.

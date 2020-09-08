@@ -6,7 +6,7 @@ import numpy as np
 from argparse import ArgumentParser
 from datetime import datetime, timedelta
 import lsc
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 import os
 
 def multi_run_cosmic(args):
@@ -91,6 +91,9 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--no_iraf", action="store_true", help="Don't use iraf (currently only option in checkpsf stage)")
 
     args = parser.parse_args()
+    if args.multicore >= cpu_count():
+        args.multicore = cpu_count()-1 if cpu_count() > 1 else 1
+        print('Attempting to run on too many cores, reducing to {n}'.format(n=args.multicore))
 
     if args.stage == 'checkdiff':
         filetype = 3

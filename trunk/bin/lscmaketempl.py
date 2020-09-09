@@ -65,6 +65,7 @@ if __name__ == "__main__":
     from pyraf import iraf
     from iraf import digiphot
     from iraf import daophot
+    iraf.set(stdimage='imt2048')
     from astropy.wcs import WCS
     ##################################
     goon = False
@@ -119,8 +120,8 @@ if __name__ == "__main__":
                 if chosepos:
                     print 'choose xpos, ypos interactively'
                     lsc.util.delete('tmp.log')
-                    zz1, zz2, goon = lsc.util.display_image(img, 1, '', '', True)
-                    iraf.imexamine(img, 1, wcs='logical', logfile='tmp.log', keeplog=True)
+                    zz1, zz2, goon = lsc.util.display_image(img, 1, 0, 6000, True)
+                    iraf.imexamine(wcs='logical', logfile='tmp.log', keeplog=True)
                     xytargets = iraf.fields('tmp.log', '1,2', Stdout=1)
                     _xpos, _ypos = string.split(xytargets[0])[0], string.split(xytargets[0])[1]
                 elif not _ra or not _dec:
@@ -180,6 +181,7 @@ if __name__ == "__main__":
                 while answ == 'n':
                     coordlist = str(_xpos) + '   ' + str(_ypos) + '    ' + str(_mag)
                     os.system('echo ' + coordlist + ' > ddd')
+                    _z11, _z22, goon = lsc.util.display_image(img0, 1, z11, z22, False)
                     iraf.imarith(img0, '-', img0, '_tmp.fits', verbose='no')
                     if float(_mag) != 0.0:
                         iraf.daophot.addstar("_tmp.fits", 'ddd', psfimg, "_tmp2.fits", nstar=1, veri='no', simple='yes',

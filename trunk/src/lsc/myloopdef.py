@@ -2,14 +2,16 @@ import os
 import lsc
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from pyraf import iraf
 from glob import glob
 import datetime
 import astropy.units as u
 from astropy.io import fits
 from astropy.wcs import WCS
-from astropy.table import Table
+from astropy.table import Table, vstack
 from astropy.coordinates import SkyCoord
+from astropy.visualization import ImageNormalize, ZScaleInterval
 
 def weighted_avg_and_std(values, weights):
     """
@@ -69,6 +71,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                 if tel[-1] not in setup:  setup[tel[-1]] = {}
                 if filt[-1] not in setup[tel[-1]]:  setup[tel[-1]][filt[-1]] = {}
 
+    tables = []
     for _tel in setup:
         for _fil in setup[_tel]:
             mjd0 = np.compress((np.array(filt) == _fil) & (np.array(tel) == _tel), np.array(mjd))
@@ -125,45 +128,26 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
             setup[_tel][_fil]['jd'] = list(np.array(mjd1) + 2400000.5)
             setup[_tel][_fil]['date'] = date1
             setup[_tel][_fil]['filename'] = filename1
+            table = Table([date1, np.array(mjd1) + 2400000.5, mag1, dmag1], names=['dateobs', 'jd', 'mag', 'dmag'])
+            table['telescope'] = _tel
+            table['filter'] = lsc.sites.filterst1[_fil]
+            table['magtype'] = magtype1
+            tables.append(table)
 
     if _show:
         plotfast2(setup)
     elif _output:
         plotfast(setup, _output)
 
-    linetot = {}
+    output_table = vstack(tables)
+    output_table.sort('jd')
+    output_table['jd'].format = '%.5f'
+    output_table['mag'].format = '%.4f'
+    output_table['dmag'].format = '%.4f'
     if _output:
-        ff = open(_output, 'w')
-
-    filters_used = sum([[lsc.sites.filterst1[filt] for filt in setup[_tel].keys()] for _tel in setup], [])
-    filters = []
-    for filt in 'UBVRIugriz':
-        if filt in filters_used:
-            filters.append(filt)
-    for _tel in setup:
-        line0 = '# %15s%15s' % ('dateobs', 'jd')
-        for filt in filters:
-            if filt in [lsc.sites.filterst1[key] for key in setup[_tel]]:
-                line0 += '%12s%12s ' % (str(filt), str(filt) + 'err')
-        for _fil in setup[_tel]:
-            for j in range(0, len(setup[_tel][_fil]['mjd'])):
-                line = '  %10s %12.4f ' % (str(setup[_tel][_fil]['date'][j]), setup[_tel][_fil]['jd'][j])
-                for filt in filters:
-                    if _fil in lsc.sites.filterst[filt]:
-                        line += '%12.4f %12.4f ' % (setup[_tel][_fil]['mag'][j], setup[_tel][_fil]['dmag'][j])
-                    else:
-                        line += '%12s %12s ' % ('9999', '0.0')
-                line += '%6s %2s\n' % (_tel, lsc.sites.filterst1[_fil])
-                linetot[setup[_tel][_fil]['mjd'][j]] = line
-    aaa = linetot.keys()
-    if _output:
-        for gg in np.sort(aaa):
-            ff.write(linetot[gg])
+        output_table.write(_output, format='ascii')
     else:
-        for gg in np.sort(aaa):
-            print linetot[gg]
-    if _output:
-        ff.close()
+        output_table.pprint(max_lines=-1)
 
 def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit', database='photlco', field=None, refcat=None, force=False, minstars=0):
     if len(extlist) > 0:
@@ -287,13 +271,15 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
         pp = ' -p ' + str(nstars) + ' '
 
         status = checkstage(img, 'psf')
-        print status
+        print 'status= ',status
         if status == 1:
             rr = '-r'
         if status >= 1:
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
             _dir = ggg[0]['filepath']
-            if ggg[0]['filetype'] == '3' and ggg[0]['difftype'] == 0: # HOTPANTS difference images
+            
+            # filetype is a integer it should not be passed as string 
+            if ggg[0]['filetype'] == 3 and ggg[0]['difftype'] == 0: # HOTPANTS difference images
                 ##################################################################################
                 print '\n### get parameters for difference image'
                 hdrdiff=lsc.util.readhdr(_dir+img)
@@ -597,7 +583,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
 
     if _filetype:
         if int(_filetype) in [1, 2, 3, 4]:
-            ww = np.array([i for i in range(len(ll1['filetype'])) if ((ll1['filetype'][i] == str(_filetype)))])
+            ww = np.array([i for i in range(len(ll1['filetype'])) if ((ll1['filetype'][i] == int(_filetype)))])
             if len(ww) > 0:
                 for jj in ll1.keys():
                     ll1[jj] = np.array(ll1[jj])[ww]
@@ -638,12 +624,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                 ll1[jj] = []
     if _name:  # name
         _targetid = lsc.mysqldef.gettargetid(_name, '', '', conn, 0.01, False)
-        if _targetid:
-            print _targetid
-            ww = np.array([i for i in range(len(ll1['filter'])) if ((_targetid == ll1['targetid'][i]))])
-        else:
-            ww = np.array([i for i in range(len(ll1['filter'])) if ((_name in ll1['objname'][i]))])
-
+        ww = np.array([i for i in range(len(ll1['filter'])) if ((_targetid == ll1['targetid'][i]))])
         if len(ww) > 0:
             for jj in ll1.keys():
                 ll1[jj] = np.array(ll1[jj])[ww]
@@ -680,7 +661,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             for jj in ll1.keys():
                 ll1[jj] = []
 
-    if _filetype == 3 and _temptel:
+    if int(_filetype) == 3 and _temptel:
         temptels = np.array([fn.replace('.optimal', '').split('.')[1].replace('diff', inst[:2])
 #                             if fn.replace('.optimal', '').count('.') == 3 else inst[0:2]
                              for fn, inst in zip(ll1['filename'], ll1['instrument'])], dtype=str)
@@ -810,6 +791,27 @@ def position(imglist, ra1, dec1, show=False):
 
 
 #########################################################################
+def mark_stars_on_image(imgfile, catfile, fig=None):
+    data, hdr = fits.getdata(imgfile, header=True)
+    if fig is None:
+        fig = plt.gcf()
+    fig.clf()
+    ax = fig.add_subplot(1, 1, 1)
+    norm = ImageNormalize(data, interval=ZScaleInterval())
+    ax.imshow(data, norm=norm, origin='lower')
+    wcs = WCS(hdr)
+    if catfile.endswith('fits'):
+        cat = Table.read(catfile)
+    else:
+        cat = Table.read(catfile, format='ascii.commented_header', header_start=1, delimiter='\s')
+    coords = SkyCoord(cat['ra'], cat['dec'], unit=(u.hourangle, u.deg))
+    i, j = wcs.wcs_world2pix(coords.ra, coords.dec, 0)
+    ax.autoscale(False)
+    ax.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
+    ax.set_title(os.path.basename(imgfile))
+    fig.tight_layout()
+
+
 def checkcat(imglist, database='photlco'):
     plt.ion()
     plt.figure(figsize=(6, 6))
@@ -826,17 +828,7 @@ def checkcat(imglist, database='photlco'):
                     lines = f.readlines()
                 print len(lines) - 2, 'stars in catalog'
                 if len(lines) > 2:
-                    data, hdr = fits.getdata(_dir + img, header=True)
-                    vmin = np.percentile(data, 0.1)
-                    vmax = np.percentile(data, 99.9)
-                    plt.clf()
-                    plt.imshow(data, vmin=vmin, vmax=vmax)
-                    plt.tight_layout()
-                    wcs = WCS(hdr)
-                    cat = Table.read(catfile, format='ascii.commented_header', header_start=1, delimiter='\s')
-                    coords = SkyCoord(cat['ra'], cat['dec'], unit=(u.hourangle, u.deg))
-                    i, j = wcs.wcs_world2pix(coords.ra, coords.dec, 0)
-                    plt.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
+                    mark_stars_on_image(_dir + img, catfile)
                     aa = raw_input('>>>good catalogue [[y]/n] or [b] bad quality ? ')
                     if not aa: aa = 'y'
                 else: # automatically delete the file if is is only a header
@@ -862,21 +854,30 @@ def checkcat(imglist, database='photlco'):
             print 'status ' + str(status) + ': unknown status'
 
 
-def checkpsf(imglist, database='photlco'):
-    iraf.digiphot(_doprint=0)
-    iraf.daophot(_doprint=0)
+def checkpsf(imglist, no_iraf=False, database='photlco'):
+    if no_iraf:
+        plt.ion()
+        img_fig = plt.figure(figsize=(6, 6))
+        psf_fig = plt.figure(figsize=(8, 4))
+    else:
+        iraf.digiphot(_doprint=0)
+        iraf.daophot(_doprint=0)
     for img in imglist:
         status = checkstage(img, 'checkpsf')
         print img, status
         if status >= 1:
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
-            iraf.delete('_psf.psf.fits', verify=False)
             if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
-                print img
-                lsc.util.marksn2(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
-                iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
-                iraf.surface('_psf.psf')
+                if no_iraf:
+                    mark_stars_on_image(_dir + img, _dir + img.replace('.fits', '.sn2.fits'), fig=img_fig)
+                    psf_filename = _dir + img.replace('.fits', '.psf.fits')
+                    make_psf_plot(psf_filename, fig=psf_fig)
+                else:
+                    lsc.util.marksn2(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
+                    iraf.delete('_psf.psf.fits', verify=False)
+                    iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
+                    iraf.surface('_psf.psf')
                 aa = raw_input('>>>good psf [[y]/n] or [b] bad quality ? ')
                 if not aa: aa = 'y'
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
@@ -903,13 +904,57 @@ def checkpsf(imglist, database='photlco'):
         else:
             print 'status ' + str(status) + ': unknown status'
 
+
+def make_psf_plot(psf_filename, fig=None):
+    """
+    Displays plots of PSFs for the checkpsf stage without using iraf
+    :param psf_filename: filepath+filename of psf file
+    """
+    if fig is None:
+        fig = plt.gcf()
+    fig.clf()
+
+    psf_hdul = fits.open(psf_filename)
+    N = psf_hdul[0].header['PSFHEIGH'] / psf_hdul[0].header['NPSFSTAR']
+    sigma_x = psf_hdul[0].header['PAR1']
+    sigma_y = psf_hdul[0].header['PAR2']
+    psfrad = psf_hdul[0].header['PSFRAD']
+    NAXIS1 = psf_hdul[0].header['NAXIS1']
+    NAXIS2 = psf_hdul[0].header['NAXIS2']
+
+    x = np.linspace(-psfrad, psfrad, num=NAXIS1)
+    y = np.linspace(-psfrad, psfrad, num=NAXIS2)
+    X, Y = np.meshgrid(x, y)
+    # PSF is elliptical gaussian (from header) + residuals (from img data)
+    # in description https://iraf.net/irafhelp.php?val=seepsf
+    # not 100% sure normalization is correct, but tested on
+    #       good and bad psfs and I think it's right
+    analytic = N * np.exp(-(((X ** 2) / (sigma_x ** 2)) + ((Y ** 2) / (sigma_y ** 2))) / 2)
+    residual = psf_hdul[0].data
+    Z = analytic + residual
+
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    """
+    # the transparency makes this challenging to interpret
+    ax.plot_wireframe(X, Y, Z, rcount=2 * psfrad + 1, ccount=2 * psfrad + 1)
+    """
+    # replicate iraf look, much slower than wireframe
+    ax.plot_surface(X,Y,Z,rcount=2*psfrad+1,ccount=2*psfrad+1,
+            antialiased=True,linewidth=.25,color='black',edgecolor='white')
+    
+
+    ax.view_init(elev=40, azim=330)  # replicating starting view of iraf PSF
+    ax.set_axis_off()
+    ax.set_title('PSF for {psf_filename}'.format(psf_filename=os.path.basename(psf_filename)))
+    fig.tight_layout()
+
     #############################################################################
 
 
 def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
-    iraf.set(stdimage='imt1024')
+    iraf.set(stdimage='imt2048')
     print force
     print _z1, _z2
     for img in imglist:
@@ -1171,7 +1216,7 @@ def display_subtraction(img):
 def checkdiff(imglist, database='photlco'):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
-    iraf.set(stdimage='imt1024')
+    iraf.set(stdimage='imt2048')
     for img in imglist:
         status = checkstage(img, 'wcs')
         if status >= 0:
@@ -1282,7 +1327,7 @@ def checkpos(imglist, _ra, _dec, database='photlco'):
 def checkquality(imglist, database='photlco'):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
-    iraf.set(stdimage='imt1024')
+    iraf.set(stdimage='imt2048')
     for img in imglist:
         status = checkstage(img, 'checkquality')
         if status == -4:
@@ -1481,7 +1526,7 @@ def plotfast2(setup):
         print 'mjd = {:.2f}\tmag = {:.2f} (from database)'.format(dbrow['mjd'], dbrow['mag'])
         plt.figure(2)
         display_psf_fit(filenames[i])
-        if dbrow['filetype'] == '3':
+        if int(dbrow['filetype']) == 3:
             plt.figure(3, figsize=(8, 8))
             display_subtraction(filenames[i])
 
@@ -1495,7 +1540,7 @@ def plotfast2(setup):
 
     def bad_hook(i):
         dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, filetype')[0]
-        if dbrow['filetype'] == '3':
+        if int(dbrow['filetype']) == 3:
             os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.fits', '*'))
             os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.diff', '.ref'))
             lsc.mysqldef.deleteredufromarchive(filenames[i], 'photlco', 'filename')
@@ -1647,14 +1692,14 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
             ll0['ra'] = ll0['ra0']
             ll0['dec'] = ll0['dec0']
         ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad,
-             filetype, _groupid, _instrument, _temptel, _difftype, classid)
+             int(filetype), _groupid, _instrument, _temptel, _difftype, classid)
     else:
         ll = ''
     return ll
 
 def get_standards(epoch, name, filters):
     epochs = process_epoch(epoch)
-    flexible_name = name.lower().replace('at20', 'at20%').replace('sn20', 'sn20%').replace(' ', '%')
+    targetid = lsc.mysqldef.gettargetid(name, '', '', lsc.conn)
     query = '''SELECT DISTINCT std.filepath, std.filename, std.objname, std.filter,
                std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat, std.lastunpacked
                FROM
@@ -1681,8 +1726,8 @@ def get_standards(epoch, name, filters):
                AND std.quality = 127
                AND obj.dayobs >= {start}
                AND obj.dayobs <= {end}
-               AND targobj.name LIKE "{name}"
-               '''.format(start=epochs[0], end=epochs[-1], name=flexible_name)
+               AND targobj.targetid = {targetid}
+               '''.format(start=epochs[0], end=epochs[-1], targetid=targetid)
     if filters:
         query += 'AND (obj.filter="' + '" OR obj.filter="'.join(lsc.sites.filterst[filters]) + '")'
     print 'Searching for corresponding standard fields. This may take a minute...'

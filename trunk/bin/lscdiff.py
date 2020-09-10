@@ -172,13 +172,13 @@ if __name__ == "__main__":
                             shutil.copy(_dir + targmask0, targmask)
 
                             temp_reproj, temp_foot = reproject_interp(_dirtemp + imgtemp0, hdtar)
-                            fits.writeto(imgtarg, temp_reproj, hdtar)
+                            fits.writeto(imgtemp, temp_reproj, hdtar, overwrite=True)
 
                             tempmask_reproj, tempmask_foot = reproject_interp(_dirtemp + tempmask0, hdtar)
-                            fits.writeto(tempmask, tempmask_reproj, hdtar)
+                            fits.writeto(tempmask, tempmask_reproj, hdtar, overwrite=True)
 
                             tempnoise_reproj, tempnoise_foot = reproject_interp(_dirtemp + tempnoise0, hdtar)
-                            fits.writeto(tempnoise, tempnoise_reproj, hdtar)
+                            fits.writeto(tempnoise, tempnoise_reproj, hdtar, overwrite=True)
 
                             if args.show:
                                 fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -295,7 +295,7 @@ if __name__ == "__main__":
 
                         # create mask image for template
                         mask = np.abs(data_temp) < 1e-6
-                        fits.writeto('tempmask.fits',mask.astype('i'))
+                        fits.writeto('tempmask.fits',mask.astype('i'), overwrite=True)
 
                         if args.fixpix:
                             try:

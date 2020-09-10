@@ -201,8 +201,18 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
    conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
 
    for fullpath in imglist:
+      print(fullpath)
       path, img = os.path.split(fullpath)
       path += '/'
+
+######  for external users ingesting directly in lcophot ######      
+      if img[-3:] == '.fz':
+         os.system('funpack -D ' + fullpath)
+         img = img[:-3]
+         fullpath = fullpath[:-3]
+         if os.path.isfile(fullpath + '.fz'):
+            os.remove(fullpath + '.fz')
+############################################################
 
       exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
       exist2=lsc.mysqldef.getfromdataraw(conn,'photlcoraw','filename', string.split(img,'/')[-1],column2='filename, groupidcode')
@@ -217,11 +227,11 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
             print img,database
             lsc.mysqldef.deleteredufromarchive(string.split(img,'/')[-1],dataredutable)
             print 'delete line from '+str(database)
-            exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
-
+            exist = False
+            
       if not exist or force =='update':
-         hdr=readhdr(fullpath)
-         _targetid=lsc.mysqldef.targimg(fullpath)
+         hdr = readhdr(fullpath)
+         _targetid = lsc.mysqldef.targimg(fullpath)
          try:
             _tracknumber=int(readkey3(hdr,'TRACKNUM'))
          except:
@@ -235,7 +245,7 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
          elif _tel in ['Faulkes Telescope North','ftn']: 
             _tel='2m0-01'
          _inst=hdr.get('instrume')
-         dictionary={'dateobs':readkey3(hdr,'date-obs'),'dayobs':readkey3(hdr,'DAY-OBS'),'filename':img,'filepath':path,'filetype':filetype,'targetid':_targetid,\
+         dictionary={'dateobs':readkey3(hdr,'date-obs'),'dayobs':readkey3(hdr,'DAY-OBS'),'filename':img,'filepath':path,'filetype': int(filetype), 'targetid':_targetid,\
                      'exptime':readkey3(hdr,'exptime'), 'filter':readkey3(hdr,'filter'),'mjd':readkey3(hdr,'mjd'),'tracknumber':_tracknumber,'groupidcode':_groupidcode,\
                      'telescope':_tel,'airmass':readkey3(hdr,'airmass'),'objname':readkey3(hdr,'object'),'ut':readkey3(hdr,'ut'),\
                      'wcs':readkey3(hdr,'wcserr'),'instrument':_inst,'ra0':readkey3(hdr,'RA'),'dec0':readkey3(hdr,'DEC')}
@@ -261,6 +271,11 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
 
          print dictionary
          print 'insert reduced'
+
+         # we need to update the connection before quering again the database
+         hostname, username, passwd, database=lsc.mysqldef.getconnection('lcogt2')
+         conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
+         
          ggg=lsc.mysqldef.getfromdataraw(conn, dataredutable, 'filename',str(img), '*')
          if not ggg:
             lsc.mysqldef.insert_values(conn,dataredutable,dictionary)
@@ -614,9 +629,8 @@ def gettargetid(_name,_ra,_dec,conn,_radius=.01,verbose=False):
    import lsc
    from numpy import argmin
    if _name:
-        _name = _name.lower().replace('at20', 'at20%').replace('sn20', 'sn20%').replace(' ', '%')
-        command=['select distinct(r.name), r.targetid, t.id, t.ra0, t.dec0 from targetnames as r join targets as t where r.name like "'+\
-                 _name +'" and t.id=r.targetid']
+        command=['select distinct(r.name), r.targetid, t.id, t.ra0, t.dec0 from targetnames as r join targets as t where r.name like "%'+\
+                 _name.replace(' ', '%') +'" and t.id=r.targetid']
         lista=lsc.mysqldef.query(command,conn)
    elif _ra and _dec:
       if ':' in  str(_ra):

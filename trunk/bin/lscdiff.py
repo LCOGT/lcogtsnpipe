@@ -11,8 +11,7 @@ from PyZOGY.subtract import run_subtraction
 from pyraf import iraf
 from reproject import reproject_interp
 import shutil
-import matplotlib.pyplot as plt
-from astropy.visualization import ImageNormalize, ZScaleInterval
+
 
 def crossmatchtwofiles(img1, img2, radius=3):
     ''' This module is crossmatch two images:
@@ -179,13 +178,6 @@ if __name__ == "__main__":
 
                             tempnoise_reproj, tempnoise_foot = reproject_interp(_dirtemp + tempnoise0, hdtar)
                             fits.writeto(tempnoise, tempnoise_reproj, hdtar, overwrite=True)
-
-                            if args.show:
-                                fig, (ax1, ax2) = plt.subplots(1, 2)
-                                norm1 = ImageNormalize(artar, interval=ZScaleInterval())
-                                ax1.imshow(artar, norm=norm1, origin='lower')
-                                norm2 = ImageNormalize(temp_reproj, interval=ZScaleInterval())
-                                ax2.imshow(temp_reproj, norm=norm2, origin='lower')
 
                         else:
                             substamplist, dict = crossmatchtwofiles(_dir + imgtarg0, _dirtemp + imgtemp0, 4)

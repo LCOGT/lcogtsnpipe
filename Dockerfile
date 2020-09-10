@@ -29,7 +29,7 @@ RUN apt-get update \
 
 RUN ln -s /usr/bin/sextractor /usr/bin/sex
 
-RUN pip install cryptography==2.4.1 numpy>=1.12 astropy matplotlib==2.2.5 pyraf mysql-python scipy astroquery==v0.4 statsmodels==0.10 cython
+RUN pip install cryptography==2.4.1 numpy>=1.12 astropy matplotlib==2.2.5 pyraf mysql-python scipy astroquery==v0.4 statsmodels==0.10 cython reproject
 
 RUN pip install git+git://github.com/kbarbary/sep.git@master git+git://github.com/dguevel/PyZOGY.git && rm -rf ~/.cache/pip
 

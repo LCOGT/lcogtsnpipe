@@ -152,12 +152,24 @@ if __name__ == "__main__":
                             continue
                         tempnoise0 = imgtemp0.replace('.fits', '.var.fits')
                         outmask0 = imgout0.replace('.fits', '.mask.fits')
-                        artar, hdtar = fits.getdata(_dir+imgtarg0, header=True)
 
                         if os.path.isfile(_dirtemp+imgtemp0.replace('.fits', '.sn2.fits')):
                             hdtempsn = fits.getheader(_dirtemp+imgtemp0.replace('.fits', '.sn2.fits'))
                         else:
                             hdtempsn = {}
+
+                        data_targ, head_targ = fits.getdata(_dir + imgtarg0, header=True)
+                        exp_targ = lsc.util.readkey3(head_targ, 'exptime')
+                        sat_targ = lsc.util.readkey3(head_targ, 'datamax')
+                        gain_targ = lsc.util.readkey3(head_targ, 'gain')
+                        rn_targ = lsc.readkey3(head_targ, 'ron')
+                        max_fwhm = head_targ.get('L1FWHM', 3.0)
+
+                        data_temp, head_temp = fits.getdata(_dir + imgtemp0, header=True)
+                        exp_temp = lsc.util.readkey3(head_temp, 'exptime')
+                        sat_temp = lsc.util.readkey3(head_temp, 'datamax')
+                        gain_temp = lsc.util.readkey3(head_temp, 'gain')
+                        rn_temp = head_temp.get('rdnoise', 1)
 
                         imgtemp = '_temp.fits'
                         imgtarg = '_targ.fits'
@@ -167,17 +179,20 @@ if __name__ == "__main__":
                         tempnoise = 'tempnoise.fits'
 
                         if args.no_iraf:
-                            fits.writeto(imgtarg, artar, hdtar, overwrite=True)
+                            fits.writeto(imgtarg, data_targ, head_targ, overwrite=True)
                             shutil.copy(_dir + targmask0, targmask)
 
-                            temp_reproj, temp_foot = reproject_interp(_dirtemp + imgtemp0, hdtar)
-                            fits.writeto(imgtemp, temp_reproj, hdtar, overwrite=True)
+                            temp_reproj, temp_foot = reproject_interp(_dirtemp + imgtemp0, head_targ)
+                            temp_reproj[temp_foot == 0.] = 0.
+                            fits.writeto(imgtemp, temp_reproj, head_targ, overwrite=True)
 
-                            tempmask_reproj, tempmask_foot = reproject_interp(_dirtemp + tempmask0, hdtar)
-                            fits.writeto(tempmask, tempmask_reproj, hdtar, overwrite=True)
+                            tempmask_reproj, tempmask_foot = reproject_interp(_dirtemp + tempmask0, head_targ)
+                            tempmask_reproj = (tempmask_reproj > 0.) | (temp_foot == 0.)
+                            fits.writeto(tempmask, tempmask_reproj.astype('uint8'), head_targ, overwrite=True)
 
-                            tempnoise_reproj, tempnoise_foot = reproject_interp(_dirtemp + tempnoise0, hdtar)
-                            fits.writeto(tempnoise, tempnoise_reproj, hdtar, overwrite=True)
+                            tempnoise_reproj, tempnoise_foot = reproject_interp(_dirtemp + tempnoise0, head_targ)
+                            tempnoise_reproj[tempmask_reproj] = sat_temp  # ~infinite variance where masked
+                            fits.writeto(tempnoise, tempnoise_reproj, head_targ, overwrite=True)
 
                         else:
                             substamplist, dict = crossmatchtwofiles(_dir + imgtarg0, _dirtemp + imgtemp0, 4)
@@ -193,7 +208,7 @@ if __name__ == "__main__":
                             else:
                                 num = 2
                             np.savetxt('tmpcoo', vector4, fmt='%1s')
-                            iraf.immatch.geomap('tmpcoo', "tmp$db", 1, hdtar['NAXIS1'], 1, hdtar['NAXIS2'],
+                            iraf.immatch.geomap('tmpcoo', "tmp$db", 1, head_targ['NAXIS1'], 1, head_targ['NAXIS2'],
                                                 fitgeom="general", functio="legendre", xxor=num, xyor=num, xxterms="half",
                                                 yxor=num, yyor=num, yxterms="half", calctype="real", inter='No')
 
@@ -230,34 +245,11 @@ if __name__ == "__main__":
                                 iraf.display(_dirtemp + imgtemp0 + '[0]', frame=3, fill='yes')
                                 iraf.display(imgtemp, frame=4, fill='yes')
 
-                        data_targ, head_targ = fits.getdata(imgtarg, header=True)
-                        exp_targ  = lsc.util.readkey3(head_targ, 'exptime')
-                        sat_targ = lsc.util.readkey3(head_targ, 'datamax')
-                        gain_targ = lsc.util.readkey3(head_targ, 'gain')
-                        rn_targ = lsc.readkey3(head_targ,'ron')
-
-                        data_temp, head_temp = fits.getdata(imgtemp, header=True)
-                        exp_temp = lsc.util.readkey3(head_temp, 'exptime')
-                        sat_temp = lsc.util.readkey3(head_temp, 'datamax')
-                        gain_temp = lsc.util.readkey3(head_temp, 'gain')
-
-                        if 'rdnoise' in head_temp:
-                            rn_temp   = head_temp['rdnoise']
-                        else:
-                            rn_temp   = 1
-
-                        if 'L1FWHM' in head_targ: 
-                            max_fwhm = head_targ['L1FWHM']  # to be check
-                        else:                     
-                            max_fwhm = 3.0
-
-                        targmask_data = fits.getdata(targmask)
-
-                        # round all values in template mask up to 1 (unless they are 0)
-                        tempmask_data, tempmask_header = fits.getdata(tempmask, header=True)
-                        tempmask_int = (tempmask_data > 0).astype('uint8')
-                        tempmask_fits = fits.PrimaryHDU(header=tempmask_header, data=tempmask_int)
-                        tempmask_fits.writeto(tempmask, overwrite=True, output_verify='fix')
+                            # round all values in template mask up to 1 (unless they are 0)
+                            tempmask_data, tempmask_header = fits.getdata(tempmask, header=True)
+                            tempmask_int = (tempmask_data > 0).astype('uint8')
+                            tempmask_fits = fits.PrimaryHDU(header=tempmask_header, data=tempmask_int)
+                            tempmask_fits.writeto(tempmask, overwrite=True, output_verify='fix')
 
                         # create the noise images
                         median = np.median(data_targ)
@@ -265,16 +257,17 @@ if __name__ == "__main__":
                         pssl_targ = gain_targ*noise**2 - rn_targ**2/gain_targ - median
                         #noiseimg = (data_targ - median)**2
                         noiseimg = data_targ + pssl_targ + rn_targ**2
+                        targmask_data = fits.getdata(targmask)
                         noiseimg[targmask_data > 0] = sat_targ
                         fits.writeto('targnoise.fits', noiseimg, output_verify='fix', overwrite=True)
 
-#                        print 'variance image already there, do not create noise image'
                         if not os.path.isfile(_dirtemp + tempnoise0):
                             median = np.median(data_temp)
                             noise = 1.4826*np.median(np.abs(data_temp - median))
                             pssl_temp = gain_temp*noise**2 - rn_temp**2/gain_temp - median
                             #noiseimg = (data_temp - median)**2
                             noiseimg = data_temp + pssl_temp + rn_temp**2
+                            tempmask_data = fits.getdata(tempmask)
                             noiseimg[tempmask_data > 0] = sat_temp
                             fits.writeto(tempnoise, noiseimg, output_verify='fix', overwrite=True)
                         else:

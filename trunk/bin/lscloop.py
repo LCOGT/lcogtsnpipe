@@ -12,7 +12,6 @@ import os
 def multi_run_cosmic(args):
     return lsc.myloopdef.run_cosmic(*args)
 
-
 # ###########################################################################
 
 if __name__ == "__main__":   # main program
@@ -109,10 +108,10 @@ if __name__ == "__main__":   # main program
 
     if args.stage == 'diff':
         ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
-                                    'photlco', filetype, args.groupidcode, args.instrument)
+                                    'photlco', filetype, args.groupidcode, args.instrument,'','',None, ars.targetid)
     else:
         ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC, 
-                                    'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
+                                    'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype,None, args.targetid)
     if ll:
         if args.stage != 'merge':
             print '##' * 50

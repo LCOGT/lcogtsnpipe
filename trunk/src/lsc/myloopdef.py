@@ -1694,8 +1694,8 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
         else:
             ll0['ra'] = ll0['ra0']
             ll0['dec'] = ll0['dec0']
-        ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad,
-             int(filetype), _groupid, _instrument, _temptel, _difftype, classid, _targetid)
+
+        ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, int(filetype), _groupid, _instrument, _temptel, _difftype, classid, _targetid)
     else:
         ll = ''
     return ll

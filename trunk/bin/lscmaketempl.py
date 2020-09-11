@@ -23,7 +23,7 @@ if __name__ == "__main__":
                       type='str', help='DEC coordinate \t\t\t %default')
     parser.add_option("-p", "--psf", dest="psf", default='',
                       type='str', help='psf image \t\t\t %default')
-    parser.add_option("--mag", dest="mag", type=float, default=0, help='mag to subtract \t\t [%default]')
+    parser.add_option("--mag", dest="mag", type=float, default=0, help='mag to subtract \t\t [%default] \t instrumental magnitude at 1 seconds (eg psf mag)')
     parser.add_option("-s", "--show", action='store_true', help='Show output \t\t [%default]')
     parser.add_option("-f", "--force", action='store_true', help='force archiving \t\t [%default]')
     parser.add_option("--uncleaned", dest="clean", action='store_false', help='do not use cosmic ray cleaned image \t\t [%default]')
@@ -90,32 +90,29 @@ if __name__ == "__main__":
                     hdr1 = lsc.util.readhdr(re.sub('.fits', '.sn2.fits', img0))
                     _xpos = lsc.util.readkey3(hdr1, 'PSFX1')
                     _ypos = lsc.util.readkey3(hdr1, 'PSFY1')
+                    _exptime = lsc.util.readkey3(hdr1, 'exptime')
+                    print('exptime:', str(_exptime))
                     if _subtract_mag_from_header:
-                        print 'use mag from header'
-                        _exptime = lsc.util.readkey3(hdr1, 'exptime')
-                        _mag = float(lsc.util.readkey3(hdr1, 'PSFMAG1')) + 2.5 * math.log10(float(_exptime))
-                    if 'ZPN' in hdr1.keys():
-                        _ZPN = lsc.util.readkey3(hdr1, 'ZPN')
-                    else:
-                        _ZPN = ''
-                    print 'found fits table'
-                    print 'ZPN:', _ZPN
+                        print('subtract magnitude from header')
+                        if 'PSFMAG1' in hdr1.keys():
+                            _mag = float(lsc.util.readkey3(hdr1, 'PSFMAG1')) #+ 2.5 * math.log10(float(_exptime))
+                        else:
+                            _mag = 0
+                            print('warning: mag not found in the header')
+                        
 
                 #######################  chose mag  ##############
                 if chosemag:
-                    if _ZPN:
-                        print '2 magnitude difference'
-                        _magobj = raw_input('which is the mag of the object  ? ')
-                        if float(_magobj) == 0.0:
-                            _mag = 0.0
+                        _magobj = raw_input('which is the mag of the object  ? ' +str(_mag) + '? ')
+                        if _magobj == '':
+                            _magobj = _mag
                         else:
-                            _mag = float(_magobj) - float(_ZPN)  #+2.5*math.log10(float(_exptime)))
-                    else:
-                        _mag0 = raw_input('which mag do you want to subtract  ' + str(_mag) + ' ? ')
-                        if _mag0:
-                            _mag = float(_mag0)
-                print 'magnitude to be subtracted:', _mag
+                            _mag = float(_magobj) #+ 2.5 * math.log10(float(_exptime))
 
+                if _subtract_mag_from_header or chosemag:
+                    print 'magnitude to be subtracted:', _mag
+                else:
+                    print('do not subtract SN magnitude')
                 #######################  Chose Ra   and    Dec  ##############
                 if chosepos:
                     print 'choose xpos, ypos interactively'

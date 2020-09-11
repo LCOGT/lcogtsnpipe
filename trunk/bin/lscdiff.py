@@ -165,7 +165,7 @@ if __name__ == "__main__":
                         rn_targ = lsc.readkey3(head_targ, 'ron')
                         max_fwhm = head_targ.get('L1FWHM', 3.0)
 
-                        data_temp, head_temp = fits.getdata(_dir + imgtemp0, header=True)
+                        data_temp, head_temp = fits.getdata(_dirtemp + imgtemp0, header=True)
                         exp_temp = lsc.util.readkey3(head_temp, 'exptime')
                         sat_temp = lsc.util.readkey3(head_temp, 'datamax')
                         gain_temp = lsc.util.readkey3(head_temp, 'gain')

@@ -32,9 +32,10 @@ def crossmatch(cat0, cat1, threshold=1., racol0='ra', deccol0='dec', racol1='ra'
     
 def get_image_data(lista, magcol=None, errcol=None, refcat=None):
     filename_equals = ['filename="{}"'.format(os.path.basename(fn).replace('.sn2.fits', '.fits')) for fn in lista]
-    t = Table(lsc.mysqldef.query(['''select filter, filepath, filename, airmass, shortname, dayobs, instrument,
+    t = Table(lsc.mysqldef.query(['''select filter, filepath, filename, airmass, shortname, dayobs, type as instrument, targetid,
                                      zcol1, z1, c1, dz1, dc1, zcol2, z2, c2, dz2, dc2, psfmag, psfdmag, apmag, dapmag
-                                     from photlco left join telescopes on photlco.telescopeid=telescopes.id where ''' + 
+                                     from photlco left join telescopes on photlco.telescopeid=telescopes.id
+                                     left join instruments on photlco.instrumentid=instruments.id where ''' +
                                      ' or '.join(filename_equals)], lsc.conn), masked=True)
     t['filter'] = [lsc.sites.filterst1[filt] for filt in t['filter']]
     if magcol in t.colnames and errcol in t.colnames:
@@ -230,8 +231,8 @@ if __name__ == "__main__":
     if args.stage == 'mag':
         # write mag & dmag to database
         targets['dmag'].mask = targets['mag'].mask
-        query = 'INSERT INTO photlco (filename, mag, dmag) VALUES\n'
-        query += ',\n'.join(['("{}", {}, {})'.format(row['filename'], row['mag'], row['dmag']) for row in targets.filled(9999.)])
+        query = 'INSERT INTO photlco (filename, targetid, mag, dmag) VALUES\n'
+        query += ',\n'.join(['("{}", {}, {}, {})'.format(row['filename'], row['targetid'], row['mag'], row['dmag']) for row in targets.filled(9999.)])
         query += '\nON DUPLICATE KEY UPDATE mag=VALUES(mag), dmag=VALUES(dmag)'
         print query
         lsc.mysqldef.query([query], lsc.conn)

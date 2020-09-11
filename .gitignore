@@ -5,3 +5,7 @@
 .idea/
 .AppleDouble
 trunk/build
+mysql/
+data/
+trunk/build/
+trunk/dist/*egg*

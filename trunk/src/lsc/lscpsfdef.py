@@ -487,6 +487,8 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
             lsc.util.updateheader(img + '.sn2.fits', 0, {'YDIM': (lsc.util.readkey3(hdr, 'naxis2'), 'y number of pixels')})
             lsc.util.updateheader(img + '.sn2.fits', 0,
                                   {'PSF_FWHM': (fwhm * scale, 'FWHM (arcsec) - computed with daophot')})
+        else:  # If make_sn2 = False (i.e. PyZOGY)
+            aperture_correction = 0
         result = 1
 
     except:

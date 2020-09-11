@@ -19,5 +19,5 @@ setup(
                          "standard/cat/*dat","standard/cat/*cat",
                          "standard/cat/sloan/*cat","standard/cat/landolt/*cat","standard/cat/apass/*cat",
                          "standard/cat/sloanprime/*cat","standard/cat/sloannatural/*cat","standard/cat/landoltnatural/*cat",
-                         "standard/sex/*"]}
+                         "standard/sex/*", 'configure']}
 )

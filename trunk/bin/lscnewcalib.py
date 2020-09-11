@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
         _cat = ''
         if _filter in ['u', 'g', 'r', 'i', 'z']:
-            _catalogue = glob.glob(lsc.__path__[0] + '/standard/cat/sloan/' + _object + '*')
+            _catalogue = glob.glob(os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'standard', 'cat', 'sloan', _object + '*'))
             if _catalogue:
                 _sloan = lsc.lscastrodef.readtxt(_catalogue[0])
                 for _id in _sloan:
@@ -188,7 +188,7 @@ if __name__ == "__main__":
                     _apass = vizq(_ra0, _dec0, 'apass', 20)
                     if _apass:   _cat = _apass
         elif _filter in ['U', 'B', 'V', 'R', 'I']:
-            _catalogue = glob.glob(lsc.__path__[0] + '/standard/cat/landolt/' + _object + '*')
+            _catalogue = glob.glob(os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'standard', 'cat', 'landolt', _object + '*'))
             if _catalogue:
                 _landolt = lsc.lscastrodef.readtxt(_catalogue[0])
                 print 'use catalogue from archive for object ' + str(_object)

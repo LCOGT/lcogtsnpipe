@@ -108,7 +108,7 @@ if __name__ == "__main__":   # main program
 
     if args.stage == 'diff':
         ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
-                                    'photlco', filetype, args.groupidcode, args.instrument,'','',None, ars.targetid)
+                                    'photlco', filetype, args.groupidcode, args.instrument,'','',None, args.targetid)
     else:
         ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC, 
                                     'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype,None, args.targetid)

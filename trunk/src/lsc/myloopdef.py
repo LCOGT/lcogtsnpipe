@@ -632,13 +632,14 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             for jj in ll1.keys():
                 ll1[jj] = []
 
-    if _targetid:  # name
+    if _targetid:  # target ID
         ww = np.array([i for i in range(len(ll1['targetid'])) if ((ll1['targetid'][i]==int(_targetid)))])
         if len(ww) > 0:
             for jj in ll1.keys(): 
                 ll1[jj] = np.array(ll1[jj])[ww]
         else:
-            for jj in ll1.keys(): ll1[jj] = []
+            for jj in ll1.keys(): 
+                ll1[jj] = []
 
     if _groupid:
         ww = np.array([i for i in range(len(ll1['filter'])) if ((ll1['groupidcode'][i] != _groupid))])

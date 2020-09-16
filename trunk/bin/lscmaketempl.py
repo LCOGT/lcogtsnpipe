@@ -118,6 +118,7 @@ if __name__ == "__main__":
                     print 'choose xpos, ypos interactively'
                     lsc.util.delete('tmp.log')
                     zz1, zz2, goon = lsc.util.display_image(img, 1, 0, 6000, True)
+                    print '>>> identify target (mark with <a> then press <q>)'
                     iraf.imexamine(wcs='logical', logfile='tmp.log', keeplog=True)
                     xytargets = iraf.fields('tmp.log', '1,2', Stdout=1)
                     _xpos, _ypos = string.split(xytargets[0])[0], string.split(xytargets[0])[1]

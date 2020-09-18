@@ -82,7 +82,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--fixpix", action="store_true", help='Run fixpix on the images before doing image subtraction')
     parser.add_argument("--nstars", type=int, default=6, help="number of stars used to make the PSF")
     parser.add_argument("--minstars", type=int, default=0, help="minimum number of stars matching catalog (-s abscat/local)")
-    parser.add_argument("--difftype", default='', choices=['0', '1', '0,1'], help='Choose hotpants or optimal subtraction; hotpants = 0, difftype = 1, both = 0,1')
+    parser.add_argument("--difftype", type=int, choices=[0, 1], help='Choose hotpants (0) or optimal (1) subtraction')
     parser.add_argument("--multicore", default=8, type=int, help='numbers of cores')
     parser.add_argument("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
     parser.add_argument("--banzai", action="store_true", help="Use souces from BANZAI catalogs stored in image headers for PSF")
@@ -106,12 +106,8 @@ if __name__ == "__main__":   # main program
     
     filters = ','.join(args.filter)
 
-    if args.stage == 'diff':
-        ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
-                                    'photlco', filetype, args.groupidcode, args.instrument,'','',None, args.targetid)
-    else:
-        ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC, 
-                                    'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype,None, args.targetid)
+    ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
+                                'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype, None, args.targetid)
     if ll:
         if args.stage != 'merge':
             print '##' * 50
@@ -230,54 +226,52 @@ if __name__ == "__main__":   # main program
                     field = args.field
                 lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force, args.minstars)
             elif args.stage == 'diff':  #    difference images using hotpants
-                _difftypelist = args.difftype.split(',')
-                for difftype in _difftypelist:
-                    if not args.name and not args.targetid:
-                        raise Exception('you need to select one object: use option -n/--name or --targetid')
-                    if args.telescope=='all':
-                        raise Exception('you need to select one type of instrument -T [fs, fl ,kb]')
-                    
-                    startdate = args.tempdate.split('-')[0]
-                    enddate   = args.tempdate.split('-')[-1]
+                if not args.name and not args.targetid:
+                    raise Exception('you need to select one object: use option -n/--name')
+                if args.telescope=='all':
+                    raise Exception('you need to select one type of instrument -T [fs, fl ,kb]')
+                
+                startdate = args.tempdate.split('-')[0]
+                enddate   = args.tempdate.split('-')[-1]
 
-                    if difftype == '1':
-                        suffix = '.optimal.{}.diff.fits'.format(args.temptel).replace('..', '.')
-                    else:
-                        suffix = '.{}.diff.fits'.format(args.temptel).replace('..', '.')
+                if args.difftype == 1:
+                    suffix = '.optimal.{}.diff.fits'.format(args.temptel).replace('..', '.')
+                else:
+                    suffix = '.{}.diff.fits'.format(args.temptel).replace('..', '.')
 
-                    if args.temptel.upper() in ['SDSS', 'PS1']:
-                        if args.telescope == 'kb':
-                            fake_temptel = 'sbig'
-                        elif args.telescope == 'fs':
-                            fake_temptel = 'spectral'
-                        elif args.telescope == 'fl':
-                            fake_temptel = 'sinistro'
-                        elif args.telescope == 'fa':
-                            fake_temptel = 'sinistro'
-                    elif args.temptel:
-                        fake_temptel = args.temptel
-                    else:
-                        fake_temptel = args.telescope
+                if args.temptel.upper() in ['SDSS', 'PS1']:
+                    if args.telescope == 'kb':
+                        fake_temptel = 'sbig'
+                    elif args.telescope == 'fs':
+                        fake_temptel = 'spectral'
+                    elif args.telescope == 'fl':
+                        fake_temptel = 'sinistro'
+                    elif args.telescope == 'fa':
+                        fake_temptel = 'sinistro'
+                elif args.temptel:
+                    fake_temptel = args.temptel
+                else:
+                    fake_temptel = args.telescope
 
-                    lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', fake_temptel)
-                    if lista:
-                        ll00 = {}
+                lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', fake_temptel)
+                if lista:
+                    ll00 = {}
+                    for jj in lista[0].keys():
+                        ll00[jj] = []
+                    for i in range(0, len(lista)):
                         for jj in lista[0].keys():
-                            ll00[jj] = []
-                        for i in range(0, len(lista)):
-                            for jj in lista[0].keys():
-                                ll00[jj].append(lista[i][jj])
-                        inds = np.argsort(ll00['mjd'])  #  sort by mjd
-                        for i in ll00.keys():
-                            ll00[i] = np.take(ll00[i], inds)
-                        lltemp = lsc.myloopdef.filtralist(ll00, filters, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '', '', '', None, args.targetid)
+                            ll00[jj].append(lista[i][jj])
+                    inds = np.argsort(ll00['mjd'])  #  sort by mjd
+                    for i in ll00.keys():
+                        ll00[i] = np.take(ll00[i], inds)
+                    lltemp = lsc.myloopdef.filtralist(ll00, filters, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '', '', '', None, args.targetid)
 
-                    if not lista or not lltemp:
-                        raise Exception('template not found')
+                if not lista or not lltemp:
+                    raise Exception('template not found')
 
-                    listtemp = np.array([k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])])
+                listtemp = np.array([k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])])
 
-                    lsc.myloopdef.run_diff(listfile, listtemp, args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, difftype, suffix, args.use_mask)
+                lsc.myloopdef.run_diff(listfile, listtemp, args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, args.difftype, suffix, args.use_mask)
             elif args.stage == 'template':
                 lsc.myloopdef.run_template(listfile, args.show, args.force, args.interactive, args.RA, args.DEC, args.psf, args.mag, args.clean, args.subtract_mag_from_header)
             elif args.stage == 'mergeall':  #    merge images using lacos and swarp

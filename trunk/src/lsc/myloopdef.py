@@ -567,13 +567,13 @@ def getcoordfromref(img2, img1, _show, database='photlco'):
     return rasn2c, decsn2c
 
 
-def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype='', classid=None, _targetid=None):
+def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype=None, classid=None, _targetid=None):
     ll1 = {}
     for key in ll2.keys():
         ll1[key] = ll2[key][:]
 
-    if len(_difftype) > 0:
-        ww = np.array([i for i in range(len(ll1['difftype'])) if ((str(ll1['difftype'][i]) in str(_difftype)))])
+    if _filetype == 3 and _difftype is not None:
+        ww = np.array([i for i in range(len(ll1['difftype'])) if ll1['difftype'][i] == _difftype])
         if len(ww) > 0:
             for jj in ll1.keys():
                 ll1[jj] = np.array(ll1[jj])[ww]
@@ -702,8 +702,11 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                             for filepath, filename in zip(ll1['filepath'], ll1['filename'])]
             ww = np.flatnonzero(np.logical_not(maskexists))
         elif _bad == 'diff':
+            include_pattern = '*{}{}.diff.fits'.format('.optimal' if _difftype == 1 else '', '.' + _temptel if _temptel else '*')
+            exclude_pattern = '*.optimal*.diff.fits' if _difftype == 0 else ''
             ww = np.array([i for i, (filepath, filename) in enumerate(zip(ll1['filepath'], ll1['filename']))
-                          if not glob(filepath+filename.replace('.fits', '*.diff.fits'))])
+                           if not (set(glob(filepath + filename.replace('.fits', include_pattern)))
+                                 - set(glob(filepath + filename.replace('.fits', exclude_pattern))))])
         elif _bad == 'mag':
             ww = np.array([i for i in range(len(ll1['mag'])) if (ll1['mag'][i] >= 1000 or ll1[_bad][i] < 0)])
         else:
@@ -1671,7 +1674,8 @@ def process_epoch(epoch):
     return epochs
 
 def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
-             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype='', classid=None, _targetid=None):
+             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype=None, classid=None, _targetid=None):
+
     epochs = process_epoch(epoch)
     lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epochs[0], epochs[-1], '*', _telescope)
     if lista:
@@ -1855,7 +1859,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
     os.system(command)
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype='0', suffix='.diff.fits', use_mask=True):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype=None, suffix='.diff.fits', use_mask=True):
     status = []
     stat = 'psf'
     for img in listtar:
@@ -1892,8 +1896,8 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
         fixpix = ' --fixpix '
     else:
         fixpix = ''
-    if _difftype:
-        difftype = ' --difftype ' + _difftype
+    if _difftype is not None:
+        difftype = ' --difftype ' + str(_difftype)
     else:
         difftype = ''
     if use_mask:

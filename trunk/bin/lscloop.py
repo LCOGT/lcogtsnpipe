@@ -12,7 +12,6 @@ import os
 def multi_run_cosmic(args):
     return lsc.myloopdef.run_cosmic(*args)
 
-
 # ###########################################################################
 
 if __name__ == "__main__":   # main program
@@ -72,6 +71,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--z1", type=float)
     parser.add_argument("--z2", type=float)
     parser.add_argument("--groupidcode", type=int)
+    parser.add_argument("--targetid", default=None,   type=int)
     parser.add_argument("--ps1frames", default='', help='list of ps1 frames (download them manually)')
     parser.add_argument('--zcatold', action='store_true', help='use original zero point and color term routine')
     parser.add_argument("--bgo", default=3., type=float, help=' bgo parameter for hotpants')
@@ -107,7 +107,7 @@ if __name__ == "__main__":   # main program
     filters = ','.join(args.filter)
 
     ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
-                                'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
+                                'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype, None, args.targetid)
     if ll:
         if args.stage != 'merge':
             print '##' * 50
@@ -226,7 +226,7 @@ if __name__ == "__main__":   # main program
                     field = args.field
                 lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force, args.minstars)
             elif args.stage == 'diff':  #    difference images using hotpants
-                if not args.name:
+                if not args.name and not args.targetid:
                     raise Exception('you need to select one object: use option -n/--name')
                 if args.telescope=='all':
                     raise Exception('you need to select one type of instrument -T [fs, fl ,kb]')
@@ -264,7 +264,7 @@ if __name__ == "__main__":   # main program
                     inds = np.argsort(ll00['mjd'])  #  sort by mjd
                     for i in ll00.keys():
                         ll00[i] = np.take(ll00[i], inds)
-                    lltemp = lsc.myloopdef.filtralist(ll00, filters, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '')
+                    lltemp = lsc.myloopdef.filtralist(ll00, filters, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '', '', '', None, args.targetid)
 
                 if not lista or not lltemp:
                     raise Exception('template not found')

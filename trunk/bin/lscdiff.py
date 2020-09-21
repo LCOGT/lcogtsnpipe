@@ -69,7 +69,7 @@ if __name__ == "__main__":
     hotpants.add_argument("--interpolation", dest="interpolation", default='drizzle',
                           choices=['drizzle', 'nearest', 'linear', 'poly3', 'poly5', 'spline3'],
                         help='interpolation algorithm  [drizzle,nearest,linear,poly3,poly5,spline3]\t [%default]')
-    parser.add_argument("--difftype", type=str, default='0', help='Choose hotpants (0) or optimal (1) subtraction \t [%(default)s]')
+    parser.add_argument("--difftype", type=int, choices=[0, 1], default=0, help='Choose hotpants (0) or optimal (1) subtraction \t [%(default)s]')
     parser.add_argument("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
 
     args = parser.parse_args()
@@ -306,7 +306,7 @@ if __name__ == "__main__":
                         else:
                             _afssc = ''
 
-                        if args.difftype == '1':
+                        if args.difftype == 1:
                             #do subtraction
                             iraf.noao()
                             iraf.digiphot()
@@ -433,7 +433,7 @@ if __name__ == "__main__":
                             if not os.path.isfile(dictionary['filepath'] + imgout0) or args.force in ['yes', True]:
                                 os.system('mv -v ' + imgout + ' ' + dictionary['filepath'] + imgout0)
                                 os.system('mv -v ' + imgtemp + ' ' + dictionary['filepath'] + imgout0.replace('.diff.', '.ref.'))
-                                if args.difftype == '1':
+                                if args.difftype == 1:
                                     hdulist = fits.open(imgout.replace('.fits', '.psf.fits'))
                                     imgdata = hdulist[0].data
                                     yctr, xctr = np.array(imgdata.shape) / 2

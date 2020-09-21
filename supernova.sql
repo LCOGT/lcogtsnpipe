@@ -712,6 +712,7 @@ CREATE TABLE `photlco` (
   `dapmag` double DEFAULT '9999' COMMENT 'Aperture magnitude error',
   `limmag` double DEFAULT NULL COMMENT 'Three sigma limiting magnitude of the image as a whole',
   `lastunpacked` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `apercorr` float DEFAULT NULL COMMENT 'Aperture correction to correct psfmag to apmag',
   PRIMARY KEY (`id`),
   UNIQUE KEY `filename` (`filename`),
   KEY `targetid` (`targetid`),

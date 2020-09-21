@@ -87,7 +87,7 @@ if __name__ == "__main__":
                         if catalog:
                             break
             while True:
-                result, fwhm = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
+                result, fwhm, aperture_correction = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
                                                    option.distance, option.interactive, psffun, fixaperture,
                                                    catalog, option.datamin, option.datamax, option.show, make_sn2)
                 print '\n### ' + str(result)

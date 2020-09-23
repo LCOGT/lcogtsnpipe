@@ -215,7 +215,8 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
     return photmag, pst, fitmag
 
 
-def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss', fixaperture=False, _catalog='', _datamin=None, _datamax=None, show=False, make_sn2=True):
+def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss', fixaperture=False, _catalog='', _datamin=None, _datamax=None, show=False, make_sn2=True,
+            max_apercorr=0.1):
     try:
         hdr = lsc.util.readhdr(img + '.fits')
 
@@ -433,8 +434,8 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                 else:
                     dmag[i] = '%6.3f' % (dmag[i])
             # Fail to create a PSF is the aperture correction is too big
-            max_aperture_correction = 0.1 #mag
-            if np.abs(aperture_correction) > max_aperture_correction:
+            max_apercorr = 0.1 #mag
+            if np.abs(aperture_correction) > max_apercorr:
                 result = 0
                 fwhm = 0.0
                 traceback.print_exc()

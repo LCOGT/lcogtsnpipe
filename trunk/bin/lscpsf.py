@@ -41,6 +41,8 @@ if __name__ == "__main__":
                       help="value used to sigma-clip BANZAI sources")
     parser.add_option("--b_crlim", type=float, default=3.0,
                       help="lower limit used to reject CRs identified as BANZAI sources")
+    parser.add_argument("--max_apercorr", type=float, default=0.1, 
+                      help="absolute value of the maximum aperture correction (mag) above which a PSF is marked as bad")
 
     option, args = parser.parse_args()
 
@@ -89,7 +91,7 @@ if __name__ == "__main__":
             while True:
                 result, fwhm, aperture_correction = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
                                                    option.distance, option.interactive, psffun, fixaperture,
-                                                   catalog, option.datamin, option.datamax, option.show, make_sn2)
+                                                   catalog, option.datamin, option.datamax, option.show, make_sn2, max_apercorr=option.max_apercorr)
                 print '\n### ' + str(result)
                 if option.show:
 #                    lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')

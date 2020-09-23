@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import lsc
 from multiprocessing import Pool, cpu_count
 import os
+import warnings
 
 def multi_run_cosmic(args):
     return lsc.myloopdef.run_cosmic(*args)
@@ -53,7 +54,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--catalogue", default='', help="filename of catalog (full path OR ./___apass.cat OR apass/___apass.cat)")
     parser.add_argument("--calib", default='', choices=['sloan', 'natural', 'sloanprime'])
     parser.add_argument("--sigma-clip", default=2., help='number of sigma at which to reject stars for zero point calibration')
-    parser.add_argument("--type", choices=['fit', 'ph', 'mag'], default='fit', help='type of magnitude (PSF, aperture, apparent)')
+    parser.add_argument("--type", choices=['fit', 'ph', 'mag'], default='', help='type of magnitude (PSF, aperture, apparent); default ph for filetype=3 and fit for everything else')
     parser.add_argument("--standard", default='', help='use the zeropoint from this standard')
     parser.add_argument("--xshift", default=0, type=int, help='x-shift in the guess astrometry')
     parser.add_argument("--yshift", default=0, type=int, help='y-shift in the guess astrometry')
@@ -105,6 +106,12 @@ if __name__ == "__main__":   # main program
     else:
         filetype = args.filetype
     
+    #Set aperture photometry as default for difference imaging
+    if filetype == 3 and not args.type:
+        args.type = 'ph'
+    elif not args.type:
+        args.type = 'fit'
+
     filters = ','.join(args.filter)
 
     ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
@@ -218,7 +225,7 @@ if __name__ == "__main__":   # main program
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
                 # Don't allow PSF photometry to be performed on difference images becaues of complications with aperture correction
                 if args.filetype == 3 and args.stage == 'mag' and args.type =='fit':
-                    raise Exception ('Use aperture photometry on difference images (--type ph)')
+                    warnings.warn('Aperture photometry recommended for difference images (--type ph)', UserWarning)
                 if args.catalogue:
                     catalogue = args.catalogue
                 elif args.field:

@@ -41,7 +41,7 @@ if __name__ == "__main__":
                       help="value used to sigma-clip BANZAI sources")
     parser.add_option("--b_crlim", type=float, default=3.0,
                       help="lower limit used to reject CRs identified as BANZAI sources")
-    parser.add_argument("--max_apercorr", type=float, default=0.1, 
+    parser.add_option("--max_apercorr", type=float, default=0.1, 
                       help="absolute value of the maximum aperture correction (mag) above which a PSF is marked as bad")
 
     option, args = parser.parse_args()

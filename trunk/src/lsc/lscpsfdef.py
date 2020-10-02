@@ -251,7 +251,7 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
         print img, fwhm, threshold, scale, xdim
 
         if _datamax is None:
-            _datamax = lsc.util.readkey3(hdr, 'datamax')
+            _datamax = 0.6*lsc.util.readkey3(hdr, 'datamax')
 
         #################################################################################
         ###################        write file to compute psf     _psf.coo    ############

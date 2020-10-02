@@ -251,7 +251,9 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
         print img, fwhm, threshold, scale, xdim
 
         if _datamax is None:
-            _datamax = 0.6*lsc.util.readkey3(hdr, 'datamax')
+            # When a star near saturation is selected as the first PSF star it leads to an incorrect
+            # scaling of the PSF, set this to be siginifantly below saturation
+            _datamax = 0.5*lsc.util.readkey3(hdr, 'datamax') 
 
         #################################################################################
         ###################        write file to compute psf     _psf.coo    ############

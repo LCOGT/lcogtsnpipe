@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import lsc
 from multiprocessing import Pool, cpu_count
 import os
+import warnings
 
 def multi_run_cosmic(args):
     return lsc.myloopdef.run_cosmic(*args)
@@ -53,7 +54,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--catalogue", default='', help="filename of catalog (full path OR ./___apass.cat OR apass/___apass.cat)")
     parser.add_argument("--calib", default='', choices=['sloan', 'natural', 'sloanprime'])
     parser.add_argument("--sigma-clip", default=2., help='number of sigma at which to reject stars for zero point calibration')
-    parser.add_argument("--type", choices=['fit', 'ph', 'mag'], default='fit', help='type of magnitude (PSF, aperture, apparent)')
+    parser.add_argument("--type", choices=['fit', 'ph', 'mag'], default='', help='type of magnitude (PSF, aperture, apparent); default ph for filetype=3 and fit for everything else')
     parser.add_argument("--standard", default='', help='use the zeropoint from this standard')
     parser.add_argument("--xshift", default=0, type=int, help='x-shift in the guess astrometry')
     parser.add_argument("--yshift", default=0, type=int, help='y-shift in the guess astrometry')
@@ -89,6 +90,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--b_sigma", type=float, default=3.0, help="value used to sigma-clip BANZAI sources")
     parser.add_argument("--b_crlim", type=float, default=3.0, help="lower limit used to reject CRs identified as BANZAI sources")
     parser.add_argument("--no_iraf", action="store_true", help="Don't use iraf (currently only option in checkpsf stage)")
+    parser.add_argument("--max_apercorr", type=float, default=0.1, help="absolute value of the maximum aperture correction (mag) above which a PSF is marked as bad")
 
     args = parser.parse_args()
     if args.multicore >= cpu_count():
@@ -104,6 +106,12 @@ if __name__ == "__main__":   # main program
     else:
         filetype = args.filetype
     
+    #Set aperture photometry as default for difference imaging
+    if filetype == 3 and not args.type:
+        args.type = 'ph'
+    elif not args.type:
+        args.type = 'fit'
+
     filters = ','.join(args.filter)
 
     ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
@@ -177,7 +185,8 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type)
             elif args.stage == 'psf':
                 lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,
-                                      'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai, args.b_sigma, args.b_crlim)
+                                      'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai, args.b_sigma, args.b_crlim, 
+                                      max_apercorr=args.max_apercorr)
             elif args.stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], args.RAS, args.DECS, args.xord, args.yord, args.bkg, args.size, args.recenter, args.ref,
                                       args.interactive, args.show, args.force, args.datamax,args.datamin,'photlco',args.RA0,args.DEC0)
@@ -214,6 +223,9 @@ if __name__ == "__main__":   # main program
                     for img in listfile:
                         run_absphot(img)
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
+                # Don't allow PSF photometry to be performed on difference images becaues of complications with aperture correction
+                if args.filetype == 3 and args.stage == 'mag' and args.type =='fit':
+                    warnings.warn('Aperture photometry recommended for difference images (--type ph)', UserWarning)
                 if args.catalogue:
                     catalogue = args.catalogue
                 elif args.field:

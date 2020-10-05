@@ -168,7 +168,34 @@ if __name__ == "__main__":
                     _z1, _z2, goon = lsc.util.display_image(img + '.fits', 1, '', '', True, _xsize=1, _ysize=1)
                 elif _show:
                     _z1, _z2, goon = lsc.util.display_image(img + '.fits', 1, '', '', False)
-                apco0 = lsc.util.readkey3(hdr2, 'APCO')
+                # Read aperture correction that corresponds to PSF used
+                if 'diff' in imglong:
+                    if 'optimal' in imglong: #aperture correction is meaningless for theoretical PyZOGY PSF
+                        apco0 = 0
+                    else: #HOTPANTS difference imaging
+                        if 'CONVOL00' in hdr:
+                            convolve_value = lsc.util.readkey3(hdr, 'CONVOL00')
+                            if convolve_value == 'TEMPLATE': #Read template aperture correction if template PSF is used
+                                try:
+                                    hostname, username, passwd, database = lsc.mysqldef.getconnection('lcogt2')
+                                    conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
+                                except ImportError as e:
+                                    print e
+                                    print 'try running one of these:'
+                                    print 'pip install mysql-python'
+                                    print 'conda install mysql-python'
+                                except Exception as e:
+                                    print e
+                                    print '### warning: problem connecting to the database'
+                                template_filename = hdr['TEMPLATE']
+                                template_db_info = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', str(template_filename), '*')
+                                template_filepath = template_db_info[0]['filepath']  
+                                hdr_apco = lsc.util.readhdr(os.path.join(template_filepath, template_filename.replace('.fits', '.sn2.fits')))
+                            elif convolve_value == 'IMAGE': #Read image aperture correction if image PSF is used
+                                hdr_apco = lsc.util.readhdr(os.path.join(os.path.dirname(imglong), hdr['TARGET'].replace('.fits', '.sn2.fits')))
+                            apco0 = lsc.util.readkey3(hdr_apco, 'APCO')
+                else: #For all non-difference imaging, the sn2 file should correspond to the PSF used filetype 1, 2, and 4
+                    apco0 = lsc.util.readkey3(hdr2, 'APCO')
 
                 if 'PIXSCALE' in hdr2:
                     pixelscale = lsc.util.readkey3(hdr2, 'PIXSCALE')

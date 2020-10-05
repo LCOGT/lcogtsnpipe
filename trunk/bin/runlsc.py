@@ -99,6 +99,7 @@ if __name__ == "__main__":
     else:
         basecmd_tel = basecmd + ' -T ' + args.telescope
         telescopes = [args.telescope]
+    basecmd_tel = basecmd_tel + ' --max_apercorr 2'
     
     logfile = open('lsc.log', 'w')
     #  compute astrometry, when missing, with astrometry.net

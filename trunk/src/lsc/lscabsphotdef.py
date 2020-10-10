@@ -1,6 +1,8 @@
 from scipy.optimize import fsolve # root
 from astropy.io import fits
 from astropy.wcs import WCS
+from astropy.coordinates import SkyCoord
+import astropy.units as u
 import numpy as np
 from scipy import stats, odr
 import matplotlib.pyplot as plt
@@ -1148,3 +1150,25 @@ def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
         print len(t), 'matching objects. Catalog saved to', output
     else:
         print 'No matching objects.'
+#######################################################################
+def gaia2file(ra, dec, width=26., mag1=13., mag2=20., output='gaia.cat'):
+
+    from astroquery.gaia import Gaia
+
+    warnings.simplefilter('ignore')  # suppress a lot of astroquery warnings
+
+    coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree))
+    size = u.Quantity(width, u.arcminute)
+    response = Gaia.query_object_async(coordinate=coord, width=size, height=size)
+
+    response = response[
+            (response['phot_g_mean_mag'] > mag1) &
+            (response['phot_g_mean_mag'] < mag2)
+    ]
+    response['ra'].format ='%16.12f'
+    response['dec'].format = '%16.12f'
+    response['phot_g_mean_mag'].format = '%.2f'
+
+    gaia_cat = response['ra', 'dec', 'source_id', 'phot_g_mean_mag']
+    gaia_cat.write(output, format='ascii.commented_header',
+            delimiter=' ', overwrite=True)

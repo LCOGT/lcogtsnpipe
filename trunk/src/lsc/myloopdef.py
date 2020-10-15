@@ -824,7 +824,7 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
 def get_psf_star_coords(imgfile):
     psf_file = imgfile.replace('.fits', '.psf.fits')
     psf_hdr = fits.getheader(psf_file, 0)
-    i = 0
+    i = 1
     id = []
     x = []
     y = []

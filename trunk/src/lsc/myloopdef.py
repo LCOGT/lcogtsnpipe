@@ -832,6 +832,7 @@ def get_psf_star_coords(imgfile):
         id.append(str(psf_hdr['ID{}'.format(i)]))
         x.append(psf_hdr['X{}'.format(i)])
         y.append(psf_hdr['Y{}'.format(i)])
+        i+=1
     return x, y, id
 
 def checkcat(imglist, database='photlco'):

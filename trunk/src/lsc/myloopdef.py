@@ -817,7 +817,22 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
     ax.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
     ax.set_title(os.path.basename(imgfile))
     fig.tight_layout()
+    psf_star_x, psf_star_y, psf_star_id = get_psf_star_coords(imgfile)
+    ax.plot(psf_star_x, psf_star_y, 'o', mec='c', mfc='none', ls='none')
+    ax.text(psf_star_x, psf_star_y, psf_star_id, color='c')
 
+def get_psf_star_coords(imgfile):
+    psf_file = imgfile.replace('.fits', '.psf.fits')
+    psf_hdr = fits.getheader(psf_file, 0)
+    i = 0
+    id = []
+    x = []
+    y = []
+    while 'X{}'.format(i) in psf_hdr.keys():
+        id.append('ID{}'.format(i))
+        x.append('X{}'.format(i))
+        y.append('Y{}'.format(i))
+    return x, y, id
 
 def checkcat(imglist, database='photlco'):
     plt.ion()

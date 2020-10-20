@@ -805,7 +805,7 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
     fig.clf()
     ax = fig.add_subplot(1, 1, 1)
     norm = ImageNormalize(data, interval=ZScaleInterval())
-    ax.imshow(data, norm=norm, origin='lower')
+    ax.imshow(data, norm=norm, origin='lower', cmap='bone')
     wcs = WCS(hdr)
     if catfile.endswith('fits'):
         cat = Table.read(catfile)
@@ -817,7 +817,24 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
     ax.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
     ax.set_title(os.path.basename(imgfile))
     fig.tight_layout()
+    psf_star_x, psf_star_y, psf_star_id = get_psf_star_coords(imgfile)
+    ax.plot(psf_star_x-1, psf_star_y-1, 'o', mec='c', mfc='none', ls='none') #subtract 1 for iraf --> python indexing
+    for ipsf_star_x, ipsf_star_y, ipsf_star_id in zip(psf_star_x, psf_star_y, psf_star_id):
+        ax.text(ipsf_star_x-1, ipsf_star_y-1, ipsf_star_id, color='c') 
 
+def get_psf_star_coords(imgfile):
+    psf_file = imgfile.replace('.fits', '.psf.fits')
+    psf_hdr = fits.getheader(psf_file, 0)
+    npsfstars = psf_hdr['NPSFSTAR']
+    id = []
+    x = np.empty(npsfstars)
+    y = np.empty(npsfstars)
+    for indx in range(npsfstars):
+        starnum = indx+1
+        id.append(psf_hdr['ID{}'.format(starnum)])
+        x[indx] = psf_hdr['X{}'.format(starnum)]
+        y[indx] = psf_hdr['Y{}'.format(starnum)]
+    return x, y, id
 
 def checkcat(imglist, database='photlco'):
     plt.ion()

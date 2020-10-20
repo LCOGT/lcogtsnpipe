@@ -825,17 +825,15 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
 def get_psf_star_coords(imgfile):
     psf_file = imgfile.replace('.fits', '.psf.fits')
     psf_hdr = fits.getheader(psf_file, 0)
-    i = 1
+    npsfstars = psf_hdr['NPSFSTAR']
     id = []
-    x = []
-    y = []
-    while 'X{}'.format(i) in psf_hdr.keys():
-        id.append(str(psf_hdr['ID{}'.format(i)]))
-        x.append(psf_hdr['X{}'.format(i)])
-        y.append(psf_hdr['Y{}'.format(i)])
-        i+=1
-    x = np.array(x)
-    y = np.array(y)
+    x = np.empty(npsfstars)
+    y = np.empty(npsfstars)
+    for indx in range(npsfstars):
+        starnum = indx+1
+        id.append(psf_hdr['ID{}'.format(starnum)])
+        x[indx] = psf_hdr['X{}'.format(starnum)]
+        y[indx] = psf_hdr['Y{}'.format(starnum)]
     return x, y, id
 
 def checkcat(imglist, database='photlco'):

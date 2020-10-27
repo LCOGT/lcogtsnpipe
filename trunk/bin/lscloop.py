@@ -48,7 +48,8 @@ if __name__ == "__main__":   # main program
     parser.add_argument("-c", "--center", action="store_false", dest='recenter', help='do not recenter')
     parser.add_argument("--unfix", action="store_false", dest='fix', help='use a variable color term')
     parser.add_argument("--cutmag", default=99., type=float, help='magnitude instrumental cut for zeropoint')
-    parser.add_argument("--field", default='', choices=['landolt', 'sloan', 'apass'])
+    parser.add_argument("--field", default='', choices=['landolt', 'sloan', 'apass', 'gaia'],
+            help='note: gaia only functional for psf stage')
     parser.add_argument("--ref", default='', help='get sn position from this file')
     parser.add_argument("--use-sextractor", action="store_true", help="use souces from sextractor for PSF instead of catalog")
     parser.add_argument("--catalogue", default='', help="filename of catalog (full path OR ./___apass.cat OR apass/___apass.cat)")
@@ -184,7 +185,8 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type)
             elif args.stage == 'psf':
-                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,
+                catalogue = lsc.util.getcatalog(args.name, args.field) if args.field else args.catalogue
+                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, catalogue,
                                       'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai, args.b_sigma, args.b_crlim, 
                                       max_apercorr=args.max_apercorr)
             elif args.stage == 'psfmag':

@@ -223,6 +223,10 @@ if __name__ == "__main__":   # main program
                     p.join()
                 else:                    
                     for img in listfile:
+                        if args.field == 'gaia':
+                            print('Cannot use gaia catalog for zcat stage: ' 
+                                  'use apass or sloan instead')
+                            continue
                         run_absphot(img)
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
                 # Don't allow PSF photometry to be performed on difference images becaues of complications with aperture correction

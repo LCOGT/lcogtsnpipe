@@ -83,8 +83,7 @@ if __name__ == "__main__":
                 elif option.catalog:
                     catalog = option.catalog
                 else:
-                    for system in ['sloan', 'apass', 'landolt']:
-                        #catalog = lsc.util.getcatalog(img, system)
+                    for system in ['gaia', 'sloan', 'apass', 'landolt']:
                         catalog = lsc.util.getcatalog(img.split('/')[-1], system)
                         if catalog:
                             break

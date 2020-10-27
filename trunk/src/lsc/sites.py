@@ -32,6 +32,7 @@ for key, val in filterst.items():
 filterst['landolt'] = sum([filterst[f] for f in 'UBVRI'], [])
 filterst['sloan'] = sum([filterst[f] for f in 'ugrizw'], [])
 filterst['apass'] = sum([filterst[f] for f in 'BVgriw'], [])
+filterst['gaia'] = sum([filterst[f] for f in filterst.keys()], [])
 filterst[''] = filterst['landolt'] + filterst['sloan']
 
 def chosecolor(allfilter, usegood=False):

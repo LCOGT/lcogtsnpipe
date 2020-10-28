@@ -1151,15 +1151,16 @@ def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
     else:
         print 'No matching objects.'
 #######################################################################
-def gaia2file(ra, dec, width=26., mag1=13., mag2=20., output='gaia.cat'):
+def gaia2file(ra, dec, size=26., mag1=13., mag2=20., output='gaia.cat'):
 
     from astroquery.gaia import Gaia
 
     warnings.simplefilter('ignore')  # suppress a lot of astroquery warnings
 
     coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree))
-    size = u.Quantity(width, u.arcminute)
-    response = Gaia.query_object_async(coordinate=coord, width=size, height=size)
+    height = u.Quantity(size, u.arcminute)
+    width  = u.Quantity(size/np.cos(dec*np.pi/180.), u.arcminute)
+    response = Gaia.query_object_async(coordinate=coord, width=width, height=height)
 
     response = response[
             (response['phot_g_mean_mag'] > mag1) &

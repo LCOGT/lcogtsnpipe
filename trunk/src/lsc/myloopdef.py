@@ -915,7 +915,7 @@ def checkpsf(imglist, no_iraf=False, database='photlco'):
                         print 'updatestatus bad quality'
                         lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
         elif status == 0:
-            print 'status ' + str(status) + ': WCS stage not done'
+            print 'status ' + str(status) + ': PSF stage not done'
         elif status == -1:
             print 'status ' + str(status) + ': sn2.fits file not found'
         elif status == -2:

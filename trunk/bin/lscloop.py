@@ -91,6 +91,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--b_crlim", type=float, default=3.0, help="lower limit used to reject CRs identified as BANZAI sources")
     parser.add_argument("--no_iraf", action="store_true", help="Don't use iraf (currently only option in checkpsf stage)")
     parser.add_argument("--max_apercorr", type=float, default=0.1, help="absolute value of the maximum aperture correction (mag) above which a PSF is marked as bad")
+    parser.add_argument("--uploadtosnex2", action="store_true", help="Upload the selected data points to SNEx2")
 
     args = parser.parse_args()
     if args.multicore >= cpu_count():
@@ -182,7 +183,7 @@ if __name__ == "__main__":   # main program
                 query = 'update photlco set lastunpacked=NULL where filename="' + '" or filename="'.join(packed) + '"'
                 lsc.mysqldef.query([query], lsc.conn)
             elif args.stage == 'getmag':  # get final magnitude from mysql
-                lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type)
+                lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type, args.uploadtosnex2)
             elif args.stage == 'psf':
                 lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,
                                       'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai, args.b_sigma, args.b_crlim, 

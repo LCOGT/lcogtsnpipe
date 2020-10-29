@@ -1,4 +1,5 @@
 import os
+from os.path import splitext
 import lsc
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,7 +36,7 @@ except Exception as e:
     print e
     print '### warning: problem connecting to the database'
 
-def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10, magtype='mag', database='photlco'):
+def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10, magtype='mag', snex2_upload=False, database='photlco'):
     if len(imglist)==0:
         print 'error: no images selected'
         return
@@ -70,6 +71,11 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                 magtype.append(ggg[0]['magtype'])
                 if tel[-1] not in setup:  setup[tel[-1]] = {}
                 if filt[-1] not in setup[tel[-1]]:  setup[tel[-1]][filt[-1]] = {}
+
+                # These three things should be the same for all the images in imglist
+                ftype = ggg[0]['filetype']
+                dtype = ggg[0]['difftype']
+                targetid = ggg[0]['targetid']
 
     tables = []
     for _tel in setup:
@@ -146,6 +152,48 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     output_table['dmag'].format = '%.4f'
     if _output:
         output_table.write(_output, format='ascii')
+        if snex2_upload:
+            ### Make it snex2 readable
+            os.system('format_snex2.py -n ' + _output)
+            snex2_filename = splitext(_output)[0] + '_snex2' + splitext(_output)[1]
+
+            upload_extras = {
+                'reduction_type': 'manual',
+                'instrument': 'LCO'
+            }
+            if mtype == 'psfmag':
+                upload_extras['photometry_type'] = 'PSF'
+            elif mtype == 'apmag':
+                upload_extras['photometry_type'] = 'Aperture'
+            if int(ftype)==3:
+                upload_extras['background_subtracted'] = True
+                if int(dtype)==0:
+                    upload_extras['subtraction_algorithm'] = 'Hotpants'
+                else:
+                    upload_extras['subtraction_algorithm'] = 'PyZOGY'
+
+                template_source = raw_input('Please enter the source of the template used to perform background subtraction (i.e. LCO or SDSS): ')
+                upload_extras['template_source'] = template_source
+
+            ### Prompt user for inputs for a few upload extras
+            reducer_group = raw_input('Please enter the group reducing this data (i.e. LCO, UC Davis, etc.): ')
+            if reducer_group!='LCO':
+                upload_extras['reducer_group'] = reducer_group
+
+            final_photometry = raw_input('Is this reduction final? [y/n]')
+            if final_photometry == 'y':
+                upload_extras['final_reduction'] = True
+            else:
+                upload_extras['final_reduction'] = False
+            used_in = raw_input('Is this paper used in a paper? If so, please enter the last name of the first author: ')
+            if used_in:
+                upload_extras['used_in'] = used_in
+
+            print(upload_extras)
+            ### Upload to snex2
+            # Need username and password
+            # Send the request like r = requests.post(snex2_url, data={'target': targetid, 'data_product_type': 'photometry', 'group': list_of_groups}, json=upload_extras, files={'file': (snex2_file, open(path_to_snex2_file, 'rb'))}, auth=(username, password))
+            
     else:
         output_table.pprint(max_lines=-1)
 

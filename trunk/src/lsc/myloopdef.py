@@ -467,11 +467,8 @@ def checkstage(img, stage, database='photlco'):
             status = 1  # mag should be replaced with 'cat'
         else:
             status = 2
-    elif stage == 'checkpsf' and status >= -1 and ggg[0]['wcs'] == 0:
-        if ggg[0]['psf'] == 'X':
-            status = 1
-        else:
-            status = 2
+    elif stage == 'checkpsf' and status >= 0 and ggg[0]['psf'] != 'X' and ggg[0]['wcs'] == 0:
+        status = 1
     elif stage == 'checkmag' and status >= 0 and ggg[0]['psf'] != 'X' and ggg[0]['wcs'] == 0:
         if ggg[0]['psfmag'] == 9999:
             status = 1
@@ -918,7 +915,7 @@ def checkpsf(imglist, no_iraf=False, database='photlco'):
                         print 'updatestatus bad quality'
                         lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
         elif status == 0:
-            print 'status ' + str(status) + ': WCS stage not done'
+            print 'status ' + str(status) + ': PSF stage not done'
         elif status == -1:
             print 'status ' + str(status) + ': sn2.fits file not found'
         elif status == -2:

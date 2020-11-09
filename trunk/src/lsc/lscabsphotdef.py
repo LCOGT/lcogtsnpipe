@@ -1151,7 +1151,7 @@ def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
     else:
         print 'No matching objects.'
 #######################################################################
-def gaia2file(ra, dec, width=26., mag1=13., mag2=19., output='gaia.cat'):
+def gaia2file(ra, dec, size=26., mag1=13., mag2=19., output='gaia.cat'):
 
     from astroquery.gaia import Gaia
 

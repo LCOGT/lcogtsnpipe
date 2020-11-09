@@ -1151,7 +1151,7 @@ def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
     else:
         print 'No matching objects.'
 #######################################################################
-def gaia2file(ra, dec, width=26., mag1=13., mag2=20., output='gaia.cat'):
+def gaia2file(ra, dec, width=26., mag1=13., mag2=19., output='gaia.cat'):
 
     from astroquery.gaia import Gaia
 
@@ -1163,7 +1163,8 @@ def gaia2file(ra, dec, width=26., mag1=13., mag2=20., output='gaia.cat'):
 
     response = response[
             (response['phot_g_mean_mag'] > mag1) &
-            (response['phot_g_mean_mag'] < mag2)
+            (response['phot_g_mean_mag'] < mag2) &
+            (response['parallax'] > 0)  # ignore extragalactic sources
     ]
     response['ra'].format ='%16.12f'
     response['dec'].format = '%16.12f'

@@ -8,10 +8,10 @@ from datetime import datetime, timedelta
 import lsc
 from multiprocessing import Pool, cpu_count
 import os
+import warnings
 
 def multi_run_cosmic(args):
     return lsc.myloopdef.run_cosmic(*args)
-
 
 # ###########################################################################
 
@@ -54,7 +54,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--catalogue", default='', help="filename of catalog (full path OR ./___apass.cat OR apass/___apass.cat)")
     parser.add_argument("--calib", default='', choices=['sloan', 'natural', 'sloanprime'])
     parser.add_argument("--sigma-clip", default=2., help='number of sigma at which to reject stars for zero point calibration')
-    parser.add_argument("--type", choices=['fit', 'ph', 'mag'], default='fit', help='type of magnitude (PSF, aperture, apparent)')
+    parser.add_argument("--type", choices=['fit', 'ph', 'mag'], default='', help='type of magnitude (PSF, aperture, apparent); default ph for filetype=3 and fit for everything else')
     parser.add_argument("--standard", default='', help='use the zeropoint from this standard')
     parser.add_argument("--xshift", default=0, type=int, help='x-shift in the guess astrometry')
     parser.add_argument("--yshift", default=0, type=int, help='y-shift in the guess astrometry')
@@ -72,6 +72,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--z1", type=float)
     parser.add_argument("--z2", type=float)
     parser.add_argument("--groupidcode", type=int)
+    parser.add_argument("--targetid", default=None,   type=int)
     parser.add_argument("--ps1frames", default='', help='list of ps1 frames (download them manually)')
     parser.add_argument('--zcatold', action='store_true', help='use original zero point and color term routine')
     parser.add_argument("--bgo", default=3., type=float, help=' bgo parameter for hotpants')
@@ -82,13 +83,14 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--fixpix", action="store_true", help='Run fixpix on the images before doing image subtraction')
     parser.add_argument("--nstars", type=int, default=6, help="number of stars used to make the PSF")
     parser.add_argument("--minstars", type=int, default=0, help="minimum number of stars matching catalog (-s abscat/local)")
-    parser.add_argument("--difftype", default='', choices=['0', '1', '0,1'], help='Choose hotpants or optimal subtraction; hotpants = 0, difftype = 1, both = 0,1')
+    parser.add_argument("--difftype", type=int, choices=[0, 1], help='Choose hotpants (0) or optimal (1) subtraction')
     parser.add_argument("--multicore", default=8, type=int, help='numbers of cores')
     parser.add_argument("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
     parser.add_argument("--banzai", action="store_true", help="Use souces from BANZAI catalogs stored in image headers for PSF")
     parser.add_argument("--b_sigma", type=float, default=3.0, help="value used to sigma-clip BANZAI sources")
     parser.add_argument("--b_crlim", type=float, default=3.0, help="lower limit used to reject CRs identified as BANZAI sources")
     parser.add_argument("--no_iraf", action="store_true", help="Don't use iraf (currently only option in checkpsf stage)")
+    parser.add_argument("--max_apercorr", type=float, default=0.1, help="absolute value of the maximum aperture correction (mag) above which a PSF is marked as bad")
 
     args = parser.parse_args()
     if args.multicore >= cpu_count():
@@ -104,14 +106,16 @@ if __name__ == "__main__":   # main program
     else:
         filetype = args.filetype
     
+    #Set aperture photometry as default for difference imaging
+    if filetype == 3 and not args.type:
+        args.type = 'ph'
+    elif not args.type:
+        args.type = 'fit'
+
     filters = ','.join(args.filter)
 
-    if args.stage == 'diff':
-        ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
-                                    'photlco', filetype, args.groupidcode, args.instrument)
-    else:
-        ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC, 
-                                    'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype)
+    ll = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, args.bad, args.name, args.id, args.RA, args.DEC,
+                                'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype, None, args.targetid)
     if ll:
         if args.stage != 'merge':
             print '##' * 50
@@ -181,7 +185,8 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type)
             elif args.stage == 'psf':
                 lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,
-                                      'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai, args.b_sigma, args.b_crlim)
+                                      'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai, args.b_sigma, args.b_crlim, 
+                                      max_apercorr=args.max_apercorr)
             elif args.stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], args.RAS, args.DECS, args.xord, args.yord, args.bkg, args.size, args.recenter, args.ref,
                                       args.interactive, args.show, args.force, args.datamax,args.datamin,'photlco',args.RA0,args.DEC0)
@@ -218,6 +223,9 @@ if __name__ == "__main__":   # main program
                     for img in listfile:
                         run_absphot(img)
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
+                # Don't allow PSF photometry to be performed on difference images becaues of complications with aperture correction
+                if args.filetype == 3 and args.stage == 'mag' and args.type =='fit':
+                    warnings.warn('Aperture photometry recommended for difference images (--type ph)', UserWarning)
                 if args.catalogue:
                     catalogue = args.catalogue
                 elif args.field:
@@ -230,54 +238,52 @@ if __name__ == "__main__":   # main program
                     field = args.field
                 lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force, args.minstars)
             elif args.stage == 'diff':  #    difference images using hotpants
-                _difftypelist = args.difftype.split(',')
-                for difftype in _difftypelist:
-                    if not args.name:
-                        raise Exception('you need to select one object: use option -n/--name')
-                    if args.telescope=='all':
-                        raise Exception('you need to select one type of instrument -T [fs, fl ,kb]')
-                    
-                    startdate = args.tempdate.split('-')[0]
-                    enddate   = args.tempdate.split('-')[-1]
+                if not args.name and not args.targetid:
+                    raise Exception('you need to select one object: use option -n/--name')
+                if args.telescope=='all':
+                    raise Exception('you need to select one type of instrument -T [fs, fl ,kb]')
+                
+                startdate = args.tempdate.split('-')[0]
+                enddate   = args.tempdate.split('-')[-1]
 
-                    if difftype == '1':
-                        suffix = '.optimal.{}.diff.fits'.format(args.temptel).replace('..', '.')
-                    else:
-                        suffix = '.{}.diff.fits'.format(args.temptel).replace('..', '.')
+                if args.difftype == 1:
+                    suffix = '.optimal.{}.diff.fits'.format(args.temptel).replace('..', '.')
+                else:
+                    suffix = '.{}.diff.fits'.format(args.temptel).replace('..', '.')
 
-                    if args.temptel.upper() in ['SDSS', 'PS1']:
-                        if args.telescope == 'kb':
-                            fake_temptel = 'sbig'
-                        elif args.telescope == 'fs':
-                            fake_temptel = 'spectral'
-                        elif args.telescope == 'fl':
-                            fake_temptel = 'sinistro'
-                        elif args.telescope == 'fa':
-                            fake_temptel = 'sinistro'
-                    elif args.temptel:
-                        fake_temptel = args.temptel
-                    else:
-                        fake_temptel = args.telescope
+                if args.temptel.upper() in ['SDSS', 'PS1']:
+                    if args.telescope == 'kb':
+                        fake_temptel = 'sbig'
+                    elif args.telescope == 'fs':
+                        fake_temptel = 'spectral'
+                    elif args.telescope == 'fl':
+                        fake_temptel = 'sinistro'
+                    elif args.telescope == 'fa':
+                        fake_temptel = 'sinistro'
+                elif args.temptel:
+                    fake_temptel = args.temptel
+                else:
+                    fake_temptel = args.telescope
 
-                    lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', fake_temptel)
-                    if lista:
-                        ll00 = {}
+                lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', fake_temptel)
+                if lista:
+                    ll00 = {}
+                    for jj in lista[0].keys():
+                        ll00[jj] = []
+                    for i in range(0, len(lista)):
                         for jj in lista[0].keys():
-                            ll00[jj] = []
-                        for i in range(0, len(lista)):
-                            for jj in lista[0].keys():
-                                ll00[jj].append(lista[i][jj])
-                        inds = np.argsort(ll00['mjd'])  #  sort by mjd
-                        for i in ll00.keys():
-                            ll00[i] = np.take(ll00[i], inds)
-                        lltemp = lsc.myloopdef.filtralist(ll00, filters, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '')
+                            ll00[jj].append(lista[i][jj])
+                    inds = np.argsort(ll00['mjd'])  #  sort by mjd
+                    for i in ll00.keys():
+                        ll00[i] = np.take(ll00[i], inds)
+                    lltemp = lsc.myloopdef.filtralist(ll00, filters, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '', '', '', None, args.targetid)
 
-                    if not lista or not lltemp:
-                        raise Exception('template not found')
+                if not lista or not lltemp:
+                    raise Exception('template not found')
 
-                    listtemp = np.array([k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])])
+                listtemp = np.array([k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])])
 
-                    lsc.myloopdef.run_diff(listfile, listtemp, args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, difftype, suffix, args.use_mask, args.no_iraf)
+                lsc.myloopdef.run_diff(listfile, listtemp, args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, args.difftype, suffix, args.use_mask, args.no_iraf)
             elif args.stage == 'template':
                 lsc.myloopdef.run_template(listfile, args.show, args.force, args.interactive, args.RA, args.DEC, args.psf, args.mag, args.clean, args.subtract_mag_from_header)
             elif args.stage == 'mergeall':  #    merge images using lacos and swarp

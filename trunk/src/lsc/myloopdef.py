@@ -226,7 +226,7 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
 
 def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, fix=True,
             catalog='', database='photlco', use_sextractor=False, datamin=None, datamax=None, 
-            nstars=6, banzai=False, b_sigma=3.0, b_crlim=3.0):
+            nstars=6, banzai=False, b_sigma=3.0, b_crlim=3.0, max_apercorr=0.1):
     for img in imglist:
         if interactive:
             ii = '-i'
@@ -269,7 +269,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
         else:
             dmax = ' '
         pp = ' -p ' + str(nstars) + ' '
-
+        add_max_apercorr = ' --max_apercorr {}'.format(max_apercorr)
         status = checkstage(img, 'psf')
         print 'status= ',status
         if status == 1:
@@ -325,7 +325,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                         raise Exception('fits table not there, run psf for ' + sntable)
             else: # PyZOGY difference images or unsubtracted images
                 command = 'lscpsf.py ' + _dir + img + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
-                    treshold) + gg + cc + xx + dmin + dmax + pp + bz
+                    treshold) + gg + cc + xx + dmin + dmax + pp + bz + add_max_apercorr
                 print command
                 os.system(command)
         elif status == 0:
@@ -467,11 +467,8 @@ def checkstage(img, stage, database='photlco'):
             status = 1  # mag should be replaced with 'cat'
         else:
             status = 2
-    elif stage == 'checkpsf' and status >= -1 and ggg[0]['wcs'] == 0:
-        if ggg[0]['psf'] == 'X':
-            status = 1
-        else:
-            status = 2
+    elif stage == 'checkpsf' and status >= 0 and ggg[0]['psf'] != 'X' and ggg[0]['wcs'] == 0:
+        status = 1
     elif stage == 'checkmag' and status >= 0 and ggg[0]['psf'] != 'X' and ggg[0]['wcs'] == 0:
         if ggg[0]['psfmag'] == 9999:
             status = 1
@@ -567,13 +564,13 @@ def getcoordfromref(img2, img1, _show, database='photlco'):
     return rasn2c, decsn2c
 
 
-def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype='', classid=None):
+def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid='', _instrument='', _temptel='', _difftype=None, classid=None, _targetid=None):
     ll1 = {}
     for key in ll2.keys():
         ll1[key] = ll2[key][:]
 
-    if len(_difftype) > 0:
-        ww = np.array([i for i in range(len(ll1['difftype'])) if ((str(ll1['difftype'][i]) in str(_difftype)))])
+    if _filetype == 3 and _difftype is not None:
+        ww = np.array([i for i in range(len(ll1['difftype'])) if ll1['difftype'][i] == _difftype])
         if len(ww) > 0:
             for jj in ll1.keys():
                 ll1[jj] = np.array(ll1[jj])[ww]
@@ -631,6 +628,16 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
         else:
             for jj in ll1.keys():
                 ll1[jj] = []
+
+    if _targetid:  # target ID
+        ww = np.array([i for i in range(len(ll1['targetid'])) if ((ll1['targetid'][i]==int(_targetid)))])
+        if len(ww) > 0:
+            for jj in ll1.keys(): 
+                ll1[jj] = np.array(ll1[jj])[ww]
+        else:
+            for jj in ll1.keys(): 
+                ll1[jj] = []
+
     if _groupid:
         ww = np.array([i for i in range(len(ll1['filter'])) if ((ll1['groupidcode'][i] != _groupid))])
         if len(ww) > 0:
@@ -692,8 +699,11 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                             for filepath, filename in zip(ll1['filepath'], ll1['filename'])]
             ww = np.flatnonzero(np.logical_not(maskexists))
         elif _bad == 'diff':
+            include_pattern = '*{}{}.diff.fits'.format('.optimal' if _difftype == 1 else '', '.' + _temptel if _temptel else '*')
+            exclude_pattern = '*.optimal*.diff.fits' if _difftype == 0 else ''
             ww = np.array([i for i, (filepath, filename) in enumerate(zip(ll1['filepath'], ll1['filename']))
-                          if not glob(filepath+filename.replace('.fits', '*.diff.fits'))])
+                           if not (set(glob(filepath + filename.replace('.fits', include_pattern)))
+                                 - set(glob(filepath + filename.replace('.fits', exclude_pattern))))])
         elif _bad == 'mag':
             ww = np.array([i for i in range(len(ll1['mag'])) if (ll1['mag'][i] >= 1000 or ll1[_bad][i] < 0)])
         else:
@@ -792,7 +802,7 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
     fig.clf()
     ax = fig.add_subplot(1, 1, 1)
     norm = ImageNormalize(data, interval=ZScaleInterval())
-    ax.imshow(data, norm=norm, origin='lower')
+    ax.imshow(data, norm=norm, origin='lower', cmap='bone')
     wcs = WCS(hdr)
     if catfile.endswith('fits'):
         cat = Table.read(catfile)
@@ -804,7 +814,24 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
     ax.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
     ax.set_title(os.path.basename(imgfile))
     fig.tight_layout()
+    psf_star_x, psf_star_y, psf_star_id = get_psf_star_coords(imgfile)
+    ax.plot(psf_star_x-1, psf_star_y-1, 'o', mec='c', mfc='none', ls='none') #subtract 1 for iraf --> python indexing
+    for ipsf_star_x, ipsf_star_y, ipsf_star_id in zip(psf_star_x, psf_star_y, psf_star_id):
+        ax.text(ipsf_star_x-1, ipsf_star_y-1, ipsf_star_id, color='c') 
 
+def get_psf_star_coords(imgfile):
+    psf_file = imgfile.replace('.fits', '.psf.fits')
+    psf_hdr = fits.getheader(psf_file, 0)
+    npsfstars = psf_hdr['NPSFSTAR']
+    id = []
+    x = np.empty(npsfstars)
+    y = np.empty(npsfstars)
+    for indx in range(npsfstars):
+        starnum = indx+1
+        id.append(psf_hdr['ID{}'.format(starnum)])
+        x[indx] = psf_hdr['X{}'.format(starnum)]
+        y[indx] = psf_hdr['Y{}'.format(starnum)]
+    return x, y, id
 
 def checkcat(imglist, database='photlco'):
     plt.ion()
@@ -888,7 +915,7 @@ def checkpsf(imglist, no_iraf=False, database='photlco'):
                         print 'updatestatus bad quality'
                         lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
         elif status == 0:
-            print 'status ' + str(status) + ': WCS stage not done'
+            print 'status ' + str(status) + ': PSF stage not done'
         elif status == -1:
             print 'status ' + str(status) + ': sn2.fits file not found'
         elif status == -2:
@@ -1669,7 +1696,8 @@ def process_epoch(epoch):
     return epochs
 
 def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id='', _ra='', _dec='', database='photlco',
-             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype='', classid=None):
+             filetype=1, _groupid=None, _instrument='', _temptel='', _difftype=None, classid=None, _targetid=None):
+
     epochs = process_epoch(epoch)
     lista = lsc.mysqldef.getlistfromraw(conn, database, 'dayobs', epochs[0], epochs[-1], '*', _telescope)
     if lista:
@@ -1693,8 +1721,8 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
         else:
             ll0['ra'] = ll0['ra0']
             ll0['dec'] = ll0['dec0']
-        ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad,
-             int(filetype), _groupid, _instrument, _temptel, _difftype, classid)
+
+        ll = lsc.myloopdef.filtralist(ll0, _filter, _id, _name, _ra, _dec, _bad, int(filetype), _groupid, _instrument, _temptel, _difftype, classid, _targetid)
     else:
         ll = ''
     return ll
@@ -1853,7 +1881,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
     os.system(command)
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype='0', suffix='.diff.fits', use_mask=True, no_iraf=False):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype=None, suffix='.diff.fits', use_mask=True, no_iraf=False):
     status = []
     stat = 'psf'
     for img in listtar:
@@ -1890,8 +1918,8 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
         fixpix = ' --fixpix '
     else:
         fixpix = ''
-    if _difftype:
-        difftype = ' --difftype ' + _difftype
+    if _difftype is not None:
+        difftype = ' --difftype ' + str(_difftype)
     else:
         difftype = ''
     if use_mask:

@@ -250,7 +250,9 @@ if __name__ == "__main__":
                         if noiseimg.size == targmask_data.size:
                             noiseimg[targmask_data > 0] = sat_targ
                         else:
-                            warnings.warn('Target noise image and mask are difference sizes ({} vs {}, moving onto the next image'.format(noiseimg.shape, targmask_data.shape))
+                            warning = 'Target noise image and mask are difference sizes ({} vs {}), moving onto the next image'.format(noiseimg.shape, targmask_data.shape)
+                            warnings.warn(warning)
+                            os.system('echo -e "{}:\n{}" | mailx -s "Wrong Size Mask Warning" sne@lco.global'.format(warning, imgtarg0))
                             continue
                         fits.writeto('targnoise.fits', noiseimg, output_verify='fix', overwrite=True)
 
@@ -264,7 +266,9 @@ if __name__ == "__main__":
                             if noiseimg.size == tempmask_data.size:
                                 noiseimg[tempmask_data > 0] = sat_temp
                             else:
-                                warnings.warn('Template noise image and mask are different sizes ({} vs {}), moving onto next image'.format(noiseimg.shape, tempmask_data.shape))
+                                warning = 'Template noise image and mask are different sizes ({} vs {}), moving onto next image'.format(noiseimg.shape, tempmask_data.shape)
+                                warnings.warn(warning)
+                                os.system('echo -e "{}:\n{}" | mailx -s "Wrong Size Mask Warning" sne@lco.global'.format(warning, imgtemp0))
                                 continue
                             fits.writeto('tempnoise.fits', noiseimg, output_verify='fix', overwrite=True)
                         else:

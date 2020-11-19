@@ -190,9 +190,10 @@ if __name__ == "__main__":
                             tempmask_reproj = (tempmask_reproj > 0.) | (temp_foot == 0.)
                             fits.writeto(tempmask, tempmask_reproj.astype('uint8'), head_targ, overwrite=True)
 
-                            tempnoise_reproj, tempnoise_foot = reproject_interp(_dirtemp + tempnoise0, head_targ)
-                            tempnoise_reproj[tempmask_reproj] = sat_temp  # ~infinite variance where masked
-                            fits.writeto(tempnoise, tempnoise_reproj, head_targ, overwrite=True)
+                            if os.path.isfile(_dirtemp + tempnoise0):
+                                tempnoise_reproj, tempnoise_foot = reproject_interp(_dirtemp + tempnoise0, head_targ)
+                                tempnoise_reproj[tempmask_reproj] = sat_temp  # ~infinite variance where masked
+                                fits.writeto(tempnoise, tempnoise_reproj, head_targ, overwrite=True)
 
                         else:
                             substamplist, dict = crossmatchtwofiles(_dir + imgtarg0, _dirtemp + imgtemp0, 4)
@@ -233,7 +234,7 @@ if __name__ == "__main__":
                                 iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
                                                    interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
-                            if os.path.isfile(_dirtemp + imgtemp0.replace('.fits','.var.fits')):
+                            if os.path.isfile(_dirtemp + tempnoise0):
                                 print 'variance image already there, do not create noise image'
                                 iraf.immatch.gregister(_dirtemp + tempnoise0, tempnoise, "tmp$db", "tmpcoo", geometr="geometric",
                                                    interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')

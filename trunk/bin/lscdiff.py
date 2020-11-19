@@ -10,6 +10,9 @@ import numpy as np
 from argparse import ArgumentParser
 from PyZOGY.subtract import run_subtraction
 from pyraf import iraf
+from reproject import reproject_interp
+import shutil
+
 
 def crossmatchtwofiles(img1, img2, radius=3):
     ''' This module is crossmatch two images:
@@ -72,6 +75,8 @@ if __name__ == "__main__":
                         help='interpolation algorithm  [drizzle,nearest,linear,poly3,poly5,spline3]\t [%default]')
     parser.add_argument("--difftype", type=int, choices=[0, 1], default=0, help='Choose hotpants (0) or optimal (1) subtraction \t [%(default)s]')
     parser.add_argument("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
+    parser.add_argument("--no-iraf", action='store_true', help='transform images in Python instead of IRAF'
+                                                               '(IRAF is still used for fixpix if run with --fixpix)')
 
     args = parser.parse_args()
     imglisttar = lsc.util.readlist(args.targlist)
@@ -146,107 +151,114 @@ if __name__ == "__main__":
                         if not os.path.isfile(_dirtemp + tempmask0):
                             print "no cosmic ray mask for template image, run 'lscloop.py -s cosmic' first"
                             continue
+                        tempnoise0 = imgtemp0.replace('.fits', '.var.fits')
                         outmask0 = imgout0.replace('.fits', '.mask.fits')
-                        artar, hdtar = fits.getdata(_dir+imgtarg0, header=True)
 
                         if os.path.isfile(_dirtemp+imgtemp0.replace('.fits', '.sn2.fits')):
                             hdtempsn = fits.getheader(_dirtemp+imgtemp0.replace('.fits', '.sn2.fits'))
                         else:
                             hdtempsn = {}
 
-                        ##########################################################
-                        substamplist, dict = crossmatchtwofiles(_dir + imgtarg0, _dirtemp + imgtemp0, 4)
-                        xra1, xdec1, xra2, xdec2, xpix1, ypix1, xpix2, ypix2 = dict['ra1'], dict['dec1'], dict['ra2'], \
-                                                                               dict['dec2'], dict['xpix1'], \
-                                                                               dict['ypix1'], dict['xpix2'], \
-                                                                               dict['ypix2']
+                        data_targ, head_targ = fits.getdata(_dir + imgtarg0, header=True)
+                        exp_targ = lsc.util.readkey3(head_targ, 'exptime')
+                        sat_targ = lsc.util.readkey3(head_targ, 'datamax')
+                        gain_targ = lsc.util.readkey3(head_targ, 'gain')
+                        rn_targ = lsc.readkey3(head_targ, 'ron')
+                        max_fwhm = head_targ.get('L1FWHM', 3.0)
 
-                        vector4 = [str(k) + ' ' + str(v) + ' ' + str(j) + ' ' + str(l) for k, v, j, l in
-                                   zip(xpix1, ypix1, xpix2, ypix2)]
-                        if len(vector4) >= 12:
-                            num = 3
-                        else:
-                            num = 2
-                        np.savetxt('tmpcoo', vector4, fmt='%1s')
-                        iraf.immatch.geomap('tmpcoo', "tmp$db", 1, hdtar['NAXIS1'], 1, hdtar['NAXIS2'],
-                                            fitgeom="general", functio="legendre", xxor=num, xyor=num, xxterms="half",
-                                            yxor=num, yyor=num, yxterms="half", calctype="real", inter='No')
+                        data_temp, head_temp = fits.getdata(_dirtemp + imgtemp0, header=True)
+                        exp_temp = lsc.util.readkey3(head_temp, 'exptime')
+                        sat_temp = lsc.util.readkey3(head_temp, 'datamax')
+                        gain_temp = lsc.util.readkey3(head_temp, 'gain')
+                        rn_temp = head_temp.get('rdnoise', 1)
 
                         imgtemp = '_temp.fits'
                         imgtarg = '_targ.fits'
                         imgout = '_out.fits'
                         tempmask = '_tempmask.fits'
                         targmask = '_targmask.fits'
-                        lsc.util.delete(imgtemp)
-                        lsc.util.delete(imgtarg)
-                        lsc.util.delete(imgout)
-                        lsc.util.delete(tempmask)
-                        lsc.util.delete(targmask)
-                        lsc.util.delete('tempmask.fits')
-                        iraf.imcopy(_dir + imgtarg0 + '[0]', imgtarg, verbose='yes')
-                        iraf.imcopy(_dir + targmask0, targmask, verbose='yes')
-#                        try:
-                        iraf.immatch.gregister(_dirtemp + imgtemp0, imgtemp, "tmp$db", "tmpcoo", geometr="geometric",
-                                               interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
-                        print 'here' 
-                        try:
-                            iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
-                                               interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
-                        except:
-                            print 'try again'
-                            # this is strange, sometime the registration of the msk fail the first time, but not the second time
-                            iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
-                                               interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+                        tempnoise = 'tempnoise.fits'
 
-                        if os.path.isfile(_dirtemp + imgtemp0.replace('.fits','.var.fits')):
-                            print 'variance image already there, do not create noise image'
-                            iraf.immatch.gregister(_dirtemp + imgtemp0.replace('.fits','.var.fits'), 'tempnoise.fits', "tmp$db", "tmpcoo", geometr="geometric",
-                                               interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+                        if args.no_iraf:
+                            fits.writeto(imgtarg, data_targ, head_targ, overwrite=True)
+                            shutil.copy(_dir + targmask0, targmask)
 
-                        if args.show:
-                            iraf.set(stdimage='imt2048')
-                            iraf.display(_dir + imgtarg0 + '[0]', frame=1, fill='yes')
-                            iraf.display(imgtarg, frame=2, fill='yes')
-                            iraf.display(_dirtemp + imgtemp0 + '[0]', frame=3, fill='yes')
-                            iraf.display(imgtemp, frame=4, fill='yes')
+                            temp_reproj, temp_foot = reproject_interp(_dirtemp + imgtemp0, head_targ)
+                            temp_reproj[temp_foot == 0.] = 0.
+                            fits.writeto(imgtemp, temp_reproj, head_targ, overwrite=True)
 
-                        ###########################################################
+                            tempmask_reproj, tempmask_foot = reproject_interp(_dirtemp + tempmask0, head_targ)
+                            tempmask_reproj = (tempmask_reproj > 0.) | (temp_foot == 0.)
+                            fits.writeto(tempmask, tempmask_reproj.astype('uint8'), head_targ, overwrite=True)
 
-                        data_targ, head_targ = fits.getdata(imgtarg, header=True)
-                        exp_targ  = lsc.util.readkey3(head_targ, 'exptime')
-                        sat_targ = lsc.util.readkey3(head_targ, 'datamax')
-                        gain_targ = lsc.util.readkey3(head_targ, 'gain')
-                        rn_targ = lsc.readkey3(head_targ,'ron')
+                            if os.path.isfile(_dirtemp + tempnoise0):
+                                tempnoise_reproj, tempnoise_foot = reproject_interp(_dirtemp + tempnoise0, head_targ)
+                                tempnoise_reproj[tempmask_reproj] = sat_temp  # ~infinite variance where masked
+                                fits.writeto(tempnoise, tempnoise_reproj, head_targ, overwrite=True)
 
-                        data_temp, head_temp = fits.getdata(imgtemp, header=True)
-                        exp_temp = lsc.util.readkey3(head_temp, 'exptime')
-                        sat_temp = lsc.util.readkey3(head_temp, 'datamax')
-                        gain_temp = lsc.util.readkey3(head_temp, 'gain')
-
-                        if 'rdnoise' in head_temp:
-                            rn_temp   = head_temp['rdnoise']
                         else:
-                            rn_temp   = 1
+                            substamplist, dict = crossmatchtwofiles(_dir + imgtarg0, _dirtemp + imgtemp0, 4)
+                            xra1, xdec1, xra2, xdec2, xpix1, ypix1, xpix2, ypix2 = dict['ra1'], dict['dec1'], dict['ra2'], \
+                                                                                   dict['dec2'], dict['xpix1'], \
+                                                                                   dict['ypix1'], dict['xpix2'], \
+                                                                                   dict['ypix2']
 
-                        if 'L1FWHM' in head_targ: 
-                            max_fwhm = head_targ['L1FWHM']  # to be check
-                        else:                     
-                            max_fwhm = 3.0
+                            vector4 = [str(k) + ' ' + str(v) + ' ' + str(j) + ' ' + str(l) for k, v, j, l in
+                                       zip(xpix1, ypix1, xpix2, ypix2)]
+                            if len(vector4) >= 12:
+                                num = 3
+                            else:
+                                num = 2
+                            np.savetxt('tmpcoo', vector4, fmt='%1s')
+                            iraf.immatch.geomap('tmpcoo', "tmp$db", 1, head_targ['NAXIS1'], 1, head_targ['NAXIS2'],
+                                                fitgeom="general", functio="legendre", xxor=num, xyor=num, xxterms="half",
+                                                yxor=num, yyor=num, yxterms="half", calctype="real", inter='No')
 
-                        targmask_data = fits.getdata(targmask)
+                            lsc.util.delete(imgtemp)
+                            lsc.util.delete(imgtarg)
+                            lsc.util.delete(imgout)
+                            lsc.util.delete(tempmask)
+                            lsc.util.delete(targmask)
+                            lsc.util.delete('tempmask.fits')
+                            iraf.imcopy(_dir + imgtarg0 + '[0]', imgtarg, verbose='yes')
+                            iraf.imcopy(_dir + targmask0, targmask, verbose='yes')
+    #                        try:
+                            iraf.immatch.gregister(_dirtemp + imgtemp0, imgtemp, "tmp$db", "tmpcoo", geometr="geometric",
+                                                   interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+                            print 'here'
+                            try:
+                                iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
+                                                   interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+                            except:
+                                print 'try again'
+                                # this is strange, sometime the registration of the msk fail the first time, but not the second time
+                                iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
+                                                   interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
-                        # round all values in template mask up to 1 (unless they are 0)
-                        tempmask_data, tempmask_header = fits.getdata(tempmask, header=True)
-                        tempmask_int = (tempmask_data > 0).astype('uint8')
-                        tempmask_fits = fits.PrimaryHDU(header=tempmask_header, data=tempmask_int)
-                        tempmask_fits.writeto(tempmask, overwrite=True, output_verify='fix')
+                            if os.path.isfile(_dirtemp + tempnoise0):
+                                print 'variance image already there, do not create noise image'
+                                iraf.immatch.gregister(_dirtemp + tempnoise0, tempnoise, "tmp$db", "tmpcoo", geometr="geometric",
+                                                   interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+
+                            if args.show:
+                                iraf.set(stdimage='imt2048')
+                                iraf.display(_dir + imgtarg0 + '[0]', frame=1, fill='yes')
+                                iraf.display(imgtarg, frame=2, fill='yes')
+                                iraf.display(_dirtemp + imgtemp0 + '[0]', frame=3, fill='yes')
+                                iraf.display(imgtemp, frame=4, fill='yes')
+
+                            # round all values in template mask up to 1 (unless they are 0)
+                            tempmask_data, tempmask_header = fits.getdata(tempmask, header=True)
+                            tempmask_int = (tempmask_data > 0).astype('uint8')
+                            tempmask_fits = fits.PrimaryHDU(header=tempmask_header, data=tempmask_int)
+                            tempmask_fits.writeto(tempmask, overwrite=True, output_verify='fix')
 
                         # create the noise images
                         median = np.median(data_targ)
                         noise = 1.4826*np.median(np.abs(data_targ - median))
                         pssl_targ = gain_targ*noise**2 - rn_targ**2/gain_targ - median
-                        #noiseimg = (data_targ - median)**2
                         noiseimg = data_targ + pssl_targ + rn_targ**2
+                        targmask_data = fits.getdata(targmask)
                         if noiseimg.size == targmask_data.size:
                             noiseimg[targmask_data > 0] = sat_targ
                         else:
@@ -256,13 +268,12 @@ if __name__ == "__main__":
                             continue
                         fits.writeto('targnoise.fits', noiseimg, output_verify='fix', overwrite=True)
 
-#                        print 'variance image already there, do not create noise image'
-                        if not os.path.isfile(_dirtemp +imgtemp0.replace('.fits','.var.fits')):
+                        if not os.path.isfile(_dirtemp + tempnoise0):
                             median = np.median(data_temp)
                             noise = 1.4826*np.median(np.abs(data_temp - median))
                             pssl_temp = gain_temp*noise**2 - rn_temp**2/gain_temp - median
-                            #noiseimg = (data_temp - median)**2
                             noiseimg = data_temp + pssl_temp + rn_temp**2
+                            tempmask_data = fits.getdata(tempmask)
                             if noiseimg.size == tempmask_data.size:
                                 noiseimg[tempmask_data > 0] = sat_temp
                             else:
@@ -280,9 +291,8 @@ if __name__ == "__main__":
                             pssl_temp = head_temp['SKYLEVEL']
 
                         # create mask image for template
-                        data_temp, head_temp
                         mask = np.abs(data_temp) < 1e-6
-                        fits.writeto('tempmask.fits',mask.astype('i'))
+                        fits.writeto('tempmask.fits',mask.astype('i'), overwrite=True)
 
                         if args.fixpix:
                             try:
@@ -320,20 +330,23 @@ if __name__ == "__main__":
                             _afssc = ''
 
                         if args.difftype == 1:
-                            #do subtraction
-                            iraf.noao()
-                            iraf.digiphot()
-                            iraf.daophot(_doprint=0)
                             psftarg = '_targpsf.fits'
                             psftemp = '_temppsf.fits'
-                            os.system('rm {0} {1}'.format(psftarg, psftemp))
-                            iraf.seepsf(imgtarg_path.replace('.fits','.psf.fits'), psftarg)
-                            iraf.seepsf(imgtemp_path.replace('.fits','.psf.fits'), psftemp)
+                            if args.no_iraf:
+                                lsc.myloopdef.seepsf(imgtarg_path.replace('.fits', '.psf.fits'), psftarg)
+                                lsc.myloopdef.seepsf(imgtemp_path.replace('.fits', '.psf.fits'), psftemp)
+                            else:
+                                iraf.noao()
+                                iraf.digiphot()
+                                iraf.daophot(_doprint=0)
+                                os.system('rm {0} {1}'.format(psftarg, psftemp))
+                                iraf.seepsf(imgtarg_path.replace('.fits','.psf.fits'), psftarg)
+                                iraf.seepsf(imgtemp_path.replace('.fits','.psf.fits'), psftemp)
                             try:
                                 print 'Passing images to PyZOGY'
                                 run_subtraction(imgtarg, imgtemp, psftarg, psftemp,
-                                                           science_mask='_targmask.fits',
-                                                           reference_mask='_tempmask.fits',
+                                                           science_mask=targmask,
+                                                           reference_mask=tempmask,
                                                            science_saturation=sat_targ,
                                                            reference_saturation=sat_temp,
                                                            n_stamps=1,

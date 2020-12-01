@@ -1164,7 +1164,7 @@ def gaia2file(ra, dec, size=26., mag_limit=18., output='gaia.cat'):
 
     response = response[
             (response['phot_g_mean_mag'] < mag_limit) &
-            (response['parallax'] > 0)  # ignore extragalactic sources
+            (response['astrometric_excess_noise_sig'] < 2) # filter objects with bad astrometry (e.g. HII regions in galaxies)
     ]
     response['ra'].format ='%16.12f'
     response['dec'].format = '%16.12f'

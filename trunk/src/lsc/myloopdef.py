@@ -926,15 +926,12 @@ def checkpsf(imglist, no_iraf=False, database='photlco'):
             print 'status ' + str(status) + ': unknown status'
 
 
-def make_psf_plot(psf_filename, fig=None):
+def seepsf(psf_filename, saveto=None):
     """
-    Displays plots of PSFs for the checkpsf stage without using iraf
+    Calculates PSF from header info plus residuals without using iraf
     :param psf_filename: filepath+filename of psf file
+    :param saveto: filepath+filename of output file
     """
-    if fig is None:
-        fig = plt.gcf()
-    fig.clf()
-
     psf_hdul = fits.open(psf_filename)
     N = psf_hdul[0].header['PSFHEIGH'] / psf_hdul[0].header['NPSFSTAR']
     sigma_x = psf_hdul[0].header['PAR1']
@@ -953,16 +950,27 @@ def make_psf_plot(psf_filename, fig=None):
     analytic = N * np.exp(-(((X ** 2) / (sigma_x ** 2)) + ((Y ** 2) / (sigma_y ** 2))) / 2)
     residual = psf_hdul[0].data
     Z = analytic + residual
+    if saveto is not None:
+        psf_hdul[0].data = Z
+        psf_hdul.writeto(saveto, overwrite=True)
+    return X, Y, Z
+
+
+def make_psf_plot(psf_filename, fig=None):
+    """
+    Displays plots of PSFs for the checkpsf stage without using iraf
+    :param psf_filename: filepath+filename of psf file
+    """
+    if fig is None:
+        fig = plt.gcf()
+    fig.clf()
+
+    X, Y, Z = seepsf(psf_filename)
 
     ax = fig.add_subplot(1, 1, 1, projection='3d')
-    """
-    # the transparency makes this challenging to interpret
-    ax.plot_wireframe(X, Y, Z, rcount=2 * psfrad + 1, ccount=2 * psfrad + 1)
-    """
+    # ax.plot_wireframe(X, Y, Z)  # the transparency makes this challenging to interpret
     # replicate iraf look, much slower than wireframe
-    ax.plot_surface(X,Y,Z,rcount=2*psfrad+1,ccount=2*psfrad+1,
-            antialiased=True,linewidth=.25,color='black',edgecolor='white')
-    
+    ax.plot_surface(X, Y, Z, antialiased=True, linewidth=.25, color='black', edgecolor='white')
 
     ax.view_init(elev=40, azim=330)  # replicating starting view of iraf PSF
     ax.set_axis_off()
@@ -1873,7 +1881,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
     os.system(command)
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype=None, suffix='.diff.fits', use_mask=True):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype=None, suffix='.diff.fits', use_mask=True, no_iraf=False):
     status = []
     stat = 'psf'
     for img in listtar:
@@ -1918,7 +1926,11 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
         mask = ''
     else:
         mask = ' --unmask'
-    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix + mask
+    if no_iraf:
+        iraf = ' --no-iraf'
+    else:
+        iraf = ''
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix + mask + iraf
     print command
     os.system(command)
 

@@ -815,9 +815,9 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
     ax.set_title(os.path.basename(imgfile))
     fig.tight_layout()
     psf_star_x, psf_star_y, psf_star_id = get_psf_star_coords(imgfile)
-    ax.plot(psf_star_x-1, psf_star_y-1, 'o', mec='c', mfc='none', ls='none') #subtract 1 for iraf --> python indexing
+    ax.plot(psf_star_x-1, psf_star_y-1, 'o', mec='b', mfc='none', ls='none') #subtract 1 for iraf --> python indexing
     for ipsf_star_x, ipsf_star_y, ipsf_star_id in zip(psf_star_x, psf_star_y, psf_star_id):
-        ax.text(ipsf_star_x-1, ipsf_star_y-1, ipsf_star_id, color='c') 
+        ax.text(ipsf_star_x-1, ipsf_star_y-1, ipsf_star_id, color='b') 
 
 def get_psf_star_coords(imgfile):
     psf_file = imgfile.replace('.fits', '.psf.fits')

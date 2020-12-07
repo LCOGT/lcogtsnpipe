@@ -200,11 +200,15 @@ Where:
 * Find standard stars that were observed during the epoch you need in the filter you need (U). Ideally, you also obtain at least 1 other filter (for color correction) - recommended B and V
 * Search archive.lco.global for obstype=STANDARD, set date range, filter, if applicable telescope and site (e.g. fo 2018zd I set site=elp and telescope=fl05)
 * You will be using standards from the same telescope and observed on the same night as your observations
-* Download the reduced observations
-* run python ingestzip.py -f downloaded_directory_or_zip_filename
-* Use the standard star image to find the nightly zeropoint for the nights on which you observed your target and the standard (run cosmic, wcs, psf, psfmag, zcat)
+* Use LCOGTingest.py to download and ingest observations. For example ``` LCOGTingest.py -S lsc -T 1m0a -f U -s 2019-09-26 -e 2019-10-08  -r reduced -t STANDARD --public``` Where `-S` is the site (if you want to be this specific), `-T` is the telescope, `-f` is the filter, `-s` is the start date, `-e` is the end date, `-r reduced` downloads files that have already been reduced with BANZAI, and `--public` is always required. Note: the date format has dashes and the search is exclusive of the end data
+* If you are downloading a standard for the first time, manually update the targets table so that the standards you downloaded have `classificationid=1`
+    * ```mysql -u supernova -D supernova -p``` (if you are using docker-compose you also need ```-h supernovadb```)
+    * Get the targetid of the standard you want to update: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE name="L107"``` (you should replace L107 with the name of your standard)
+    * Check that you're selecting the right row: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE targetid=55``` (you should replace 55 with the targetid you found in the last step)
+    * If `classificationid` is not 1, update `classificationid` for the row selected: ```UPDATE targets SET classificationid=1 WHERE targetid=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard)
+* Use the standard star image to find the nightly zeropoint for the nights on which you observed your target and the standard (run psf, psfmag, zcat)
     * When running the zcat step, use ```--catalog=$LCOSNDIR/standard/cat/landolt/<standard catalog name>```
-* When you run -s local on the SN (in the next step), it queries the database for any standards in the same filter-site-night as the SN observations. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard STANDARD``` where STANDARD is the name of your standard (e.g. L95)
+* When you run -s local on the SN (in the next step), it queries the database for any standards in the same filter-site-night as the SN observations. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard STANDARD``` where STANDARD is the name of your standard (e.g. L95). Alternately, you can use `--standard all` to find all available standards
 
 ### Create a catalog of stars (local sequence) in SN field for Landolt filters
 * This calculates the apparent magnitude for the stars in a given filter in your SN field and creates a catalog that will be used in the zcat step to generate the zeropoint for each observation. If a single class of telescopes seems to be an outlier, then you should limit the telescopes used to calculate the apparent magnitude to a single class of telescopes with the ```-T 1m0``` flag
@@ -217,6 +221,7 @@ Where STANDARD is the standard you calibrated previously and CATALOG is the name
     - if there is a big difference between the BV filters of Landolt and APASS for a large number of stars (a few stars will be variable)
     - I guess the main thing is that some of the standard field observations will be bad because of clouds or whatever, so make sure they are not pulling the median zero point away too much
 * This outputs a catalog (the name of which is printed to the screen)
+* Your catalog needs at least B-band magnitudes, in addition to U, to perform color corrections. If there were no B-band standards taken for your dates/site, you'll need to manually add the B-band magnitudes of the stars into your new catalog. The id's should match those in the APASS catalog for your SN, so you can add the appropriate values to the B and Berr columns in your new landolt catalog before proceding. 
 
 ### Move the catalog to the catalog directory:
 * Move the catalog created in the previous step to the directory $LCOSNPIPE/trunk/src/lsc/standard/cat/landolt
@@ -235,19 +240,35 @@ Where STANDARD is the standard you calibrated previously and CATALOG is the name
 
 # Definitions
 ## Telescopes
-| Short Name   | Long Name                         | ?             | lscloop keyword|
-|--------------|-----------------------------------|---------------|----------------|
-| OGG 2m       | Haleakala Observatory - 2m        | ogg2m001-fs02 | 2m0            |
-| COJ 2m       | Siding Springs Observatory - 2m   | coj2m002-fs03 | 2m0            |
-| COJ 1m       | Siding Springs Observatory - 1m   | coj1m003-kb71 | 1m0            |
-| LSC 1m       | CTIO - Region IV                  | lsc1m004-kb77 | 1m0            |
-| LSC 1m       | CTIO - Region IV                  | lsc1m005-kb78 | 1m0            |
-| ELP 1m       | McDonald Observatory - 1m         | elp1m008-kb74 | 1m0            |
-| LSC 1m       | CTIO - Region IV                  | lsc1m009-fl03 | 1m0            |
-| CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m010      | 1m0            |
-| COJ 1m       | Siding Springs Observatory - 1m   | coj1m011-kb05 | 1m0            |
-| CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m012-kb75 | 1m0            |
-| CPT 1m       | SAAO - Sutherland Facilities - 1m | cpt1m013-kb76 | 1m0            |
+Current facilities can be found at: https://lco.global/observatory/sites/  
+Telescope numbers are unique within a given mirror size
+
+| Short Name   | Long Name                         | Telescope id (-T)  | Telescope Number | Site id (-S)|
+|--------------|-----------------------------------|----------------|------------------|----------------|
+| OGG 2m       | Haleakala Observatory - 2m        | 2m0            | 01               | ogg            |
+| COJ 2m       | Siding Springs Observatory - 2m   | 2m0            | 02               | coj            |
+|--------------|-----------------------------------|----------------|------------------|----------------|
+| COJ 1m       | Siding Springs Observatory - 1m   | 1m0            | 03               | coj            |
+| LSC 1m       | CTIO - Region IV                  | 1m0            | 04               | lsc            |
+| LSC 1m       | CTIO - Region IV                  | 1m0            | 05               | lsc            |
+| ELP 1m       | McDonald Observatory - 1m         | 1m0            | 06               | elp            |
+| ELP 1m       | McDonald Observatory - 1m         | 1m0            | 08               | elp            |
+| LSC 1m       | CTIO - Region IV                  | 1m0            | 09               | lsc            |
+| CPT 1m       | SAAO - Sutherland Facilities - 1m | 1m0            | 10               | cpt            |
+| COJ 1m       | Siding Springs Observatory - 1m   | 1m0            | 11               | coj            |
+| CPT 1m       | SAAO - Sutherland Facilities - 1m | 1m0            | 12               | cpt            |
+| CPT 1m       | SAAO - Sutherland Facilities - 1m | 1m0            | 13               | cpt            |
+|--------------|-----------------------------------|----------------|------------------|----------------|
+| COJ 0.4m     | Siding Springs Observatory - 0.4m | 0m4            | 03               | coj            |
+| OGG 0.4m     | Haleakala Observatory - 0.4m      | 0m4            | 04               | ogg            |
+| COJ 0.4m     | Siding Springs Observatory - 0.4m | 0m4            | 05               | coj            |
+| OGG 0.4m     | Haleakala Observatory - 0.4m      | 0m4            | 06               | ogg            |
+| CPT 0.4m     | SAAO - Sutherland Facilities -0.4m| 0m4            | 07               | cpt            |
+| LSC 0.4m     | CTIO - Region IV                  | 0m4            | 09               | lsc            |
+| TFN 0.4m     | Teide Observatory 0.4m            | 0m4            | 10               | tfn            |
+| ELP 0.4m     | McDonald Observatory - 0.4m       | 0m4            | 11               | elp            |
+| LSC 0.4m     | CTIO - Region IV                  | 0m4            | 12               | lsc            |
+| TFN 0.4m     | Teide Observatory 0.4m            | 0m4            | 14               | tfn            |
 
 ## Filetype:
 | Number | Meaning         |

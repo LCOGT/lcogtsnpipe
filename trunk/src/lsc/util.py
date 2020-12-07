@@ -806,12 +806,14 @@ def getcatalog(name_or_filename, field='', return_field=False):
     catalog = ''
     # get the catalog(s) from the database
     if '.fits' in name_or_filename:
-        entries = lsc.mysqldef.query(['''select name, sloan_cat, landolt_cat, apass_cat, filter
+        entries = lsc.mysqldef.query(['''select name, sloan_cat, landolt_cat, apass_cat,
+                                         gaia_cat, filter
                                          from targets, targetnames, photlco
                                          where targets.id=targetnames.targetid and targets.id=photlco.targetid
                                          and filename="{}"'''.format(name_or_filename)], lsc.conn)
     else:
-        entries = lsc.mysqldef.query(['''select othernames.name, sloan_cat, landolt_cat, apass_cat
+        entries = lsc.mysqldef.query(['''select othernames.name, sloan_cat, landolt_cat,
+                                         apass_cat, gaia_cat
                                          from targets, targetnames, targetnames as othernames
                                          where targets.id=targetnames.targetid and targets.id=othernames.targetid
                                          and targetnames.name="{}"'''.format(name_or_filename)], lsc.conn)

@@ -13,6 +13,9 @@ from astropy.wcs import WCS
 from astropy.table import Table, vstack
 from astropy.coordinates import SkyCoord
 from astropy.visualization import ImageNormalize, ZScaleInterval
+import requests
+import json
+import getpass
 
 def weighted_avg_and_std(values, weights):
     """
@@ -75,7 +78,9 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                 # These three things should be the same for all the images in imglist
                 ftype = ggg[0]['filetype']
                 dtype = ggg[0]['difftype']
-                targetid = ggg[0]['targetid']
+                # Get name of target:
+                namequery = lsc.mysqldef.getfromdataraw(conn, 'targetnames', 'targetid', str(ggg[0]['targetid']))
+                targetname = namequery[0]['name']
 
     tables = []
     for _tel in setup:
@@ -155,16 +160,16 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
         if snex2_upload:
             ### Make it snex2 readable
             os.system('format_snex2.py -n ' + _output)
-            snex2_filename = splitext(_output)[0] + '_snex2' + splitext(_output)[1]
+            snex2_filename = splitext(_output)[0] + '_snex2.csv'
 
             upload_extras = {
                 'reduction_type': 'manual',
                 'instrument': 'LCO'
             }
-            if mtype == 'psfmag':
-                upload_extras['photometry_type'] = 'PSF'
-            elif mtype == 'apmag':
+            if mtype == 'apmag':
                 upload_extras['photometry_type'] = 'Aperture'
+            else:
+                upload_extras['photometry_type'] = 'PSF'
             if int(ftype)==3:
                 upload_extras['background_subtracted'] = True
                 if int(dtype)==0:
@@ -188,12 +193,20 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
             used_in = raw_input('Is this paper used in a paper? If so, please enter the last name of the first author: ')
             if used_in:
                 upload_extras['used_in'] = used_in
-
             print(upload_extras)
-            ### Upload to snex2
-            # Need username and password
-            # Send the request like r = requests.post(snex2_url, data={'target': targetid, 'data_product_type': 'photometry', 'group': list_of_groups}, json=upload_extras, files={'file': (snex2_file, open(path_to_snex2_file, 'rb'))}, auth=(username, password))
             
+            print('This dataproduct will be assigned to the default sharing groups. If you would like to change these group permissions, you can do so on the page for this target on SNEx2.')
+            ### Upload to snex2
+            username = raw_input('Please enter your SNEx2 username: ')
+            password = getpass.getpass(prompt='Please enter your SNEx2 password: ')
+            # Send the request
+            snex2_upload_url = 'http://test.supernova.exchange/pipeline-upload/photometry-upload/'
+            r = requests.post(snex2_upload_url, data={'targetname': targetname, 'data_product_type': 'photometry', 'upload_extras': json.dumps(upload_extras), 'username': username}, files={'file': (snex2_filename, open(os.getcwd() + '/' + snex2_filename, 'rb'))}, auth=(username, password))
+            if r.status_code == 201:
+                print('Upload successful')
+            else: 
+                print('Error: Upload failed with code {}'.format(r.status_code))
+                print(r)
     else:
         output_table.pprint(max_lines=-1)
 

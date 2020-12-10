@@ -268,10 +268,9 @@ if __name__ == "__main__":
                                 iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
                                                    interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
-                            if os.path.isfile(_dirtemp + tempnoise0):
-                                print 'variance image already there, do not create noise image'
-                                iraf.immatch.gregister(_dirtemp + tempnoise0, tempnoise, "tmp$db", "tmpcoo", geometr="geometric",
-                                                   interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
+                            print 'variance image already there, do not create noise image'
+                            iraf.immatch.gregister(_dirtemp + tempnoise0, tempnoise, "tmp$db", "tmpcoo", geometr="geometric",
+                                               interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
                             if args.show:
                                 iraf.set(stdimage='imt2048')

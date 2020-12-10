@@ -185,7 +185,7 @@ if __name__ == "__main__":
                         noise = 1.4826*np.median(np.abs(data_targ - median))
                         pssl_targ = gain_targ*noise**2 - rn_targ**2/gain_targ - median
                         noiseimg = data_targ + pssl_targ + rn_targ**2
-                        targmask_data = fits.getdata(targmask)
+                        targmask_data = fits.getdata(_dir + targmask0)
                         if noiseimg.size == targmask_data.size:
                             noiseimg[targmask_data > 0] = sat_targ
                         else:
@@ -200,7 +200,7 @@ if __name__ == "__main__":
                             noise = 1.4826*np.median(np.abs(data_temp - median))
                             pssl_temp = gain_temp*noise**2 - rn_temp**2/gain_temp - median
                             noiseimg = data_temp + pssl_temp + rn_temp**2
-                            tempmask_data = fits.getdata(tempmask)
+                            tempmask_data = fits.getdata(_dirtemp + tempmask0)
                             if noiseimg.size == tempmask_data.size:
                                 noiseimg[tempmask_data > 0] = sat_temp
                             else:

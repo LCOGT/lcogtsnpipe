@@ -178,6 +178,40 @@ if __name__ == "__main__":
                         tempmask = '_tempmask.fits'
                         targmask = '_targmask.fits'
                         tempnoise = 'tempnoise.fits'
+                        targnoise = 'targnoise.fits'
+
+                        # create the noise images
+                        median = np.median(data_targ)
+                        noise = 1.4826*np.median(np.abs(data_targ - median))
+                        pssl_targ = gain_targ*noise**2 - rn_targ**2/gain_targ - median
+                        noiseimg = data_targ + pssl_targ + rn_targ**2
+                        targmask_data = fits.getdata(targmask)
+                        if noiseimg.size == targmask_data.size:
+                            noiseimg[targmask_data > 0] = sat_targ
+                        else:
+                            warning = 'Target noise image and mask are difference sizes ({} vs {}), moving onto the next image'.format(noiseimg.shape, targmask_data.shape)
+                            warnings.warn(warning)
+                            os.system('echo -e "{}:\n{}" | mailx -s "Wrong Size Mask Warning" sne@lco.global'.format(warning, imgtarg0))
+                            continue
+                        fits.writeto(targnoise, noiseimg, output_verify='fix', overwrite=True)
+
+                        if not os.path.isfile(_dirtemp + tempnoise0):
+                            median = np.median(data_temp)
+                            noise = 1.4826*np.median(np.abs(data_temp - median))
+                            pssl_temp = gain_temp*noise**2 - rn_temp**2/gain_temp - median
+                            noiseimg = data_temp + pssl_temp + rn_temp**2
+                            tempmask_data = fits.getdata(tempmask)
+                            if noiseimg.size == tempmask_data.size:
+                                noiseimg[tempmask_data > 0] = sat_temp
+                            else:
+                                warning = 'Template noise image and mask are different sizes ({} vs {}), moving onto next image'.format(noiseimg.shape, tempmask_data.shape)
+                                warnings.warn(warning)
+                                os.system('echo -e "{}:\n{}" | mailx -s "Wrong Size Mask Warning" sne@lco.global'.format(warning, imgtemp0))
+                                continue
+                            fits.writeto(_dirtemp + tempnoise0, noiseimg, output_verify='fix', overwrite=True)
+                        else:
+                            pssl_temp = 0
+                            print 'variance image already there, do not create noise image'
 
                         if args.no_iraf:
                             fits.writeto(imgtarg, data_targ, head_targ, overwrite=True)
@@ -191,10 +225,9 @@ if __name__ == "__main__":
                             tempmask_reproj = (tempmask_reproj > 0.) | (temp_foot == 0.)
                             fits.writeto(tempmask, tempmask_reproj.astype('uint8'), head_targ, overwrite=True)
 
-                            if os.path.isfile(_dirtemp + tempnoise0):
-                                tempnoise_reproj, tempnoise_foot = reproject_interp(_dirtemp + tempnoise0, head_targ)
-                                tempnoise_reproj[tempmask_reproj] = sat_temp  # ~infinite variance where masked
-                                fits.writeto(tempnoise, tempnoise_reproj, head_targ, overwrite=True)
+                            tempnoise_reproj, tempnoise_foot = reproject_interp(_dirtemp + tempnoise0, head_targ)
+                            tempnoise_reproj[tempmask_reproj] = sat_temp  # ~infinite variance where masked
+                            fits.writeto(tempnoise, tempnoise_reproj, head_targ, overwrite=True)
 
                         else:
                             substamplist, dict = crossmatchtwofiles(_dir + imgtarg0, _dirtemp + imgtemp0, 4)
@@ -252,39 +285,6 @@ if __name__ == "__main__":
                             tempmask_int = (tempmask_data > 0).astype('uint8')
                             tempmask_fits = fits.PrimaryHDU(header=tempmask_header, data=tempmask_int)
                             tempmask_fits.writeto(tempmask, overwrite=True, output_verify='fix')
-
-                        # create the noise images
-                        median = np.median(data_targ)
-                        noise = 1.4826*np.median(np.abs(data_targ - median))
-                        pssl_targ = gain_targ*noise**2 - rn_targ**2/gain_targ - median
-                        noiseimg = data_targ + pssl_targ + rn_targ**2
-                        targmask_data = fits.getdata(targmask)
-                        if noiseimg.size == targmask_data.size:
-                            noiseimg[targmask_data > 0] = sat_targ
-                        else:
-                            warning = 'Target noise image and mask are difference sizes ({} vs {}), moving onto the next image'.format(noiseimg.shape, targmask_data.shape)
-                            warnings.warn(warning)
-                            os.system('echo -e "{}:\n{}" | mailx -s "Wrong Size Mask Warning" sne@lco.global'.format(warning, imgtarg0))
-                            continue
-                        fits.writeto('targnoise.fits', noiseimg, output_verify='fix', overwrite=True)
-
-                        if not os.path.isfile(_dirtemp + tempnoise0):
-                            median = np.median(data_temp)
-                            noise = 1.4826*np.median(np.abs(data_temp - median))
-                            pssl_temp = gain_temp*noise**2 - rn_temp**2/gain_temp - median
-                            noiseimg = data_temp + pssl_temp + rn_temp**2
-                            tempmask_data = fits.getdata(tempmask)
-                            if noiseimg.size == tempmask_data.size:
-                                noiseimg[tempmask_data > 0] = sat_temp
-                            else:
-                                warning = 'Template noise image and mask are different sizes ({} vs {}), moving onto next image'.format(noiseimg.shape, tempmask_data.shape)
-                                warnings.warn(warning)
-                                os.system('echo -e "{}:\n{}" | mailx -s "Wrong Size Mask Warning" sne@lco.global'.format(warning, imgtemp0))
-                                continue
-                            fits.writeto('tempnoise.fits', noiseimg, output_verify='fix', overwrite=True)
-                        else:
-                            pssl_temp = 0
-                            print 'variance image already there, do not create noise image'
 
                         #  if skylevel is in the header, swarp with bkg subtraction has been applyed
                         if 'SKYLEVEL' in head_temp:
@@ -373,11 +373,11 @@ if __name__ == "__main__":
                                     ' -tu ' + tuthresh + ' -tuk ' + tucthresh +
                                     ' -tl ' + str(min(-pssl_temp,0)) + ' -tg ' + str(gain_temp) +
                                     ' -tr ' + str(rn_temp) + ' -tp ' + str(min(-pssl_temp,0)) +
-                                    ' -tni tempnoise.fits ' +
+                                    ' -tni ' + tempnoise +
                                     ' -iu ' + str(iuthresh) + ' -iuk ' + str(iucthresh) + 
                                     ' -il ' + str(min(-pssl_targ,0)) + ' -ig ' + str(gain_targ) +
                                     ' -ir ' + str(rn_targ) + ' -ip ' + str(min(-pssl_targ,0)) +
-                                    ' -ini targnoise.fits ' +
+                                    ' -ini ' + targnoise +
                                     ' -r ' + str(rkernel) +
                                     ' -nrx ' + args.nrxy.split(',')[0] + ' -nry ' + args.nrxy.split(',')[1] +
                                     ' -nsx ' + args.nsxy.split(',')[0] + ' -nsy ' + args.nsxy.split(',')[1] +

@@ -166,11 +166,20 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                 'reduction_type': 'manual',
                 'instrument': 'LCO'
             }
-            if mtype == 'apmag':
-                upload_extras['photometry_type'] = 'Aperture'
-            else:
-                upload_extras['photometry_type'] = 'PSF'
-            if int(ftype)==3:
+
+            if int(ftype)==1:
+                phot_type = raw_input('The default photometry type for non-difference imaging is PSF. If Aperture photometry was performed instead, please enter "Aperture". Otherwise press enter: ')
+                if phot_type.lower() == 'aperture':
+                    upload_extras['photometry_type'] = 'Aperture'
+                else:
+                    upload_extras['photometry_type'] = 'PSF'
+                    
+            elif int(ftype)==3:
+                phot_type = raw_input('The default photometry type for difference imaging is Aperture. If PSF photometry was performed instead, please enter "PSF". Otherwise press enter: ')
+                if phot_type.lower() == 'psf':
+                    upload_extras['photometry_type'] = 'PSF'
+                else:
+                    upload_extras['photometry_type'] = 'Aperture'
                 upload_extras['background_subtracted'] = True
                 if int(dtype)==0:
                     upload_extras['subtraction_algorithm'] = 'Hotpants'
@@ -190,7 +199,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                 upload_extras['final_reduction'] = True
             else:
                 upload_extras['final_reduction'] = False
-            used_in = raw_input('Is this paper used in a paper? If so, please enter the last name of the first author: ')
+            used_in = raw_input('Will this data be used in a paper? If so, please enter the last name of the first author: ')
             if used_in:
                 upload_extras['used_in'] = used_in
             print(upload_extras)

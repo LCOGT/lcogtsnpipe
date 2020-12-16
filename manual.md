@@ -18,7 +18,7 @@
 LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public
 ```
 
-# Create gaiai, apass, and sloan catalogs for new objects
+# Create gaia, apass, and sloan catalogs for new objects
 * run `comparecatalogs.py` to generate new catalogs
 * Note if you are trying to reduce U band, you need to generate a local catalog. See [Creating an Landolt Catalog](#Creating-a-Landolt-Catalog) for details.
 
@@ -38,29 +38,37 @@ This is a description of the stream-lined steps that are recommended for process
     ds9&
     lscloop.py -n 2016cok -e 20160528-20180104 -s checkpsf --show -f B --no_iraf
     ```
-4. Redo the PSF for any images you marked with `n`. These are selected using the `-b psf` option.  
+4. Redo the PSF for any images you marked with `n`. These are selected using the `-b psf` option. Suggestions for improving the PSFs: increase the `--nstars` parameter (e.g. `--nstars 12`) to increase the number of stars that get averaged together to make the PSF; adjust the `--datamax` and `--datamin` parameters to exclude bright stars or cosmic rays (e.g. `--datamax 60000 --datamin 0`); use a different catalog (as described above).
 **Example** 
-lscloop.py -n 2016cok -e 20160528-20180104 -s psf -b psf 
+    ```
+    lscloop.py -n 2016cok -e 20160528-20180104 -s psf -b psf 
+    ```
 
 5. Calculate instrumental magnitudes by running the `psfmag` stage. This will derive aperture and psf photometry. If the aperture photometry is failing often, you may need to set `--datamax` and `--datamin`.  
 **Example**
-```
-lscloop.py -n 2016cok -e 20160528-20180104 -s psfmag
-```
+    ```
+    lscloop.py -n 2016cok -e 20160528-20180104 -s psfmag
+    ```
 
-6. Calculate the photometric zeropoint for each image. The `zcat` stage should be run for at least two filters at a time so that the color term can be evaluated.  
+6. Calculate the photometric zeropoint for each image. The `zcat` stage should be run for at least two filters at a time so that the color term can be evaluated. You can specify which catalog of field stars to use as calibration with the `--field` argument.
 **Example**
-```
-lscloop.py -n 2016cok -e 20160528-20180104 -s zcat
-```
+    ```
+    lscloop.py -n 2016cok -e 20160528-20180104 -s zcat -f landolt --field apass
+    lscloop.py -n 2016cok -e 20160528-20180104 -s zcat -f sloan --field sloan
+    ```
 
 7. Calculate the apparent magnitude for an image using the instrumental magnitude derived from PSF photometry using the `--type fit` option. This is another stage that should be run on more than one filter so the color term can be used.  
 **Example**
-```
-lscloop.py -n 2016cok -e 20160528-20180104 -s mag --type fit
-```
+    ```
+    lscloop.py -n 2016cok -e 20160528-20180104 -s mag --type fit
+    ```
 
-8. Visually inspect your light curve using `getmag` stage with the `--show` option. This will bring up a plot with your light curve (I like to do this one filter at a time). You can click on individual points to bring up a second window which shows a cut out of the supernova on the left and the residual after the PSF subtraction on the right. You are given the option to remove bad points from the light curve. It is recommended that you use the `d` option at this stage, allowing you to easily redo these observations from any stage using the `-b mag` option. In general, however, this is used to eliminate points with a lot of scatter due to poor observing conditions. By supplying `--output output_filename.csv` at this stage, the output can be written to a file. When photometry is final, use the `--uploadtosnex2` flag to send your light curve to SNEx.
+8. Visually inspect your light curve using `getmag` stage with the `--show` option. This will bring up a plot with your light curve (I like to do this one filter at a time). You can click on individual points to bring up a second window which shows a cut out of the supernova on the left and the residual after the PSF subtraction on the right. You are given the option to remove bad points from the light curve. It is recommended that you use the `d` option at this stage, allowing you to easily redo these observations from any stage using the `-b mag` option. In general, however, this is used to eliminate points with a lot of scatter due to poor observing conditions. By supplying `--output output_filename.csv` at this stage, the output can be written to a file. When photometry is final, use the `--uploadtosnex2` flag to send your light curve to SNEx 2.
+**Example**
+    ```
+    lscloop.py -n 2016cok -e 20160528-20180104 -s getmag --type mag --show
+    lscloop.py -n 2016cok -e 20160528-20180104 -s getmag --type mag --output output_filename.csv
+    ```
 
 
 # Running the pipeline:
@@ -77,7 +85,7 @@ Where:
 * ```-F``` force a step to be run again, even if it succeeded last time
 * ```-f FILTER``` run only on observations from one filter or set of filters (U,u,B,g,V,r,R,i,I,z,w,landolt, apass, sloan)
 * ```--id, -d``` run only on a specific image specified by a 3 digit number in the filename. For example you would use ```--id 046``` to run on the file elp1m008-fl05-20180302-0046-s91.
-* ```-T``` run only on observations from one telescope. Valid options: 1m0, 2m0, or 0m4. Note: because of the implementation, there is a bug/feature to -T that you can search for any substring in the filename
+* ```-T``` run only on observations from one telescope. Valid options: 1m0, 2m0, or 0m4. Note: because of the implementation, there is a bug/feature to `-T` that you can search for any substring in the filename
 * ```-I``` run only on observations from one instrument. Valid options: kb, fl, fs, sinistro, sbig
 * ```-b STAGE``` run only on observations marked at bad at a given stage (where stage is quality, wcs, psf, psfmag, zcat, mag)
 
@@ -90,7 +98,7 @@ Where:
 
 ### WCS solution
 * **Call**: ```-s wcs```
-* **Description**: Generate a WCS solution for a given observation. In general, this stage does not need to be run when starting analysis from observations that have been reduced with Banzai (which is recommended) as Banzai solves the WCS solution (end in `.e91.fits`).
+* **Description**: Generate a WCS solution for a given observation. In general, this stage does not need to be run when starting analysis from observations that have been reduced with Banzai (which is recommended) as Banzai solves the WCS solution (files processed by Banzai end in `.e91.fits`).
 * **Recommended Options**: 
 
 * **Other Options**: 

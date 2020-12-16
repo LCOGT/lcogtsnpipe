@@ -69,17 +69,17 @@ In general, the pipeline is called as a series of stages. Each stage should be c
 lscloop.py -e YYYYMMDD-YYYYMMDD -n NAME -s STAGE
 ```
 Where:
-* ```-e YYYYMMDD-YYYYMMDD``` is the date range of the observations you want to process
+* ```-e YYYYMMDD-YYYYMMDD``` is the date range of the observations you want to process, this can be a single date if so desired
 * ```-n NAME``` is the name of the object you want to process
 * ```-s STAGE``` is the stage which is detailed below, in recommended order
 
 ## Broadly used options
 * ```-F``` force a step to be run again, even if it succeeded last time
 * ```-f FILTER``` run only on observations from one filter or set of filters (U,u,B,g,V,r,R,i,I,z,w,landolt, apass, sloan)
-* ```--id``` run only on a specific image specified by a 3 digit number in the filename. For example you would use ```--id 046``` to run on the file elp1m008-fl05-20180302-0046-s91.
-* ```-T``` run only on observations from one telescope. Valid options: 1m0, 2m0, or 0m4
+* ```--id, -d``` run only on a specific image specified by a 3 digit number in the filename. For example you would use ```--id 046``` to run on the file elp1m008-fl05-20180302-0046-s91.
+* ```-T``` run only on observations from one telescope. Valid options: 1m0, 2m0, or 0m4. Note: because of the implementation, there is a bug/feature to -T that you can search for any substring in the filename
 * ```-I``` run only on observations from one instrument. Valid options: kb, fl, fs, sinistro, sbig
-* ```-b STAGE``` run only on observations marked at bad at a given stage (where stage is quality, wcs, psf, psfmag, zcat)
+* ```-b STAGE``` run only on observations marked at bad at a given stage (where stage is quality, wcs, psf, psfmag, zcat, mag)
 
 ## Steps:
 ### Cosmic ray rejection:
@@ -90,13 +90,14 @@ Where:
 
 ### WCS solution
 * **Call**: ```-s wcs```
-* **Description**: Generate a WCS solution for a given observation. In general, this stage does not need to be run when starting analysis from observations that have been reduced with Banzai (which is recommended) as Banzai solves the WCS solution.
+* **Description**: Generate a WCS solution for a given observation. In general, this stage does not need to be run when starting analysis from observations that have been reduced with Banzai (which is recommended) as Banzai solves the WCS solution (end in `.e91.fits`).
 * **Recommended Options**: 
 
 * **Other Options**: 
     * ```--catalog=CATALOG```: where CATALOG is either usnoa2, usnob1, 2mass, or apass. If this option is not specified then the following catalogs are tried: ['2mass', 'usnoa2', 'usnob1']
 * **How to tell if this step worked**:
     * If the pipeline thinks it was successful, then the column wcs in the photlco table of the database will have a 0 in it, if it wasn't able to find a solution the value in this column will be 9999
+    * Alternately, run ```lscloop.py -n <snname> -e <epoch> -b wcs``` and any other criteria you'd like to filter on to get a list of files that failed the WCS stage
     * Additionally, when the pipeline fails on this step it sets the quality from 127 to 1. 
     * To inspect images for which the wcs step failed:
         * open DS9
@@ -117,40 +118,47 @@ Where:
 * **Call**: ```-s psf```
 * **Description**: creates a model psf for each image
 * **Recommended Options**:
-    * ```--catalog=CATALOG``` this uses the stars found at the location of stars in the catalog to generate a model PSF (TODO: check that this is true)
 * **Other Options**: 
+    * ```--catalog=CATALOG``` this uses the stars found at the location of stars in the catalog to generate a model PSF
+    * ```--max_apercorr``` if the median difference between the psf and aperture magnitudes for catalog stars is more than this value, the PSF stage will fail. In practice, if this value is large its an indication that the model PSF is not characterizing the actual PSF well.
 * **How to tell if this step worked**:
     * This step fills in the psf column with a filename (for the psf model) if it succeeds and an X if it fails.
-    * To inspect images for which the pipeline failed:
+    * Alternately, run ```lscloop.py -n <snname> -e <epoch> -b psf``` and any other criteria you'd like to filter on to get a list of files that failed the PSF stage
+    * To inspect all images and their PSFs:
         * open DS9
-        * run the standard lscloop.py with the stage ```-s checkpsf -b psf --show``` TODO: check if you need --show or -i
-        * This displays image for which the psf value is X in DS9 and in a separate window shows the psf model. The psf model should be a single source (e.g. not a blended gaussian). TODO: is it ok if its elongated?
+        * run the standard lscloop.py with the stage ```-s checkpsf --show --no_iraf``` 
+        * This displays image for which the psf value is X in DS9 and in a separate window shows the psf model. The psf model should be a single source (e.g. not a blended gaussian).
         * You will then be asked if this image is good with the option to answer: yes, no, or bad. Here if you answer bad, the quality will be set from 127 to 1, indicating that the image should not be used. If you mark no, then the psf will be reset, indicating that you would like to try to calibrate the psf again.
-        * if you run this step without ```-b psf``` then you can inspect all observations
-        * BETA: ```-s checkpsf``` has the option to use matplotlib to display the psf rather than iraf with the option ```--no_iraf```. In this case, you can manipulate the figure (rotate and pan) to better see the psf
+    * To inspect images for which the PSF failed
+        * open DS9
+        * run the standard lscloop.py with the stage ```-s wcs -b psf --show``` 
 * **How to fix this step if the image looks ok but the psf step failed**
-    * Try running without the  --catalog option
+    * Try adjusting --datamin or --datamax to select different stars. You can use the datamin and datamax output during the PSF stage to change which stars are selected
+    * Try running with the  --catalog option
     * Try running with the ```--fwhm``` option. This is especially true for the 0.4m telescopes. Possible values to try: 5 and 7
-    * 
 
-### Generate instrumental magnitudes using psf photometry
+### Generate instrumental magnitudes using psf and aperture photometry
 * **Call**: ```-s psfmag```
-* **Description**: Generate instrumental magnitudes using psf photometry
+* **Description**: Generate instrumental magnitudes using psf and aperture photometry
 * **Recommended Options**:
 * **Other Options**: 
+    * `--datamin` and `--datamax` manually set the datamin and datamax keywords used by iraf to select the PSF stars. These may be necessary to use if the aperture photometry is failing and you're interested in it
 * **How to tell if this step worked**:
-    * This step sets the psfmag column to the instrumental magnitude if this step works and to 9999 if this step fails.
+    * This step sets the psfmag and apmag column to the instrumental magnitude if this step works and to 9999 if this step fails.
+    * Alternately, run ```lscloop.py -n <snname> -e <epoch> -b psfmag``` (or ```-b apmag```) and any other criteria you'd like to filter on to get a list of files that failed the PSF stage
 * **How to fix this step if the image looks ok but the psfmag step failed**
+    * Try setting `--datamin` and/or `--datamax`
 
 ### Calculate the zeropoint
 * **Call**: ```-s zcat```
 * **Description**: Calculate the zeropoint of an image using the apparent magnitude of stars in the image as found in the catalog provided. This will be used to convert instrumental magnitudes to apparent magnitudes
-* TODO: What does the pipeline default to when no catalog is provided?
 * **Recommended Options**:
-    * ```--catalog=CATALOG``` where CATALOG should be a catalog that corresponds to the filter you are trying to calibrate (e.g. apass, sloan, or landolt). The pipeline will use the location and apparent magnitude of the stars in this catalog to calculate the conversion between instrumental and apparent magnitude.
+    * ```-f sloan```, ```-f apass```, or ```-f landolt```: more than one filter should be provided so that the zeropoint color term can be calculated
 * **Other Options**: 
+    * ```--catalog=CATALOG``` where CATALOG should be a catalog that corresponds to the filter you are trying to calibrate (e.g. apass, sloan, or landolt). The pipeline will use the location and apparent magnitude of the stars in this catalog to calculate the conversion between instrumental and apparent magnitude.
 * **How to tell if this step worked**:
     * This set fills in the zcat column in the photlco database with a file name if it succeeded and an X if it failed
+    * Alternately, run ```lscloop.py -n <snname> -e <epoch> -b zcat``` and any other criteria you'd like to filter on to get a list of files that failed the zcat stage
     * The most likely failure mode is that there are not enough stars between the catalog and the image. You can visually check this by:
         * Openning DS9
         * running ```-s zcat -i```
@@ -165,24 +173,22 @@ Where:
     * ```--type fit```: this generates an apparent magnitude from the instrumental magnitude derived from psf photometry.
 * **Other Options**: 
     * ```--type ph```: generate apparent magnitudes from aperture photometry
-    * ```--type mag```: TODO: what does this mean?
 * **How to tell if this step worked**:
     * If this step worked, an apparent magnitude will be put in the mag column of the photlco table. If this step failed this field will be set to 9999
-* **How to fix this step if the image looks ok but the psfmag step failed**
+    * Alternately, run ```lscloop.py -n <snname> -e <epoch> -b mag``` and any other criteria you'd like to filter on to get a list of files that failed the PSF stage
+* **How to fix this step if the image looks ok but the mag step failed**
+    * Since this is just a combination of the output of the psfmag stage and the zcat stage, inspect the outputs of these stages and redo as needed
 
 ### Evaluating Image quality from lightcurve outliers:
-* **Call**: ```-s getmag``` TODO: check if you need --show or -i
+* **Call**: ```-s getmag --show```
 * **Description**: view whole light curve and inspect cutouts of object and residuals after the psf subtraction. 
 * **Recommended Options**:
 * **Other Options**:
     * ```-f FILTER``` where FILTER is U,B,g,V,r,R,i,I, landolt, apass, or sloan. This displays light curve for only this filter or set of filters
-    * If a point looks funny, then you can click on it. This brings up an image with a cutout of the image, and a cut out of the residual after the psf has been subtracted. It will ask you if you want to make this image with yes, no, or bad (TODO: verify this and fill in what happens if you answer no vs bad)
-
-
-#
-* Check whether there are enough stars in common between a field and the catalog being used in the zcat step ```-s zcat -i```
-
-
+    * ```-o, --output <filename>``` write the output to a csv file
+    * ```--updatetosnex2``` upload output to SNEx 2
+    * If a point looks funny, then you can click on it. This brings up an image with a cutout of the image, and a cut out of the residual after the psf has been subtracted. It will ask you if you want to make this image with yes, delete (d), upper limit (u), or bad. In theory, yes should keep the observation and all derived quantities, delete (d) removes everything back to the psf stage, upper limit (u) set the magtype to -1, and bad (b) sets the quality to 1. It is recommended that you use delete to remove an observation rather than b. Currently, there is a bug which sets images marked as bad to upper limits (i.e. b is aliased to u; see issue #56).
+    
 # Creating a Landolt Catalog:
 ### Download landolt standard star catalogs
 * These need to be obtained from LCO (Jamie gave me a zip file with them)
@@ -201,8 +207,8 @@ Where:
     * If `classificationid` is not 1, update `classificationid` for the row selected: ```UPDATE targets SET classificationid=1 WHERE targetid=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard)
 * Use the standard star image to find the nightly zeropoint for the nights on which you observed your target and the standard (run psf, psfmag, zcat)
     * When running the zcat step, use ```--catalog=$LCOSNDIR/standard/cat/landolt/<standard catalog name>```
+    * Check whether there are enough stars in common between a field and the catalog being used in the zcat step ```-s zcat -i```
 * When you run -s local on the SN (in the next step), it queries the database for any standards in the same filter-site-night as the SN observations. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard STANDARD``` where STANDARD is the name of your standard (e.g. L95). Alternately, you can use `--standard all` to find all available standards
-
 ### Create a catalog of stars (local sequence) in SN field for Landolt filters
 * This calculates the apparent magnitude for the stars in a given filter in your SN field and creates a catalog that will be used in the zcat step to generate the zeropoint for each observation. If a single class of telescopes seems to be an outlier, then you should limit the telescopes used to calculate the apparent magnitude to a single class of telescopes with the ```-T 1m0``` flag
 ```

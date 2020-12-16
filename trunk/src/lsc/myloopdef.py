@@ -168,18 +168,27 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
             }
 
             if int(ftype)==1:
-                phot_type = raw_input('The default photometry type for non-difference imaging is PSF. If Aperture photometry was performed instead, please enter "Aperture". Otherwise press enter: ')
+                phot_type = raw_input('The default photometry type for non-difference imaging is PSF. If this is not PSF photometry please enter "Aperture", "Mixed", or "Unsure": ')
                 if phot_type.lower() == 'aperture':
                     upload_extras['photometry_type'] = 'Aperture'
+                elif phot_type.lower() == 'mixed':
+                    upload_extras['photometry_type'] = 'Mixed'
+                elif phot_type.lower() == 'unsure':
+                    upload_extras['photometry_type'] = 'Unsure'
                 else:
                     upload_extras['photometry_type'] = 'PSF'
                     
             elif int(ftype)==3:
-                phot_type = raw_input('The default photometry type for difference imaging is Aperture. If PSF photometry was performed instead, please enter "PSF". Otherwise press enter: ')
+                phot_type = raw_input('The default photometry type for difference imaging is Aperture. If this is not Aperture photometry please enter "PSF", "Mixed", or "Unsure": ')
                 if phot_type.lower() == 'psf':
                     upload_extras['photometry_type'] = 'PSF'
+                elif phot_type.lower() == 'mixed':
+                    upload_extras['photometry_type'] = 'Mixed'
+                elif phot_type.lower() == 'unsure':
+                    upload_extras['photometry_type'] = 'Unsure'
                 else:
                     upload_extras['photometry_type'] = 'Aperture'
+
                 upload_extras['background_subtracted'] = True
                 if int(dtype)==0:
                     upload_extras['subtraction_algorithm'] = 'Hotpants'
@@ -199,12 +208,14 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                 upload_extras['final_reduction'] = True
             else:
                 upload_extras['final_reduction'] = False
-            used_in = raw_input('Will this data be used in a paper? If so, please enter the last name of the first author: ')
+            used_in = raw_input('Will this data be used in a paper? If so, please enter the name of the first author like "Last Name, First Name": ')
             if used_in:
                 upload_extras['used_in'] = used_in
             print(upload_extras)
-            
-            print('This dataproduct will be assigned to the default sharing groups. If you would like to change these group permissions, you can do so on the page for this target on SNEx2.')
+            default_groups = [
+                'ANU', 'ARIES', 'CSP', 'CU Boulder', 'e/PESSTO', 'ex-LCOGT', 'KMTNet', 'LBNL', 'LCOGT', 'LSQ', 'NAOC', 'Padova', 'QUB', 'SAAO', 'SIRAH', 'Skymapper', 'Tel Aviv U', 'U Penn', 'UC Berkeley', 'US GSP', 'UT Austin'
+            ]
+            print('This dataproduct will be assigned to the following groups. If you would like to change these group permissions, you can do so on the page for this target on SNEx2: {}'.format(default_groups))
             ### Upload to snex2
             username = raw_input('Please enter your SNEx2 username: ')
             password = getpass.getpass(prompt='Please enter your SNEx2 password: ')

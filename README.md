@@ -15,7 +15,7 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 1. Image Subtraction: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
 2. [Manual (beta)](manual.md) 
 
-# Docker-compose Installation:
+# Docker-compose Installation (recommended):
 This is likely the quickest way to get the pipeline up and running and requires the least amount of installation.
 In the following instructions, the database server and data directories will live locally on your computer, so they will persist outside the Docker.
 The pipeline itself will run inside the Docker container and forward graphics to your local computer.

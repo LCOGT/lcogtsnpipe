@@ -381,6 +381,10 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
         print status
         if status >= 1:
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
+            # TODO: fix muscat reduction
+            if 'ep' in ggg[0]['instrument']:  # skip muscat data
+                print('Skipping MuSCAT data for now')
+                continue
             _dir = ggg[0]['filepath']
             img0 = img.replace('.fits', '.sn2.fits')
 

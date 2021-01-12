@@ -1223,9 +1223,9 @@ def display_subtraction(img):
         ax1 = plt.subplot(2, 2, 1, adjustable='box-forced')
         ax2 = plt.subplot(2, 2, 2, sharex=ax1, sharey=ax1, adjustable='box-forced')
         ax3 = plt.subplot(2, 2, 3, sharex=ax1, sharey=ax1, adjustable='box-forced')
-        ax1.imshow(origdata, norm = ImageNormalize(origdata, interval=ZScaleInterval()))
-        ax2.imshow(tempdata, norm = ImageNormalize(tempdata, interval=ZScaleInterval()))
-        ax3.imshow(diffdata, norm = ImageNormalize(diffdata, interval=ZScaleInterval()))
+        ax1.imshow(origdata, origin='lower', norm=ImageNormalize(origdata, interval=ZScaleInterval()))
+        ax2.imshow(tempdata, origin='lower', norm=ImageNormalize(tempdata, interval=ZScaleInterval()))
+        ax3.imshow(diffdata, origin='lower', norm=ImageNormalize(diffdata, interval=ZScaleInterval()))
         basename = origimg.split('.')[0]
         ax1.set_title(origimg.replace(basename, ''))
         ax2.set_title(tempimg.replace(basename, ''))

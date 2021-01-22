@@ -9,7 +9,8 @@ default_catdir = os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'st
 parser = argparse.ArgumentParser()
 parser.add_argument('-F', '--force', action='store_true', help="try to download catalog even if we've tried before")
 parser.add_argument('-R', '--radius', type=float, default=20., help="query for stars within this radius of the coordinates")
-parser.add_argument('-f', '--field', nargs='+', choices=['landolt', 'apass', 'sloan'], default=['landolt', 'apass', 'sloan'], help="catalogs to check (all by default)")
+parser.add_argument('-f', '--field', nargs='+', choices=['landolt', 'apass', 'sloan', 'gaia'],
+        default=['landolt', 'apass', 'sloan', 'gaia'], help="catalogs to check (all by default)")
 args = parser.parse_args()
 
 if args.force:
@@ -40,6 +41,9 @@ for system in args.field:
                 os.system('queryapasscat.py -r {ra0} -d {dec0} -R {radius} -o '.format(radius=args.radius, **target) + os.path.join(filepath, filename))
             elif system == 'sloan':
                 lsc.lscabsphotdef.sloan2file(target['ra0'], target['dec0'], args.radius, output=os.path.join(filepath, filename))
+            elif system == 'gaia':
+                lsc.lscabsphotdef.gaia2file(target['ra0'], target['dec0'],
+                        output=os.path.join(filepath, filename))
             fileexists = os.path.isfile(os.path.join(filepath, filename))
             if fileexists:
                 print 'Adding', filename, 'to database'

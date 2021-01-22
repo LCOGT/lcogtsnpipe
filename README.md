@@ -53,7 +53,7 @@ These instructions only need to be run once, when you set up the pipeline.
         xeyes
         ```
         If a window appears, your computer is configured correctly. You only have to do this once.
-   7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe` and `cd lcogtsnpipe`
+   7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe`
    8. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
    9. Set you environment variables to point to where you want to store data and catalogs are e.g. 
        ```

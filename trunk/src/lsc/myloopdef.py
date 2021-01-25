@@ -1,4 +1,5 @@
 import os
+from os.path import splitext
 import lsc
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,6 +13,9 @@ from astropy.wcs import WCS
 from astropy.table import Table, vstack
 from astropy.coordinates import SkyCoord
 from astropy.visualization import ImageNormalize, ZScaleInterval
+import requests
+import json
+import getpass
 
 def weighted_avg_and_std(values, weights):
     """
@@ -35,7 +39,7 @@ except Exception as e:
     print e
     print '### warning: problem connecting to the database'
 
-def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10, magtype='mag', database='photlco'):
+def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10, magtype='mag', snex2_upload=False, database='photlco'):
     if len(imglist)==0:
         print 'error: no images selected'
         return
@@ -70,6 +74,13 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                 magtype.append(ggg[0]['magtype'])
                 if tel[-1] not in setup:  setup[tel[-1]] = {}
                 if filt[-1] not in setup[tel[-1]]:  setup[tel[-1]][filt[-1]] = {}
+
+                # These three things should be the same for all the images in imglist
+                ftype = ggg[0]['filetype']
+                dtype = ggg[0]['difftype']
+                # Get name of target:
+                namequery = lsc.mysqldef.getfromdataraw(conn, 'targetnames', 'targetid', str(ggg[0]['targetid']))
+                targetname = namequery[0]['name']
 
     tables = []
     for _tel in setup:
@@ -146,6 +157,77 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     output_table['dmag'].format = '%.4f'
     if _output:
         output_table.write(_output, format='ascii')
+        if snex2_upload:
+            ### Make it snex2 readable
+            os.system('format_snex2.py -n ' + _output)
+            snex2_filename = splitext(_output)[0] + '_snex2.csv'
+
+            upload_extras = {
+                'reduction_type': 'manual',
+                'instrument': 'LCO'
+            }
+
+            if int(ftype)==1:
+                phot_type = raw_input('The default photometry type for non-difference imaging is PSF. If this is not PSF photometry please enter "Aperture", "Mixed", or "Unsure": ')
+                if phot_type.lower() == 'aperture':
+                    upload_extras['photometry_type'] = 'Aperture'
+                elif phot_type.lower() == 'mixed':
+                    upload_extras['photometry_type'] = 'Mixed'
+                elif phot_type.lower() == 'unsure':
+                    upload_extras['photometry_type'] = 'Unsure'
+                else:
+                    upload_extras['photometry_type'] = 'PSF'
+                    
+            elif int(ftype)==3:
+                phot_type = raw_input('The default photometry type for difference imaging is Aperture. If this is not Aperture photometry please enter "PSF", "Mixed", or "Unsure": ')
+                if phot_type.lower() == 'psf':
+                    upload_extras['photometry_type'] = 'PSF'
+                elif phot_type.lower() == 'mixed':
+                    upload_extras['photometry_type'] = 'Mixed'
+                elif phot_type.lower() == 'unsure':
+                    upload_extras['photometry_type'] = 'Unsure'
+                else:
+                    upload_extras['photometry_type'] = 'Aperture'
+
+                upload_extras['background_subtracted'] = True
+                if int(dtype)==0:
+                    upload_extras['subtraction_algorithm'] = 'Hotpants'
+                else:
+                    upload_extras['subtraction_algorithm'] = 'PyZOGY'
+
+                template_source = raw_input('Please enter the source of the template used to perform background subtraction (i.e. LCO or SDSS): ')
+                upload_extras['template_source'] = template_source
+
+            ### Prompt user for inputs for a few upload extras
+            reducer_group = raw_input('Please enter the group reducing this data (i.e. LCO, UC Davis, etc.): ')
+            if reducer_group!='LCO':
+                upload_extras['reducer_group'] = reducer_group
+
+            final_photometry = raw_input('Is this reduction final? [y/n]')
+            if final_photometry == 'y':
+                upload_extras['final_reduction'] = True
+            else:
+                upload_extras['final_reduction'] = False
+            used_in = raw_input('Will this data be used in a paper? If so, please enter the name of the first author like "Last Name, First Name": ')
+            if used_in:
+                upload_extras['used_in'] = used_in
+            print(upload_extras)
+            print("\n")
+            default_groups = [
+                'ANU', 'ARIES', 'CSP', 'CU Boulder', 'e/PESSTO', 'ex-LCOGT', 'KMTNet', 'LBNL', 'LCOGT', 'LSQ', 'NAOC', 'Padova', 'QUB', 'SAAO', 'SIRAH', 'Skymapper', 'Tel Aviv U', 'U Penn', 'UC Berkeley', 'US GSP', 'UT Austin'
+            ]
+            print('This dataproduct will be assigned to the following groups. If you would like to change these group permissions, you can do so on the page for this target on SNEx2: {}'.format(default_groups))
+            ### Upload to snex2
+            username = raw_input('Please enter your SNEx2 username: ')
+            password = getpass.getpass(prompt='Please enter your SNEx2 password: ')
+            # Send the request
+            snex2_upload_url = 'http://test.supernova.exchange/pipeline-upload/photometry-upload/'
+            r = requests.post(snex2_upload_url, data={'targetname': targetname, 'data_product_type': 'photometry', 'upload_extras': json.dumps(upload_extras), 'username': username}, files={'file': (snex2_filename, open(os.getcwd() + '/' + snex2_filename, 'rb'))}, auth=(username, password))
+            if r.status_code == 201:
+                print('Upload successful')
+            else: 
+                print('Error: Upload failed with code {}'.format(r.status_code))
+                print(r)
     else:
         output_table.pprint(max_lines=-1)
 

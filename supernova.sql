@@ -1042,6 +1042,7 @@ CREATE TABLE `targets` (
   `sloan_cat` text,
   `landolt_cat` text,
   `apass_cat` text,
+  `gaia_cat` text,
   `pm_ra` double NOT NULL DEFAULT '0' COMMENT 'proper motion RA times cos(dec)',
   `pm_dec` double NOT NULL DEFAULT '0' COMMENT 'proper motion Dec',
   `groupidcode` bigint(20) NOT NULL DEFAULT '32769' COMMENT 'Which groups can see this',

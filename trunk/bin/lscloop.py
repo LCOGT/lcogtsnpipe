@@ -48,7 +48,8 @@ if __name__ == "__main__":   # main program
     parser.add_argument("-c", "--center", action="store_false", dest='recenter', help='do not recenter')
     parser.add_argument("--unfix", action="store_false", dest='fix', help='use a variable color term')
     parser.add_argument("--cutmag", default=99., type=float, help='magnitude instrumental cut for zeropoint')
-    parser.add_argument("--field", default='', choices=['landolt', 'sloan', 'apass'])
+    parser.add_argument("--field", default='', choices=['landolt', 'sloan', 'apass', 'gaia'],
+            help='note: gaia only functional for psf stage')
     parser.add_argument("--ref", default='', help='get sn position from this file')
     parser.add_argument("--use-sextractor", action="store_true", help="use souces from sextractor for PSF instead of catalog")
     parser.add_argument("--catalogue", default='', help="filename of catalog (full path OR ./___apass.cat OR apass/___apass.cat)")
@@ -185,7 +186,8 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type, args.uploadtosnex2)
             elif args.stage == 'psf':
-                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,
+                catalogue = lsc.util.getcatalog(args.name, args.field) if args.field else args.catalogue
+                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, catalogue,
                                       'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai, args.b_sigma, args.b_crlim, 
                                       max_apercorr=args.max_apercorr)
             elif args.stage == 'psfmag':
@@ -222,6 +224,10 @@ if __name__ == "__main__":   # main program
                     p.join()
                 else:                    
                     for img in listfile:
+                        if args.field == 'gaia':
+                            print('Cannot use gaia catalog for zcat stage: ' 
+                                  'use apass or sloan instead')
+                            continue
                         run_absphot(img)
             elif args.stage in ['mag', 'abscat', 'local']:  # compute magnitudes for sequence stars or supernova
                 # Don't allow PSF photometry to be performed on difference images becaues of complications with aperture correction
@@ -284,7 +290,7 @@ if __name__ == "__main__":   # main program
 
                 listtemp = np.array([k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])])
 
-                lsc.myloopdef.run_diff(listfile, listtemp, args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, args.difftype, suffix, args.use_mask)
+                lsc.myloopdef.run_diff(listfile, listtemp, args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, args.difftype, suffix, args.use_mask, args.no_iraf)
             elif args.stage == 'template':
                 lsc.myloopdef.run_template(listfile, args.show, args.force, args.interactive, args.RA, args.DEC, args.psf, args.mag, args.clean, args.subtract_mag_from_header)
             elif args.stage == 'mergeall':  #    merge images using lacos and swarp

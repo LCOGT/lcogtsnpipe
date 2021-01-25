@@ -549,11 +549,8 @@ def checkstage(img, stage, database='photlco'):
             status = 1  # mag should be replaced with 'cat'
         else:
             status = 2
-    elif stage == 'checkpsf' and status >= -1 and ggg[0]['wcs'] == 0:
-        if ggg[0]['psf'] == 'X':
-            status = 1
-        else:
-            status = 2
+    elif stage == 'checkpsf' and status >= 0 and ggg[0]['psf'] != 'X' and ggg[0]['wcs'] == 0:
+        status = 1
     elif stage == 'checkmag' and status >= 0 and ggg[0]['psf'] != 'X' and ggg[0]['wcs'] == 0:
         if ggg[0]['psfmag'] == 9999:
             status = 1
@@ -887,7 +884,7 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
     fig.clf()
     ax = fig.add_subplot(1, 1, 1)
     norm = ImageNormalize(data, interval=ZScaleInterval())
-    ax.imshow(data, norm=norm, origin='lower')
+    ax.imshow(data, norm=norm, origin='lower', cmap='bone')
     wcs = WCS(hdr)
     if catfile.endswith('fits'):
         cat = Table.read(catfile)
@@ -899,7 +896,24 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
     ax.plot(i, j, marker='o', mec='r', mfc='none', ls='none')
     ax.set_title(os.path.basename(imgfile))
     fig.tight_layout()
+    psf_star_x, psf_star_y, psf_star_id = get_psf_star_coords(imgfile)
+    ax.plot(psf_star_x-1, psf_star_y-1, 'o', mec='b', mfc='none', ls='none') #subtract 1 for iraf --> python indexing
+    for ipsf_star_x, ipsf_star_y, ipsf_star_id in zip(psf_star_x, psf_star_y, psf_star_id):
+        ax.text(ipsf_star_x-1, ipsf_star_y-1, ipsf_star_id, color='b') 
 
+def get_psf_star_coords(imgfile):
+    psf_file = imgfile.replace('.fits', '.psf.fits')
+    psf_hdr = fits.getheader(psf_file, 0)
+    npsfstars = psf_hdr['NPSFSTAR']
+    id = []
+    x = np.empty(npsfstars)
+    y = np.empty(npsfstars)
+    for indx in range(npsfstars):
+        starnum = indx+1
+        id.append(psf_hdr['ID{}'.format(starnum)])
+        x[indx] = psf_hdr['X{}'.format(starnum)]
+        y[indx] = psf_hdr['Y{}'.format(starnum)]
+    return x, y, id
 
 def checkcat(imglist, database='photlco'):
     plt.ion()
@@ -983,7 +997,7 @@ def checkpsf(imglist, no_iraf=False, database='photlco'):
                         print 'updatestatus bad quality'
                         lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
         elif status == 0:
-            print 'status ' + str(status) + ': WCS stage not done'
+            print 'status ' + str(status) + ': PSF stage not done'
         elif status == -1:
             print 'status ' + str(status) + ': sn2.fits file not found'
         elif status == -2:
@@ -994,15 +1008,12 @@ def checkpsf(imglist, no_iraf=False, database='photlco'):
             print 'status ' + str(status) + ': unknown status'
 
 
-def make_psf_plot(psf_filename, fig=None):
+def seepsf(psf_filename, saveto=None):
     """
-    Displays plots of PSFs for the checkpsf stage without using iraf
+    Calculates PSF from header info plus residuals without using iraf
     :param psf_filename: filepath+filename of psf file
+    :param saveto: filepath+filename of output file
     """
-    if fig is None:
-        fig = plt.gcf()
-    fig.clf()
-
     psf_hdul = fits.open(psf_filename)
     N = psf_hdul[0].header['PSFHEIGH'] / psf_hdul[0].header['NPSFSTAR']
     sigma_x = psf_hdul[0].header['PAR1']
@@ -1021,16 +1032,27 @@ def make_psf_plot(psf_filename, fig=None):
     analytic = N * np.exp(-(((X ** 2) / (sigma_x ** 2)) + ((Y ** 2) / (sigma_y ** 2))) / 2)
     residual = psf_hdul[0].data
     Z = analytic + residual
+    if saveto is not None:
+        psf_hdul[0].data = Z
+        psf_hdul.writeto(saveto, overwrite=True)
+    return X, Y, Z
+
+
+def make_psf_plot(psf_filename, fig=None):
+    """
+    Displays plots of PSFs for the checkpsf stage without using iraf
+    :param psf_filename: filepath+filename of psf file
+    """
+    if fig is None:
+        fig = plt.gcf()
+    fig.clf()
+
+    X, Y, Z = seepsf(psf_filename)
 
     ax = fig.add_subplot(1, 1, 1, projection='3d')
-    """
-    # the transparency makes this challenging to interpret
-    ax.plot_wireframe(X, Y, Z, rcount=2 * psfrad + 1, ccount=2 * psfrad + 1)
-    """
+    # ax.plot_wireframe(X, Y, Z)  # the transparency makes this challenging to interpret
     # replicate iraf look, much slower than wireframe
-    ax.plot_surface(X,Y,Z,rcount=2*psfrad+1,ccount=2*psfrad+1,
-            antialiased=True,linewidth=.25,color='black',edgecolor='white')
-    
+    ax.plot_surface(X, Y, Z, antialiased=True, linewidth=.25, color='black', edgecolor='white')
 
     ax.view_init(elev=40, azim=330)  # replicating starting view of iraf PSF
     ax.set_axis_off()
@@ -1283,10 +1305,9 @@ def display_subtraction(img):
         ax1 = plt.subplot(2, 2, 1, adjustable='box-forced')
         ax2 = plt.subplot(2, 2, 2, sharex=ax1, sharey=ax1, adjustable='box-forced')
         ax3 = plt.subplot(2, 2, 3, sharex=ax1, sharey=ax1, adjustable='box-forced')
-        pmin, pmax = 5, 99
-        ax1.imshow(origdata, vmin=np.percentile(origdata, pmin), vmax=np.percentile(origdata, pmax))
-        ax2.imshow(tempdata, vmin=np.percentile(tempdata, pmin), vmax=np.percentile(tempdata, pmax))
-        ax3.imshow(diffdata, vmin=np.percentile(diffdata, pmin), vmax=np.percentile(diffdata, pmax))
+        ax1.imshow(origdata, origin='lower', norm=ImageNormalize(origdata, interval=ZScaleInterval()))
+        ax2.imshow(tempdata, origin='lower', norm=ImageNormalize(tempdata, interval=ZScaleInterval()))
+        ax3.imshow(diffdata, origin='lower', norm=ImageNormalize(diffdata, interval=ZScaleInterval()))
         basename = origimg.split('.')[0]
         ax1.set_title(origimg.replace(basename, ''))
         ax2.set_title(tempimg.replace(basename, ''))
@@ -1941,7 +1962,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
     os.system(command)
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype=None, suffix='.diff.fits', use_mask=True):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype=None, suffix='.diff.fits', use_mask=True, no_iraf=False):
     status = []
     stat = 'psf'
     for img in listtar:
@@ -1986,7 +2007,11 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
         mask = ''
     else:
         mask = ' --unmask'
-    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix + mask
+    if no_iraf:
+        iraf = ' --no-iraf'
+    else:
+        iraf = ''
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix + mask + iraf
     print command
     os.system(command)
 

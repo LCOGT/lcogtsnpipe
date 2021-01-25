@@ -212,6 +212,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
             if used_in:
                 upload_extras['used_in'] = used_in
             print(upload_extras)
+            print("\n")
             default_groups = [
                 'ANU', 'ARIES', 'CSP', 'CU Boulder', 'e/PESSTO', 'ex-LCOGT', 'KMTNet', 'LBNL', 'LCOGT', 'LSQ', 'NAOC', 'Padova', 'QUB', 'SAAO', 'SIRAH', 'Skymapper', 'Tel Aviv U', 'U Penn', 'UC Berkeley', 'US GSP', 'UT Austin'
             ]

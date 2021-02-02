@@ -13,7 +13,8 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 
 # Pipeline Documentation:
 1. Image Subtraction: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
-2. [Manual (beta)](manual.md) 
+2. [Manual](manual.md) 
+3. Tutorial: https://docs.google.com/document/d/14ADvdbS-19flwtU7TRJ1lyx8IjgBK6D1KubZnQkQciA/edit?usp=sharing
 
 # Docker-compose Installation (recommended):
 This is likely the quickest way to get the pipeline up and running and requires the least amount of installation.

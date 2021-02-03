@@ -98,7 +98,7 @@ Where:
 
 ### WCS solution
 * **Call**: ```-s wcs```
-* **Description**: Generate a WCS solution for a given observation. In general, this stage does not need to be run when starting analysis from observations that have been reduced with Banzai (which is recommended) as Banzai solves the WCS solution (files processed by Banzai end in `.e91.fits`).
+* **Description**: Generate a WCS solution for a given observation. In general, this stage does not need to be run when starting analysis from observations that have been reduced with Banzai (which is recommended) as Banzai solves the WCS solution (files processed by Banzai end in `.e91.fits`). If Banzai fails to solve the WCS solution, then the WCS column will be populated with 4 - this means you may need to run the WCS stage manually.
 * **Recommended Options**: 
 
 * **Other Options**: 
@@ -120,7 +120,8 @@ Where:
 * **How to fix this step if the image looks ok but the wcs failed**
     * rerun lscloop.py with the step ```-s wcs -b wcs``` to run only on those files for which the wcs failed
     * try running with the --catalog option
-    * try using ```--use_sextractor``` flag TODO: describe this
+    * try using ```--mode astrometry``` to use astrometry.net to solve the WCS
+    * try using ```--xshift 1 --yshift 1``` to start the solution from a slightly different location
 
 ### Generate a PSF model
 * **Call**: ```-s psf```
@@ -228,7 +229,7 @@ Where STANDARD is the standard you calibrated previously and CATALOG is the name
     - if there is a big difference between the BV filters of Landolt and APASS for a large number of stars (a few stars will be variable)
     - I guess the main thing is that some of the standard field observations will be bad because of clouds or whatever, so make sure they are not pulling the median zero point away too much
 * This outputs a catalog (the name of which is printed to the screen)
-* Your catalog needs at least B-band magnitudes, in addition to U, to perform color corrections. If there were no B-band standards taken for your dates/site, you'll need to manually add the B-band magnitudes of the stars into your new catalog. The id's should match those in the APASS catalog for your SN, so you can add the appropriate values to the B and Berr columns in your new landolt catalog before proceding. 
+* Your catalog needs at least B-band magnitudes, in addition to U, to perform color corrections. If there were no B-band standards taken for your dates/site, you'll need to manually add the B-band magnitudes of the stars into your new catalog. The id's should match those in the APASS catalog for your SN, so you can add the appropriate values to the B and Berr columns in your new landolt catalog before proceeding. 
 
 ### Move the catalog to the catalog directory:
 * Move the catalog created in the previous step to the directory $LCOSNPIPE/trunk/src/lsc/standard/cat/landolt

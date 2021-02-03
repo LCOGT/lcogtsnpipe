@@ -93,7 +93,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--no_iraf", action="store_true", help="Don't use iraf (currently only option in checkpsf stage)")
     parser.add_argument("--max_apercorr", type=float, default=0.1, help="absolute value of the maximum aperture correction (mag) above which a PSF is marked as bad")
     parser.add_argument("--uploadtosnex2", action="store_true", help="Upload the selected data points to SNEx2")
-
+    parser.add_argument('--pixstack-limit', dest='pixstack_limit', type=int, help='Modify set_extract_pixstack in sep via PyZOGY', default=None)
     args = parser.parse_args()
     if args.multicore >= cpu_count():
         args.multicore = cpu_count()-1 if cpu_count() > 1 else 1
@@ -290,7 +290,7 @@ if __name__ == "__main__":   # main program
 
                 listtemp = np.array([k + v for k, v in zip(lltemp['filepath'], lltemp['filename'])])
 
-                lsc.myloopdef.run_diff(listfile, listtemp, args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, args.difftype, suffix, args.use_mask, args.no_iraf)
+                lsc.myloopdef.run_diff(listfile, listtemp, args.show, args.force, args.normalize, args.convolve, args.bgo, args.fixpix, args.difftype, suffix, args.use_mask, args.no_iraf, pixstack_limit=args.pixstack_limit)
             elif args.stage == 'template':
                 lsc.myloopdef.run_template(listfile, args.show, args.force, args.interactive, args.RA, args.DEC, args.psf, args.mag, args.clean, args.subtract_mag_from_header)
             elif args.stage == 'mergeall':  #    merge images using lacos and swarp

@@ -1962,7 +1962,8 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
     os.system(command)
 
 #####################################################################
-def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype=None, suffix='.diff.fits', use_mask=True, no_iraf=False):
+def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _convolve='', _bgo=3, _fixpix=False, _difftype=None, suffix='.diff.fits', 
+             use_mask=True, no_iraf=False, pixstack_limit=None):
     status = []
     stat = 'psf'
     for img in listtar:
@@ -2011,7 +2012,11 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
         iraf = ' --no-iraf'
     else:
         iraf = ''
-    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix + mask + iraf
+    if pixstack_limit is not None:
+        pixstack_text = ' --pixstack-limit {}'.format(pixstack_limit)
+    else:
+        pixstack_text = ''
+    command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix + mask + iraf + pixstack_text
     print command
     os.system(command)
 

@@ -27,8 +27,8 @@ These instructions only need to be run once, when you set up the pipeline.
    1. Install [Docker](https://docs.docker.com/get-docker/).
         * Make sure to increase the amount of memory Docker can access (recommended 8 GB). This is needed for certain stages (like `-s cosmic`) to run. On Mac, press the Docker icon in the toolbar, then click Preferences, then Resources, and increase Memory to 8 GB.
    2. Install [docker-compose](https://docs.docker.com/compose/install/)
-   3. (MacOS only) Install [XQuartz](https://www.xquartz.org).
-   4. (MacOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
+   3. (macOS only) Install [XQuartz](https://www.xquartz.org).
+   4. (macOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
    5. Allow X11 connections (may be only necessary on Linux): `xhost +`
    6. (Linux Only) Modify your X11 config files to allow TCP connections: 
         1. If you are running gdm or gdm3 for your display manager add the following to `/etc/gdm<3>/custom.conf`
@@ -56,7 +56,9 @@ These instructions only need to be run once, when you set up the pipeline.
         If a window appears, your computer is configured correctly. You only have to do this once.
    7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe`
    8. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
-   9. Set you environment variables to point to where you want to store data and catalogs are e.g. 
+   9. Set your environment variables to point to where you want to store data and catalogs.
+      You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file
+      so that you don't have to set them in every new terminal session.
        ```
        export LCOSNDIR=/your/data/directory
        export LCOSNDBPATH=/your/data/directory/mysql
@@ -72,7 +74,7 @@ These instructions only need to be run once, when you set up the pipeline.
        ```
        This will take over your current terminal. Eventually, the terminal will print that the mysql host is ready to 
        accept connections
-   11. In a new terminal, log in to the pipeline container: 
+   11. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
        ```
        docker exec -it lcosnpipe /bin/bash
        ```

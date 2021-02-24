@@ -83,7 +83,7 @@ These instructions only need to be run once, when you set up the pipeline.
    13. From inside the container, run 
        ```
        cd $LCOSNDIR
-       mkdir -p lsc fts 0m4 floyds extdata standard/cat/apass standard/cat/sloan standard/cat/landolt standard/cat/gaia
+       mkdir -p data/lsc data/fts data/0m4 data/floyds data/extdata standard/cat/apass standard/cat/sloan standard/cat/landolt standard/cat/gaia
        ```   
        This only needs to be done the first time you populate data in this directory. 
 

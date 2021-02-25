@@ -187,6 +187,8 @@ def guess_instrument_type(name):
         insttype = 'SBIG'
     elif prefix == 'fs':
         insttype = 'Spectral'
+    elif prefix == 'ep':
+        insttype = 'MUSCAT'
     else:
         insttype = None
     return insttype

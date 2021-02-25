@@ -187,6 +187,31 @@ def readkey3(hdr,keyword):
                            'propid'    : 'PROPID',\
                            'userid'    : 'USERID',\
                            'telescop'  : 'TELESCOP'}
+    elif 'ep' in _instrume:   # muscat
+        useful_keys = {'object': 'OBJECT',
+                       'date-obs': 'DATE-OBS',
+                       'ut': 'DATE-OBS',
+                       'date-night': 'DAY-OBS',
+                       'RA': 'RA',
+                       'DEC': 'DEC',
+                       'CAT-RA': 'CAT-RA',
+                       'CAT-DEC': 'CAT-DEC',
+                       'datamin': -100.0,
+                       'datamax': 'SATURATE',
+                       'observer': 'OBSERVER',
+                       'exptime': 'EXPTIME',
+                       'wcserr': 'WCSERR',
+                       'instrume': 'INSTRUME',
+                       'JD': 'MJD-OBS',
+                       'mjd': 'MJD-OBS',
+                       'filter': 'FILTER',
+                       'gain': 'GAIN',
+                       'ron': 'RDNOISE',
+                       'airmass': 'AIRMASS',
+                       'type': 'OBSTYPE',
+                       'propid': 'PROPID',
+                       'userid': 'USERID',
+                       'telescop': 'TELESCOP'}
     elif 'fs' in _instrume or 'em' in _instrume:
        if hdr.get('DATE-OBS') < '2014-04-01':
           if 'RDNOISE' in hdr: ron='RDNOISE'

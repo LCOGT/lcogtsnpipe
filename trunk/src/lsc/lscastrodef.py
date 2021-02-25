@@ -69,7 +69,7 @@ def wcsstart(img,CRPIX1='',CRPIX2=''):
         else: CRPIX2= 1000.+CRPIX2
         CDELT1=2
         CDELT2=2
-    elif 'fl' in _instrume or 'fa' in _instrume:
+    elif 'fl' in _instrume or 'fa' in _instrume or 'ep' in _instrume:
         angle=readkey3(hdr,'ROLLERDR')#posang)
         theta=(angle*pi/180.)
         pixscale=float(readkey3(hdr,'PIXSCALE'))
@@ -329,33 +329,38 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
 ######################################## 
         if rmsx3 < 10 and rmsy3 < 10: 
             if 'kb' in _instrume:
-                fwhmgess3=median(array(fwhm3))*.68*2.35*0.467
-                if _imex:  fwhmgessime = median(array(ccc))*0.467
+                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3)))*0.464
+                if _imex:  fwhmgessime = median(array(ccc))*0.464
                 else:     fwhmgessime = 9999
             elif 'fl' in _instrume or 'fa' in _instrume:
-                fwhmgess3=median(array(fwhm3))*.68*2.35*0.467          #  need to check
-                if _imex:  fwhmgessime = median(array(ccc))*0.467
+                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.389
+                if _imex:  fwhmgessime = median(array(ccc)) * 0.467
                 else:     fwhmgessime = 9999
             elif 'fs' in _instrume:
-                fwhmgess3=median(array(fwhm3))*.68*2.35*0.30
-                if _imex:  fwhmgessime = median(array(ccc))*0.30
+                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.30
+                if _imex:  fwhmgessime = median(array(ccc)) * 0.30
                 else:     fwhmgessime = 9999
             elif 'em' in _instrume:
-                fwhmgess3=median(array(fwhm3))*.68*2.35*0.278
-                if _imex:  fwhmgessime = median(array(ccc))*0.278  
+                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.278
+                if _imex:  fwhmgessime = median(array(ccc)) * 0.278
+                else:     fwhmgessime = 9999
+            elif 'ep' in _instrume:
+                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.27
+                if _imex:  fwhmgessime = median(array(ccc)) * 0.27
                 else:     fwhmgessime = 9999
             ellgess3=median(array(ell3))
+
         else:
             fwhmgess3=9999
             fwhmgessime=9999
             ellgess3=9999
-        if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa']:
+        if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa', 'ep']:
             mbkg3=median(bkg3)
             lsc.util.updateheader(img,0,{'MBKG':(mbkg3,'background level')})
         else:
             mbkg3=readkey3(hdr,'MBKG')
         if fwhmgess3:
-            if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa']:
+            if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa', 'ep']:
                 V=(math.pi/(4*math.log(2)))*(45000-float(mbkg3))*(float(fwhmgess3)**2)
             else:                     
                 V=(math.pi/(4*math.log(2)))*(32000-float(mbkg3))*(float(fwhmgess3)**2)
@@ -736,7 +741,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
             fileph['ug']=array(array(magstd0['u'],float)-array(magstd0['g'],float),str)
             fileph['iz']=array(array(magstd0['i'],float)-array(magstd0['z'],float),str)
         distvec,pos0,pos1=lsc.lscastrodef.crossmatch(array(rastd0),array(decstd0),array(rasex),array(decsex),10) 
-        fwhm0=(median(array(fw,float)[pos1]))*.68*2.35
+        fwhm0 = half_total_flux_radius_to_fwhm(median(array(fw,float)[pos1]))
         print '\n fwhm = '+str(fwhm0)
         iraf.noao.digiphot.mode='h'
         iraf.noao.digiphot.daophot.photpars.zmag = 0
@@ -1290,6 +1295,13 @@ def finewcs(img):
 #        iraf.tvmark(1,'STDIN',Stdin=list(vector),mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=206,txsize=4)
 #####################################################################################################3
 
+
+def half_total_flux_radius_to_fwhm(htfr):
+    # The 2.355 goes from 1 sigma to fwhm
+    # The 0.8493218 goes from a radius that holds 50% of the flux of a Gaussian to 1 sigma
+    return htfr * 0.8493218 * 2.355
+
+
 def run_astrometry(im, clobber=True,redo=False):
     import lsc
     import os
@@ -1337,15 +1349,17 @@ def run_astrometry(im, clobber=True,redo=False):
             xpix,ypix,fw,cl,cm,ell,bkg,fl = sexvec
             if len(fw)>1:
                 if 'kb' in _instrume:
-                    fwhm = np.median(np.array(fw))*.68*2.35*0.467
+                    fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.464
                 elif 'fa' in _instrume:
-                    fwhm = np.median(np.array(fw))*.68*2.35*0.467          #  need to check
+                    fwhm =half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.389
                 elif 'fl' in _instrume:
-                    fwhm = np.median(np.array(fw))*.68*2.35*0.467          #  need to check
+                    fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.389
                 elif 'fs' in _instrume:
-                    fwhm = np.median(np.array(fw))*.68*2.35*0.30
+                    fwhm =half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.30
                 elif 'em' in _instrume:
-                    fwhm = np.median(np.array(fw))*.68*2.35*0.278
+                    fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.278
+                elif 'ep' in _instrume:
+                    fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.27
                 else:
                     fwhm = 5
             else:

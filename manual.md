@@ -86,7 +86,7 @@ Where:
 * ```-f FILTER``` run only on observations from one filter or set of filters (U,u,B,g,V,r,R,i,I,z,w,landolt, apass, sloan)
 * ```--id, -d``` run only on a specific image specified by a 3 digit number in the filename. For example you would use ```--id 046``` to run on the file elp1m008-fl05-20180302-0046-s91.
 * ```-T``` run only on observations from one telescope. Valid options: 1m0, 2m0, or 0m4. Note: because of the implementation, there is a bug/feature to `-T` that you can search for any substring in the filename
-* ```-I``` run only on observations from one instrument. Valid options: kb, fl, fs, sinistro, sbig
+* ```-I``` run only on observations from one instrument. Valid options: kb, fl, fs, sinistro, sbig, muscat, ep
 * ```-b STAGE``` run only on observations marked at bad at a given stage (where stage is quality, wcs, psf, psfmag, zcat, mag)
 
 ## Steps:

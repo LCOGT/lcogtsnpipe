@@ -29,13 +29,14 @@ RUN apt-get update \
 
 RUN ln -s /usr/bin/sextractor /usr/bin/sex
 
-RUN pip install cryptography==2.4.1 numpy>=1.12 astropy matplotlib==2.2.5 pyraf mysql-python scipy astroquery==v0.4 statsmodels==0.10 cython reproject
+RUN pip install numpy>=1.12
+RUN pip install cryptography==2.4.1 astropy matplotlib==2.2.5 pyraf mysql-python scipy astroquery==v0.4 statsmodels==0.10 cython reproject
 
-RUN pip install git+git://github.com/kbarbary/sep.git@master git+git://github.com/dguevel/PyZOGY.git && rm -rf ~/.cache/pip
+RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git && rm -rf ~/.cache/pip
 
-RUN wget http://ds9.si.edu/download/debian9/ds9.debian9.8.1.tar.gz \
-        && tar -xzvf ds9.debian9.8.1.tar.gz -C /usr/local/bin \
-        && rm -rf ds9.debian9.8.1.tar.gz
+RUN wget http://ds9.si.edu/download/debian9/ds9.debian9.8.2.tar.gz \
+        && tar -xzvf ds9.debian9.8.2.tar.gz -C /usr/local/bin \
+        && rm -rf ds9.debian9.8.2.tar.gz
 
 RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
         && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \

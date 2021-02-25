@@ -13,9 +13,10 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 
 # Pipeline Documentation:
 1. Image Subtraction: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
-2. [Manual (beta)](manual.md) 
+2. [Manual](manual.md) 
+3. Tutorial: https://docs.google.com/document/d/14ADvdbS-19flwtU7TRJ1lyx8IjgBK6D1KubZnQkQciA/edit?usp=sharing
 
-# Docker-compose Installation:
+# Docker-compose Installation (recommended):
 This is likely the quickest way to get the pipeline up and running and requires the least amount of installation.
 In the following instructions, the database server and data directories will live locally on your computer, so they will persist outside the Docker.
 The pipeline itself will run inside the Docker container and forward graphics to your local computer.
@@ -26,8 +27,8 @@ These instructions only need to be run once, when you set up the pipeline.
    1. Install [Docker](https://docs.docker.com/get-docker/).
         * Make sure to increase the amount of memory Docker can access (recommended 8 GB). This is needed for certain stages (like `-s cosmic`) to run. On Mac, press the Docker icon in the toolbar, then click Preferences, then Resources, and increase Memory to 8 GB.
    2. Install [docker-compose](https://docs.docker.com/compose/install/)
-   3. (MacOS only) Install [XQuartz](https://www.xquartz.org).
-   4. (MacOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
+   3. (macOS only) Install [XQuartz](https://www.xquartz.org).
+   4. (macOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
    5. Allow X11 connections (may be only necessary on Linux): `xhost +`
    6. (Linux Only) Modify your X11 config files to allow TCP connections: 
         1. If you are running gdm or gdm3 for your display manager add the following to `/etc/gdm<3>/custom.conf`
@@ -53,9 +54,11 @@ These instructions only need to be run once, when you set up the pipeline.
         xeyes
         ```
         If a window appears, your computer is configured correctly. You only have to do this once.
-   7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe` and `cd lcogtsnpipe`
+   7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe`
    8. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
-   9. Set you environment variables to point to where you want to store data and catalogs are e.g. 
+   9. Set your environment variables to point to where you want to store data and catalogs.
+      You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file
+      so that you don't have to set them in every new terminal session.
        ```
        export LCOSNDIR=/your/data/directory
        export LCOSNDBPATH=/your/data/directory/mysql
@@ -71,7 +74,7 @@ These instructions only need to be run once, when you set up the pipeline.
        ```
        This will take over your current terminal. Eventually, the terminal will print that the mysql host is ready to 
        accept connections
-   11. In a new terminal, log in to the pipeline container: 
+   11. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
        ```
        docker exec -it lcosnpipe /bin/bash
        ```
@@ -80,7 +83,7 @@ These instructions only need to be run once, when you set up the pipeline.
    13. From inside the container, run 
        ```
        cd $LCOSNDIR
-       mkdir -p lsc fts 0m4 floyds extdata standard/cat/apass standard/cat/sloan
+       mkdir -p data/lsc data/fts data/0m4 data/floyds data/extdata standard/cat/apass standard/cat/sloan standard/cat/landolt standard/cat/gaia
        ```   
        This only needs to be done the first time you populate data in this directory. 
 
@@ -97,7 +100,7 @@ Follow these instructions each time you want to use the pipeline.
    ```
    export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
    ```
-   5. Make sure your `$LCOSNDIR` and `$LCOSNDBDIR` environment variables are set correctly. 
+   5. Make sure your `$LCOSNDIR` and `$LCOSNDBPATH` environment variables are set correctly. 
    6. From inside the `lcogtsnpipe` directory, run `docker-compose up`
    7. From a separate terminal you can enter the docker container using `docker exec -it lcosnpipe /bin/bash`
    8. Run your desired pipeline processing commands

@@ -77,6 +77,7 @@ if __name__ == "__main__":
     parser.add_argument("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
     parser.add_argument("--no-iraf", action='store_true', help='transform images in Python instead of IRAF'
                                                                '(IRAF is still used for fixpix if run with --fixpix)')
+    parser.add_argument('--pixstack-limit', dest='pixstack_limit', type=int, help='Modify set_extract_pixstack in Sep', default=None)
 
     args = parser.parse_args()
     imglisttar = lsc.util.readlist(args.targlist)
@@ -352,7 +353,8 @@ if __name__ == "__main__":
                                                            output=imgout,
                                                            normalization=args.normalize,
                                                            show=args.show,
-                                                           use_mask_for_gain=args.use_mask)
+                                                           use_mask_for_gain=args.use_mask,
+                                                           pixstack_limit=args.pixstack_limit)
                             except Exception as e:
                                 print e
                                 print 'PyZOGY failed on', imgtarg0

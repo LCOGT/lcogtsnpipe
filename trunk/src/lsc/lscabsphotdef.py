@@ -10,6 +10,7 @@ import warnings
 import lsc
 import os
 from pyraf import iraf
+from mastcasjobs import MastCasJobs
 
 with warnings.catch_warnings(): # so cronic doesn't email on the "experimental" warning
     warnings.simplefilter('ignore')
@@ -1150,7 +1151,54 @@ def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
         print len(t), 'matching objects. Catalog saved to', output
     else:
         print 'No matching objects.'
-#######################################################################
+
+
+def panstarrs2file(ra, dec, radius=10., mag1=13., mag2=20., output='panstarrs.cat'):
+    '''download a Pan-STARRS1 3pi catalog'''
+    jobs = MastCasJobs(context='PanSTARRS_DR2')
+    t = jobs.quick('''select o.raMean, o.decMean, o.objID,
+                      9999. as uMeanPSFMag, 9999. as uMeanPSFMagErr, o.gMeanPSFMag, o.gMeanPSFMagErr, o.rMeanPSFMag,
+                      o.rMeanPSFMagErr, o.iMeanPSFMag, o.iMeanPSFMagErr, o.zMeanPSFMag, o.zMeanPSFMagErr
+                      from dbo.fGetNearbyObjEq({:f}, {:f}, {:f}) as x
+                      join MeanObjectView o on o.ObjID=x.ObjID
+                      left join StackObjectAttributes as soa on soa.objID=x.objID
+                      where o.nDetections > 5 and o.rMeanPSFMag - o.rMeanKronMag < 0.05
+                      and o.gQfPerfect > 0.85 and o.rQfPerfect > 0.85 and o.iQfPerfect > 0.85 and o.zQfPerfect > 0.85
+                      and o.rMeanPSFMag >= {:f} and o.rMeanPSFMag <= {:f}'''.format(ra, dec, radius, mag1, mag2))
+    if t is not None:
+        t['raMean'].format ='%16.12f'
+        t['decMean'].format = '%16.13f'
+        t['objID'].format = '%19d'
+        for filt in 'ugriz':
+            t[filt + 'MeanPSFMag'].format = '%8.5f'
+            t[filt + 'MeanPSFMagErr'].format = '%11.9f'
+        t.meta['comments'] = [
+        'BEGIN CATALOG HEADER',
+        '   type btext',
+        '   nheader 1',
+        '       csystem J2000',
+        '   nfields 13',
+        '       ra     1 0 d degrees ' + t['raMean'].format,
+        '       dec    2 0 d degrees ' + t['decMean'].format,
+        '       id     3 0 c INDEF   ' + t['objID'].format,
+        '       u      4 0 r INDEF   ' + t['uMeanPSFMag'].format,
+        '       uerr   5 0 r INDEF   ' + t['uMeanPSFMagErr'].format,
+        '       g      6 0 r INDEF   ' + t['gMeanPSFMag'].format,
+        '       gerr   7 0 r INDEF   ' + t['gMeanPSFMagErr'].format,
+        '       r      8 0 r INDEF   ' + t['rMeanPSFMag'].format,
+        '       rerr   9 0 r INDEF   ' + t['rMeanPSFMagErr'].format,
+        '       i     10 0 r INDEF   ' + t['iMeanPSFMagErr'].format,
+        '       ierr  11 0 r INDEF   ' + t['iMeanPSFMagErr'].format,
+        '       z     12 0 r INDEF   ' + t['zMeanPSFMag'].format,
+        '       zerr  13 0 r INDEF   ' + t['zMeanPSFMagErr'].format,
+        'END CATALOG HEADER'
+        ]
+        t.write(output, format='ascii.no_header')
+        print len(t), 'matching objects. Catalog saved to', output
+    else:
+        print 'No matching objects.'
+
+
 def gaia2file(ra, dec, size=26., mag_limit=18., output='gaia.cat'):
 
     from astroquery.gaia import Gaia

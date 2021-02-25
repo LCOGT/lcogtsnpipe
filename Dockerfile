@@ -32,7 +32,9 @@ RUN ln -s /usr/bin/sextractor /usr/bin/sex
 RUN pip install numpy>=1.12
 RUN pip install cryptography==2.4.1 astropy matplotlib==2.2.5 pyraf mysql-python scipy astroquery==v0.4 statsmodels==0.10 cython reproject
 
-RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git && rm -rf ~/.cache/pip
+RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git
+
+RUN pip install git+https://github.com/dfm/casjobs.git git+https://github.com/rlwastro/mastcasjobs.git && rm -rf ~/.cache/pip
 
 RUN wget http://ds9.si.edu/download/debian9/ds9.debian9.8.2.tar.gz \
         && tar -xzvf ds9.debian9.8.2.tar.gz -C /usr/local/bin \

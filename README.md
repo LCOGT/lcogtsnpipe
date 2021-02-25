@@ -100,7 +100,7 @@ Follow these instructions each time you want to use the pipeline.
    ```
    export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
    ```
-   5. Make sure your `$LCOSNDIR` and `$LCOSNDBDIR` environment variables are set correctly. 
+   5. Make sure your `$LCOSNDIR` and `$LCOSNDBPATH` environment variables are set correctly. 
    6. From inside the `lcogtsnpipe` directory, run `docker-compose up`
    7. From a separate terminal you can enter the docker container using `docker exec -it lcosnpipe /bin/bash`
    8. Run your desired pipeline processing commands

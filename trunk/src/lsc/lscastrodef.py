@@ -1299,6 +1299,7 @@ def finewcs(img):
 def half_total_flux_radius_to_fwhm(htfr):
     # The 2.355 goes from 1 sigma to fwhm
     # The 0.8493218 goes from a radius that holds 50% of the flux of a Gaussian to 1 sigma
+    # The extra multiplicative factor after this is called is the instrument's pixel scale
     return htfr * 0.8493218 * 2.355
 
 

@@ -21,6 +21,9 @@ LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public
 # Create gaia, apass, and sloan catalogs for new objects
 * run `comparecatalogs.py` to generate new catalogs
 * Note if you are trying to reduce U band, you need to generate a local catalog. See [Creating an Landolt Catalog](#Creating-a-Landolt-Catalog) for details.
+* As an experimental feature, you can now download Pan-STARRS1 3π catalogs instead of SDSS catalogs for calibrating _griz_ images.
+  To use this feature, you must make an account on [MAST CasJobs](http://mastweb.stsci.edu/ps1casjobs/) and store your WSID (available on the [Profile](http://mastweb.stsci.edu/ps1casjobs/ChangeDetails.aspx) tab) and password in the environment variables `CASJOBS_WSID` and `CASJOBS_PW`, respectively.
+  Then run `comparecatalogs.py -p`. Note that you will not be able to calibrate _u_-band images.
 
 # Cookbook
 ## Basic reduction

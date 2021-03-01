@@ -1154,7 +1154,11 @@ def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
 
 
 def panstarrs2file(ra, dec, radius=10., mag1=13., mag2=20., output='panstarrs.cat'):
-    '''download a Pan-STARRS1 3pi catalog'''
+    '''
+    Download a Pan-STARRS1 3pi catalog
+
+    Query from https://outerspace.stsci.edu/display/PANSTARRS/PS1+Sample+queries#PS1Samplequeries-Query
+    '''
     jobs = MastCasJobs(context='PanSTARRS_DR2')
     t = jobs.quick('''select o.raMean, o.decMean, o.objID,
                       9999. as uMeanPSFMag, 9999. as uMeanPSFMagErr, o.gMeanPSFMag, o.gMeanPSFMagErr, o.rMeanPSFMag,

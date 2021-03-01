@@ -1159,6 +1159,8 @@ def panstarrs2file(ra, dec, radius=10., mag1=13., mag2=20., output='panstarrs.ca
 
     Query from https://outerspace.stsci.edu/display/PANSTARRS/PS1+Sample+queries#PS1Samplequeries-Query
     '''
+    if not os.getenv('CASJOBS_WSID') or not os.getenv('CASJOBS_PW'):
+        raise Exception('Must set CASJOBS_WSID and CASJOBS_PW environment variables to download Pan-STARRS1 catalogs')
     jobs = MastCasJobs(context='PanSTARRS_DR2')
     t = jobs.quick('''select o.raMean, o.decMean, o.objID,
                       9999. as uMeanPSFMag, 9999. as uMeanPSFMagErr, o.gMeanPSFMag, o.gMeanPSFMagErr, o.rMeanPSFMag,

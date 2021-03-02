@@ -19,7 +19,7 @@ if __name__ == "__main__":   # main program
     parser = ArgumentParser(description=description)
     parser.add_argument("-e", "--epoch", help='args.epoch to reduce')
     parser.add_argument("-T", "--telescope", default='all')
-    parser.add_argument("-I", "--instrument", default='', help='kb, fl, fs, sinistro, sbig')
+    parser.add_argument("-I", "--instrument", default='', help='kb, fl, fs, sinistro, sbig, ep, muscat')
     parser.add_argument("-n", "--name", default='', help='object name')
     parser.add_argument("-d", "--id", default='')
     parser.add_argument("-f", "--filter", default='', nargs='+',
@@ -248,7 +248,7 @@ if __name__ == "__main__":   # main program
                 if not args.name and not args.targetid:
                     raise Exception('you need to select one object: use option -n/--name')
                 if args.telescope=='all':
-                    raise Exception('you need to select one type of instrument -T [fs, fl ,kb]')
+                    raise Exception('you need to select one type of instrument -T [fs, fl, kb, ep]')
                 
                 startdate = args.tempdate.split('-')[0]
                 enddate   = args.tempdate.split('-')[-1]
@@ -267,6 +267,8 @@ if __name__ == "__main__":   # main program
                         fake_temptel = 'sinistro'
                     elif args.telescope == 'fa':
                         fake_temptel = 'sinistro'
+                    elif args.telescope == 'ep':
+                        fake_temptel = 'muscat'
                 elif args.temptel:
                     fake_temptel = args.temptel
                 else:

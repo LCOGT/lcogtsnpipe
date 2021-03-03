@@ -441,6 +441,11 @@ def targimg(img='', hdrt=None):
     _ra=lsc.util.readkey3(hdrt,'CAT-RA')
     _dec=lsc.util.readkey3(hdrt,'CAT-DEC')
 
+    if _ra == 'N/A':
+        _ra = lsc.util.readkey3(hdrt, 'OFST-RA')
+    if _dec == 'N/A':
+        _dec = lsc.util.readkey3(hdrt, 'OFST-DEC')
+
     if _ra is None or _dec is None:
         # No CAT RA or dec, so send a warning message to slack and return exception
         # Send Slack message

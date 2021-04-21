@@ -242,7 +242,7 @@ Where STANDARD is the standard you calibrated previously and CATALOG is the name
 * e.g. ```lscloop.py -n 'SN 2018zd' -e 20180302-20190419 -f landolt -s zcat```
 
 # Difference Imaging
-* An outline of the steps to perform difference imaging can be found here: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
+* An outline of the steps to perform difference imaging can be found in [image_subtraction.md](image_subtraction.md).
 * When running the `zcat` stage, `--field` is used to select the catalog to which you will calibrate the magnitudes of those images. If you do not give `--field`, it uses whatever you put in `-f` by default (which is correct for Sloan, for example).
 * When the `-s diff --difftype 1` fails with the error message `ERROR:root:Too few stars in common at 5-sigma; lower and try again` this could be the result of bad WCS, bad background subtraction, bad cosmic ray mask, bad quality image. Regardless, most of these issues are solved by adding the `--unmask` flag to ignore the bad pixel mask when looking for stars
 * An experimental feature has been added under the `--no_iraf` flag. This will use the Python package `reproject` (specifically the `reproject_interp` function) to align the images instead of using IRAF's `gregister`. We added this after experiencing problems where `gregister` does not align images correctly, but we have not looked deeply into the root cause of that problem. We think that `reproject_interp` does not use the same algorithm as `gregister`, and in fact it may use a worse algorithm, so this option should be used with caution. Note that IRAF is still used for `--fixpix` regardless of the `--no_iraf` flag.

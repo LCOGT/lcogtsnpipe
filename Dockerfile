@@ -27,6 +27,18 @@ RUN apt-get update \
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update \
+        && apt-get -y install autoconf \
+        && apt-get -y install automake \
+        && apt-get -y install libtool-bin \
+        && cd / \
+        && git clone https://github.com/astromatic/swarp.git \
+        && cd swarp \
+        && ./autogen.sh \
+        && ./configure \
+        && make \
+        && ln -s /swarp/src/swarp /usr/bin/
+
 RUN ln -s /usr/bin/sextractor /usr/bin/sex
 
 RUN pip install numpy>=1.12

@@ -187,6 +187,8 @@ def guess_instrument_type(name):
         insttype = 'SBIG'
     elif prefix == 'fs':
         insttype = 'Spectral'
+    elif prefix == 'ep':
+        insttype = 'MUSCAT'
     else:
         insttype = None
     return insttype
@@ -430,21 +432,27 @@ def targimg(img='', hdrt=None):
     from lsc.mysqldef import getfromcoordinate
     from lsc import conn
     import string
+    import os, json, requests
     _targetid=''
     _group=''
     if hdrt is None:
         hdrt=lsc.util.readhdr(img)
-    if ('CAT-RA' in hdrt and 'CAT-DEC' in hdrt and 
-        hdrt['CAT-RA'] not in lsc.util.missingvalues and hdrt['CAT-DEC'] not in lsc.util.missingvalues):
-        _ra=lsc.util.readkey3(hdrt,'CAT-RA')
-        _dec=lsc.util.readkey3(hdrt,'CAT-DEC')
-    elif ('RA' in hdrt and 'DEC' in hdrt and 
-        hdrt['RA'] not in lsc.util.missingvalues and hdrt['DEC'] not in lsc.util.missingvalues):
-        _ra=lsc.util.readkey3(hdrt,'RA')
-        _dec=lsc.util.readkey3(hdrt,'DEC')
-    else:
-        _ra = None
-        _dec = None
+    
+    _ra=lsc.util.readkey3(hdrt,'CAT-RA')
+    _dec=lsc.util.readkey3(hdrt,'CAT-DEC')
+
+    if _ra is None or _dec is None:
+        # No CAT RA or dec, so send a warning message to slack and return exception
+        # Send Slack message
+        post_url = os.environ['SLACK_CHANNEL_WEBHOOK']
+        payload = {'text': 'CAT-RA and CAT-DEC could not be found for {}'.format(img)}
+        json_data = json.dumps(payload)
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(post_url, data=json_data.encode('ascii'), headers=headers)
+
+        # Raise exception so pipeline moves on to ingesting the next image
+        raise Exception ('No CAT-RA or CAT-DEC could be found for {}'.format(img))
+
     _object=lsc.util.readkey3(hdrt,'object')
     if ':' in str(_ra):        
        _ra,_dec=lsc.deg2HMS(_ra,_dec)
@@ -465,19 +473,20 @@ def targimg(img='', hdrt=None):
     ########  define targetid  ##################
     _targetid=lsc.mysqldef.gettargetid(_object,'','',conn,.01,False)
     if not _targetid:
-       print '# no target with this name '+_object
-       _targetid=lsc.mysqldef.gettargetid('',_ra,_dec,conn,.01,False)
-       if _targetid:
-          print '# target at this coordinate with a different name, add name '+str(_ra)+' '+str(_dec)
-          dictionary1={'name':_object,'targetid':_targetid,'groupidcode':_group}
-          lsc.mysqldef.insert_values(conn,'targetnames',dictionary1)
+        print '# no target with this name '+_object
+        _targetid=lsc.mysqldef.gettargetid('',_ra,_dec,conn,.01,False)
+        if _targetid:
+            print '# target at this coordinate with a different name, add name '+str(_ra)+' '+str(_dec)
+            dictionary1={'name':_object,'targetid':_targetid,'groupidcode':_group}
+            lsc.mysqldef.insert_values(conn,'targetnames',dictionary1)
 
-          bb2=lsc.mysqldef.query(['select id from targetnames where name = "'+_object+'"'],conn)
-          dictionary3 = {'userid':67, 'tablemodified': 'targetnames', 'idmodified': bb2[0]['id'],
-                         'columnmodified': 'New Row', 'newvalue': 'Multiple'}
-          lsc.mysqldef.insert_values(conn,'useractionlog',dictionary3)
-       else:
-           print 'not found targetid with ra and dec '+str(_ra)+' '+str(_dec)
+            bb2=lsc.mysqldef.query(['select id from targetnames where name = "'+_object+'"'],conn)
+            dictionary3 = {'userid':67, 'tablemodified': 'targetnames', 'idmodified': bb2[0]['id'],
+                          'columnmodified': 'New Row', 'newvalue': 'Multiple'}
+            lsc.mysqldef.insert_values(conn,'useractionlog',dictionary3)
+        else:
+            print 'not found targetid with ra and dec '+str(_ra)+' '+str(_dec)
+
     else:
         print 'found name= '+_object+'  targetid= '+str(_targetid)
     ##############################################
@@ -629,9 +638,8 @@ def gettargetid(_name,_ra,_dec,conn,_radius=.01,verbose=False):
    import lsc
    from numpy import argmin
    if _name:
-        _name = _name.lower().replace('at20', 'at20%').replace('sn20', 'sn20%').replace(' ', '%')
-        command=['select distinct(r.name), r.targetid, t.id, t.ra0, t.dec0 from targetnames as r join targets as t where r.name like "'+\
-                 _name +'" and t.id=r.targetid']
+        command=['select distinct(r.name), r.targetid, t.id, t.ra0, t.dec0 from targetnames as r join targets as t where r.name like "%'+\
+                 _name.replace(' ', '%') +'" and t.id=r.targetid']
         lista=lsc.mysqldef.query(command,conn)
    elif _ra and _dec:
       if ':' in  str(_ra):

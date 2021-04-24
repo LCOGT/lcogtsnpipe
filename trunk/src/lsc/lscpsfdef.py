@@ -215,7 +215,8 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
     return photmag, pst, fitmag
 
 
-def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss', fixaperture=False, _catalog='', _datamin=None, _datamax=None, show=False, make_sn2=True):
+def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss', fixaperture=False, _catalog='', _datamin=None, _datamax=None, show=False, make_sn2=True,
+            max_apercorr=0.1):
     try:
         hdr = lsc.util.readhdr(img + '.fits')
 
@@ -250,7 +251,9 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
         print img, fwhm, threshold, scale, xdim
 
         if _datamax is None:
-            _datamax = lsc.util.readkey3(hdr, 'datamax')
+            # When a star near saturation is selected as the first PSF star it leads to an incorrect
+            # scaling of the PSF, set this to be siginifantly below saturation
+            _datamax = 0.7*lsc.util.readkey3(hdr, 'datamax') 
 
         #################################################################################
         ###################        write file to compute psf     _psf.coo    ############
@@ -414,20 +417,32 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                         break
 
             _dmag = np.compress(np.array(dmag) < 9.99, np.array(dmag))
-
+            aperture_correction = np.mean(_dmag)
+            aperture_correction_err = np.std(_dmag)
             print '>>> Aperture correction (phot)   %6.3f +/- %5.3f %3d ' % \
-                  (np.mean(_dmag), np.std(_dmag), len(_dmag))
+                  (aperture_correction, aperture_correction_err, len(_dmag))
+            #Sigma clip if there are enough points
             if len(_dmag) > 3:
                 _dmag = np.compress(np.abs(_dmag - np.median(_dmag)) < 2 * np.std(_dmag), _dmag)
+                aperture_correction = np.mean(_dmag)
+                aperture_correction_err = np.std(_dmag)
                 print '>>>         2 sigma rejection)   %6.3f +/- %5.3f %3d  [default]' \
-                      % (np.mean(_dmag), np.std(_dmag), len(_dmag))
+                      % (aperture_correction, aperture_correction_err, len(_dmag))
                 print '>>>     fwhm   %s  ' % (str(fwhm))
+                
             for i in range(len(dmag)):
                 if dmag[i] == 9.99:
                     dmag[i] = ''
                 else:
                     dmag[i] = '%6.3f' % (dmag[i])
-
+            # Fail to create a PSF is the aperture correction is too big
+            if np.abs(aperture_correction) > max_apercorr:
+                result = 0
+                fwhm = 0.0
+                traceback.print_exc()
+                print('The difference between the aperture and psf magnitudes exceeds the maximum allowed '+ \
+                      '{:2.2f}>{:2.2f}'.format(aperture_correction, max_apercorr))
+                return result, fwhm * scale, aperture_correction
             #######################################
             rap, decp, magp2, magp3, magp4, smagf, merrp3, smagerrf = [], [], [], [], [], [], [], []
             rap0, decp0 = [], []
@@ -451,6 +466,11 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                         break
                 smagf.append(_smagf)
                 smagerrf.append(_smagerrf)
+            #Add the aperture correction to the sn2 file magnitudes
+            for indx in range(len(smagf)):
+                if smagf[indx] not in ['INDEF', 9999]:
+                    smagf[indx] = '{:0<2.3f}'.format(float(smagf[indx])+aperture_correction)
+                    smagerrf[indx] = '{:0<2.3f}'.format(np.sqrt(float(smagerrf[indx])**2+aperture_correction_err**2))
             tbhdu = fits.BinTableHDU.from_columns(fits.ColDefs([fits.Column(name='ra', format='20A', array=np.array(rap)),
                                                    fits.Column(name='dec', format='20A', array=np.array(decp)),
                                                    fits.Column(name='ra0', format='E', array=np.array(rap0)),
@@ -480,16 +500,19 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
             thdulist = fits.HDUList([hdu, tbhdu])
             lsc.util.delete(img + '.sn2.fits')
             thdulist.writeto(img + '.sn2.fits')
-            lsc.util.updateheader(img + '.sn2.fits', 0, {'APCO': (np.mean(_dmag), 'Aperture correction')})
+            aperture_correction = np.mean(_dmag)
+            lsc.util.updateheader(img + '.sn2.fits', 0, {'APCO': (aperture_correction, 'Aperture correction')})
             lsc.util.updateheader(img + '.sn2.fits', 0, {'APCOERR': (np.std(_dmag), 'Aperture correction error')})
             lsc.util.updateheader(img + '.sn2.fits', 0, {'XDIM': (lsc.util.readkey3(hdr, 'naxis1'), 'x number of pixels')})
             lsc.util.updateheader(img + '.sn2.fits', 0, {'YDIM': (lsc.util.readkey3(hdr, 'naxis2'), 'y number of pixels')})
             lsc.util.updateheader(img + '.sn2.fits', 0,
                                   {'PSF_FWHM': (fwhm * scale, 'FWHM (arcsec) - computed with daophot')})
+        else:  # If make_sn2 = False (i.e. PyZOGY)
+            aperture_correction = 0
         result = 1
 
     except:
         result = 0
         fwhm = 0.0
         traceback.print_exc()
-    return result, fwhm * scale
+    return result, fwhm * scale, aperture_correction

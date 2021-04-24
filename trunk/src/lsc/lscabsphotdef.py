@@ -1,6 +1,8 @@
 from scipy.optimize import fsolve # root
 from astropy.io import fits
 from astropy.wcs import WCS
+from astropy.coordinates import SkyCoord
+import astropy.units as u
 import numpy as np
 from scipy import stats, odr
 import matplotlib.pyplot as plt
@@ -1148,3 +1150,26 @@ def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
         print len(t), 'matching objects. Catalog saved to', output
     else:
         print 'No matching objects.'
+#######################################################################
+def gaia2file(ra, dec, size=26., mag_limit=18., output='gaia.cat'):
+
+    from astroquery.gaia import Gaia
+
+    warnings.simplefilter('ignore')  # suppress a lot of astroquery warnings
+
+    coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree))
+    height = u.Quantity(size, u.arcminute)
+    width  = u.Quantity(size/np.cos(dec*np.pi/180.), u.arcminute)
+    response = Gaia.query_object_async(coordinate=coord, width=width, height=height)
+
+    response = response[
+            (response['phot_g_mean_mag'] < mag_limit) &
+            (response['astrometric_excess_noise_sig'] < 2) # filter objects with bad astrometry (e.g. HII regions in galaxies)
+    ]
+    response['ra'].format ='%16.12f'
+    response['dec'].format = '%16.12f'
+    response['phot_g_mean_mag'].format = '%.2f'
+
+    gaia_cat = response['ra', 'dec', 'source_id', 'phot_g_mean_mag']
+    gaia_cat.write(output, format='ascii.commented_header',
+            delimiter=' ', overwrite=True)

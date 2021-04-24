@@ -41,6 +41,8 @@ if __name__ == "__main__":
                       help="value used to sigma-clip BANZAI sources")
     parser.add_option("--b_crlim", type=float, default=3.0,
                       help="lower limit used to reject CRs identified as BANZAI sources")
+    parser.add_option("--max_apercorr", type=float, default=0.1, 
+                      help="absolute value of the maximum aperture correction (mag) above which a PSF is marked as bad")
 
     option, args = parser.parse_args()
 
@@ -81,15 +83,14 @@ if __name__ == "__main__":
                 elif option.catalog:
                     catalog = option.catalog
                 else:
-                    for system in ['sloan', 'apass', 'landolt']:
-                        #catalog = lsc.util.getcatalog(img, system)
+                    for system in ['gaia', 'sloan', 'apass', 'landolt']:
                         catalog = lsc.util.getcatalog(img.split('/')[-1], system)
                         if catalog:
                             break
             while True:
-                result, fwhm = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
+                result, fwhm, aperture_correction = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
                                                    option.distance, option.interactive, psffun, fixaperture,
-                                                   catalog, option.datamin, option.datamax, option.show, make_sn2)
+                                                   catalog, option.datamin, option.datamax, option.show, make_sn2, max_apercorr=option.max_apercorr)
                 print '\n### ' + str(result)
                 if option.show:
 #                    lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')
@@ -115,23 +116,13 @@ if __name__ == "__main__":
                 basename = os.path.basename(img)
                 if result == 1:
                     lsc.mysqldef.updatevalue('photlco', 'psf', basename.replace('.fits', '.psf.fits'), basename)
-                    lsc.mysqldef.updatevalue('photlco', 'fwhm', fwhm, basename)
-                    lsc.mysqldef.updatevalue('photlco', 'mag', 9999, basename)
-                    lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, basename)
-                    lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, basename)
-                    if 'diff' not in img and os.path.isfile(img + '.diff.fits') and os.path.isfile(img + '.sn2.fits'):
-                        # update diff info is file available
-                        os.system('cp ' + img + '.sn2.fits ' + img + '.diff.sn2.fits')
-                        lsc.mysqldef.updatevalue('photlco', 'psf', basename + '.psf.fits', basename + '.diff.fits')
-                        lsc.mysqldef.updatevalue('photlco', 'fwhm', fwhm, basename + '.diff.fits')
-                        lsc.mysqldef.updatevalue('photlco', 'mag', 9999, basename + '.diff.fits')
-                        lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, basename + '.diff.fits')
-                        lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, basename + '.diff.fits')
                 else:
                     print 'psf not good, database not updated '
-                    lsc.mysqldef.updatevalue('photlco', 'psf', 'X', basename + '.fits')
-                    if os.path.isfile(img + '.diff.fits'):
-                        lsc.mysqldef.updatevalue('photlco', 'psf', 'X', basename + '.diff.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'psf', 'X', basename)
+                lsc.mysqldef.updatevalue('photlco', 'fwhm', fwhm, basename)
+                lsc.mysqldef.updatevalue('photlco', 'mag', 9999, basename)
+                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, basename)
+                lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, basename)
             except:
                 print 'module mysqldef not found'
 

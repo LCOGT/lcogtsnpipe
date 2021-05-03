@@ -472,7 +472,8 @@ def targimg(img='', hdrt=None):
                     "1. Go to the object's SNEx page to look up its RA and dec\n" \
                     '2. Access your database (possibly mysql -h supernovadb -D ' \
                     'supernova -u supernova -psupernova)\n' \
-                    '3. Add to targets table:\n' \
+                    '3. Add to targets table, ' \
+                    'making sure that both RA and dec are in decimal format:\n' \
                     '   insert into `targets` (`ra0`, `dec0`) values (SNEx_ra, SNEx_dec);\n' \
                     '4. See what the id of the newly created target is:\n' \
                     '   select * from targets;\n' \

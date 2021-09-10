@@ -36,8 +36,10 @@ These instructions only need to be run once, when you set up the pipeline.
         ```
         [Seat:*]
         xserver-command=X -core -listen tcp
-        2) /etc/lightdm/lightdm.conf
+        ```
+        and the following to `/etc/lightdm/lightdm.conf`.
         This file probably won't exist, you may create it if it is missing.
+        ```
         [Seat:*]
         xserver-allow-tcp=true
         xserver-command=X -listen tcp

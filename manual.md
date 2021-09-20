@@ -257,7 +257,7 @@ will select the same instrument given with -T.
 
 1.  Look through your reference images and choose the best one for each camera--filter combination. Make a note of their ID numbers.
     ```
-    ds9 &\
+    ds9 &
     ```
     ```
     lscloop.py -n NAME -e TEMPDATE -s checkwcs

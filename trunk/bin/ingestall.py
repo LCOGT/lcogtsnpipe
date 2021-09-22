@@ -39,7 +39,7 @@ except ValueError as e:
 
 frames = get_metadata(authtoken, start=start, end=end, OBSTYPE='EXPOSE', RLEVEL=91, public=False)       # all images where SNEx is a co-I
 for telid in ['2m0a', '1m0a', '0m4a', '0m4b', '0m4c']:
-    frames += get_metadata(authtoken, start=start, end=end, PROPID='standard', TELID=telid, RLEVEL=91)  # all photometric standards (except SQA)
+    frames += get_metadata(authtoken, start=start, end=end, PROPID='Photometric standards', TELID=telid, RLEVEL=91)  # all photometric standards (except SQA)
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=0, public=False)        # all FTN spectra SNEx is a co-I
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=0, public=False)        # all FTS spectra SNEx is a co-I
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en12', RLEVEL=0, public=False)        # all FTS spectra SNEx is a co-I

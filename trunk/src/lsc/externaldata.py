@@ -295,6 +295,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
 
        try:
           _mjd = MJDnow(datetime.datetime(int(str(_dayobs)[0:4]),int(str(_dayobs)[4:6]),int(str(_dayobs)[6:8])))
+          _ut = jd2date(_mjd+2400000.5).strftime('%H%M%S')
        except:
           print 'warning, no mjd'
           _mjd = 0
@@ -380,6 +381,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        # measure skylevel in all ps1 images
        for jj in imglist:
           img_data,img_header=fits.getdata(jj, header=True)
+          img_data += 6000
           skylevel.append(np.nanmean(img_data))
 
 #    elif len(welist):
@@ -486,7 +488,7 @@ def northupeastleft(filename='', data=None, header=None):
     else:
         return data, header
 
-def getimages(ra,dec,size=11000,filters="gri"):
+def getimages(ra,dec,size=10000,filters="gri"):
     
     """Query ps1filenames.py service to get a list of images
     
@@ -502,7 +504,7 @@ def getimages(ra,dec,size=11000,filters="gri"):
     table = Table.read(url, format='ascii')
     return table
 
-def geturl(ra, dec, size=11000, output_size=None, filters="gri", format="fits", color=False):
+def geturl(ra, dec, size=10000, output_size=None, filters="gri", format="fits", color=False):
     
     """Get URL for images in the table
     
@@ -580,7 +582,7 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
    if survey == 'sloan':
       frames = downloadsdss(_ra, _dec, _band, _radius, force)
    elif survey == 'ps1':
-      delta= 0.22
+      delta= 0.15
       DR = delta/np.cos(_dec*np.pi/180)
       DD = delta
       frames = []
@@ -589,6 +591,10 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
       frames.append(geturl(_ra-DR, _dec-DD, filters=_band))
       frames.append(geturl(_ra+DR, _dec-DD, filters=_band))
       frames.append(geturl(_ra-DR, _dec+DD, filters=_band))
+      frames.append(geturl(_ra+(2*DR), _dec+(2*DD), filters=_band))
+      frames.append(geturl(_ra-(2*DR), _dec-(2*DD), filters=_band))
+      frames.append(geturl(_ra+(2*DR), _dec-(2*DD), filters=_band))
+      frames.append(geturl(_ra-(2*DR), _dec+(2*DD), filters=_band))
    '''
       if len(frames) == 0:
          delta= 0.22
@@ -632,7 +638,6 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
           frames = frames2
    '''
    if len(frames):
-       print('length of frames is %i' %len(frames))
        out, varimg = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey, show=show)
    else:
        sys.exit('exit, no PS1 images have been downloaded')

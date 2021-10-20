@@ -39,13 +39,13 @@ except ValueError as e:
 
 frames = get_metadata(authtoken, start=start, end=end, OBSTYPE='EXPOSE', RLEVEL=91, public=False)       # all images where SNEx is a co-I
 for telid in ['2m0a', '1m0a', '0m4a', '0m4b', '0m4c']:
-    frames += get_metadata(authtoken, start=start, end=end, PROPID='standard', TELID=telid, RLEVEL=91)  # all photometric standards (except SQA)
+    frames += get_metadata(authtoken, start=start, end=end, PROPID='Photometric standards', TELID=telid, RLEVEL=91)  # all photometric standards (except SQA)
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=0, public=False)        # all FTN spectra SNEx is a co-I
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=0, public=False)        # all FTS spectra SNEx is a co-I
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en12', RLEVEL=0, public=False)        # all FTS spectra SNEx is a co-I
-frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=0, PROPID='OGG_calib')  # FTN standard star spectra
-frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=0, PROPID='COJ_calib')  # FTS standard star spectra
-frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en12', RLEVEL=0, PROPID='COJ_calib')  # FTS standard star spectra
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=0, PROPID='FLOYDS standards')  # FTN standard star spectra
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=0, PROPID='FLOYDS standards')  # FTS standard star spectra
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en12', RLEVEL=0, PROPID='FLOYDS standards')  # FTS standard star spectra
 frames += get_metadata(authtoken, start=start, end=end, PROPID='LCOEPO2016B-001', RLEVEL=91)            # supernova tracker images
 
 logger.info('Total number of frames: {:d}'.format(len(frames)))
@@ -79,9 +79,9 @@ lsc.mysqldef.ingestredu(fullpaths) # ingest new data into photlco
 frames = get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=90, public=False)  # all FTN spectra SNEx is a co-I
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=90, public=False) # all FTS spectra SNEx is a co-I
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en12', RLEVEL=90, public=False) # all FTS spectra SNEx is a co-I
-frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=90, PROPID='OGG_calib')  # FTN standard star spectra
-frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=90, PROPID='COJ_calib')  # FTS standard star spectra
-frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en12', RLEVEL=90, PROPID='COJ_calib')  # FTS standard star spectra
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=90, PROPID='FLOYDS standards')  # FTN standard star spectra
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=90, PROPID='FLOYDS standards')  # FTS standard star spectra
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en12', RLEVEL=90, PROPID='FLOYDS standards')  # FTS standard star spectra
 
 for frame in frames:
     try:

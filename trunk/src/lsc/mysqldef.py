@@ -441,18 +441,6 @@ def targimg(img='', hdrt=None):
     _ra=lsc.util.readkey3(hdrt,'CAT-RA')
     _dec=lsc.util.readkey3(hdrt,'CAT-DEC')
 
-    if _ra is None or _dec is None:
-        # No CAT RA or dec, so send a warning message to slack and return exception
-        # Send Slack message
-        post_url = os.environ['SLACK_CHANNEL_WEBHOOK']
-        payload = {'text': 'CAT-RA and CAT-DEC could not be found for {}'.format(img)}
-        json_data = json.dumps(payload)
-        headers = {'Content-Type': 'application/json'}
-        response = requests.post(post_url, data=json_data.encode('ascii'), headers=headers)
-
-        # Raise exception so pipeline moves on to ingesting the next image
-        raise Exception ('No CAT-RA or CAT-DEC could be found for {}'.format(img))
-
     _object=lsc.util.readkey3(hdrt,'object')
     if ':' in str(_ra):        
        _ra,_dec=lsc.deg2HMS(_ra,_dec)
@@ -474,6 +462,30 @@ def targimg(img='', hdrt=None):
     _targetid=lsc.mysqldef.gettargetid(_object,'','',conn,.01,False)
     if not _targetid:
         print '# no target with this name '+_object
+
+        if type(_ra) is not float or type(_dec) is not float:
+            error = '\n\033[1m\033[91mERROR: \033[0m' \
+                    'No CAT-RA or CAT-DEC could be found for {img}\n' \
+                    'CAT-RA and CAT-DEC read from header as: {ra} {dec}\n' \
+                    'No object of name {obj} found in database\n' \
+                    'Since headers are corrupted, we recommend manually adding target to db:\n' \
+                    "1. Go to the object's SNEx page to look up its RA and dec\n" \
+                    '2. Access your database (possibly mysql -h supernovadb -D ' \
+                    'supernova -u supernova -psupernova)\n' \
+                    '3. Add to targets table, ' \
+                    'making sure that both RA and dec are in decimal format:\n' \
+                    '   insert into `targets` (`ra0`, `dec0`) values (SNEx_ra, SNEx_dec);\n' \
+                    '4. See what the id of the newly created target is:\n' \
+                    '   select * from targets;\n' \
+                    '   and note the id of the target you just added.\n' \
+                    '5. Add target name to targetnames table, associated with the right id:\n' \
+                    '   insert into `targetnames` (`name`, `targetid`) ' \
+                    "values ('{obj}', new_target_id);\n" \
+                    'Re-run your command to see if images get ingested correctly. ' \
+                    'If not, reach out to the #pipeline channel of the GSP slack.'.format(
+                        img=img, ra=_ra, dec=_dec, obj=_object)
+            raise Exception (error)
+
         _targetid=lsc.mysqldef.gettargetid('',_ra,_dec,conn,.01,False)
         if _targetid:
             print '# target at this coordinate with a different name, add name '+str(_ra)+' '+str(_dec)

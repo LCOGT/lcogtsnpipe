@@ -208,18 +208,23 @@ Where:
 
 ### Download and Calibrate the Standard Star Observations
 * Find standard stars that were observed during the epoch you need in the filter you need (U). Ideally, you also obtain at least 1 other filter (for color correction) - recommended B and V
-* Search archive.lco.global for obstype=STANDARD, set date range, filter, if applicable telescope and site (e.g. fo 2018zd I set site=elp and telescope=fl05)
+* Search archive.lco.global for observation type "STANDARD" and/or proposal "standard" (see note below), set date range, filter, if applicable telescope and site (e.g. fo 2018zd I set site=elp and telescope=fl05)
 * You will be using standards from the same telescope and observed on the same night as your observations
-* Use LCOGTingest.py to download and ingest observations. For example ``` LCOGTingest.py -S lsc -T 1m0a -f U -s 2019-09-26 -e 2019-10-08  -r reduced -t STANDARD --public``` Where `-S` is the site (if you want to be this specific), `-T` is the telescope, `-f` is the filter, `-s` is the start date, `-e` is the end date, `-r reduced` downloads files that have already been reduced with BANZAI, and `--public` is always required. Note: the date format has dashes and the search is exclusive of the end data
+* Use LCOGTingest.py to download and ingest observations. For example ``` LCOGTingest.py -S lsc -T 1m0a -f U -s 2019-09-26 -e 2019-10-08  -r reduced -t STANDARD --public``` Where `-S` is the site (if you want to be this specific), `-T` is the telescope, `-f` is the filter, `-s` is the start date, `-e` is the end date, `-r reduced` downloads files that have already been reduced with BANZAI, and `--public` is always required. Note: the date format has dashes and the search is exclusive of the end data. Also note: for many years in the late 2010s, LCO scheduled some (but not all) standard field observations with observation type EXPOSE instead of STANDARD. You can still identify them by their proposal ID "standard" (i.e., in the command above, replace `-t STANDARD` with `-P standard`).
 * If you are downloading a standard for the first time, manually update the targets table so that the standards you downloaded have `classificationid=1`
     * ```mysql -u supernova -D supernova -p``` (if you are using docker-compose you also need ```-h supernovadb```)
     * Get the targetid of the standard you want to update: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE name="L107"``` (you should replace L107 with the name of your standard)
     * Check that you're selecting the right row: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE targetid=55``` (you should replace 55 with the targetid you found in the last step)
     * If `classificationid` is not 1, update `classificationid` for the row selected: ```UPDATE targets SET classificationid=1 WHERE targetid=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard)
-* Use the standard star image to find the nightly zeropoint for the nights on which you observed your target and the standard (run psf, psfmag, zcat)
-    * When running the zcat step, use ```--catalog=$LCOSNDIR/standard/cat/landolt/<standard catalog name>```
-    * Check whether there are enough stars in common between a field and the catalog being used in the zcat step ```-s zcat -i```
-* When you run -s local on the SN (in the next step), it queries the database for any standards in the same filter-site-night as the SN observations. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard STANDARD``` where STANDARD is the name of your standard (e.g. L95). Alternately, you can use `--standard all` to find all available standards
+* Create PSF models for the standard star images. You need these to calculate the zero points.
+```
+lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s psf
+```
+* Calculate the zero points for the standard star images. You should run this interactively to make sure there are enough stars identified in the image.
+```
+lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s zcat -i --catalog=$LCOSNDIR/standard/cat/landolt/<standard catalog name>
+```
+* When you run -s local on the SN (in the next step), it queries the database for any standards in the same filter-site-night as the SN observations and applies the zero points from these standards to your SN images. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard STANDARD``` where STANDARD is the name of your standard (e.g. L95). Alternately, you can use `--standard all` to find all available standards
 ### Create a catalog of stars (local sequence) in SN field for Landolt filters
 * This calculates the apparent magnitude for the stars in a given filter in your SN field and creates a catalog that will be used in the zcat step to generate the zeropoint for each observation. If a single class of telescopes seems to be an outlier, then you should limit the telescopes used to calculate the apparent magnitude to a single class of telescopes with the ```-T 1m0``` flag
 ```
@@ -258,7 +263,7 @@ will select the same instrument given with -T.
 
 1.  Look through your reference images and choose the best one for each camera--filter combination. Make a note of their ID numbers.
     ```
-    ds9 &\
+    ds9 &
     ```
     ```
     lscloop.py -n NAME -e TEMPDATE -s checkwcs

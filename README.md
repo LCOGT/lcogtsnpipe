@@ -1,20 +1,16 @@
-#  lcogtsnpipe
+# lcogtsnpipe
 This is the pipeline that ingests and reduces new data from the lcogt key project
 
-# Table of Contents
+--------------------------------------------
+## Table of Contents
 - [ Pipeline Documentation](#pipeline-documentation)
-- [Docker-compose Installation](#docker-compose-installation)
+- [Docker-compose Installation (Recommended)](#docker-compose-Installation-(recommended))
 - [Manual Installation: Installing the Pipeline and Database](#manual-installation-installing-the-pipeline-and-database)
-- [Testing your installation](#testing-your-installation)
-- [Appendix A: Expected output from show tables](#appendix-a-expected-output-from-show-tables)
-- [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina)
-- [Appendix C: Other packages you may need to install](#appendix-c-other-packages-you-may-need-to-install)
-- [Appendix D: Installing Source Extractor](#appendix-d-installing-source-extractor)
 
+---------------------------------
 # Pipeline Documentation:
-1. Image Subtraction: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
-2. [Manual](manual.md) 
-3. Tutorial: https://docs.google.com/document/d/14ADvdbS-19flwtU7TRJ1lyx8IjgBK6D1KubZnQkQciA/edit?usp=sharing
+1. ### [Manual](manual.md) 
+2. ### [Tutorial](https://docs.google.com/document/d/14ADvdbS-19flwtU7TRJ1lyx8IjgBK6D1KubZnQkQciA/edit?usp=sharing)
 
 # Docker-compose Installation (recommended):
 This is likely the quickest way to get the pipeline up and running and requires the least amount of installation.
@@ -40,8 +36,10 @@ These instructions only need to be run once, when you set up the pipeline.
         ```
         [Seat:*]
         xserver-command=X -core -listen tcp
-        2) /etc/lightdm/lightdm.conf
+        ```
+        and the following to `/etc/lightdm/lightdm.conf`.
         This file probably won't exist, you may create it if it is missing.
+        ```
         [Seat:*]
         xserver-allow-tcp=true
         xserver-command=X -listen tcp
@@ -114,6 +112,12 @@ You can access the database from your host machine, e.g. with sequelpro by setti
 
  
 # Manual Installation: Installing the Pipeline and Database
+- [Testing your installation](#testing-your-installation)
+- [Appendix A: Expected output from show tables](#appendix-a-expected-output-from-show-tables)
+- [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina)
+- [Appendix C: Other packages you may need to install](#appendix-c-other-packages-you-may-need-to-install)
+- [Appendix D: Installing Source Extractor](#appendix-d-installing-source-extractor)
+
 1. Install msql  
     1. Install MySQL server from: https://dev.mysql.com/downloads/mysql/  
     **Note:** you don’t need an Oracle account to sign up, there is a just start download link at the bottom of the page. Links from here were very useful: https://dev.mysql.com/doc/refman/5.6/en/installing.html

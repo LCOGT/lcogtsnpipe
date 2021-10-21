@@ -6,6 +6,7 @@
 * [Creating a Landolt Catalog](#Creating-a-Landolt-Catalog)
 * [Difference Imaging](#Difference-Imaging)
 * [Tips and Tricks](#Tips-and-Tricks)
+* [Common Errors](#Common-Errors)
 * [Definitions](#Definitions)
     * [Telescopes](##Telescopes)
     * [Filetype](##Filetype)
@@ -403,6 +404,14 @@ By default, `--filetype 3` selects both HOTPANTS and Optimally subtracted images
 
 # Tips and Tricks
 * Cleanly stopping a pipeline process: use ctrl+Z to suspend the process, and then kill %1 (or whatever the job number is). Sometimes this works better than ctrl+C when there are multiple processes
+
+# Common Errors
+* `sn2.fits file not found`: this usually indicates that the PSF stage was not run or ran and failed. You can check this by running lscloop.py with your target and epoch but no stage and checking the PSF column (X means it failed, filename means it succeeded). The most commonly missed error in the PSF stage is "The difference between the aperture and psf magnitudes exceeds the minimum allowed".
+
+* `The difference between the aperture and psf magnitudes exceeds the minimum allowed  ## > 0.1` : The aperture correction compares the median aperture and psf photometry of field stars in your image. It was decided that if this differs by more than ~10% (0.1 mag) then something is likely wrong with your PSF (or possibly your aperture) and this deserves a closer look. First, run the psf stage with `--show` or the checkpsf stage with `--no_iraf` and check your PSF stars are good (not double, not near the edge, not saturated, not under diffraction spikes, etc). If your PSF stars look good, you can usually fix this with one of the following:
+    - increase the `fwhm`. This value should be printed to the screen during the PSF stage. You can suggest a FWHM to lscloop with the keyword `--fwhm` (e.g. `--fwhm 7`)
+    - Remove the brightest star by setting the `--datamax` keyword to a value lower than the first PSF star datamax, which can be read from the output
+    - Increase the number of PSF stars using the `--nstars` flag (e.g. `--nstars 12`)
 
 # Definitions
 ## Telescopes

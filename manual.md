@@ -90,6 +90,7 @@ Where:
 * ```-T``` run only on observations from one telescope. Valid options: 1m0, 2m0, or 0m4. Note: because of the implementation, there is a bug/feature to `-T` that you can search for any substring in the filename
 * ```-I``` run only on observations from one instrument. Valid options: kb, fl, fs, sinistro, sbig, muscat, ep
 * ```-b STAGE``` run only on observations marked at bad at a given stage (where stage is quality, wcs, psf, psfmag, zcat, mag)
+* in many of the quality check stages the user is asked whether a file is good or bad and there are two options for bad, `b` and `n`. In general the `b` option should only be used for unusable images as it removes the observation completely from future processing and hides it. The only way to get this observation back is to run `-s checkquality -b quality`. If you answer `n` that stage of the pipeline will be reset for you to run again (as if the stage failed).
 
 ## Steps:
 ### Cosmic ray rejection:
@@ -100,7 +101,7 @@ Where:
 
 ### WCS solution
 * **Call**: ```-s wcs```
-* **Description**: Generate a WCS solution for a given observation. In general, this stage does not need to be run when starting analysis from observations that have been reduced with Banzai (which is recommended) as Banzai solves the WCS solution (files processed by Banzai end in `.e91.fits`). If Banzai fails to solve the WCS solution, then the WCS column will be populated with 4 - this means you may need to run the WCS stage manually.
+* **Description**: Generate a WCS solution for a given observation. In general, this stage does not need to be run when starting analysis from observations that have been reduced with Banzai (which is recommended) as Banzai solves the WCS solution (files processed by Banzai end in `.e91.fits`). If Banzai fails to solve the WCS solution, then the WCS column will be populated with 4 - this means you may need to run the WCS stage manually. If the file was marked with `n` in the `checkwcs` stage or previously marked with `b` and resurrected, the value will be 9999.0. The easiest way to fix this is the run the `wcs` stage with `-s wcs -b wcs`.
 * **Recommended Options**: 
 
 * **Other Options**: 
@@ -412,7 +413,10 @@ By default, `--filetype 3` selects both HOTPANTS and Optimally subtracted images
     - increase the `fwhm`. This value should be printed to the screen during the PSF stage. You can suggest a FWHM to lscloop with the keyword `--fwhm` (e.g. `--fwhm 7`)
     - Remove the brightest star by setting the `--datamax` keyword to a value lower than the first PSF star datamax, which can be read from the output
     - Increase the number of PSF stars using the `--nstars` flag (e.g. `--nstars 12`)
-
+   
+* I accidentally marked a file as `b` how do I bring it back? -OR- One of my files disappeared, how do I get it back?
+   Files marked with `b` are considered failed observations that no amount of finessing will bring back (e.g. no signal). For this reason, the pipeline hides them from all future processing. The only way to get this observation back is to run `-s checkquality -b quality`. If you answer `n` that stage of the pipeline will be reset for you to run again (as if the stage failed).
+   
 # Definitions
 ## Telescopes
 Current facilities can be found at: https://lco.global/observatory/sites/  

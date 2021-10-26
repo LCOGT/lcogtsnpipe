@@ -1,5 +1,7 @@
 # lcogtsnpipe
-This is the pipeline that ingests and reduces new data from the lcogt key project
+This is the pipeline that ingests and reduces new data from the lcogt key project.
+
+**Please follow these [guidelines](getting_help.md) for asking for help with installing and running the pipeline**
 
 --------------------------------------------
 ## Table of Contents

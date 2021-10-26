@@ -22,6 +22,8 @@
 
 * Quality check your results. If the code is running but the results aren't what you expect, use the check stages to ensure that your observation is what you expect it to be (i.e. its not blank, the PSF is well characterized, the difference images are well subtracted, etc.)
 
+* Check with your research group and advisor. Even if they are unfamiliar with the pipeline - a fresh set of eyes, especially ones that have done photometry before can be really helpful at spotting reduction issues
+
 If the above does not solve your issue:
 * Request assistance on Slack:
     * Post in the most relevant #pipeline channel

@@ -406,7 +406,7 @@ By default, `--filetype 3` selects both HOTPANTS and Optimally subtracted images
 # Tips and Tricks
 * Cleanly stopping a pipeline process: use ctrl+Z to suspend the process, and then kill %1 (or whatever the job number is). Sometimes this works better than ctrl+C when there are multiple processes
 
-# Common Errors
+# Common Errors and how to fix them
 * `sn2.fits file not found`: this usually indicates that the PSF stage was not run or ran and failed. You can check this by running lscloop.py with your target and epoch but no stage and checking the PSF column (X means it failed, filename means it succeeded). The most commonly missed error in the PSF stage is "The difference between the aperture and psf magnitudes exceeds the minimum allowed".
 
 * `The difference between the aperture and psf magnitudes exceeds the minimum allowed  ## > 0.1` : The aperture correction compares the median aperture and psf photometry of field stars in your image. It was decided that if this differs by more than ~10% (0.1 mag) then something is likely wrong with your PSF (or possibly your aperture) and this deserves a closer look. First, run the psf stage with `--show` or the checkpsf stage with `--no_iraf` and check your PSF stars are good (not double, not near the edge, not saturated, not under diffraction spikes, etc). If your PSF stars look good, you can usually fix this with one of the following:
@@ -416,6 +416,10 @@ By default, `--filetype 3` selects both HOTPANTS and Optimally subtracted images
    
 * I accidentally marked a file as `b` how do I bring it back? -OR- One of my files disappeared, how do I get it back?
    Files marked with `b` are considered failed observations that no amount of finessing will bring back (e.g. no signal). For this reason, the pipeline hides them from all future processing. The only way to get this observation back is to run `-s checkquality -b quality`. If you answer `n` that stage of the pipeline will be reset for you to run again (as if the stage failed).
+   
+* My instrumental aperture magnitudes for different imaging are all 9999. Try running the `psfmag` stage with `--datamin -1000 --datamax 100000`
+   
+* All of my apparent magnitudes are 9999 after I run the mag stage. This occurs when you run the mag stage with only one filter because the color correction can't be applied. Try running with `-f sloan` or `-f landolt`
    
 # Definitions
 ## Telescopes

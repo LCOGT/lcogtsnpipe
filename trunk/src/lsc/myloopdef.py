@@ -797,7 +797,8 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
 
         if _bad == 'psfmag':  # do not consider standard field as bad psfmag files
             ww = np.array([i for i in range(len(ll1['objname'])) if (
-            (ll1['objname'][i]) not in ['L104', 'L105', 'L95', 'L92', 'L106', 'L113', 'L101', 'L107', 'L110', 'MarkA',
+            (ll1['objname'][i]) not in ['L104', 'L105', 'L95', 'L92', 'L106', 'L113',
+                                        'L101', 'L107', 'L110', 'MarkA', 'SA93',
                                         's82_00420020', 's82_01030111', 'Ru152'])])
             if len(ww) > 0:
                 for jj in ll1.keys(): ll1[jj] = np.array(ll1[jj])[ww]

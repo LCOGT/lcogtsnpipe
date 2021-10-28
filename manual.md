@@ -405,6 +405,8 @@ By default, `--filetype 3` selects both HOTPANTS and Optimally subtracted images
 
 # Tips and Tricks
 * Cleanly stopping a pipeline process: use ctrl+Z to suspend the process, and then kill %1 (or whatever the job number is). Sometimes this works better than ctrl+C when there are multiple processes
+   
+* To check which standard stars you have downloaded for a given SN use the command `lscloop.py -n SN_NAME -e SN_EPOCH --standard all`
 
 # Common Errors and how to fix them
 * `sn2.fits file not found`: this usually indicates that the PSF stage was not run or ran and failed. You can check this by running lscloop.py with your target and epoch but no stage and checking the PSF column (X means it failed, filename means it succeeded). The most commonly missed error in the PSF stage is "The difference between the aperture and psf magnitudes exceeds the minimum allowed".

@@ -217,7 +217,7 @@ Where:
     * Get the targetid of the standard you want to update: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE name="L107"``` (you should replace L107 with the name of your standard)
     * Check that you're selecting the right row: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE targetid=55``` (you should replace 55 with the targetid you found in the last step)
     * If `classificationid` is not 1, update `classificationid` for the row selected: ```UPDATE targets SET classificationid=1 WHERE targetid=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard)
-* Create PSF models for the standard star images. You need these to calculate the zero points.
+* Create photometry catalogs for the standard star images. You need these to calculate the zero points.
 ```
 lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s psf
 ```
@@ -229,9 +229,9 @@ lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s
 ### Create a catalog of stars (local sequence) in SN field for Landolt filters
 * This calculates the apparent magnitude for the stars in a given filter in your SN field and creates a catalog that will be used in the zcat step to generate the zeropoint for each observation. If a single class of telescopes seems to be an outlier, then you should limit the telescopes used to calculate the apparent magnitude to a single class of telescopes with the ```-T 1m0``` flag
 ```
-lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -s local -i --standard STANDARD --catalog=CATALOG
+lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -s local -i --standard STANDARD
 ```
-Where STANDARD is the standard you calibrated previously and CATALOG is the name of the apass or sloan catalog created for your supernova (e.g. SN2018zd_apass.cat). You should use the full epoch so that you calculate the apparent magnitudes for a variety of night (ideally) making your values more robust to outliers.
+Where STANDARD is the standard you calibrated previously. You should use the full epoch so that you calculate the apparent magnitudes for a variety of night (ideally) making your values more robust to outliers.
 
 * Check plots for:
     - if there is a big difference between the BV filters of Landolt and APASS for a large number of stars (a few stars will be variable)

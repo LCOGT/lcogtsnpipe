@@ -33,7 +33,7 @@ If the above does not solve your issue:
     * If there was a crash, paste in a substantial portion of your trace (this goes back to the multiple errors/errors farther up issue)
 
 * Request assistance via office hours:
-    * office hours will be held weekly at 10am pacific time on Tuesdays. Zoom link in the GSP Pipeline Slack channel description.
+    * office hours will be held weekly at 11am pacific time on Tuesdays. Zoom link in the GSP Pipeline Slack channel description.
     * be prepared to screenshare
 
 * `lcogtsnpipe` is currently developed and maintained by just a handful of GSP volunteers at present. Your contributions to this open source project would be greatly appreciated. You can contribute by: 

@@ -221,15 +221,18 @@ Where:
 ```
 lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s psf
 ```
+Where STANDARD is the name of the standard you wish to calibrate.   
+*A word on the `--standard` keyword. The `--standard` flag has two optional inputs with slightly different behavior. When `--standard all` is used, all standards are selected that occur on the same filter-night-site as your supernova observations. When `--standard STANDARD` is used where STANDARD is a specific standard (e.g. L110) then all avaulable standards are given for the range of date, regardless of whether they were observed on the same night and site as your supernova observation. If only a single standard is available for your supernova observations nights and sites, then you can use `--standard all` for the calibration of the standard images (`-s psf` and `-s zcat` as well as the `-s local` stage. However, if multiple standards are available, then you should calibrate them individually with `--standard STANDARD` for the `-s psf` and `-s zcat` stages and then `--standard all` for the `-s local` stage.*  
 * Calculate the zero points for the standard star images. You should run this interactively to make sure there are enough stars identified in the image.
 ```
 lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s zcat -i --catalog=$LCOSNDIR/standard/cat/landolt/<standard catalog name>
 ```
-* When you run -s local on the SN (in the next step), it queries the database for any standards in the same filter-site-night as the SN observations and applies the zero points from these standards to your SN images. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard STANDARD``` where STANDARD is the name of your standard (e.g. L95). Alternately, you can use `--standard all` to find all available standards
+* When you run -s local on the SN (in the next step) with `--standard all`, it queries the database for any standards in the same filter-site-night as the SN observations and applies the zero points from these standards to your SN images. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard all```.
+   
 ### Create a catalog of stars (local sequence) in SN field for Landolt filters
 * This calculates the apparent magnitude for the stars in a given filter in your SN field and creates a catalog that will be used in the zcat step to generate the zeropoint for each observation. If a single class of telescopes seems to be an outlier, then you should limit the telescopes used to calculate the apparent magnitude to a single class of telescopes with the ```-T 1m0``` flag
 ```
-lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -s local -i --standard STANDARD
+lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -s local -i --standard all
 ```
 Where STANDARD is the standard you calibrated previously. You should use the full epoch so that you calculate the apparent magnitudes for a variety of night (ideally) making your values more robust to outliers.
 

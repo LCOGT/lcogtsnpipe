@@ -178,17 +178,20 @@ Where:
         * if enough stars are found, this also displays a plot calibrated_mag - instrumental_mag vs color.  Each point is a star being used to calculate the zero point. Green are accepted, red are excluded by some automatic sigma-clipping. You can toggle each point by clicking on it if you don’t like the automatic rejection.
 * **How to fix this step if the image looks ok but the zcat step failed**
 
-### Generate instrumental magnitudes using psf photometry
+### Generate apparent magnitudes using from instrumental magnitudes
 * **Call**: ```-s mag```
-* **Description**: Generate instrumental magnitudes using psf photometry
+* **Description**: Generate apparent magnitudes using instrumental magnitudes
 * **Recommended Options**:
-    * ```--type fit```: this generates an apparent magnitude from the instrumental magnitude derived from psf photometry.
+   *  ```-f sloan```, ```-f apass```, or ```-f landolt```: more than one filter should be provided to use the zeropoint calculated with a color term. If a single filter is given the mag column will be populated with 9999.
 * **Other Options**: 
+    * The default for non-difference images is to use PSF instrumental magnitudes for this stage (```--type fit```), however, for difference imaging,  aperture instrumental magnitudes (```--type ph```) are used for consistency between methods (because the aperture correction is applied to HOTPANTS subtractions but not to PyZOGY subtractions). This may cause additional scatter in your light curve.
     * ```--type ph```: generate apparent magnitudes from aperture photometry
+    * ```--type fit```: generate apparent magnitudes from PSF photometry
 * **How to tell if this step worked**:
-    * If this step worked, an apparent magnitude will be put in the mag column of the photlco table. If this step failed this field will be set to 9999
+    * If this step worked, an apparent magnitude will be put in the mag column of the photlco table. If this step failed this field will be set to 9999 (if every field is 9999 check that you asked for more than one filter).
     * Alternately, run ```lscloop.py -n <snname> -e <epoch> -b mag``` and any other criteria you'd like to filter on to get a list of files that failed the PSF stage
 * **How to fix this step if the image looks ok but the mag step failed**
+    * If all mag values are 9999, it is likely that you ran this stage with a single filter. More than one filter should be provided to use the zeropoint calculated with a color term. Try running with one of the recommended options for ```-f```.
     * Since this is just a combination of the output of the psfmag stage and the zcat stage, inspect the outputs of these stages and redo as needed
 
 ### Evaluating Image quality from lightcurve outliers:

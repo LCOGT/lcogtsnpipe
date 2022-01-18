@@ -27,7 +27,7 @@ These instructions only need to be run once, when you set up the pipeline.
    2. Install [docker-compose](https://docs.docker.com/compose/install/)
    3. (macOS only) Install [XQuartz](https://www.xquartz.org).
    4. (macOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
-   5. Allow X11 connections (may be only necessary on Linux): `xhost +`
+   5. Allow X11 connections (may be only necessary on Linux): `xhost +local:docker`
    6. (Linux Only) Modify your X11 config files to allow TCP connections: 
         1. If you are running gdm or gdm3 for your display manager add the following to `/etc/gdm<3>/custom.conf`
         ```
@@ -54,6 +54,15 @@ These instructions only need to be run once, when you set up the pipeline.
         xeyes
         ```
         If a window appears, your computer is configured correctly. You only have to do this once.
+        
+        If stage 4 results in an error similar to `Error: Can't open display:`, then rerun step 4 with this modified command instead.
+        ```sh
+        docker run --rm -it -e DISPLAY=${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix centos:7 /bin/bash
+        yum install -y xorg-x11-apps
+        xeyes
+        ```
+        Now an window should appear.
+        
    7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe`
    8. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
    9. Set your environment variables to point to where you want to store data and catalogs.
@@ -64,20 +73,42 @@ These instructions only need to be run once, when you set up the pipeline.
        export LCOSNDBPATH=/your/data/directory/mysql
        ```  
        These directories do not need to exist. In fact, it is easier if they do not. Docker will automatically create them
-       with the correct permissions. If you need to use a pre-existing directory, you may have to update the permissions using
-       `chmod -R 777 /path/to/data/`. If you do not set these environment variables, they default to being in `data` and `mysql`
-       in repo directory.
+       with the correct permissions. If you need to use a pre-existing directory or in case docker doesn't set up the permissions correctly, you may have to update the permissions using
+       `chmod -R 777 /path/to/data/`. 
+       If you do not set these environment variables, they default to being in `data` and `mysql` in repo directory.
    10. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
        this mental picture is close enough).
        ```
        docker-compose -f lcogtsnpipe/docker-compose.yml up
        ```
+       (Linux Only) If you initially had trouble in getting display output from docker in your linux machine (step 6), you will need to slightly modify your `docker-compose.yml` file in the following manner.
+       ```diff
+                 LCOSNDBUSER: "${LCOSNDBUSER:-supernova}"
+                 LCOSNDBPASS: "${LCOSNDBPASS:-supernova}"
+                 LCOSNDIR: "${LCOSNDIR:-/supernova}"
+       -         DISPLAY: "${LCOSNDISPLAY:-host.docker.internal:0}"
+       +         # DISPLAY: "${LCOSNDISPLAY:-host.docker.internal:0}"
+       +         DISPLAY: "${DISPLAY}"
+               ports:
+                 - "4306:3306"
+               links:
+                 - sn-db:supernovadb
+               depends_on:
+                 - sn-db
+               volumes:
+                 - ${LCOSNDIR:-./data}:${LCOSNDIR:-/supernova}
+       +         - /tmp/.X11-unix:/tmp/.X11-unix
+       ```
+   
+       Now, rerun the above command.
+       
        This will take over your current terminal. Eventually, the terminal will print that the mysql host is ready to 
        accept connections
    11. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
        ```
        docker exec -it lcosnpipe /bin/bash
        ```
+       If you're configured correctly, you should be able to open a ds9 window now using `ds9` command. 
    12. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
        the first time you setup the db.
    13. From inside the container, run 

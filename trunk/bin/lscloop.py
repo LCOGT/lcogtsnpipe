@@ -54,7 +54,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--use-sextractor", action="store_true", help="use souces from sextractor for PSF instead of catalog")
     parser.add_argument("--catalogue", default='', help="filename of catalog (full path OR ./___apass.cat OR apass/___apass.cat)")
     parser.add_argument("--calib", default='', choices=['sloan', 'natural', 'sloanprime'])
-    parser.add_argument("--sigma-clip", default=2., help='number of sigma at which to reject stars for zero point calibration')
+    parser.add_argument("--sigma-clip", default=2., type=float, help='number of sigma at which to reject stars for zero point calibration')
     parser.add_argument("--type", choices=['fit', 'ph', 'mag'], default='', help='type of magnitude (PSF, aperture, apparent); default ph for filetype=3 and fit for everything else')
     parser.add_argument("--standard", default='', help='use the zeropoint from this standard')
     parser.add_argument("--xshift", default=0, type=int, help='x-shift in the guess astrometry')

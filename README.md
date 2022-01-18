@@ -81,7 +81,7 @@ These instructions only need to be run once, when you set up the pipeline.
        ```
        docker-compose -f lcogtsnpipe/docker-compose.yml up
        ```
-       (Linux Only) If you initially had trouble in getting display output from docker in your linux maching (step 6), you will need to slightly modify your `docker-compose.yml` file in the following manner.
+       (Linux Only) If you initially had trouble in getting display output from docker in your linux machine (step 6), you will need to slightly modify your `docker-compose.yml` file in the following manner.
        ```diff
                  LCOSNDBUSER: "${LCOSNDBUSER:-supernova}"
                  LCOSNDBPASS: "${LCOSNDBPASS:-supernova}"

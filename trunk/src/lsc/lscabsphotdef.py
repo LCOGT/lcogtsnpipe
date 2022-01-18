@@ -20,6 +20,7 @@ def get_other_filters(filename):
                photlco AS p1, photlco AS p2,
                telescopes AS t1, telescopes AS t2
                WHERE p1.filename='{}'
+               AND p2.quality=127
                AND p1.dayobs=p2.dayobs
                AND p1.targetid=p2.targetid
                AND p1.telescopeid=t1.id

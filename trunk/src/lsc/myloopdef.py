@@ -1016,12 +1016,14 @@ def seepsf(psf_filename, saveto=None):
     :param saveto: filepath+filename of output file
     """
     psf_hdul = fits.open(psf_filename)
-    N = psf_hdul[0].header['PSFHEIGH'] / psf_hdul[0].header['NPSFSTAR']
     sigma_x = psf_hdul[0].header['PAR1']
     sigma_y = psf_hdul[0].header['PAR2']
     psfrad = psf_hdul[0].header['PSFRAD']
     NAXIS1 = psf_hdul[0].header['NAXIS1']
     NAXIS2 = psf_hdul[0].header['NAXIS2']
+    N = psf_hdul[0].header['PSFHEIGH'] / (sigma_x * sigma_y)
+    if sigma_x > 50 or sigma_y > 50:
+        print 'WARNING: PSF is very non-Gaussian, --no_iraf flag may display incorrectly'
 
     x = np.linspace(-psfrad, psfrad, num=NAXIS1)
     y = np.linspace(-psfrad, psfrad, num=NAXIS2)

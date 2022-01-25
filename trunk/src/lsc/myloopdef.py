@@ -1016,25 +1016,29 @@ def seepsf(psf_filename, saveto=None):
     :param saveto: filepath+filename of output file
     """
     psf_hdul = fits.open(psf_filename)
-    sigma_x = psf_hdul[0].header['PAR1']
-    sigma_y = psf_hdul[0].header['PAR2']
+    PAR1 = psf_hdul[0].header['PAR1']
+    PAR2 = psf_hdul[0].header['PAR2']
+    # factor of 0.8493218 from https://github.com/iraf-community/iraf/blob/ab7cf74b3109b7748aec4492feac78a8119c4a25/noao/digiphot/daophot/daolib/profile.x#L44
+    sigma_x = PAR1 * 0.8493218
+    sigma_y = PAR2 * 0.8493218
     psfrad = psf_hdul[0].header['PSFRAD']
     NAXIS1 = psf_hdul[0].header['NAXIS1']
     NAXIS2 = psf_hdul[0].header['NAXIS2']
-    N = psf_hdul[0].header['PSFHEIGH'] / (sigma_x * sigma_y)
-    if sigma_x > 50 or sigma_y > 50:
-        print 'WARNING: PSF is very non-Gaussian, --no_iraf flag may display incorrectly'
+    N = psf_hdul[0].header['PSFHEIGH'] / (PAR1 * PAR2)
 
     x = np.linspace(-psfrad, psfrad, num=NAXIS1)
     y = np.linspace(-psfrad, psfrad, num=NAXIS2)
     X, Y = np.meshgrid(x, y)
     # PSF is elliptical gaussian (from header) + residuals (from img data)
     # in description https://iraf.net/irafhelp.php?val=seepsf
-    # not 100% sure normalization is correct, but tested on
-    #       good and bad psfs and I think it's right
     analytic = N * np.exp(-(((X ** 2) / (sigma_x ** 2)) + ((Y ** 2) / (sigma_y ** 2))) / 2)
     residual = psf_hdul[0].data
     Z = analytic + residual
+    # our resampling is not quite what iraf does
+    # removing edge pixels/artifacts
+    X = X[3:-3, 3:-3]
+    Y = Y[3:-3, 3:-3]
+    Z = Z[3:-3, 3:-3]
     if saveto is not None:
         psf_hdul[0].data = Z
         psf_hdul.writeto(saveto, overwrite=True)

@@ -1026,6 +1026,7 @@ def seepsf(psf_filename, saveto=None):
     NAXIS2 = psf_hdul[0].header['NAXIS2']
     N = psf_hdul[0].header['PSFHEIGH'] / (PAR1 * PAR2)
 
+    # subsampling by factor of 2 in agreement with what iraf is doing
     x = np.linspace(-psfrad, psfrad, num=NAXIS1)
     y = np.linspace(-psfrad, psfrad, num=NAXIS2)
     X, Y = np.meshgrid(x, y)
@@ -1034,11 +1035,8 @@ def seepsf(psf_filename, saveto=None):
     analytic = N * np.exp(-(((X ** 2) / (sigma_x ** 2)) + ((Y ** 2) / (sigma_y ** 2))) / 2)
     residual = psf_hdul[0].data
     Z = analytic + residual
-    # our resampling is not quite what iraf does
-    # removing edge pixels/artifacts
-    X = X[3:-3, 3:-3]
-    Y = Y[3:-3, 3:-3]
-    Z = Z[3:-3, 3:-3]
+    # keeping just in psfrad
+    Z[residual == 0] = 0
     if saveto is not None:
         psf_hdul[0].data = Z
         psf_hdul.writeto(saveto, overwrite=True)

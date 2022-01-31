@@ -220,6 +220,7 @@ Where:
     * Get the targetid of the standard you want to update: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE name="L107"``` (you should replace L107 with the name of your standard)
     * Check that you're selecting the right row: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE targetid=55``` (you should replace 55 with the targetid you found in the last step)
     * If `classificationid` is not 1, update `classificationid` for the row selected: ```UPDATE targets SET classificationid=1 WHERE targetid=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard)
+* When you run a command with `--standard all`, it queries the database for any standards in the same filter-telescope-instrument-night as the SN observations and applies the zero points from these standards to your SN images. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard all```. If you want to calibrate to a single standard field, you can also give, e.g., `--standard L94`. Lastly, you have the option to use `--match-by-site` to match by filter-site-night if there are too few standard images taken with the exact telescope.
 * Create photometry catalogs for the standard star images. You need these to calculate the zero points.
 ```
 lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s psf
@@ -229,8 +230,7 @@ Where STANDARD is the name of the standard you wish to calibrate.
 ```
 lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s zcat -i --catalog=$LCOSNDIR/standard/cat/landolt/<standard catalog name>
 ```
-* When you run -s local on the SN (in the next step) with `--standard all`, it queries the database for any standards in the same filter-site-night as the SN observations and applies the zero points from these standards to your SN images. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard all```.
-   
+
 ### Create a catalog of stars (local sequence) in SN field for Landolt filters
 * This calculates the apparent magnitude for the stars in a given filter in your SN field and creates a catalog that will be used in the zcat step to generate the zeropoint for each observation. If a single class of telescopes seems to be an outlier, then you should limit the telescopes used to calculate the apparent magnitude to a single class of telescopes with the ```-T 1m0``` flag
 ```

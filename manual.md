@@ -225,7 +225,6 @@ Where:
 lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s psf
 ```
 Where STANDARD is the name of the standard you wish to calibrate.   
-*A word on the `--standard` keyword. The `--standard` flag has two optional inputs with slightly different behavior. When `--standard all` is used, all standards are selected that occur on the same filter-night-site as your supernova observations. When `--standard STANDARD` is used where STANDARD is a specific standard (e.g. L110) then all avaulable standards are given for the range of date, regardless of whether they were observed on the same night and site as your supernova observation. If only a single standard is available for your supernova observations nights and sites, then you can use `--standard all` for the calibration of the standard images (`-s psf` and `-s zcat` as well as the `-s local` stage. However, if multiple standards are available, then you should calibrate them individually with `--standard STANDARD` for the `-s psf` and `-s zcat` stages and then `--standard all` for the `-s local` stage.*  
 * Calculate the zero points for the standard star images. You should run this interactively to make sure there are enough stars identified in the image.
 ```
 lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s zcat -i --catalog=$LCOSNDIR/standard/cat/landolt/<standard catalog name>

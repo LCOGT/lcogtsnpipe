@@ -1817,7 +1817,7 @@ def get_standards(epoch, name, filters, standard_name='all', match_by_site=False
         is_standard = 'targstd.classificationid = 1'
     else:
         std_join = 'JOIN targetnames AS targstd ON std.targetid = targstd.targetid'
-        is_standard = 'targstd.name = {}'.format(standard_name)
+        is_standard = 'targstd.name = "{}"'.format(standard_name)
 
     if match_by_site:  # join on site, telescope class, and instrument type
         tel_join = '''((photlco AS obj JOIN targetnames AS targobj ON obj.targetid = targobj.targetid)

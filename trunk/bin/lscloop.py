@@ -57,6 +57,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--sigma-clip", default=2., help='number of sigma at which to reject stars for zero point calibration')
     parser.add_argument("--type", choices=['fit', 'ph', 'mag'], default='', help='type of magnitude (PSF, aperture, apparent); default ph for filetype=3 and fit for everything else')
     parser.add_argument("--standard", default='', help='use the zeropoint from this standard')
+    parser.add_argument("--match-by-site", action='store_true', help='match standards by site instead of individual telescope')
     parser.add_argument("--xshift", default=0, type=int, help='x-shift in the guess astrometry')
     parser.add_argument("--yshift", default=0, type=int, help='y-shift in the guess astrometry')
     parser.add_argument("--fwhm", default='', help='fwhm (in pixel)')
@@ -138,10 +139,7 @@ if __name__ == "__main__":   # main program
                            str(ll['mag'][i]), ll['abscat'][i])
             print '\n###  total number = ' + str(len(ll['filename']))
             if args.standard:
-                if args.standard == 'all':
-                    mm = lsc.myloopdef.get_standards(args.epoch, args.name, filters)
-                else:
-                    mm = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, _instrument=args.instrument, _name=args.standard)
+                mm = lsc.myloopdef.get_standards(args.epoch, args.name, filters, args.standard, args.match_by_site)
                 for i in range(len(mm['filename'])):
                     print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
                           (str(mm['filename'][i]), str(mm['objname'][i]), str(mm['filter'][i]),

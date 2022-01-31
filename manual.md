@@ -223,12 +223,11 @@ Where:
 * When you run a command with `--standard all`, it queries the database for any standards in the same filter-telescope-instrument-night as the SN observations and applies the zero points from these standards to your SN images. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard all```. If you want to calibrate to a single standard field, you can also give, e.g., `--standard L94`. Lastly, you have the option to use `--match-by-site` to match by filter-site-night if there are too few standard images taken with the exact telescope.
 * Create photometry catalogs for the standard star images. You need these to calculate the zero points.
 ```
-lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s psf
+lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard all -s psf
 ```
-Where STANDARD is the name of the standard you wish to calibrate.   
 * Calculate the zero points for the standard star images. You should run this interactively to make sure there are enough stars identified in the image.
 ```
-lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s zcat -i --catalog=$LCOSNDIR/standard/cat/landolt/<standard catalog name>
+lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard all -s zcat -i
 ```
 
 ### Create a catalog of stars (local sequence) in SN field for Landolt filters

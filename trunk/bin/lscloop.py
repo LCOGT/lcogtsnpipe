@@ -184,8 +184,7 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type, args.uploadtosnex2)
             elif args.stage == 'psf':
-                catalogue = lsc.util.getcatalog(args.name, args.field) if args.field else args.catalogue
-                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, catalogue,
+                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,
                                       'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai, args.b_sigma, args.b_crlim, 
                                       max_apercorr=args.max_apercorr)
             elif args.stage == 'psfmag':

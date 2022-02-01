@@ -127,9 +127,12 @@ if __name__ == "__main__":
     if args.stage in ['abscat', 'local'] and args.catalog is not None:
         try:
             refcat = Table.read(args.catalog, format='ascii', fill_values=[('9999.000', '0')])
-            colnames = [row.split()[0] for row in refcat.meta['comments'] if len(row.split()) == 6]
-            for old, new in zip(refcat.colnames, colnames):
-                refcat.rename_column(old, new)
+            if 'source_id' in refcat.colnames:  # Gaia catalog
+                refcat.rename_column('source_id', 'id')
+            else:
+                colnames = [row.split()[0] for row in refcat.meta['comments'] if len(row.split()) == 6]
+                for old, new in zip(refcat.colnames, colnames):
+                    refcat.rename_column(old, new)
         except ascii.core.InconsistentTableError: # real Landolt catalogs are different
             refcat = Table.read(args.catalog, format='ascii', names=['id', 'ra', 'dec', 'U', 'B', 'V', 'R', 'I',
                                 'vary', 'Uerr', 'Berr', 'Verr', 'Rerr', 'Ierr', 'col13', 'col14', 'col15', 'col16', 'col17'],

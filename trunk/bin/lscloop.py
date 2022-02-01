@@ -240,7 +240,7 @@ if __name__ == "__main__":   # main program
                     field = args.filter[0]
                 else:
                     field = args.field
-                lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force, args.minstars)
+                lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force, args.minstars, args.match_by_site)
             elif args.stage == 'diff':  #    difference images using hotpants
                 if not args.name and not args.targetid:
                     raise Exception('you need to select one object: use option -n/--name')

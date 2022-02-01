@@ -9,3 +9,4 @@ mysql/
 data/
 trunk/build/
 trunk/dist/*egg*
+.DS_Store

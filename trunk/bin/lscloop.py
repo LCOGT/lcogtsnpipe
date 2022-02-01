@@ -212,7 +212,7 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'zcat':
                 def run_absphot(img):
                     return lsc.lscabsphotdef.absphot(img, args.field, args.catalogue, args.fix, args.sigma_clip, args.interactive,
-                                                     args.type, args.force, args.show, args.cutmag, args.calib, args.zcatold)
+                                                     args.type, args.force, args.show, args.cutmag, args.calib, args.zcatold, args.match_by_site)
                 args.multicore = 1 # parallel processing doesn't work yet; problem with too many mysql queries
                 if args.multicore > 1:
                     p = Pool(args.multicore)

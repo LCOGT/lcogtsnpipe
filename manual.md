@@ -261,7 +261,7 @@ science images (images where the target was visible), and TEMPDATE as
 the epoch(s) of the reference images. ID refers to the ID number of a
 specific file. IN refers to the instrument prefix (kb for SBIG, fl for
 Sinistro, fs for Spectral). TEMPTEL is the instrument prefix for the
-template image (kb, fl, fs, or SDSS). If you don't give this option, it
+template image (kb, fl, fs, fa, or SDSS). If you don't give this option, it
 will select the same instrument given with -T.
 
 ## Prepare the Reference Images

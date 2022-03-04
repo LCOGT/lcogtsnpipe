@@ -34,7 +34,7 @@ This is a description of the stream-lined steps that are recommended for process
     lscloop.py -n 2016cok -e 20160528-20180104 -s psf 
     ```
 
-3. Check the PSF and image quality. Run the `checkpsf` stage with the `--show`. I like to do this by filter so I can develop a good baseline of what a field should look like in a given filter. Inspect each PSF and each image, the stars used to build are marked in blue if you use the `--no_iraf` flag. Mark the PSFs that you want to redo with `n` and the images that you never want to see again as `b` (this sets the quality to 1, you have to run the `checkquality -b quality` stage to recover these files). See https://www.overleaf.com/read/sccbqgnhwyfh for a description of different PSF shapes you may see.  
+3. Check the PSF and image quality. Run the `checkpsf` stage with the `--show`. I like to do this by filter so I can develop a good baseline of what a field should look like in a given filter. Inspect each PSF and each image, the stars used to build are marked in blue if you use the `--no_iraf` flag. Mark the PSFs that you want to redo with `n` and the images that you never want to see again as `b` (this sets the quality to 1, you have to run the `checkquality -b quality` stage to recover these files). See https://www.overleaf.com/read/sccbqgnhwyfh for a description of different PSF shapes you may see. In addition to the PSF, you should look at which stars are identified in the image as these will be used for the flux calibration later.
 **Example for checking r-band images**
     ```
     ds9&
@@ -137,23 +137,22 @@ Where:
     * This step fills in the psf column with a filename (for the psf model) if it succeeds and an X if it fails.
     * Alternately, run ```lscloop.py -n <snname> -e <epoch> -b psf``` and any other criteria you'd like to filter on to get a list of files that failed the PSF stage
     * To inspect all images and their PSFs:
-        * open DS9
-        * run the standard lscloop.py with the stage ```-s checkpsf --show --no_iraf``` 
-        * This displays image for which the psf value is X in DS9 and in a separate window shows the psf model. The psf model should be a single source (e.g. not a blended gaussian).
-        * You will then be asked if this image is good with the option to answer: yes, no, or bad. Here if you answer bad, the quality will be set from 127 to 1, indicating that the image should not be used. If you mark no, then the psf will be reset, indicating that you would like to try to calibrate the psf again.
-    * To inspect images for which the PSF failed
-        * open DS9
-        * run the standard lscloop.py with the stage ```-s wcs -b psf --show``` 
+        * run the standard lscloop.py with the stage ```-s checkpsf --show --no_iraf``` (if running without the `--no_iraf` flag you should open DS9 first)
+        * This displays an image with the stars in the catalog marked and the stars used to build the PSF marked in a different color. In a separate window the psf model is shown. The psf model should be a single source although a non-gaussian PSF may still be an accurate representation of the PSF for the image. The stars chosen to build the PSF should not be so bright that they are saturated.
+        * In addition to inspecting the PSF, you should look at which stars are identified in the image as these will be used for the flux calibration later. The stars should be evenly distributed across the image and the bright stars should be selected.
+        * You will then be asked if this image is good with the option to answer: yes, no, or bad. Here if you answer bad, the quality will be set from 127 to 1, indicating that the image should not be used and it will not be included in any future processing. If you mark no, then the psf will be reset, indicating that you would like to try to calibrate the psf again.
+
 * **How to fix this step if the image looks ok but the psf step failed**
+    * Try running with the ```--fwhm``` option. This is especially true for the 0.4m telescopes. Possible values to try: 5 and 7
     * Try adjusting --datamin or --datamax to select different stars. You can use the datamin and datamax output during the PSF stage to change which stars are selected
     * Try running with the  --catalog option
-    * Try running with the ```--fwhm``` option. This is especially true for the 0.4m telescopes. Possible values to try: 5 and 7
 
 ### Generate instrumental magnitudes using psf and aperture photometry
 * **Call**: ```-s psfmag```
 * **Description**: Generate instrumental magnitudes using psf and aperture photometry
 * **Recommended Options**:
 * **Other Options**: 
+    * -i run this stage interactively
     * `--datamin` and `--datamax` manually set the datamin and datamax keywords used by iraf to select the PSF stars. These may be necessary to use if the aperture photometry is failing and you're interested in it
 * **How to tell if this step worked**:
     * This step sets the psfmag and apmag column to the instrumental magnitude if this step works and to 9999 if this step fails.

@@ -167,6 +167,7 @@ Where:
     * ```-f sloan```, ```-f apass```, or ```-f landolt```: more than one filter should be provided so that the zeropoint color term can be calculated
 * **Other Options**: 
     * ```--catalog=CATALOG``` where CATALOG should be a catalog that corresponds to the filter you are trying to calibrate (e.g. apass, sloan, or landolt). The pipeline will use the location and apparent magnitude of the stars in this catalog to calculate the conversion between instrumental and apparent magnitude.
+    * --unfix allow the slope of the color term to vary (use with extreme caution)
 * **How to tell if this step worked**:
     * This set fills in the zcat column in the photlco database with a file name if it succeeded and an X if it failed
     * Alternately, run ```lscloop.py -n <snname> -e <epoch> -b zcat``` and any other criteria you'd like to filter on to get a list of files that failed the zcat stage

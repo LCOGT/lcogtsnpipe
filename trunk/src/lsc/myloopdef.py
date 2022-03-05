@@ -1844,9 +1844,9 @@ def get_standards(epoch, name, filters, standard_name='all', match_by_site=False
                AND std.quality = 127
                AND obj.dayobs >= {start}
                AND obj.dayobs <= {end}
-               AND targobj.name = "{name}"
+               AND targobj.name like "%{name}"
                '''.format(tel_join=tel_join, is_match=is_match, is_standard=is_standard,
-                          start=epochs[0], end=epochs[-1], name=name)
+                          start=epochs[0], end=epochs[-1], name=name.replace(' ', '%'))  # same name matching as gettargetid
     if filters:
         query += 'AND (obj.filter="' + '" OR obj.filter="'.join(lsc.sites.filterst[filters]) + '")'
     print 'Searching for corresponding standard fields. This may take a minute...'

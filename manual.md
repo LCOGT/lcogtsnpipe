@@ -143,9 +143,11 @@ Where:
         * You will then be asked if this image is good with the option to answer: yes, no, or bad. Here if you answer bad, the quality will be set from 127 to 1, indicating that the image should not be used and it will not be included in any future processing. If you mark no, then the psf will be reset, indicating that you would like to try to calibrate the psf again.
 
 * **How to fix this step if the image looks ok but the psf step failed**
-    * Try running with the ```--fwhm``` option. This is especially true for the 0.4m telescopes. Possible values to try: 5 and 7
-    * Try adjusting --datamin or --datamax to select different stars. You can use the datamin and datamax output during the PSF stage to change which stars are selected
-    * Try running with the  --catalog option
+    * Try running with the `--fwhm` option. This is especially true for the 0.4m telescopes. Possible values to try: 5 and 7
+    * Try adjusting `--datamin` or `--datamax` to select different stars. You can use the datamin and datamax output during the PSF stage to change which stars are selected
+    * Try running with the  `--field` option. For some sources, the pipeline may have trouble picking suitable stars using the default 'gaia' catalog. So, try running `-s psf --field apass` or `-s psf --field sloan`.
+    * Try running with `--use-sextractor` argument.
+    * `--field` and `--use-sextractor` commands can be combined with `--datamin` and `--datamax` to select suitable stars.
 
 ### Generate instrumental magnitudes using psf and aperture photometry
 * **Call**: ```-s psfmag```
@@ -421,6 +423,9 @@ By default, `--filetype 3` selects both HOTPANTS and Optimally subtracted images
     - increase the `fwhm`. This value should be printed to the screen during the PSF stage. You can suggest a FWHM to lscloop with the keyword `--fwhm` (e.g. `--fwhm 7`)
     - Remove the brightest star by setting the `--datamax` keyword to a value lower than the first PSF star datamax, which can be read from the output
     - Increase the number of PSF stars using the `--nstars` flag (e.g. `--nstars 12`)
+    - Try using different `--field` for selecting psf stars e.g. `-s psf --field apass` or `-s psf --field sloan`.
+    - Try running with `--use-sextractor` argument.
+    - `--field` and `--use-sextractor` commands can be combined with `--datamin` and `--datamax` to select suitable stars.
    
 * I accidentally marked a file as `b` how do I bring it back? -OR- One of my files disappeared, how do I get it back?
    Files marked with `b` are considered failed observations that no amount of finessing will bring back (e.g. no signal). For this reason, the pipeline hides them from all future processing. The only way to get this observation back is to run `-s checkquality -b quality`. If you answer `n` that stage of the pipeline will be reset for you to run again (as if the stage failed).

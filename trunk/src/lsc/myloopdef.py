@@ -1831,7 +1831,7 @@ def get_standards(epoch, name, filters, standard_name='all', match_by_site=False
         is_match = 'telobj.shortname = telstd.shortname AND instobj.type = inststd.type'
     else:  # join on exact telescope and instrument
         tel_join = '''photlco AS obj JOIN targetnames AS targobj ON obj.targetid = targobj.targetid,
-                      photlco AS std {}'''.format(std_join)
+                      photlco AS std {std_join}'''.format(std_join=std_join)
         is_match = 'obj.telescopeid = std.telescopeid AND obj.instrumentid = std.instrumentid'
 
     query = '''SELECT DISTINCT std.filepath, std.filename, std.objname, std.filter,

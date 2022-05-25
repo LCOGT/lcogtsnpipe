@@ -15,17 +15,20 @@ with warnings.catch_warnings(): # so cronic doesn't email on the "experimental" 
     warnings.simplefilter('ignore')
     from astroquery.sdss import SDSS
 
-def get_other_filters(filename):
-    query = '''SELECT DISTINCT p2.filter FROM
-               photlco AS p1, photlco AS p2,
-               telescopes AS t1, telescopes AS t2
-               WHERE p1.filename='{}'
+def get_other_filters(filename, match_by_site=False):
+    if match_by_site:
+        tel_join = '''photlco AS p1 JOIN telescopes AS t1 ON p1.telescopeid = t1.id,
+                      photlco AS p2 JOIN telescopes AS t2 ON p2.telescopeid = t2.id'''
+        is_match = 't1.shortname = t2.shortname'
+    else:
+        tel_join = 'photlco AS p1, photlco AS p2'
+        is_match = 'p1.telescopeid = p2.telescopeid'
+    query = '''SELECT DISTINCT p2.filter FROM {tel_join}
+               WHERE p1.filename='{filename}'
                AND p2.quality=127
                AND p1.dayobs=p2.dayobs
                AND p1.targetid=p2.targetid
-               AND p1.telescopeid=t1.id
-               AND p2.telescopeid=t2.id
-               AND t1.shortname=t2.shortname'''.format(filename)
+               AND {is_match}'''.format(tel_join=tel_join, filename=filename, is_match=is_match)
     result = lsc.mysqldef.query([query], lsc.conn)
     other_filters = {lsc.sites.filterst1[row['filter']] for row in result}
     return other_filters
@@ -224,7 +227,7 @@ def onclick(event):
                      (aa,sss,bb,sigmaa,sigmab))
 
 
-def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=False,_type='fit',redo=False,show=False,cutmag=-1,_calib='sloan',zcatold=False):
+def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=False,_type='fit',redo=False,show=False,cutmag=-1,_calib='sloan',zcatold=False, match_by_site=False):
     filename = os.path.basename(img)
     status = lsc.myloopdef.checkstage(filename, 'zcat')
     if status < 1:
@@ -484,7 +487,7 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
               _limmag = limmag(img, media, 3, _fwhm)     #   compute limiting magnitude at 3 sigma
               lsc.mysqldef.updatevalue('photlco', ['limmag', 'zn', 'dzn', 'znnum'], [_limmag, media, mediaerr, len(data2)], filename)
 
-        filters_observed = get_other_filters(filename)
+        filters_observed = get_other_filters(filename, match_by_site)
         filters_in_catalog = set(magstd0.keys())
         colors = lsc.sites.chosecolor(filters_observed & filters_in_catalog, False)
         colorvec=colors[lsc.sites.filterst1[_filter]]

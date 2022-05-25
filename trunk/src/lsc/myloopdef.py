@@ -231,7 +231,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     else:
         output_table.pprint(max_lines=-1)
 
-def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit', database='photlco', field=None, refcat=None, force=False, minstars=0):
+def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit', database='photlco', field=None, refcat=None, force=False, minstars=0, match_by_site=False):
     if len(extlist) > 0:
         f = open('_tmpext.list', 'w')
         for img in extlist:
@@ -260,6 +260,8 @@ def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit',
         command += ' -c ' + refcat
     if minstars:
         command += ' --minstars ' + str(minstars)
+    if match_by_site:
+        command += ' --match-by-site'
     print command
     os.system(command)
 
@@ -1813,37 +1815,42 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
         ll = ''
     return ll
 
-def get_standards(epoch, name, filters):
+def get_standards(epoch, name, filters, standard_name='all', match_by_site=False):
     epochs = process_epoch(epoch)
-    targetid = lsc.mysqldef.gettargetid(name, '', '', lsc.conn)
+
+    if standard_name == 'all':
+        std_join = 'JOIN targets AS targstd ON std.targetid = targstd.id'
+        is_standard = 'targstd.classificationid = 1'
+    else:
+        std_join = 'JOIN targetnames AS targstd ON std.targetid = targstd.targetid'
+        is_standard = 'targstd.name = "{}"'.format(standard_name)
+
+    if match_by_site:  # join on site, telescope class, and instrument type
+        tel_join = '''((photlco AS obj JOIN targetnames AS targobj ON obj.targetid = targobj.targetid)
+                                       JOIN telescopes AS telobj ON obj.telescopeid = telobj.id)
+                                       JOIN instruments AS instobj ON obj.instrumentid = instobj.id,
+                      ((photlco as std {std_join})
+                                       JOIN telescopes AS telstd ON std.telescopeid = telstd.id)
+                                       JOIN instruments AS inststd ON std.instrumentid = inststd.id'''.format(std_join=std_join)
+        is_match = 'telobj.shortname = telstd.shortname AND instobj.type = inststd.type'
+    else:  # join on exact telescope and instrument
+        tel_join = '''photlco AS obj JOIN targetnames AS targobj ON obj.targetid = targobj.targetid,
+                      photlco AS std {std_join}'''.format(std_join=std_join)
+        is_match = 'obj.telescopeid = std.telescopeid AND obj.instrumentid = std.instrumentid'
+
     query = '''SELECT DISTINCT std.filepath, std.filename, std.objname, std.filter,
                std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat, std.lastunpacked
-               FROM
-               photlco AS obj,
-               photlco AS std,
-               targetnames AS targobj,
-               targets AS targstd,
-               telescopes AS telobj,
-               telescopes AS telstd,
-               instruments AS instobj,
-               instruments AS inststd
-               WHERE obj.telescopeid = telobj.id
-               AND std.telescopeid = telstd.id
-               AND obj.instrumentid = instobj.id
-               AND std.instrumentid = inststd.id
-               AND telobj.shortname = telstd.shortname
-               AND instobj.type = inststd.type
-               AND obj.targetid = targobj.targetid
-               AND std.targetid = targstd.id
-               AND targstd.classificationid = 1
+               FROM {tel_join}
+               WHERE {is_match} AND {is_standard}
                AND obj.filter = std.filter
                AND obj.dayobs = std.dayobs
                AND obj.quality = 127
                AND std.quality = 127
                AND obj.dayobs >= {start}
                AND obj.dayobs <= {end}
-               AND targobj.targetid = {targetid}
-               '''.format(start=epochs[0], end=epochs[-1], targetid=targetid)
+               AND targobj.name like "%{name}"
+               '''.format(tel_join=tel_join, is_match=is_match, is_standard=is_standard,
+                          start=epochs[0], end=epochs[-1], name=name.replace(' ', '%'))  # same name matching as gettargetid
     if filters:
         query += 'AND (obj.filter="' + '" OR obj.filter="'.join(lsc.sites.filterst[filters]) + '")'
     print 'Searching for corresponding standard fields. This may take a minute...'

@@ -235,7 +235,7 @@ if __name__ == "__main__":   # main program
                 elif args.field:
                     catalogue = lsc.util.getcatalog(args.name, args.field)
                 else:
-                    catalogue = lsc.util.getcatalog(args.name, 'apass')
+                    catalogue = lsc.util.getcatalog(args.name, 'gaia')
                 if not args.field and args.filter and args.filter[0] in ['landolt', 'sloan', 'apass']:
                     field = args.filter[0]
                 else:

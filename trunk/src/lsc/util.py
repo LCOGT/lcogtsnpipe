@@ -841,7 +841,8 @@ def getcatalog(name_or_filename, field='', return_field=False):
                                          apass_cat, gaia_cat
                                          from targets, targetnames, targetnames as othernames
                                          where targets.id=targetnames.targetid and targets.id=othernames.targetid
-                                         and targetnames.name="{}"'''.format(name_or_filename)], lsc.conn)
+                                         and targetnames.name like "%{}"'''.format(name_or_filename.replace(' ', '%'))],
+                                     lsc.conn)  # same name matching as gettargetid
     if field:
         fields = [field]
     else:

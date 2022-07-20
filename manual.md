@@ -40,7 +40,7 @@ This is a description of the stream-lined steps that are recommended for process
     ds9&
     lscloop.py -n 2016cok -e 20160528-20180104 -s checkpsf --show -f B --no_iraf
     ```
-4. Redo the PSF for any images you marked with `n`. These are selected using the `-b psf` option. Suggestions for improving the PSFs: increase the `--nstars` parameter (e.g. `--nstars 12`) to increase the number of stars that get averaged together to make the PSF; adjust the `--datamax` and `--datamin` parameters to exclude bright stars or cosmic rays (e.g. `--datamax 60000 --datamin 0`); use a different catalog (as described above).
+4. Redo the PSF for any images you marked with `n`. These are selected using the `-b psf` option. Suggestions for improving the PSFs: change the fwhm (`--fwhm` to be bigger or smaller (depending on which stars you want selected), increase the `--nstars` parameter (e.g. `--nstars 12`) to increase the number of stars that get averaged together to make the PSF; adjust the `--datamax` and `--datamin` parameters to exclude bright stars or cosmic rays (e.g. `--datamax 60000 --datamin 0`); use a different catalog (as described above). You can play around with different FWHM values using the `--show` option and saying the PSF is bad, you will then be prompted to enter a new PSF.
 **Example** 
     ```
     lscloop.py -n 2016cok -e 20160528-20180104 -s psf -b psf 

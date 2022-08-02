@@ -310,7 +310,7 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
 
 def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, fix=True,
             catalog='', database='photlco', use_sextractor=False, datamin=None, datamax=None, 
-            nstars=6, banzai=False, b_sigma=3.0, b_crlim=3.0, max_apercorr=0.1):
+            nstars=6, banzai=False, b_sigma=3.0, b_crlim=3.0, max_apercorr=0.1, field=None):
     for img in imglist:
         if interactive:
             ii = '-i'
@@ -336,6 +336,10 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
             cc=' --catalog '+catalog+' '
         else:
             cc=' '
+        if field:
+            field_cmd = ' --field ' + field + ' '
+        else:
+            field_cmd = ' '
         if use_sextractor:
             xx = ' --use-sextractor '
         else:
@@ -409,7 +413,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                         raise Exception('fits table not there, run psf for ' + sntable)
             else: # PyZOGY difference images or unsubtracted images
                 command = 'lscpsf.py ' + _dir + img + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
-                    treshold) + gg + cc + xx + dmin + dmax + pp + bz + add_max_apercorr
+                    treshold) + gg + cc + xx + dmin + dmax + pp + bz + add_max_apercorr + field_cmd
                 print command
                 os.system(command)
         elif status == 0:

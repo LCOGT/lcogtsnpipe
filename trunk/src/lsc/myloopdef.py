@@ -336,7 +336,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
             cc=' --catalog '+catalog+' '
         else:
             cc=' '
-        if field is not None:
+        if field:
             field_cmd = ' --field ' + field + ' '
         else:
             field_cmd = ' '

@@ -33,7 +33,7 @@ for system in args.field:
             fileexists = os.path.isfile(os.path.join(filepath,  filename))
             if fileexists:
                 print 'Adding', filename, 'to database'
-                lsc.mysqldef.query(['update targets set ' + system + '_cat="' + filename + '", '+ system + '_cat_path  where id=' + tid], lsc.conn)
+                lsc.mysqldef.query(['update targets set ' + system + '_cat="' + filename + '" where id=' + tid], lsc.conn)
                 break
         if not fileexists and system != 'landolt':
             print 'Querying for catalog...'

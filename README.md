@@ -86,9 +86,7 @@ These instructions only need to be run once, when you set up the pipeline.
                  LCOSNDBUSER: "${LCOSNDBUSER:-supernova}"
                  LCOSNDBPASS: "${LCOSNDBPASS:-supernova}"
                  LCOSNDIR: "${LCOSNDIR:-/supernova}"
-       -         DISPLAY: "${LCOSNDISPLAY:-host.docker.internal:0}"
-       +         # DISPLAY: "${LCOSNDISPLAY:-host.docker.internal:0}"
-       +         DISPLAY: "${DISPLAY}"
+                 DISPLAY: "${DISPLAY}"
                ports:
                  - "4306:3306"
                links:
@@ -97,7 +95,7 @@ These instructions only need to be run once, when you set up the pipeline.
                  - sn-db
                volumes:
                  - ${LCOSNDIR:-./data}:${LCOSNDIR:-/supernova}
-       +         - /tmp/.X11-unix:/tmp/.X11-unix
+                 - /tmp/.X11-unix:/tmp/.X11-unix
        ```
    
        Now, rerun the above command.

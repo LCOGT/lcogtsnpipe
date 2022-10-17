@@ -19,7 +19,7 @@ if __name__ == "__main__":   # main program
     parser = ArgumentParser(description=description)
     parser.add_argument("-e", "--epoch", help='args.epoch to reduce')
     parser.add_argument("-T", "--telescope", default='all')
-    parser.add_argument("-I", "--instrument", default='', help='kb, fl, fs, sinistro, sbig')
+    parser.add_argument("-I", "--instrument", default='', help='kb, fl, fs, sinistro, sbig, ep, muscat')
     parser.add_argument("-n", "--name", default='', help='object name')
     parser.add_argument("-d", "--id", default='')
     parser.add_argument("-f", "--filter", default='', nargs='+',
@@ -54,9 +54,10 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--use-sextractor", action="store_true", help="use souces from sextractor for PSF instead of catalog")
     parser.add_argument("--catalogue", default='', help="filename of catalog (full path OR ./___apass.cat OR apass/___apass.cat)")
     parser.add_argument("--calib", default='', choices=['sloan', 'natural', 'sloanprime'])
-    parser.add_argument("--sigma-clip", default=2., help='number of sigma at which to reject stars for zero point calibration')
+    parser.add_argument("--sigma-clip", default=2., type=float, help='number of sigma at which to reject stars for zero point calibration')
     parser.add_argument("--type", choices=['fit', 'ph', 'mag'], default='', help='type of magnitude (PSF, aperture, apparent); default ph for filetype=3 and fit for everything else')
     parser.add_argument("--standard", default='', help='use the zeropoint from this standard')
+    parser.add_argument("--match-by-site", action='store_true', help='match standards by site instead of individual telescope')
     parser.add_argument("--xshift", default=0, type=int, help='x-shift in the guess astrometry')
     parser.add_argument("--yshift", default=0, type=int, help='y-shift in the guess astrometry')
     parser.add_argument("--fwhm", default='', help='fwhm (in pixel)')
@@ -138,10 +139,7 @@ if __name__ == "__main__":   # main program
                            str(ll['mag'][i]), ll['abscat'][i])
             print '\n###  total number = ' + str(len(ll['filename']))
             if args.standard:
-                if args.standard == 'all':
-                    mm = lsc.myloopdef.get_standards(args.epoch, args.name, filters)
-                else:
-                    mm = lsc.myloopdef.get_list(args.epoch, args.telescope, filters, _instrument=args.instrument, _name=args.standard)
+                mm = lsc.myloopdef.get_standards(args.epoch, args.name, filters, args.standard, args.match_by_site)
                 for i in range(len(mm['filename'])):
                     print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
                           (str(mm['filename'][i]), str(mm['objname'][i]), str(mm['filter'][i]),
@@ -186,10 +184,9 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type, args.uploadtosnex2)
             elif args.stage == 'psf':
-                catalogue = lsc.util.getcatalog(args.name, args.field) if args.field else args.catalogue
-                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, catalogue,
+                lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,
                                       'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai, args.b_sigma, args.b_crlim, 
-                                      max_apercorr=args.max_apercorr)
+                                      max_apercorr=args.max_apercorr, field=args.field)
             elif args.stage == 'psfmag':
                 lsc.myloopdef.run_fit(ll['filename'], args.RAS, args.DECS, args.xord, args.yord, args.bkg, args.size, args.recenter, args.ref,
                                       args.interactive, args.show, args.force, args.datamax,args.datamin,'photlco',args.RA0,args.DEC0)
@@ -215,7 +212,7 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'zcat':
                 def run_absphot(img):
                     return lsc.lscabsphotdef.absphot(img, args.field, args.catalogue, args.fix, args.sigma_clip, args.interactive,
-                                                     args.type, args.force, args.show, args.cutmag, args.calib, args.zcatold)
+                                                     args.type, args.force, args.show, args.cutmag, args.calib, args.zcatold, args.match_by_site)
                 args.multicore = 1 # parallel processing doesn't work yet; problem with too many mysql queries
                 if args.multicore > 1:
                     p = Pool(args.multicore)
@@ -238,17 +235,17 @@ if __name__ == "__main__":   # main program
                 elif args.field:
                     catalogue = lsc.util.getcatalog(args.name, args.field)
                 else:
-                    catalogue = lsc.util.getcatalog(args.name, 'apass')
+                    catalogue = lsc.util.getcatalog(args.name, 'gaia')
                 if not args.field and args.filter and args.filter[0] in ['landolt', 'sloan', 'apass']:
                     field = args.filter[0]
                 else:
                     field = args.field
-                lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force, args.minstars)
+                lsc.myloopdef.run_cat(ll['filename'], mm['filename'], args.interactive, args.stage, args.type, 'photlco', field, catalogue, args.force, args.minstars, args.match_by_site)
             elif args.stage == 'diff':  #    difference images using hotpants
                 if not args.name and not args.targetid:
                     raise Exception('you need to select one object: use option -n/--name')
                 if args.telescope=='all':
-                    raise Exception('you need to select one type of instrument -T [fs, fl ,kb]')
+                    raise Exception('you need to select one type of instrument -T [fs, fl, kb, ep]')
                 
                 startdate = args.tempdate.split('-')[0]
                 enddate   = args.tempdate.split('-')[-1]
@@ -267,6 +264,8 @@ if __name__ == "__main__":   # main program
                         fake_temptel = 'sinistro'
                     elif args.telescope == 'fa':
                         fake_temptel = 'sinistro'
+                    elif args.telescope == 'ep':
+                        fake_temptel = 'muscat'
                 elif args.temptel:
                     fake_temptel = args.temptel
                 else:

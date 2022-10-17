@@ -43,6 +43,7 @@ if __name__ == "__main__":
                       help="lower limit used to reject CRs identified as BANZAI sources")
     parser.add_option("--max_apercorr", type=float, default=0.1, 
                       help="absolute value of the maximum aperture correction (mag) above which a PSF is marked as bad")
+    parser.add_option("--field", default='gaia', help='field for choosing catalog (if not specified with --catalog)')
 
     option, args = parser.parse_args()
 
@@ -50,7 +51,6 @@ if __name__ == "__main__":
         sys.argv.append('--help')
     option, args = parser.parse_args()
     imglist = lsc.util.readlist(args[0])
-    _catalog = option.catalog
     fixaperture = option.fixaperture
     psffun = option.psffun
     if psffun not in ['gauss', 'auto', 'lorentz', 'moffat15', 'moffat25', 'penny1', 'penny2']:
@@ -83,7 +83,7 @@ if __name__ == "__main__":
                 elif option.catalog:
                     catalog = option.catalog
                 else:
-                    for system in ['gaia', 'sloan', 'apass', 'landolt']:
+                    for system in [option.field, 'gaia', 'sloan', 'apass', 'landolt']:
                         catalog = lsc.util.getcatalog(img.split('/')[-1], system)
                         if catalog:
                             break

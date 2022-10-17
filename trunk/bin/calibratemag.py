@@ -32,7 +32,8 @@ def crossmatch(cat0, cat1, threshold=1., racol0='ra', deccol0='dec', racol1='ra'
     
 def get_image_data(lista, magcol=None, errcol=None, refcat=None):
     filename_equals = ['filename="{}"'.format(os.path.basename(fn).replace('.sn2.fits', '.fits')) for fn in lista]
-    t = Table(lsc.mysqldef.query(['''select filter, filepath, filename, airmass, shortname, dayobs, type as instrument, targetid,
+    t = Table(lsc.mysqldef.query(['''select filter, filepath, filename, airmass, dayobs, targetid,
+                                     telescopeid, instrumentid, shortname, type as instrument,
                                      zcol1, z1, c1, dz1, dc1, zcol2, z2, c2, dz2, dc2, psfmag, psfdmag, apmag, dapmag
                                      from photlco left join telescopes on photlco.telescopeid=telescopes.id
                                      left join instruments on photlco.instrumentid=instruments.id where ''' +
@@ -115,6 +116,8 @@ if __name__ == "__main__":
                         help='Landolt (UBVRI), Sloan (ugriz), or APASS (BVgri) filters?')
     parser.add_argument("-c", "--catalog", help="use only stars that match this reference catalog")
     parser.add_argument("--minstars", default=0, type=int, help="minimum number of catalog matches for inclusion")
+    parser.add_argument("--match-by-site", action='store_true',
+                        help='match standards by site instead of individual telescope')
     parser.add_argument("-o", "--output", default='{SN}_{field}_{datenow}.cat', help='output filename')
     args = parser.parse_args()
     
@@ -127,9 +130,12 @@ if __name__ == "__main__":
     if args.stage in ['abscat', 'local'] and args.catalog is not None:
         try:
             refcat = Table.read(args.catalog, format='ascii', fill_values=[('9999.000', '0')])
-            colnames = [row.split()[0] for row in refcat.meta['comments'] if len(row.split()) == 6]
-            for old, new in zip(refcat.colnames, colnames):
-                refcat.rename_column(old, new)
+            if 'source_id' in refcat.colnames:  # Gaia catalog
+                refcat.rename_column('source_id', 'id')
+            else:
+                colnames = [row.split()[0] for row in refcat.meta['comments'] if len(row.split()) == 6]
+                for old, new in zip(refcat.colnames, colnames):
+                    refcat.rename_column(old, new)
         except ascii.core.InconsistentTableError: # real Landolt catalogs are different
             refcat = Table.read(args.catalog, format='ascii', names=['id', 'ra', 'dec', 'U', 'B', 'V', 'R', 'I',
                                 'vary', 'Uerr', 'Berr', 'Verr', 'Rerr', 'Ierr', 'col13', 'col14', 'col15', 'col16', 'col17'],
@@ -147,17 +153,24 @@ if __name__ == "__main__":
     color_to_use = lsc.sites.chosecolor(targets['filter'], True)
     colors_to_calculate = set(sum(color_to_use.values(), []))
 
+    if args.match_by_site:
+        tel_kwd = 'shortname'
+        inst_kwd = 'instrument'
+    else:
+        tel_kwd = 'telescopeid'
+        inst_kwd = 'instrumentid'
+
     # copy average zero points & color terms from the standards to the science images
     if args.exzp:
         with open(args.exzp) as f:
             lista2 = f.read().splitlines()
         standards = get_image_data(lista2)
-        standards = standards.group_by(['dayobs', 'shortname', 'instrument', 'filter', 'zcol1', 'zcol2'])
+        standards = standards.group_by(['dayobs', tel_kwd, inst_kwd, 'filter', 'zcol1', 'zcol2'])
         for icol in ['zcol1', 'z1', 'dz1', 'c1', 'dc1', 'zcol2', 'z2', 'dz2', 'c2', 'dc2']:
             targets[icol].mask = True
         for group in standards.groups:
-            matches_in_targets = ((targets['dayobs'] == group['dayobs'][0]) & (targets['shortname'] == group['shortname'][0])
-                                   & (targets['instrument'] == group['instrument'][0]) & (targets['filter'] == group['filter'][0]))
+            matches_in_targets = ((targets['dayobs'] == group['dayobs'][0]) & (targets[tel_kwd] == group[tel_kwd][0])
+                                   & (targets[inst_kwd] == group[inst_kwd][0]) & (targets['filter'] == group['filter'][0]))
             if not np.any(matches_in_targets):
                 continue
             targets['zcol1'][matches_in_targets] = group['zcol1'][0]
@@ -183,7 +196,7 @@ if __name__ == "__main__":
     targets['site'] = [row['shortname'].split()[0].lower() if row['shortname'] is not None else None for row in targets]
     extinction = [lsc.sites.extinction[row['site']][row['filter']] for row in targets]
     targets['instmag_amcorr'] = (targets['instmag'].T - extinction * targets['airmass']).T
-    targets = targets.group_by(['dayobs', 'shortname', 'instrument'])
+    targets = targets.group_by(['dayobs', tel_kwd, inst_kwd])
     for filters in colors_to_calculate:
         colors, dcolors = [], []
         for group in targets.groups:

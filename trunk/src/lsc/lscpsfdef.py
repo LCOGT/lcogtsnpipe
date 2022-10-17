@@ -514,5 +514,6 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
     except:
         result = 0
         fwhm = 0.0
+        aperture_correction = 0
         traceback.print_exc()
     return result, fwhm * scale, aperture_correction

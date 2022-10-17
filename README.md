@@ -1,20 +1,18 @@
-#  lcogtsnpipe
-This is the pipeline that ingests and reduces new data from the lcogt key project
+# lcogtsnpipe
+This is the pipeline that ingests and reduces new data from the lcogt key project.
 
-# Table of Contents
+**Please follow these [guidelines](getting_help.md) for asking for help with installing and running the pipeline**
+
+--------------------------------------------
+## Table of Contents
 - [ Pipeline Documentation](#pipeline-documentation)
-- [Docker-compose Installation](#docker-compose-installation)
+- [Docker-compose Installation (Recommended)](#docker-compose-Installation-(recommended))
 - [Manual Installation: Installing the Pipeline and Database](#manual-installation-installing-the-pipeline-and-database)
-- [Testing your installation](#testing-your-installation)
-- [Appendix A: Expected output from show tables](#appendix-a-expected-output-from-show-tables)
-- [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina)
-- [Appendix C: Other packages you may need to install](#appendix-c-other-packages-you-may-need-to-install)
-- [Appendix D: Installing Source Extractor](#appendix-d-installing-source-extractor)
 
+---------------------------------
 # Pipeline Documentation:
-1. Image Subtraction: https://www.authorea.com/users/75900/articles/96044-image-subtraction-with-lcogtsnpipe
-2. [Manual](manual.md) 
-3. Tutorial: https://docs.google.com/document/d/14ADvdbS-19flwtU7TRJ1lyx8IjgBK6D1KubZnQkQciA/edit?usp=sharing
+1. ### [Manual](manual.md) 
+2. ### [Tutorial](https://docs.google.com/document/d/14ADvdbS-19flwtU7TRJ1lyx8IjgBK6D1KubZnQkQciA/edit?usp=sharing)
 
 # Docker-compose Installation (recommended):
 This is likely the quickest way to get the pipeline up and running and requires the least amount of installation.
@@ -27,9 +25,9 @@ These instructions only need to be run once, when you set up the pipeline.
    1. Install [Docker](https://docs.docker.com/get-docker/).
         * Make sure to increase the amount of memory Docker can access (recommended 8 GB). This is needed for certain stages (like `-s cosmic`) to run. On Mac, press the Docker icon in the toolbar, then click Preferences, then Resources, and increase Memory to 8 GB.
    2. Install [docker-compose](https://docs.docker.com/compose/install/)
-   3. (MacOS only) Install [XQuartz](https://www.xquartz.org).
-   4. (MacOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
-   5. Allow X11 connections (may be only necessary on Linux): `xhost +`
+   3. (macOS only) Install [XQuartz](https://www.xquartz.org).
+   4. (macOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
+   5. Allow X11 connections (may be only necessary on Linux): `xhost +local:docker`
    6. (Linux Only) Modify your X11 config files to allow TCP connections: 
         1. If you are running gdm or gdm3 for your display manager add the following to `/etc/gdm<3>/custom.conf`
         ```
@@ -40,8 +38,10 @@ These instructions only need to be run once, when you set up the pipeline.
         ```
         [Seat:*]
         xserver-command=X -core -listen tcp
-        2) /etc/lightdm/lightdm.conf
+        ```
+        and the following to `/etc/lightdm/lightdm.conf`.
         This file probably won't exist, you may create it if it is missing.
+        ```
         [Seat:*]
         xserver-allow-tcp=true
         xserver-command=X -listen tcp
@@ -54,34 +54,65 @@ These instructions only need to be run once, when you set up the pipeline.
         xeyes
         ```
         If a window appears, your computer is configured correctly. You only have to do this once.
+        
+        If stage 4 results in an error similar to `Error: Can't open display:`, then rerun step 4 with this modified command instead.
+        ```sh
+        docker run --rm -it -e DISPLAY=${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix centos:7 /bin/bash
+        yum install -y xorg-x11-apps
+        xeyes
+        ```
+        Now an window should appear.
+        
    7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe`
    8. Build the Docker image: `docker build -t lcogtsnpipe lcogtsnpipe`
-   9. Set you environment variables to point to where you want to store data and catalogs are e.g. 
+   9. Set your environment variables to point to where you want to store data and catalogs.
+      You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file
+      so that you don't have to set them in every new terminal session.
        ```
        export LCOSNDIR=/your/data/directory
        export LCOSNDBPATH=/your/data/directory/mysql
        ```  
        These directories do not need to exist. In fact, it is easier if they do not. Docker will automatically create them
-       with the correct permissions. If you need to use a pre-existing directory, you may have to update the permissions using
-       `chmod -R 777 /path/to/data/`. If you do not set these environment variables, they default to being in `data` and `mysql`
-       in repo directory.
+       with the correct permissions. If you need to use a pre-existing directory or in case docker doesn't set up the permissions correctly, you may have to update the permissions using
+       `chmod -R 777 /path/to/data/`. 
+       If you do not set these environment variables, they default to being in `data` and `mysql` in repo directory.
    10. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
        this mental picture is close enough).
        ```
        docker-compose -f lcogtsnpipe/docker-compose.yml up
        ```
+       (Linux Only) If you initially had trouble in getting display output from docker in your linux machine (step 6), you will need to slightly modify your `docker-compose.yml` file in the following manner.
+       ```diff
+                 LCOSNDBUSER: "${LCOSNDBUSER:-supernova}"
+                 LCOSNDBPASS: "${LCOSNDBPASS:-supernova}"
+                 LCOSNDIR: "${LCOSNDIR:-/supernova}"
+                 DISPLAY: "${DISPLAY}"
+               ports:
+                 - "4306:3306"
+               links:
+                 - sn-db:supernovadb
+               depends_on:
+                 - sn-db
+               volumes:
+                 - ${LCOSNDIR:-./data}:${LCOSNDIR:-/supernova}
+                 - /tmp/.X11-unix:/tmp/.X11-unix
+       ```
+   
+       Now, rerun the above command.
+       
        This will take over your current terminal. Eventually, the terminal will print that the mysql host is ready to 
        accept connections
-   11. In a new terminal, log in to the pipeline container: 
+   11. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
        ```
        docker exec -it lcosnpipe /bin/bash
        ```
+       If you're configured correctly, you should be able to open a ds9 window now using `ds9` command. 
    12. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
        the first time you setup the db.
    13. From inside the container, run 
        ```
        cd $LCOSNDIR
-       mkdir -p lsc fts 0m4 floyds extdata standard/cat/apass standard/cat/sloan standard/cat/landolt standard/cat/gaia
+       mkdir -p data/lsc data/fts data/0m4 data/floyds data/extdata standard/cat/apass standard/cat/sloan standard/cat/landolt standard/cat/gaia
        ```   
        This only needs to be done the first time you populate data in this directory. 
 
@@ -98,7 +129,7 @@ Follow these instructions each time you want to use the pipeline.
    ```
    export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
    ```
-   5. Make sure your `$LCOSNDIR` and `$LCOSNDBDIR` environment variables are set correctly. 
+   5. Make sure your `$LCOSNDIR` and `$LCOSNDBPATH` environment variables are set correctly. 
    6. From inside the `lcogtsnpipe` directory, run `docker-compose up`
    7. From a separate terminal you can enter the docker container using `docker exec -it lcosnpipe /bin/bash`
    8. Run your desired pipeline processing commands
@@ -112,6 +143,12 @@ You can access the database from your host machine, e.g. with sequelpro by setti
 
  
 # Manual Installation: Installing the Pipeline and Database
+- [Testing your installation](#testing-your-installation)
+- [Appendix A: Expected output from show tables](#appendix-a-expected-output-from-show-tables)
+- [Appendix B: Installing 64 bit IRAF on Catalina ](#appendix-b-installing-64-bit-iraf-on-catalina)
+- [Appendix C: Other packages you may need to install](#appendix-c-other-packages-you-may-need-to-install)
+- [Appendix D: Installing Source Extractor](#appendix-d-installing-source-extractor)
+
 1. Install msql  
     1. Install MySQL server from: https://dev.mysql.com/downloads/mysql/  
     **Note:** you don’t need an Oracle account to sign up, there is a just start download link at the bottom of the page. Links from here were very useful: https://dev.mysql.com/doc/refman/5.6/en/installing.html

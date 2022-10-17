@@ -509,6 +509,8 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
       _telescope = 'sinistro'
    elif 'kb' in _instrume:
       _telescope = 'sbig'
+   elif 'ep' in _instrume:
+       _telescope = 'muscat'
 
    print _ra, _dec, _band, _radius
    if survey == 'sloan':

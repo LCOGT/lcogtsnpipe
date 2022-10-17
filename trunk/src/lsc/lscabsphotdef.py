@@ -10,7 +10,7 @@ import warnings
 import lsc
 import os
 from pyraf import iraf
-from mastcasjobs import MastCasJobs
+#from mastcasjobs import MastCasJobs
 
 with warnings.catch_warnings(): # so cronic doesn't email on the "experimental" warning
     warnings.simplefilter('ignore')
@@ -1153,53 +1153,80 @@ def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
         print 'No matching objects.'
 
 
-def panstarrs2file(ra, dec, radius=10., mag1=13., mag2=20., output='panstarrs.cat'):
+def panstarrs2file(ra, dec, radius=20., mag1=13., mag2=20., output='panstarrs.cat'):
     '''
-    Download a Pan-STARRS1 3pi catalog
+    Download a Pan-STARRS1 DR1 catalog from Vizier
+    '''
+    from astroquery.vizier import Vizier
+    coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree))
+    Vizier.ROW_LIMIT=-1
+    Vizier.columns = ['raMean', 'decMean', 
+                      'objID', 
+                      'gFlags',
+                      'yMeanPSFMag', 'yMeanPSFMagErr', #I'm going to make this u as a pipeline placeholder so this looks like SDSS
+                      'gMeanPSFMag', 'gMeanPSFMagErr', 
+                      'rMeanPSFMag', 'rMeanPSFMagErr', 
+                      'iMeanPSFMag', 'iMeanPSFMagErr', 
+                      'zMeanPSFMag', 'zMeanPSFMagErr']
+    Vizier.column_filters={'nDetections': '>5',
+                                                 'rMeanPSFMag-rMeanKronMag': '<0.05',
+                                                 'gQfPerfect': '>0.85',
+                                                 'rQfPerfect':'>0.85',
+                                                 'iQfPerfect':'>0.85',
+                                                 'zQfPerfect':'>0.85',
+                                                 'rMeanPSFMag':'>{:f}'.format(mag1),
+                                                 'rMeanPSFMag':'<={:f}'.format(mag2)}
+    t = Vizier.query_region(coord,
+                                 radius=float('{:f}'.format(radius))*u.arcmin,
+                                 catalog='II/349')
+    t = t[0]
 
-    Query from https://outerspace.stsci.edu/display/PANSTARRS/PS1+Sample+queries#PS1Samplequeries-Query
-    '''
-    if not os.getenv('CASJOBS_WSID') or not os.getenv('CASJOBS_PW'):
-        raise Exception('Must set CASJOBS_WSID and CASJOBS_PW environment variables to download Pan-STARRS1 catalogs')
-    jobs = MastCasJobs(context='PanSTARRS_DR2')
-    t = jobs.quick('''select o.raMean, o.decMean, o.objID,
-                      9999. as uMeanPSFMag, 9999. as uMeanPSFMagErr, o.gMeanPSFMag, o.gMeanPSFMagErr, o.rMeanPSFMag,
-                      o.rMeanPSFMagErr, o.iMeanPSFMag, o.iMeanPSFMagErr, o.zMeanPSFMag, o.zMeanPSFMagErr
-                      from dbo.fGetNearbyObjEq({:f}, {:f}, {:f}) as x
-                      join MeanObjectView o on o.ObjID=x.ObjID
-                      left join StackObjectAttributes as soa on soa.objID=x.objID
-                      where o.nDetections > 5 and o.rMeanPSFMag - o.rMeanKronMag < 0.05
-                      and o.gQfPerfect > 0.85 and o.rQfPerfect > 0.85 and o.iQfPerfect > 0.85 and o.zQfPerfect > 0.85
-                      and o.rMeanPSFMag >= {:f} and o.rMeanPSFMag <= {:f}'''.format(ra, dec, radius, mag1, mag2))
+    #From: https://outerspace.stsci.edu/display/PANSTARRS/PS1+Object+Flags#PS1ObjectFlags-ObjectFilterFlagsvalues,e.g.,columngFlagsintableMeanObject
+    # 8: Ubercal photometry used in average measurement.
+    # 16: PS1 photometry used in average measurement.
+    # 32: PS1 stack photometry exists.
+    # 256: Average magnitude uses only rank 0 detections.
+    # 16384: PS1 stack photometry comes from primary skycell.
+    # 32768: PS1 stack best measurement is a detection (not forced).
+    # 16777216: Extended in this band.
+    good_dq = 8+16+32+256+16384+32768
+    extended_dq = 16777216
+    keep_indx = (t['gFlags']&good_dq==good_dq) & (t['gFlags']&extended_dq != extended_dq)
+    t = t[keep_indx]
+    t.remove_column('gFlags')
+    t.rename_column('ymag', 'umag')
+    t.rename_column('e_ymag', 'e_umag')
+    t['umag'] = 9999.
+    t['e_umag'] = 9999.
     if t is not None:
-        t['raMean'].format ='%16.12f'
-        t['decMean'].format = '%16.13f'
+        t['RAJ2000'].format ='%16.12f'
+        t['DEJ2000'].format = '%16.13f'
         t['objID'].format = '%19d'
-        for filt in 'ugriz':
-            t[filt + 'MeanPSFMag'].format = '%8.5f'
-            t[filt + 'MeanPSFMagErr'].format = '%11.9f'
+        for filt in 'griz':
+            t[filt + 'mag'].format = '%8.5f'
+            t['e_' + filt + 'mag'].format = '%11.9f'
         t.meta['comments'] = [
         'BEGIN CATALOG HEADER',
         '   type btext',
         '   nheader 1',
         '       csystem J2000',
-        '   nfields 13',
-        '       ra     1 0 d degrees ' + t['raMean'].format,
-        '       dec    2 0 d degrees ' + t['decMean'].format,
+        '   nfields 111',
+        '       ra     1 0 d degrees ' + t['RAJ2000'].format,
+        '       dec    2 0 d degrees ' + t['DEJ2000'].format,
         '       id     3 0 c INDEF   ' + t['objID'].format,
-        '       u      4 0 r INDEF   ' + t['uMeanPSFMag'].format,
-        '       uerr   5 0 r INDEF   ' + t['uMeanPSFMagErr'].format,
-        '       g      6 0 r INDEF   ' + t['gMeanPSFMag'].format,
-        '       gerr   7 0 r INDEF   ' + t['gMeanPSFMagErr'].format,
-        '       r      8 0 r INDEF   ' + t['rMeanPSFMag'].format,
-        '       rerr   9 0 r INDEF   ' + t['rMeanPSFMagErr'].format,
-        '       i     10 0 r INDEF   ' + t['iMeanPSFMagErr'].format,
-        '       ierr  11 0 r INDEF   ' + t['iMeanPSFMagErr'].format,
-        '       z     12 0 r INDEF   ' + t['zMeanPSFMag'].format,
-        '       zerr  13 0 r INDEF   ' + t['zMeanPSFMagErr'].format,
+        '       u      4 0 r INDEF   ' + t['umag'].format,
+        '       uerr   5 0 r INDEF   ' + t['e_umag'].format,
+        '       g      6 0 r INDEF   ' + t['gmag'].format,
+        '       gerr   7 0 r INDEF   ' + t['e_gmag'].format,
+        '       r      8 0 r INDEF   ' + t['rmag'].format,
+        '       rerr   9 0 r INDEF   ' + t['e_rmag'].format,
+        '       i     10 0 r INDEF   ' + t['imag'].format,
+        '       ierr  11 0 r INDEF   ' + t['e_imag'].format,
+        '       z     12 0 r INDEF   ' + t['zmag'].format,
+        '       zerr  13 0 r INDEF   ' + t['e_zmag'].format,
         'END CATALOG HEADER'
         ]
-        t.write(output, format='ascii.no_header')
+        t.write(output, format='ascii.no_header', overwrite=True)
         print len(t), 'matching objects. Catalog saved to', output
     else:
         print 'No matching objects.'

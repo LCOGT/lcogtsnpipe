@@ -10,7 +10,6 @@ import warnings
 import lsc
 import os
 from pyraf import iraf
-#from mastcasjobs import MastCasJobs
 
 with warnings.catch_warnings(): # so cronic doesn't email on the "experimental" warning
     warnings.simplefilter('ignore')

@@ -22,8 +22,6 @@ services:
       LCOSNDBPASS: "${LCOSNDBPASS:-supernova}"
       LCOSNDIR: "${LCOSNDIR:-/supernova}"
       DISPLAY: "${LCOSNDISPLAY:-host.docker.internal:0}"
-      CASJOBS_WSID: "$CASJOBS_WSID"
-      CASJOBS_PW: "$CASJOBS_PW"
     ports:
       - "4306:3306"
     links:

@@ -46,8 +46,6 @@ RUN pip install cryptography==2.4.1 astropy matplotlib==2.2.5 pyraf mysql-python
 
 RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git
 
-RUN pip install git+https://github.com/dfm/casjobs.git git+https://github.com/rlwastro/mastcasjobs.git@56dce59 && rm -rf ~/.cache/pip
-
 RUN wget http://ds9.si.edu/download/debian9/ds9.debian9.8.2.tar.gz \
         && tar -xzvf ds9.debian9.8.2.tar.gz -C /usr/local/bin \
         && rm -rf ds9.debian9.8.2.tar.gz

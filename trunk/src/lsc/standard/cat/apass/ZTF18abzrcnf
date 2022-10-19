@@ -1,0 +1,17 @@
+# BEGIN CATALOG HEADER
+# nfields 13
+#     ra     1  0 d degrees %10.5f
+#     dec    2  0 d degrees %10.5f
+#     id     3  0 c INDEF %15s
+#     B      4 0 r INDEF %6.2f
+#     Berr   5 0 r INDEF %6.2f
+#     V      6 0 r INDEF %6.2f
+#     Verr   7 0 r INDEF %6.2f
+#     g      8 0 r INDEF %6.2f
+#     gerr   9 0 r INDEF %6.2f
+#     r      10 0 r INDEF %6.2f
+#     rerr   11 0 r INDEF %6.2f
+#     i      12 0 r INDEF %6.2f
+#     ierr   13 0 r INDEF %6.2f
+# END CATALOG HEADER
+#

@@ -318,12 +318,10 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
     elif _siteid == 'tfn': # average of other SBIGs
         colorefisso = {'uug': 0.0, 'ggr': 0.121, 'rri': -0.003, 'iri': 0.016, 'BBV': -0.032, 'VBV': -0.002, 'UUB':0.059,
                        'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
-    else: # don't know where these came from
-#        colorefisso = {'uug': 0.0, 'gug': 0.13, 'ggr': -0.02, 'rgr': 0.034, 'rri': 0.025, 'iri': 0.071, 'iiz': 0.110, 'ziz': -0.04,
-#                       'UUB': 0.059, 'BUB': -0.095, 'BBV': 0.06, 'VBV': 0.03, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013}
-
-        #I think we should raise an error if we cannot assign a meaningful color term.
-        raise Exception('No color term associated with the instrument.')
+    else: # don't attempt a color term if you don't know what the instrument is
+        print('No color terms exist for telescope/instrument set up. No color term applied')
+        colorefisso = {'uug': 0.0, 'gug': 0.0, 'ggr': 0.0, 'rgr': 0.0, 'rri': 0.0, 'iri': 0.0, 'iiz': 0.0, 'ziz': 0.0,
+                       'UUB': 0.0, 'BUB': 0.0, 'BBV': 0.0, 'VBV': 0.0, 'VVR': 0.0, 'RVR': 0.0, 'RRI': 0.0, 'IRI': 0.0}
 
     if _cat and not redo:
         print 'already calibrated'

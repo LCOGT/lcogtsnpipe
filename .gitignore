@@ -1,5 +1,4 @@
 *.fits
-*.cat
 *.*~
 *.pyc
 .idea/

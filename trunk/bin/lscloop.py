@@ -191,7 +191,7 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.run_fit(ll['filename'], args.RAS, args.DECS, args.xord, args.yord, args.bkg, args.size, args.recenter, args.ref,
                                       args.interactive, args.show, args.force, args.datamax,args.datamin,'photlco',args.RA0,args.DEC0)
             elif args.stage == 'wcs':
-                lsc.myloopdef.run_wcs(ll['filename'], args.interactive, args.force, args.xshift, args.xshift, args.catalogue,'photlco',args.mode)
+                lsc.myloopdef.run_wcs(ll['filename'], args.interactive, args.force, args.xshift, args.yshift, args.catalogue,'photlco',args.mode)
             elif args.stage == 'makestamp':
                 lsc.myloopdef.makestamp(ll['filename'], 'photlco', args.z1, args.z2, args.interactive, args.force, args.output)
             elif args.stage == 'apmag':

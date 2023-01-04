@@ -23,7 +23,7 @@ RUN mkdir -p $iraf \
 RUN apt-get update \
         && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor procps g++ \
         mysql-client libmariadbclient-dev openssh-client wcstools libxml2 vim libssl1.0.2 zip pkg-config \
-        libpng-dev libfreetype6-dev libcfitsio-dev \
+        libpng-dev libfreetype6-dev libcfitsio-dev libffi-dev libopenblas-dev libssl-dev \
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*
 
@@ -46,9 +46,9 @@ RUN pip install cryptography==2.4.1 astropy matplotlib==2.2.5 pyraf mysql-python
 
 RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git && rm -rf ~/.cache/pip
 
-RUN wget http://ds9.si.edu/download/debian9/ds9.debian9.8.2.tar.gz \
-        && tar -xzvf ds9.debian9.8.2.tar.gz -C /usr/local/bin \
-        && rm -rf ds9.debian9.8.2.tar.gz
+RUN wget http://ds9.si.edu/download/debian9/ds9.debian9.8.3.tar.gz \
+        && tar -xzvf ds9.debian9.8.3.tar.gz -C /usr/local/bin \
+        && rm -rf ds9.debian9.8.3.tar.gz
 
 RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
         && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \

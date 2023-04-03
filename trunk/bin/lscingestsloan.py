@@ -11,14 +11,17 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Download and ingest SDSS or PS1 templates')
     parser.add_argument('images', nargs='+', help='LCOGT images to use for field of view and filter')
-    parser.add_argument('--type', default='sloan', help='Survey to download from', choices=['sloan', 'ps1'])
+    parser.add_argument('--type', default='sloan', help='Survey to download from', choices=['sloan', 'ps1','decam'])
     parser.add_argument('--ps1frames', default='')
+    parser.add_argument('--decamframes', default='')
     parser.add_argument('--show', action='store_true', help='show the assembled, swarped SDSS template in DS9')
     parser.add_argument('-F', '--force', action='store_true', help='redownload SDSS images if already present in CWD')
     args = parser.parse_args()
     imglist = args.images
     imgtype = args.type
     ps1frames = args.ps1frames
+    decamframes = args.decamframes
+
 
     if imgtype =='sloan':
         for img in imglist:
@@ -35,13 +38,27 @@ if __name__ == '__main__':
             frames=''
         for img in imglist:
             image0, varimg = lsc.sloanimage(img,'ps1',frames, args.show)
+    
+    elif imgtype =='decam':
+        print "WARNING: decam dr7 ingestion works at the moment with single object and filter\n "
+        print "please, do not provide multiple objects and filter in the same query"
+#        if not decamframes:
+#            sys.exit('ERROR: you need to provide the decam files')
+#        else:
+        if decamframes:
+            frames = np.genfromtxt(decamframes,str)
+        else:
+            frames=''
+        for img in imglist:
+            image0, varimg = lsc.sloanimage(img,'decam',frames, args.show)
+
     else:
         image0=''
         print 'add here ingestion of different images (DES)'
 
     if image0:
         hdr = fits.getheader(image0)
-        filepath = lsc.util.workdirectory + 'data/extdata/' + hdr['DAY-OBS'] + '/'
+        filepath = lsc.util.workdirectory + '/data/extdata/' + hdr['DAY-OBS'] + '/'
         os.system('mkdir -vp ' + filepath)
         os.system('mv -v {} {} {}'.format(image0, varimg, filepath))
         db_ingest(filepath, image0, force=args.force)

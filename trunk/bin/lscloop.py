@@ -29,7 +29,7 @@ if __name__ == "__main__":   # main program
                         choices=['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'goodcat', 'quality', 'cosmic', 'diff'])
     parser.add_argument("-s", "--stage", default='',
                         choices=['wcs', 'psf', 'psfmag', 'zcat', 'abscat', 'mag', 'local', 'getmag', 'merge', 'mergeall', 'diff',
-                                 'template', 'makestamp', 'apmag', 'cosmic', 'ingestsloan', 'ingestps1', 'fpack',
+                                 'template', 'makestamp', 'apmag', 'cosmic', 'ingestsloan', 'ingestps1','ingestdecam', 'fpack',
                                  'checkwcs', 'checkpsf', 'checkmag', 'checkquality', 'checkpos', 'checkcat',
                                  'checkmissing', 'checkfvd', 'checkcosmic', 'checkdiff'])
     parser.add_argument("-R", "--RA", default='')
@@ -76,6 +76,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--groupidcode", type=int)
     parser.add_argument("--targetid", default=None,   type=int)
     parser.add_argument("--ps1frames", default='', help='list of ps1 frames (download them manually)')
+    parser.add_argument("--decamframes", default='', help='list of decam frames (download them manually)')    
     parser.add_argument('--zcatold', action='store_true', help='use original zero point and color term routine')
     parser.add_argument("--bgo", default=3., type=float, help=' bgo parameter for hotpants')
     parser.add_argument("-p", "--psf", default='', help='psf image for template')
@@ -191,13 +192,14 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.run_fit(ll['filename'], args.RAS, args.DECS, args.xord, args.yord, args.bkg, args.size, args.recenter, args.ref,
                                       args.interactive, args.show, args.force, args.datamax,args.datamin,'photlco',args.RA0,args.DEC0)
             elif args.stage == 'wcs':
-                lsc.myloopdef.run_wcs(ll['filename'], args.interactive, args.force, args.xshift, args.yshift, args.catalogue,'photlco',args.mode)
+                lsc.myloopdef.run_wcs(ll['filename'], args.interactive, args.force, args.xshift, args.xshift, args.catalogue,'photlco',args.mode)
             elif args.stage == 'makestamp':
                 lsc.myloopdef.makestamp(ll['filename'], 'photlco', args.z1, args.z2, args.interactive, args.force, args.output)
             elif args.stage == 'apmag':
                 lsc.myloopdef.run_apmag(ll['filename'], 'photlco')
             elif args.stage == 'cosmic':
                 if args.multicore > 1:
+                #if args.multicore == 1:
                     p = Pool(args.multicore)
                     inp = [([i], 'photlco', 4.5, 0.2, 4,args.force) for i in listfile]
                     p.map(multi_run_cosmic, inp)
@@ -209,6 +211,8 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.run_ingestsloan(listfile, 'sloan', show=args.show, force=args.force)
             elif args.stage == 'ingestps1':
                 lsc.myloopdef.run_ingestsloan(listfile, 'ps1', args.ps1frames, show=args.show, force=args.force)
+            elif args.stage == 'ingestdecam':
+                lsc.myloopdef.run_ingestsloan(listfile, 'decam', args.decamframes, show=args.show, force=args.force)
             elif args.stage == 'zcat':
                 def run_absphot(img):
                     return lsc.lscabsphotdef.absphot(img, args.field, args.catalogue, args.fix, args.sigma_clip, args.interactive,
@@ -255,7 +259,7 @@ if __name__ == "__main__":   # main program
                 else:
                     suffix = '.{}.diff.fits'.format(args.temptel).replace('..', '.')
 
-                if args.temptel.upper() in ['SDSS', 'PS1']:
+                if args.temptel.upper() in ['SDSS', 'PS1', 'DECAM']:
                     if args.telescope == 'kb':
                         fake_temptel = 'sbig'
                     elif args.telescope == 'fs':

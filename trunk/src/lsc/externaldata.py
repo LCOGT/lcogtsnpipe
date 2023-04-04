@@ -272,6 +272,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
             _imagesize =  4020
 
     if survey =='sloan':
+       print('no este')
        out1 = 'SDSS'
        hdr = fits.getheader(imglist[0])
        _filter = hdr.get('filter')
@@ -323,6 +324,37 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        if not _dec:
           _dec = hdr.get('DEC_DEG')
 
+    elif survey =='decam':
+       print('yes este')
+       out1 = 'decam'
+       imglist2=[]
+       for i,img in enumerate(imglist):
+           print i,img
+           hdr = fits.open(img)
+           if os.path.isfile(re.sub('.fits','_1.fits',img)):
+              os.system('rm '+re.sub('.fits','_1.fits',img))
+           fits.writeto(re.sub('.fits','_1.fits',img),hdr[0].data,hdr[0].header)
+           imglist2.append(re.sub('.fits','_1.fits',img))
+
+       imglist = imglist2
+       hdr = fits.getheader(imglist[0])
+       #_saturate = hdr.get('HIERARCH CELL.SATURATION')
+       #_gain   = hdr.get('HIERARCH CELL.GAIN')
+       #_ron   = hdr.get('HIERARCH CELL.READNOISE')
+       #_mjd = hdr.get('MJD-OBS')
+       _gain = 3.855 # set a random number for now to see if it works 
+       _filter = string.split(hdr.get('FILTER'),' ')[0]
+       _dayobs = string.split(hdr.get('DATEOBS2'),'T')[0]# DATE-OBS for the last  image in the stack
+       _dayobs = _dayobs.replace('-', '')
+       _telescope = string.split(hdr.get('TELESCOP'),' ')[0]
+       _saturate = 61000 # used for sloan
+       _ron = 2 # from the code downloadsdss not for decam 
+       if not _ra:
+          _ra = hdr.get('CRVAL1')
+       if not _dec:
+          _dec = hdr.get('CRVAL2')
+
+
     #  airmass
     if 'airmass' in hdr:
         _airmass = hdr.get('airmass')
@@ -334,13 +366,17 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     if _filter in filt.keys():
         _filter = filt[_filter]
 
-    if 'date-obs' in hdr:
-       _dateobs = hdr.get('date-obs')
-    else:
+    #if 'date-obs' in hdr:
+    #   _dateobs = hdr.get('date-obs')
+    #else:
+    #   _dateobs = jd2date(_mjd+2400000.5).strftime('%Y-%d-%m')
+    
+    if not(_dayobs):
        _dateobs = jd2date(_mjd+2400000.5).strftime('%Y-%d-%m')
 
-    print imglist[0]
-    print _dateobs, _dayobs, _mjd, _filter
+    print imglist[0], _dayobs
+    #print _dateobs, _dayobs, _mjd, _filter
+    print _dayobs, _filter
 
     if not output:
        output = _telescope+'_'+str(out1)+'_'+str(_dayobs)+'_'+str(_filter)+'_'+objname +'.fits'
@@ -380,12 +416,35 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
           img_data,img_header=fits.getdata(jj, header=True)
           skylevel.append(np.mean(img_data))
 
+    elif survey=='decam':
+       wtlist = [i for i in imglist if '.wt_' in i]
+       mklist = [i for i in imglist if '.mk_' in i]
+       if len(wtlist):
+          print('wtlist', wtlist)
+          for i,name in enumerate(wtlist):
+             weightimg = re.sub('.wt_','.weight.',name)
+             imgmask.append(weightimg)
+             if re.sub('.wt_','.mk_',name) in mklist:
+                weight_data, weight_header = fits.getdata(name, header=True)
+                mask_data, mask_header = fits.getdata(re.sub('.wt_','.mk_',name), header=True)
+                weight_data = 1/weight_data
+                weight_fits = fits.PrimaryHDU(header=weight_header, data=weight_data)
+                weight_fits.writeto(weightimg, output_verify='fix', overwrite=True)
+             else:
+                os.system('cp '+name+' '+weightimg)
+       imglist = [j for j in imglist if (j not in wtlist) and (j not in mklist)]
+       # measure skylevel in all ps1 images
+       for jj in imglist:
+          img_data,img_header=fits.getdata(jj, header=True)
+          skylevel.append(np.mean(img_data))
+
+
 #    elif len(welist):
 #       imglist = [j for j in imglist if j not in welist]
 #       imgmask = welist
 
 
-    print imgmask
+    print(imgmask, 'imgmask')
     print skylevel
     sampling = 'BILINEAR' # LANCZOS3
     line = 'swarp ' + ','.join(imglist) + ' -IMAGEOUT_NAME ' + str(output) + \
@@ -395,8 +454,8 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
             ' -VERBOSE_TYPE NORMAL -SUBTRACT_BACK Y -INTERPOLATE Y' + \
             ' -PIXELSCALE_TYPE MANUAL,MANUAL -PIXEL_SCALE ' + str(pixelscale) + ',' + str(pixelscale) + \
             ' -IMAGE_SIZE ' + str(_imagesize) + ',' + str(_imagesize) + \
-            ' -CENTER_TYPE MANUAL,MANUAL -CENTER ' + str(_ra) + ',' + str(_dec) + \
-            ' -GAIN_DEFAULT ' + str(_gain)
+            ' -CENTER_TYPE MANUAL,MANUAL -CENTER ' + str(_ra) + ',' + str(_dec)# + \
+            #' -GAIN_DEFAULT ' + str(_gain)
 
     if imgmask:
        line += ' -WEIGHT_TYPE MAP_WEIGHT -WEIGHT_IMAGE ' +  ','.join(imgmask)
@@ -408,6 +467,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     # we invert the normalized weight and we "de-normalized" this image
     hd = fits.getheader(output)
     ar = fits.getdata(output)
+    print(ar)
     hd2 = fits.getheader(re.sub('.fits', '', output) + '.weight.fits')
     ar2 = fits.getdata(re.sub('.fits', '', output) + '.weight.fits')
     variance = 1 / ar2
@@ -418,20 +478,21 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
 
     # put the saturation all values where the weight is zero 
     ar = np.where(ar2 == 0, _saturate, ar)
+    print(ar2, 'ar2')
 
     if len(skylevel):
         hd['SKYLEVEL'] = (np.mean(skylevel), 'average sky level')
     hd['L1FWHM']   = (9999,       'FHWM (arcsec) - computed with sextractor')
     hd['WCSERR']   = (0,          'error status of WCS fit. 0 for no error')
-    hd['MJD-OBS']  = (_mjd,       'MJD')
+    #hd['MJD-OBS']  = (_mjd,       'MJD')
     hd['RA']       = (_ra,        'RA')
     hd['DEC']      = (_dec,       'DEC')
     hd['RDNOISE']  = (_ron,       'read out noise')
     hd['PIXSCALE'] = (pixelscale, '[arcsec/pixel] Nominal pixel scale on sky')
     hd['FILTER']   = (_filter,    'filter used')
     hd['DAY-OBS']   = (_dayobs,    'day of observation')
-    hd['AIRMASS']  = (_airmass,   'airmass')
-    hd['DATE-OBS'] = (_dateobs,   'date of observation')
+    #hd['AIRMASS']  = (_airmass,   'airmass')
+    #hd['DATE-OBS'] = (_dateobs,   'date of observation')
     hd['GAIN']     = (_gain,      'gain')
     hd['SATURATE'] = (_saturate,  'saturation level ')
     if objname:
@@ -444,6 +505,10 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
         hd['TELESCOP'] = ('PS1', 'name of the telescope')
         hd['INSTRUME'] = ('PS1', 'instrument used')
         hd['SITEID'] = ('PS1', 'ID code of the Observatory site')
+    elif survey == 'decam':
+        hd['TELESCOP'] = ('decam', 'name of the telescope')
+        hd['INSTRUME'] = ('decam', 'instrument used')
+        hd['SITEID'] = ('decam', 'ID code of the Observatory site')
 
     ar, hdr = northupeastleft(data=ar, header=hd)
     out_fits = fits.PrimaryHDU(header=hd, data=ar)
@@ -451,6 +516,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     northupeastleft(filename=varimg)
     if show:
        lsc.display_image(output,2,True,'','')
+    print('outout and varimg', output,varimg)
     return output, varimg
 
 def northupeastleft(filename='', data=None, header=None):
@@ -515,6 +581,10 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
    print _ra, _dec, _band, _radius
    if survey == 'sloan':
       frames =  downloadsdss(_ra, _dec, _band, _radius, force)
+   elif survey =='decam':
+      print('recognizes survey decam')
+      _fov = 20 # setting the field of view to 20 for now
+      frames = download_decam(_ra, _dec, _fov, _band)
    elif survey == 'ps1':
       if len(frames) == 0:
          delta= 0.22
@@ -557,6 +627,7 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
 
           frames = frames2
    if len(frames):
+         print('input for sdss_swarp',frames,_telescope,_ra,_dec,'',_object, survey)
          out, varimg = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey, show=show)
    else:
        sys.exit('exit, no PS1 images have been downloaded')
@@ -619,3 +690,78 @@ def downloadPS1(homedir,filename):
     return frames
 
 ################################################################################################################
+
+def download_decam(_ra, _dec, _fov, _band):
+
+        #from astroquery.noirlab import Noirlab
+        import astropy.coordinates as coord
+        from astropy import units as u
+        from astropy.coordinates import SkyCoord
+        from astropy.visualization import ZScaleInterval
+
+        # std lib
+        from getpass import getpass
+        import warnings
+        from astropy.utils.exceptions import AstropyWarning
+        warnings.simplefilter('ignore', category=AstropyWarning) # to quiet Astropy warnings
+
+        # 3rd party
+        import numpy as np
+        from numpy.core.defchararray import startswith
+        import pylab as plt
+        import matplotlib
+
+        from pyvo.dal import sia
+        from astropy.utils.data import download_file
+        from astropy.io import fits
+        from astropy.wcs import WCS
+        from astropy.visualization import make_lupton_rgb
+        import urllib
+        from urllib import urlretrieve
+
+        frames=[]
+        DEF_ACCESS_URL = "https://datalab.noirlab.edu/sia/ls_dr7"
+        svc_ls_dr7 = sia.SIAService(DEF_ACCESS_URL)
+
+
+        imgTable = svc_ls_dr7.search((_ra,_dec), (_fov/np.cos(_dec*np.pi/180), _fov), verbosity=2).to_table()
+        if len(imgTable)==0:
+                print('No data with these coordinates available')
+
+        base_path= os.getcwd()
+        sel = (imgTable['proctype'] == 'Stack') & (imgTable['prodtype'] == 'image') & \
+                            (startswith(imgTable['obs_bandpass'].astype(str), _band))
+
+        row = imgTable[sel]
+        for i in range(len(row)):
+                row = imgTable[sel][i]
+                name_image= row['obs_publisher_did'].split('/')[-1][:-3]
+                output = base_path+'/'+name_image
+                url = row['access_url'] # get the download URL
+                #output = urllib.request.urlretrieve(url, output)
+                #output =urllib.urlopen(url, output)
+                requests = urllib.urlretrieve(url, output)
+                frames.append(output)
+        print(frames, 'este')
+        return frames
+
+
+######################################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1964,12 +1964,14 @@ def run_merge(imglist, _redu=False):
 
 ########################################################################################
 
-def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=False):
+def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', decamframes='', show=False, force=False):
     command = 'lscingestsloan.py ' + ' '.join(imglist)
     if imgtype != 'sloan':
         command += ' --type ' + imgtype
     if ps1frames:
         command += ' --ps1frames ' + ps1frames
+    if decamframes:
+        command += ' --decamframes ' + decamframes
     if show:
         command += ' --show'
     if force:
@@ -2140,6 +2142,7 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
                 else:
                     if not os.path.isfile(_dir + img.replace('.fits', '.clean.fits')) or not os.path.isfile(_dir + img.replace('.fits', '.mask.fits')) or _force:
                         output, mask, satu = lsc.util.Docosmic(_dir + img, _sigclip, _sigfrac, _objlim)
+                        print(output, mask, satu, 'este detective work')
                         lsc.util.updateheader(output, 0, {'DOCOSMIC': (True, 'Cosmic rejection using LACosmic')})
                         print 'mv ' + output + ' ' + _dir
                         os.system('mv ' + output + ' ' + _dir)

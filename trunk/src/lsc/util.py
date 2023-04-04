@@ -755,10 +755,13 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
 
    print 'gain    sat     noise   sigclip objlim  sigfrac pssl'
    print '{:<7.1f} {:<7.0f} {:<7.1f} {:<7.1f} {:<7.0f} {:<7.1f} {:<7.2f}'.format(gain, sat, rdnoise, _sigclip, _objlim, _sigfrac, _pssl)
-
+   print('the above prints the gain, saturation , rdnoise etc........')
    niter = 1
    c = lsc.cosmics.cosmicsimage(ar, pssl=_pssl, gain=gain, readnoise=rdnoise, sigclip=5, sigfrac=0.3 , objlim=5, satlevel=sat)
+   print('it passed the cosmic cosnmic function')
    c.run(maxiter = niter)
+   print('it passed the cosmic run function')
+
 
    out=re.sub('.fits','.clean.fits',string.split(img,'/')[-1])
    outmask=re.sub('.fits','.mask.fits',string.split(img,'/')[-1])

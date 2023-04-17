@@ -400,13 +400,13 @@ class cosmicsimage:
 		If findsatstars() was called, we exclude these regions from the search.
 	
 		"""
-		
+		print(verbose, 'printing verbose')
 		if verbose is None:
 			verbose = self.verbose
 
 		if verbose:
 			print "Convolving image with Laplacian kernel ..."
-		
+		#import pdb; pdb.set_trace()
 		# We subsample, convolve, clip negative values, and rebin to original size
 		subsam = subsample(self.cleanarray)
 		conved = signal.convolve2d(subsam, laplkernel, mode="same", boundary="symm")
@@ -521,7 +521,8 @@ class cosmicsimage:
 	
 		# We return
 		# (used by function lacosmic)
-		
+        #print nbfinal, nbnew, finalsel, newmask
+        #print "above shows the interrer" % nbfinal
 		return {"niter":nbfinal, "nnew":nbnew, "itermask":finalsel, "newmask":newmask}
 		
 	def findholes(self, verbose = True):
@@ -583,6 +584,7 @@ class cosmicsimage:
 		"""
 	
 	def run(self, maxiter = 4, verbose = False):
+
 		"""
 		Full artillery :-)
 			- Find saturated stars
@@ -599,7 +601,11 @@ class cosmicsimage:
 			print "Iteration %i" % i
 			
 			iterres = self.lacosmiciteration(verbose=verbose)
-			print "%i cosmic pixels (%i new)" % (iterres["niter"], iterres["nnew"])
+            
+            #if not iterres:
+            #    print "empty iterres"
+                
+			print "%i cosmic pixels (%i new)" % (iterres["niter"], iterres["nnew"], "passed iteress")
 			
 			#self.clean(mask = iterres["mask"]) # No, we want clean to operate on really clean pixels only !
 			# Thus we always apply it on the full mask, as lacosmic does :

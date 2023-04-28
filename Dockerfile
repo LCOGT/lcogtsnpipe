@@ -1,5 +1,6 @@
 # To make this a 32 bit version python:2.7.18-slim-stretch -> i386/python:2.7.18-slim-stretch
-FROM python:2.7.18-slim-stretch
+# Changed python image from "stretch" to "buster."
+FROM python:2.7.18-slim-buster
 
 ENV iraf /iraf/iraf/
 # To make this a 32 bit version linux64 -> linux
@@ -22,7 +23,7 @@ RUN mkdir -p $iraf \
 
 RUN apt-get update \
         && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor procps g++ \
-        mysql-client libmariadbclient-dev openssh-client wcstools libxml2 vim libssl1.0.2 zip pkg-config \
+        default-mysql-client libmariadbclient-dev default-libmysqlclient-dev openssh-client wcstools libxml2 vim libssl1.1 zip pkg-config \
         libpng-dev libfreetype6-dev libcfitsio-dev \
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*
@@ -42,13 +43,17 @@ RUN apt-get update \
 RUN ln -s /usr/bin/sextractor /usr/bin/sex
 
 RUN pip install numpy>=1.12
+
+# Running this line to assign the instance reconnect
+RUN sed  '/st_mysql_options options;/a unsigned int reconnect;' /usr/include/mysql/mysql.h -i.bkp 
+
 RUN pip install cryptography==2.4.1 astropy matplotlib==2.2.5 pyraf mysql-python scipy astroquery==v0.4 statsmodels==0.10 cython reproject
 
 RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git && rm -rf ~/.cache/pip
 
-RUN wget http://ds9.si.edu/download/debian9/ds9.debian9.8.3.tar.gz \
-        && tar -xzvf ds9.debian9.8.3.tar.gz -C /usr/local/bin \
-        && rm -rf ds9.debian9.8.3.tar.gz
+RUN wget http://ds9.si.edu/download/debian10/ds9.debian10.8.4.1.tar.gz \
+        && tar -xzvf ds9.debian10.8.4.1.tar.gz -C /usr/local/bin \
+        && rm -rf ds9.debian10.8.4.1.tar.gz
 
 RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
         && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \

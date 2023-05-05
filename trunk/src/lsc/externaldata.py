@@ -595,17 +595,6 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
       for i in [-2.0, -1.0, 0.0, 1.0, 2.0]:
           frame = geturl(_ra+i*DR, _dec-i*DD, filters=_band)
           frames.append(frame)
-      #frames.append(geturl(_ra, _dec, filters=_band))
-      '''
-      frames.append(geturl(_ra+DR, _dec+DD, filters=_band))
-      frames.append(geturl(_ra-DR, _dec-DD, filters=_band))
-      frames.append(geturl(_ra+DR, _dec-DD, filters=_band))
-      frames.append(geturl(_ra-DR, _dec+DD, filters=_band))
-      frames.append(geturl(_ra+(2*DR), _dec+(2*DD), filters=_band))
-      frames.append(geturl(_ra-(2*DR), _dec-(2*DD), filters=_band))
-      frames.append(geturl(_ra+(2*DR), _dec-(2*DD), filters=_band))
-      frames.append(geturl(_ra-(2*DR), _dec+(2*DD), filters=_band))
-      '''
    if len(frames):
        out, varimg = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey, show=show)
    else:

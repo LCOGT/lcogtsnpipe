@@ -10,6 +10,7 @@ def jd2date(inputjd):
  return datetime.datetime(2000,01,01,00,00,00)+datetime.timedelta(days=inputjd-jd0)
 
 
+
 def MJDnow(datenow='',verbose=False):
    import time
    _JD0=55927.
@@ -172,7 +173,9 @@ def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
     pos = coords.SkyCoord(ra=float(_ra)*u.deg,dec=float(_dec)*u.deg)
     print 'pos =', pos
     xid = SDSS.query_region(pos, spectro=False, radius=_radius*u.arcsec)
-    print xid
+    #xid.remove_column('instrument')
+    #xid.add_column(name='instrument', col=['eboss'])
+    print xid[0]
     if xid:
        pointing=[]
        for i in xid:
@@ -586,7 +589,14 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
       DR = delta/np.cos(_dec*np.pi/180)
       DD = delta
       frames = []
-      frames.append(geturl(_ra, _dec, filters=_band))
+      for i in [-2.0, -1.0, 0.0, 1.0, 2.0]:
+          frame = geturl(_ra+i*DR, _dec+i*DD, filters=_band)
+          frames.append(frame)
+      for i in [-2.0, -1.0, 0.0, 1.0, 2.0]:
+          frame = geturl(_ra+i*DR, _dec-i*DD, filters=_band)
+          frames.append(frame)
+      #frames.append(geturl(_ra, _dec, filters=_band))
+      '''
       frames.append(geturl(_ra+DR, _dec+DD, filters=_band))
       frames.append(geturl(_ra-DR, _dec-DD, filters=_band))
       frames.append(geturl(_ra+DR, _dec-DD, filters=_band))
@@ -595,48 +605,7 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
       frames.append(geturl(_ra-(2*DR), _dec-(2*DD), filters=_band))
       frames.append(geturl(_ra+(2*DR), _dec-(2*DD), filters=_band))
       frames.append(geturl(_ra-(2*DR), _dec+(2*DD), filters=_band))
-   '''
-      if len(frames) == 0:
-         delta= 0.22
-         DR = delta/np.cos(_dec*np.pi/180)
-         DD = delta
-         f=open(_object+'_'+_band+'_ps1request.txt','w')
-         f.write('%s   %s   %s\n' %(str(_ra),str(_dec),str(_band)))
-         f.write('%s   %s   %s\n' %(str(_ra+DR),str(_dec+DD),str(_band)))
-         f.write('%s   %s   %s\n' %(str(_ra-DR),str(_dec-DD),str(_band)))
-         f.write('%s   %s   %s\n' %(str(_ra+DR),str(_dec-DD),str(_band)))
-         f.write('%s   %s   %s\n' %(str(_ra-DR),str(_dec+DD),str(_band)))
-         f.close()
-         print '#'*20
-         print "Please submit file:"+_object+'_'+_band+'_ps1request  at this link (you need an account)\n'
-         print "   http://psps.ifa.hawaii.edu/PSI/postage_stamp.php    "
-         print "   select:\n       Survey ID:    3PI          3PI.PV3  \n  "
-         print "   Image Type:       Total Stacked Image, 1 pixel 0.250 "
-         print "   Method of Image Selection by:   Coordinate- Images are selected based on supplied Ra and DEC   "
-         print "   Size of the Postage Stamp:   (x) Arc-Second             Width:  2000         Height: 2000    pixel"
-         print "   Center Coordinate of Image  - Input coordinate From: "
-         print "                  (x)  Upload File           "
-         print "        Choose File:    "+_object+'_'+_band+'_ps1request.txt'
-         print '#'*20
-         answ = raw_input('Do you want to wait that the frames are downloded [y/n]  [y] ? ')
-         if not answ: 
-             answ= 'y'
-         if answ in ['Yes','yes','Y','y']:
-              print 'Which is the last req_name at this page: '
-              answ1 = raw_input('http://psps.ifa.hawaii.edu/PSI/postage_stamp_results.php ? ' )
-              if not answ1:  
-                  sys.exit('no name provided, no PS1 images have been downloaded')
-              else:
-                  print 'try download........'
-                  frames = downloadPS1('./',answ1)
-      else:
-          frames2 = []
-          for img in frames:
-               if '_'+_band+'_' in img:
-                    frames2.append(img)
-
-          frames = frames2
-   '''
+      '''
    if len(frames):
        out, varimg = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey, show=show)
    else:

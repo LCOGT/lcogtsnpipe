@@ -208,9 +208,10 @@ Where:
     
 # Creating a Landolt Catalog:
 ### Download landolt standard star catalogs
-* These need to be obtained from LCO (there is a zip file pinned in the GSP pipeline slack channel. For SA (selected area) standards, you will need to download your own catalog from [Vizier](https://vizier.u-strasbg.fr/viz-bin/VizieR-3?-source=II/183A/table2&-out.max=1000&-out.all=2&-out.all=2&-out.form=HTML%20Table&-oc.form=sexa) )
-* Put these files in the directory $LCOSNDIR/standard/cat/landolt
-* Reinstall the pipeline ```python setup.py install```
+* Landolt standard star catalogs (L*.cat) are now part of the pipeline repository and can be found in $LCOSNDIR/standard/cat/landolt. 
+* For SA (selected area) standards, you will need to download your own catalog from [Vizier](https://vizier.u-strasbg.fr/viz-bin/VizieR-3?-source=II/183A/table2&-out.max=1000&-out.all=2&-out.all=2&-out.form=HTML%20Table&-oc.form=sexa) ). You should check that the coordinates in the catalog line up with the astrometry in your image. It is possible that there are no fractional arcseconds in the catalog, which leads to a mismatch in the coordinates, that is unique to each star. This is a flaw in the original published paper and will have to be manually fixed by you (we encourage you to then contribute the corrected catalog back to the pipeline for others to use).
+   * Put these files in the directory $LCOSNDIR/standard/cat/landolt
+   * Reinstall the pipeline ```python setup.py install```
 
 ### Download and Calibrate the Standard Star Observations
 * Find standard stars that were observed during the epoch you need in the filter you need (U). The standard reduction practice is to create a landolt catalog for U, B, and V filters and calibrate your data with these. At a minimum, you also obtain B band for the color correction.

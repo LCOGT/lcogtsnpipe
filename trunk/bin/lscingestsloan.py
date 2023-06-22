@@ -10,19 +10,28 @@ if __name__ == '__main__':
     from LCOGTingest import db_ingest
 
     parser = argparse.ArgumentParser(description='Download and ingest SDSS or PS1 templates')
-    parser.add_argument('images', nargs='+', help='LCOGT images to use for field of view and filter')
+    parser.add_argument('images', nargs='*', help='LCOGT images to use for field of view and filter')
     parser.add_argument('--type', default='sloan', help='Survey to download from', choices=['sloan', 'ps1'])
     parser.add_argument('--ps1frames', default='')
     parser.add_argument('--show', action='store_true', help='show the assembled, swarped SDSS template in DS9')
     parser.add_argument('-F', '--force', action='store_true', help='redownload SDSS images if already present in CWD')
+    parser.add_argument('--targetid', default=None, type=int)
+    parser.add_argument('-T', '--tel', default='')
+    parser.add_argument('-f', '--filter', default='')
     args = parser.parse_args()
     imglist = args.images
     imgtype = args.type
     ps1frames = args.ps1frames
 
     if imgtype =='sloan':
-        for img in imglist:
-            image0, varimg = lsc.sloanimage(img,'sloan','', args.show, args.force)
+        if not imglist and args.targetid and args.tel and args.filter:
+            image0, varimg = lsc.sloanimage('', 'sloan', '', args.show, args.force, args.targetid, args.tel, args.filter)
+        elif not imglist:
+            image0=''
+            print 'no data selected'
+        else:
+            for img in imglist:
+                image0, varimg = lsc.sloanimage(img,'sloan','', args.show, args.force)
     elif imgtype =='ps1':
         print "WARNING: PS1 ingestion works at the moment with single object and filter\n "
         print "please, do not provide multiple objects and filter in the same query"

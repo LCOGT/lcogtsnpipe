@@ -111,7 +111,7 @@ if __name__ == "__main__":
                         if bb > 0:
                             fwhm0 = bb
                         else:
-                            datamax = bb
+                            datamax = -bb
                 else:
                     break
 

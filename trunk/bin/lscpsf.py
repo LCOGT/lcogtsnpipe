@@ -87,10 +87,11 @@ if __name__ == "__main__":
                         catalog = lsc.util.getcatalog(img.split('/')[-1], system)
                         if catalog:
                             break
+            datamax = option.datamax
             while True:
                 result, fwhm, aperture_correction = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
                                                    option.distance, option.interactive, psffun, fixaperture,
-                                                   catalog, option.datamin, option.datamax, option.show, make_sn2, max_apercorr=option.max_apercorr)
+                                                   catalog, option.datamin, datamax, option.show, make_sn2, max_apercorr=option.max_apercorr)
                 print '\n### ' + str(result)
                 if option.show:
 #                    lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')
@@ -102,10 +103,16 @@ if __name__ == "__main__":
                         break
                     if aa.lower()[0] == 'n':
                         result = 0
-                        bb = raw_input('If you want to try again, type the new FWHM to try here. Otherwise press enter to continue. ')
-                        if bb: fwhm0 = float(bb)
-                        else: break
-                else: 
+                        bb = raw_input('If you want to try again, type the new FWHM (+) or datamax (-). Otherwise press enter to continue. ')
+                        try:
+                            bb = float(bb)
+                        except ValueError:
+                            break
+                        if bb > 0:
+                            fwhm0 = bb
+                        else:
+                            datamax = bb
+                else:
                     break
 
             iraf.delete("tmp.*", verify="no")

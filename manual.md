@@ -208,9 +208,10 @@ Where:
     
 # Creating a Landolt Catalog:
 ### Download landolt standard star catalogs
-* These need to be obtained from LCO (there is a zip file pinned in the GSP pipeline slack channel. For SA (selected area) standards, you will need to download your own catalog from [Vizier](https://vizier.u-strasbg.fr/viz-bin/VizieR-3?-source=II/183A/table2&-out.max=1000&-out.all=2&-out.all=2&-out.form=HTML%20Table&-oc.form=sexa) )
-* Put these files in the directory $LCOSNDIR/standard/cat/landolt
-* Reinstall the pipeline ```python setup.py install```
+* Landolt standard star catalogs (L*.cat) are now part of the pipeline repository and can be found in $LCOSNDIR/standard/cat/landolt. 
+* For SA (selected area) standards, you will need to download your own catalog from [Vizier](https://vizier.u-strasbg.fr/viz-bin/VizieR-3?-source=II/183A/table2&-out.max=1000&-out.all=2&-out.all=2&-out.form=HTML%20Table&-oc.form=sexa). **Warning**: The coordinates in the original published paper have no decimal places, which is not precise enough for our needs. You must manually fix this! You may be able to look up more precise coordinates in [Simbad](https://simbad.cds.unistra.fr/simbad/sim-fid) by searching by identifier, e.g., "SA 109*" (don't forget the wildcard to get all the stars in the field). However, this table does not contain uncertainties on the magnitudes, so you have to manually assemble the final catalog. We then encourage you to then contribute the corrected catalog back to the pipeline for others to use.
+   * Put these files in the directory $LCOSNDIR/standard/cat/landolt
+   * Reinstall the pipeline ```python setup.py install```
 
 ### Download and Calibrate the Standard Star Observations
 * Find standard stars that were observed during the epoch you need in the filter you need (U). The standard reduction practice is to create a landolt catalog for U, B, and V filters and calibrate your data with these. At a minimum, you also obtain B band for the color correction.
@@ -222,7 +223,7 @@ Where:
     * ```mysql -u supernova -D supernova -p``` (if you are using docker-compose you also need ```-h supernovadb```)
     * Get the targetid and landolt catalog of the standard you want to update: ```SELECT targetnames.targetid, name, classificationid, landolt_cat FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE name="L107"``` (you should replace L107 with the name of your standard)
     * Check that you're selecting the right row: ```SELECT targetnames.targetid, name, classificationid, landolt_cat FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE targetid=55``` (you should replace 55 with the targetid you found in the last step)
-    * If `classificationid` is not 1, update `classificationid` for the row selected: ```UPDATE targets SET classificationid=1 WHERE targetid=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard)
+    * If `classificationid` is not 1, update `classificationid` for the row selected: ```UPDATE targets SET classificationid=1 WHERE id=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard)
    * If `landolt_cat` is empty, you should update it with the name of the catalog you downloaded (e.g. L107_landolt_stetson.cat). ``` UPDATE targets SET landolt_cat=<LANDOLT_FILENAME> WHERE targetid=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard and <LANDOLT_FILENAME> is the name of your downloaded landolt catalog)
 * When you run a command with `--standard all`, it queries the database for any standards in the same filter-telescope-night as the SN observations and runs the stage on those images instead. You can check that the standard images are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard all```. If you want to calibrate to a single standard field, you can also give, e.g., `--standard L94`. If a photometric night with a supernova observation and standard star taken on the same telescope with the same instrument does not exist. You should request observations of your SN field with the landolt filters until such a night exists. There is no requirement that your SN be visible at this time. If you get the error `NameError: name 'refcat' is not defined` then you need `comparecatalogs.py` to download catalogs for your supernova.
 * Create photometry catalogs for the standard star images. You need these to calculate the zero points.

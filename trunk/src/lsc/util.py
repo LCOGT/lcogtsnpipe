@@ -293,10 +293,12 @@ def readkey3(hdr,keyword):
              except:
                 pass
           elif keyword=='ut':
-             try:
+             if 'T' in value:
                 value = value.split('T')[1]
-             except:
-                pass
+             elif ' ' in value:
+                value = value.split()[1]
+             else:
+                value = ''
           elif keyword=='object':
              value = value.translate(None, ' }{][)(')
           elif keyword=='JD':       

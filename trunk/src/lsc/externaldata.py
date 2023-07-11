@@ -295,7 +295,6 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
 
        try:
           _mjd = MJDnow(datetime.datetime(int(str(_dayobs)[0:4]),int(str(_dayobs)[4:6]),int(str(_dayobs)[6:8])))
-          _ut = jd2date(_mjd+2400000.5).strftime('%H%M%S')
        except:
           print 'warning, no mjd'
           _mjd = 0
@@ -320,7 +319,6 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        _ron   = hdr.get('HIERARCH CELL.READNOISE')
        _mjd = hdr.get('MJD-OBS')
        _dayobs = jd2date(_mjd+2400000.5).strftime('%Y%m%d')
-       _ut = jd2date(_mjd+2400000.5).strftime('%H%M%S')
        if not _ra:
           _ra = hdr.get('RA_DEG')
        if not _dec:
@@ -341,7 +339,9 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        _dateobs = hdr.get('date-obs')
     else:
        _dateobs = jd2date(_mjd+2400000.5).strftime('%Y-%m-%d')
-       
+
+    _ut = jd2date(_mjd + 2400000.5).strftime('%H:%M:%S')
+
     if not output:
        output = _telescope+'_'+str(out1)+'_'+str(_dayobs)+'_'+str(_filter)+'_'+objname +'.fits'
 
@@ -424,8 +424,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
         hd['SKYLEVEL'] = (np.nanmean(skylevel), 'average sky level')
     hd['L1FWHM']   = (9999,       'FHWM (arcsec) - computed with sextractor')
     hd['WCSERR']   = (0,          'error status of WCS fit. 0 for no error')
-    hd['MJD']      = (_mjd,       'MJD')
-    hd['MJD_OBS']  = (_mjd,       'MJD')
+    hd['MJD-OBS']  = (_mjd,       'MJD')
     hd['RA']       = (_ra,        'RA')
     hd['DEC']      = (_dec,       'DEC')
     hd['RDNOISE']  = (_ron,       'read out noise')
@@ -434,7 +433,6 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     hd['DAY-OBS']  = (_dayobs,    'day of observation')
     hd['AIRMASS']  = (_airmass,   'airmass')
     hd['UTSTART']  = (_ut,        'universal time')
-    hd['UT']       = (_ut,        'universal time')
     hd['DATE-OBS'] = (_dateobs,   'date of observation')
     hd['GAIN']     = (_gain,      'gain')
     hd['SATURATE'] = (_saturate,  'saturation level ')

@@ -277,6 +277,8 @@ def readkey3(hdr,keyword):
                       'CAT-RA'    : 'RA',\
                       'CAT-DEC'   : 'DEC',\
                       'ron'       : 'RDNOISE',\
+                      'mjd'       : 'MJD-OBS',
+                      'ut'        : 'DATE-OBS',
                       'date-obs'  : 'DATE-OBS',\
                       'date-night': 'DAY-OBS',\
                       'datamax'   : 'SATURATE'}
@@ -291,10 +293,12 @@ def readkey3(hdr,keyword):
              except:
                 pass
           elif keyword=='ut':
-             try:
+             if 'T' in value:
                 value = value.split('T')[1]
-             except:
-                pass
+             elif ' ' in value:
+                value = value.split()[1]
+             else:
+                value = ''
           elif keyword=='object':
              value = value.translate(None, ' }{][)(')
           elif keyword=='JD':       

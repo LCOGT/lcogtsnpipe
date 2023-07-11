@@ -172,7 +172,7 @@ def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
     pos = coords.SkyCoord(ra=float(_ra)*u.deg,dec=float(_dec)*u.deg)
     print 'pos =', pos
     xid = SDSS.query_region(pos, spectro=False, radius=_radius*u.arcsec)
-    print xid[0]
+    print xid
     if xid:
        pointing=[]
        for i in xid:

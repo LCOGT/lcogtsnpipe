@@ -585,6 +585,7 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
    if survey == 'sloan':
       frames = downloadsdss(_ra, _dec, _band, _radius, force)
    elif survey == 'ps1':
+      # tile around the coordinates of the source by 0.15 deg
       delta= 0.15
       DR = delta/np.cos(_dec*np.pi/180)
       DD = delta

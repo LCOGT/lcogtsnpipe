@@ -277,6 +277,7 @@ def readkey3(hdr,keyword):
                       'CAT-RA'    : 'RA',\
                       'CAT-DEC'   : 'DEC',\
                       'ron'       : 'RDNOISE',\
+                      'mjd'       : 'MJD-OBS',
                       'ut'        : 'DATE-OBS',
                       'date-obs'  : 'DATE-OBS',\
                       'date-night': 'DAY-OBS',\

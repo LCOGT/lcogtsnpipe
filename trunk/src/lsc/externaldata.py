@@ -338,9 +338,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     if 'date-obs' in hdr:
        _dateobs = hdr.get('date-obs')
     else:
-       _dateobs = jd2date(_mjd+2400000.5).strftime('%Y-%m-%d')
-
-    _ut = jd2date(_mjd + 2400000.5).strftime('%H:%M:%S')
+       _dateobs = jd2date(_mjd+2400000.5).strftime('%Y-%m-%dT%H:%M:%S.%f')
 
     if not output:
        output = _telescope+'_'+str(out1)+'_'+str(_dayobs)+'_'+str(_filter)+'_'+objname +'.fits'
@@ -432,7 +430,6 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     hd['FILTER']   = (_filter,    'filter used')
     hd['DAY-OBS']  = (_dayobs,    'day of observation')
     hd['AIRMASS']  = (_airmass,   'airmass')
-    hd['UTSTART']  = (_ut,        'universal time')
     hd['DATE-OBS'] = (_dateobs,   'date of observation')
     hd['GAIN']     = (_gain,      'gain')
     hd['SATURATE'] = (_saturate,  'saturation level ')

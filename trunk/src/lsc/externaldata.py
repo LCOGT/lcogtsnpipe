@@ -10,7 +10,6 @@ def jd2date(inputjd):
  return datetime.datetime(2000,01,01,00,00,00)+datetime.timedelta(days=inputjd-jd0)
 
 
-
 def MJDnow(datenow='',verbose=False):
    import time
    _JD0=55927.
@@ -173,8 +172,6 @@ def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
     pos = coords.SkyCoord(ra=float(_ra)*u.deg,dec=float(_dec)*u.deg)
     print 'pos =', pos
     xid = SDSS.query_region(pos, spectro=False, radius=_radius*u.arcsec)
-    #xid.remove_column('instrument')
-    #xid.add_column(name='instrument', col=['eboss'])
     print xid[0]
     if xid:
        pointing=[]
@@ -312,7 +309,6 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
            hdr = fits.open(img[0])
            if os.path.isfile(re.sub('unconv','unconv_1',img[0])):
               os.system('rm '+re.sub('unconv','unconv_1',img[0]))
-           #import pdb; pdb.set_trace()
            fits.writeto(re.sub('unconv','unconv_1',img[0][-43:]),hdr[0].data,hdr[0].header, overwrite=True)
            imglist2.append(re.sub('unconv','unconv_1',img[0][-43:]))
            
@@ -346,8 +342,6 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     else:
        _dateobs = jd2date(_mjd+2400000.5).strftime('%Y-%m-%d')
        
-    #print _dateobs, _dayobs, _ut, _mjd, _filter
-
     if not output:
        output = _telescope+'_'+str(out1)+'_'+str(_dayobs)+'_'+str(_filter)+'_'+objname +'.fits'
 
@@ -545,9 +539,6 @@ def geturl(ra, dec, size=10000, output_size=None, filters="gri", format="fits", 
         url = []
         for filename in table['filename']:
             url.append(urlbase+filename)
-    #fitsurl = geturl(ra, dec, size=size, filters="i", format="fits")
-    #fh = fits.open(url[0])
-    #fim = fh[0].data
     return url
 
 ##################################################################################

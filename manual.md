@@ -321,6 +321,29 @@ will select the same instrument given with -T.
     lscloop.py -n NAME -e TEMPDATE --filetype 4 -s cosmic
     ```
 
+### PAN-STARRS (PS1) References
+
+
+1.  Choose a set of science images that includes one image with each camera--filter combination used. Then run the following command once for each of those images, using the ID numbers to choose individual frames. This will take a while.
+    ```
+    lscloop.py -n NAME -e TARGDATE -d ID -s ingestsloan
+    ````
+
+    Make a note of the TEMPDATE for each PS1 frame you download.
+
+2.  Generate PSFs for the PS1 images.
+    ```
+    ds9 &\
+    ```
+    ```
+    lscloop.py -n NAME -e TEMPDATE --filetype 4 -s psf --show --fwhm 5 --use-sextractor
+    ```
+
+3.  Copy the variance images to the right place for use as cosmic ray masks.
+    ```
+    lscloop.py -n NAME -e TEMPDATE --filetype 4 -s cosmic
+    ```
+
 ## Do the Image Subtraction
 
 1.  Run cosmic ray rejection on all the science images. This will take a while.
@@ -343,7 +366,7 @@ will select the same instrument given with -T.
     lscloop.py -n NAME -e TARGDATE-TARGDATE -b psf -s psf --show --fwhm 7 --datamax 75000
     ```
 
-3.  Once all the cosmic ray rejection is done (for science and reference images), run the subtraction. This will take a while. By default, `--tempdate=19990101-20080101` (useful for SDSS), `--temptel=IN`, `--fixpix=False`, and `--difftype=0` (0 = HOTPANTS, 1 = Optimal).
+3.  Once all the cosmic ray rejection is done (for science and reference images), run the subtraction. This will take a while. By default, `--tempdate=19990101-20080101` (useful for SDSS, PS1, and any other archival template image), `--temptel=IN`, `--fixpix=False`, and `--difftype=0` (0 = HOTPANTS, 1 = Optimal).
     ```
     lscloop.py -n NAME -e TARGDATE-TARGDATE --normalize t -T IN \[--tempdate TEMPDATE\] \[--temptel TEMPTEL\] \[--fixpix\] \[--difftype 1\] -s diff
     ```

@@ -23,6 +23,8 @@ LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public
 # Create gaia, apass, and sloan catalogs for new objects
 * run `comparecatalogs.py` to generate new catalogs
 * Note if you are trying to reduce U band, you need to generate a local catalog. See [Creating an Landolt Catalog](#Creating-a-Landolt-Catalog) for details.
+* As an experimental feature, you can now download Pan-STARRS1 3π catalogs instead of SDSS catalogs for calibrating _griz_ images.
+  To use this feature run `comparecatalogs.py -p`. Note that you will not be able to calibrate _u_-band images. This will only work when `sloan_cat=NULL` in the database (for the initial run). If the pipeline has already determined that a sloan catalog doesn't exist you will have to reset this field manually in the database.
 
 # Cookbook
 ## Basic reduction

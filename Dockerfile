@@ -49,7 +49,7 @@ RUN sed  '/st_mysql_options options;/a unsigned int reconnect;' /usr/include/mys
 
 RUN pip install cryptography==2.4.1 astropy matplotlib==2.2.5 pyraf mysql-python scipy astroquery==v0.4 statsmodels==0.10 cython reproject
 
-RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git && rm -rf ~/.cache/pip
+RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git
 
 RUN wget http://ds9.si.edu/download/debian10/ds9.debian10.8.4.1.tar.gz \
         && tar -xzvf ds9.debian10.8.4.1.tar.gz -C /usr/local/bin \

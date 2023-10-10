@@ -81,11 +81,6 @@ These instructions only need to be run once, when you set up the pipeline.
        If you do not set these environment variables, they default to being in `data` and `mysql` in repo directory.
    11. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
        this mental picture is close enough).
-       * Mac M1/M2 Only:
-         ```
-          docker-compose --platform linux/amd64 -f lcogtsnpipe/docker-compose.yml up
-          ```
-       * Everyone else:
           ```
           docker-compose -f lcogtsnpipe/docker-compose.yml up
           ```

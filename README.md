@@ -79,7 +79,9 @@ These instructions only need to be run once, when you set up the pipeline.
        with the correct permissions. If you need to use a pre-existing directory or in case docker doesn't set up the permissions correctly, you may have to update the permissions using
        `chmod -R 777 /path/to/data/`. 
        If you do not set these environment variables, they default to being in `data` and `mysql` in repo directory.
-   11. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
+   11. (MacOS only) Run XQuartz from the Finder.
+   12. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &`
+   13. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
        this mental picture is close enough).
           ```
           docker-compose -f lcogtsnpipe/docker-compose.yml up
@@ -105,14 +107,14 @@ These instructions only need to be run once, when you set up the pipeline.
        
       This will take over your current terminal. Eventually, the terminal will print that the mysql host is ready to 
       accept connections
-   13. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
+   14. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
        ```
        docker exec -it lcosnpipe /bin/bash
        ```
        If you're configured correctly, you should be able to open a ds9 window now using `ds9` command. 
-   14. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
+   15. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
        the first time you setup the db.
-   15. From inside the container, run 
+   16. From inside the container, run 
        ```
        cd $LCOSNDIR
        mkdir -p data/lsc data/fts data/0m4 data/floyds data/extdata standard/cat/apass standard/cat/sloan standard/cat/landolt standard/cat/gaia

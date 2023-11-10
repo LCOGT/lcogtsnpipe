@@ -65,8 +65,14 @@ These instructions only need to be run once, when you set up the pipeline.
         
    7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe`
    8. Build the Docker image:
-        * Mac M1/M2 Only: `docker build --platform linux/amd64 -t lcogtsnpipe lcogtsnpipe`
-        * Everyone else: `docker build -t lcogtsnpipe lcogtsnpipe`
+        * Mac M1/M2 Only:
+          ```
+          docker build --platform linux/amd64 -t lcogtsnpipe lcogtsnpipe
+          ```
+        * Everyone else:
+          ```
+          docker build -t lcogtsnpipe lcogtsnpipe
+          ```
         
    10. Set your environment variables to point to where you want to store data and catalogs.
       You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file
@@ -80,7 +86,10 @@ These instructions only need to be run once, when you set up the pipeline.
        `chmod -R 777 /path/to/data/`. 
        If you do not set these environment variables, they default to being in `data` and `mysql` in repo directory.
    11. (MacOS only) Run XQuartz from the Finder.
-   12. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &`
+   12. (MacOS only) Run this hack in the background to get the X11 forwarding to work:
+       ```
+       socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &
+       ```
    13. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
        this mental picture is close enough).
           ```
@@ -130,20 +139,26 @@ Follow these instructions each time you want to use the pipeline.
    1. Make sure the MySQL server and Docker daemon are running.
    2. (MacOS only) Run XQuartz from the Finder.
    3. (MacOS only) Run this hack in the background to get the X11 forwarding to work:
-      ```socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &```
-   5. (Linux only) Set you display environment variable to point to the docker connection using 
-   ```
-   export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
-   ```
+      ```
+      socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &
+      ```
+   4. (Linux only) Set you display environment variable to point to the docker connection using 
+      ```
+      export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
+      ```
    5. Make sure your `$LCOSNDIR` and `$LCOSNDBPATH` environment variables are set correctly. 
    6. From inside the `lcogtsnpipe` directory, run
-      ```docker-compose up```
-   8. From a separate terminal you can enter the docker container using
-      ```docker exec -it lcosnpipe /bin/bash```
-   10. Run your desired pipeline processing commands
-   11. When you're done, type `exit` to leave the Docker container.
-   12. To stop the set of docker containers (your "pipeline server"), use `control-c` in the terminal you ran `docker-compose up`.
-   13. To fully remove the containers (though not your mysql or data directories), you can run `docker-compose down` in the `lcogtsnpipe` directory.
+      ```
+      docker-compose up
+      ```
+   7. From a separate terminal you can enter the docker container using
+      ```
+      docker exec -it lcosnpipe /bin/bash
+      ```
+   8. Run your desired pipeline processing commands
+   9. When you're done, type `exit` to leave the Docker container.
+   10. To stop the set of docker containers (your "pipeline server"), use `control-c` in the terminal you ran `docker-compose up`.
+   11. To fully remove the containers (though not your mysql or data directories), you can run `docker-compose down` in the `lcogtsnpipe` directory.
 
 Note that you can access the mysql database directly by using `-h supernovadb` inside the lcosnpipe container.
 You can access the database from your host machine, e.g. with sequelpro by setting the host to be 127.0.0.1 and the port to be

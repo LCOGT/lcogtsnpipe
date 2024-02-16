@@ -758,8 +758,7 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    print('the above prints the gain, saturation , rdnoise etc........')
    niter = 1
    c = lsc.cosmics.cosmicsimage(ar, pssl=_pssl, gain=gain, readnoise=rdnoise, sigclip=5, sigfrac=0.3 , objlim=5, satlevel=sat)
-   print('it passed the cosmic cosnmic function')
-   print(len(ar), type(ar), ar.shape, 'is this the problem?')
+   #print(len(ar), type(ar), ar.shape, 'is this the problem?')
    c.run(maxiter = niter)
    print('it passed the cosmic run function')
 

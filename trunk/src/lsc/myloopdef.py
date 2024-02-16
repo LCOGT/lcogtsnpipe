@@ -312,6 +312,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
             catalog='', database='photlco', use_sextractor=False, datamin=None, datamax=None, 
             nstars=6, banzai=False, b_sigma=3.0, b_crlim=3.0, max_apercorr=0.1, field=None):
     for img in imglist:
+        print(img, 'image going into psf')
         if interactive:
             ii = '-i'
         else:
@@ -363,8 +364,10 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
         if status == 1:
             rr = '-r'
         if status >= 1:
+            print('entereing here este')
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img, '*')
             _dir = ggg[0]['filepath']
+            print(ggg[0]['filetype'])
             
             # filetype is a integer it should not be passed as string 
             if ggg[0]['filetype'] == 3 and ggg[0]['difftype'] == 0: # HOTPANTS difference images
@@ -2131,8 +2134,10 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
             _dir,img = os.path.split(ggg)
             if _dir:
                 _dir = _dir+'/'
-            print _dir + img
+            print _dir + img +'work'
+            print(os.path.isfile(_dir + img))
             if os.path.isfile(_dir + img):
+                print(os.path.isfile(_dir + img.replace('.fits', '.var.fits')))
                 if os.path.isfile(_dir + img.replace('.fits', '.var.fits')):
                     print 'variance image found'
                     os.system('cp '+_dir + img+' '+_dir + img.replace('.fits', '.clean.fits'))
@@ -2140,6 +2145,7 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
                     out_fits = fits.PrimaryHDU(header=hd,data=(ar-ar).astype('uint8'))
                     out_fits.writeto(_dir + img.replace('.fits', '.mask.fits'), overwrite=True, output_verify='fix')
                 else:
+                    print('here Andre')
                     if not os.path.isfile(_dir + img.replace('.fits', '.clean.fits')) or not os.path.isfile(_dir + img.replace('.fits', '.mask.fits')) or _force:
                         output, mask, satu = lsc.util.Docosmic(_dir + img, _sigclip, _sigfrac, _objlim)
                         print(output, mask, satu, 'este detective work')

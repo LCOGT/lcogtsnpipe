@@ -400,7 +400,7 @@ class cosmicsimage:
 		If findsatstars() was called, we exclude these regions from the search.
 	
 		"""
-		print(verbose, 'printing verbose')
+		
 		if verbose is None:
 			verbose = self.verbose
 
@@ -414,6 +414,7 @@ class cosmicsimage:
 		#cliped = np.abs(conved) # unfortunately this does not work to find holes as well ...
 		lplus = rebin2x2(cliped)
 		
+		
 		if verbose:
 			print "Creating noise model ..."
 			
@@ -422,6 +423,7 @@ class cosmicsimage:
  		# We keep this m5, as I will use it later for the interpolation.
  		m5clipped = m5.clip(min=0.00001) # As we will take the sqrt
  		noise = (1.0/self.gain) * np.sqrt(self.gain*m5clipped + self.readnoise*self.readnoise)
+		
  
  		if verbose:
 			print "Calculating Laplacian signal to noise ratio ..."
@@ -467,6 +469,8 @@ class cosmicsimage:
 		f = f / noise
 		f = f.clip(min=0.01) # as we will divide by f. like in the iraf version.
 		
+
+
 		if verbose:
 			print "Removing suspected compact bright objects ..."
 			
@@ -496,6 +500,7 @@ class cosmicsimage:
 		finalsel = np.cast['bool'](signal.convolve2d(np.cast['float32'](growcosmics), growkernel, mode="same", boundary="symm"))
 		finalsel = np.logical_and(sp > self.sigcliplow, finalsel)
 		
+	
 		# Again, we have to kick out pixels on saturated stars :
 		if self.satstars is not None:
  			if verbose:
@@ -518,7 +523,7 @@ class cosmicsimage:
 		
 		# We update the mask with the cosmics we have found :
 		self.mask = np.logical_or(self.mask, finalsel)
-	
+		print('did it get this far?')
 		# We return
 		# (used by function lacosmic)
         #print nbfinal, nbnew, finalsel, newmask
@@ -599,13 +604,14 @@ class cosmicsimage:
 		print "Starting %i L.A.Cosmic iterations ..." % maxiter
 		for i in range(1, maxiter+1):
 			print "Iteration %i" % i
-			
+			#print verbose, 'andre here', img
 			iterres = self.lacosmiciteration(verbose=verbose)
+			print('did it get this far 2?',iterres)
             
             #if not iterres:
             #    print "empty iterres"
                 
-			print "%i cosmic pixels (%i new)" % (iterres["niter"], iterres["nnew"], "passed iteress")
+			#print "%i cosmic pixels (%i new)" % (iterres["niter"], iterres["nnew"], "passed iteress")
 			
 			#self.clean(mask = iterres["mask"]) # No, we want clean to operate on really clean pixels only !
 			# Thus we always apply it on the full mask, as lacosmic does :

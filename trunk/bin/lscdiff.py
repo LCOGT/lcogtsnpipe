@@ -132,6 +132,7 @@ if __name__ == "__main__":
                 if o in listatemp[f]:
                     imglist1 = listatar[f][o]
                     imglist2 = listatemp[f][o]
+                    print(imglist2[0], 'this is the image used for tempmask')
                     for imgtarg_path in imglist1:
                         _dir, imgtarg0 = os.path.split(imgtarg_path)
                         if _dir: _dir += '/'
@@ -221,9 +222,10 @@ if __name__ == "__main__":
                             temp_reproj, temp_foot = reproject_interp(_dirtemp + imgtemp0, head_targ)
                             temp_reproj[temp_foot == 0.] = 0.
                             fits.writeto(imgtemp, temp_reproj, head_targ, overwrite=True)
-
+                            print(tempmask0, 'tempmask0')
                             tempmask_reproj, tempmask_foot = reproject_interp(_dirtemp + tempmask0, head_targ)
                             tempmask_reproj = (tempmask_reproj > 0.) | (temp_foot == 0.)
+                            print(tempmask_reproj, 'temp mask reproj')
                             fits.writeto(tempmask, tempmask_reproj.astype('uint8'), head_targ, overwrite=True)
 
                             tempnoise_reproj, tempnoise_foot = reproject_interp(_dirtemp + tempnoise0, head_targ)
@@ -396,7 +398,7 @@ if __name__ == "__main__":
                                   ' ' + imgout0.replace('.fits', 'xy') + 
                                   ' ' + imgout0.replace('.fits', 'xy.skipped') + 
                                   ' ' + imgout0.replace('.fits', 'xy.all'))
-
+                        print(imgout, 'imgout')
                         hd = fits.getheader(imgout)
                         lsc.util.updateheader(imgout, 0,
                                               {'template': (imgtemp0, 'template image'),

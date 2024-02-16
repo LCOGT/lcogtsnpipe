@@ -16,6 +16,7 @@ iraf.obsutil(_doprint=0)
 
 def runsex(img, fwhm, thresh, pix_scale):  ## run_sextractor  fwhm in pixel
     import lsc
+    print('indeed running sextractor')
 
     mina = 5.
     seeing = fwhm * pix_scale

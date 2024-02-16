@@ -200,8 +200,11 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'cosmic':
                 if args.multicore > 1:
                 #if args.multicore == 1:
+                    print('multicore')
                     p = Pool(args.multicore)
                     inp = [([i], 'photlco', 4.5, 0.2, 4,args.force) for i in listfile]
+                    print(inp)
+                    #p.map(multi_run_cosmic, [(imglist, 'photlco', 4.5, 0.2, 4, False) for imglist in inp])
                     p.map(multi_run_cosmic, inp)
                     p.close()
                     p.join()
@@ -274,7 +277,7 @@ if __name__ == "__main__":   # main program
                     fake_temptel = args.temptel
                 else:
                     fake_temptel = args.telescope
-
+                    
                 lista = lsc.mysqldef.getlistfromraw(lsc.myloopdef.conn, 'photlco', 'dayobs', startdate, enddate, '*', fake_temptel)
                 if lista:
                     ll00 = {}
@@ -287,7 +290,7 @@ if __name__ == "__main__":   # main program
                     for i in ll00.keys():
                         ll00[i] = np.take(ll00[i], inds)
                     lltemp = lsc.myloopdef.filtralist(ll00, filters, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '', '', '', None, args.targetid)
-
+                print(lista, 'lista img or temps?')
                 if not lista or not lltemp:
                     raise Exception('template not found')
 

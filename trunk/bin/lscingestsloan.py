@@ -45,6 +45,7 @@ if __name__ == '__main__':
 #        if not decamframes:
 #            sys.exit('ERROR: you need to provide the decam files')
 #        else:
+        print('going in decam!')
         if decamframes:
             frames = np.genfromtxt(decamframes,str)
         else:
@@ -57,9 +58,14 @@ if __name__ == '__main__':
         print 'add here ingestion of different images (DES)'
 
     if image0:
+        print(image0, 'image0')
         hdr = fits.getheader(image0)
+        print('tes1')
         filepath = lsc.util.workdirectory + '/data/extdata/' + hdr['DAY-OBS'] + '/'
         os.system('mkdir -vp ' + filepath)
+        print('test2')
         os.system('mv -v {} {} {}'.format(image0, varimg, filepath))
         db_ingest(filepath, image0, force=args.force)
+        print('test3')
         lsc.mysqldef.ingestredu([filepath + image0], 'yes' if args.force else 'no', 'photlco', filetype=4)
+        print('test4')

@@ -89,10 +89,11 @@ if __name__ == "__main__":
                             break
             datamax = option.datamax
             while True:
+                print('check if its calculating lscpsfdef.ecpsf', img)
                 result, fwhm, aperture_correction = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
                                                    option.distance, option.interactive, psffun, fixaperture,
                                                    catalog, option.datamin, datamax, option.show, make_sn2, max_apercorr=option.max_apercorr)
-                print '\n### ' + str(result)
+                print '\n### ' + str(result) + 'resultados'
                 if option.show:
 #                    lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')
                     iraf.delete('tmp.psf.fit?', verify=False)

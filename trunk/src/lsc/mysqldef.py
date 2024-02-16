@@ -99,6 +99,7 @@ def getlistfromraw(conn, table, column, value1, value2, column2='*', telescope='
         cursor.execute("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"'")
     else:
         fntel = telescope.replace('-', '')  # 1m0-01 (input) --> 1m001 (in filename)
+        print("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"' and (filename like '%"+fntel+"%' or telescope='"+telescope+"')", 'string values')
         cursor.execute("select "+column2+" from "+str(table)+" where "+column+"<="+"'"+value2+"' and "+column+">="+"'"+value1+"' and (filename like '%"+fntel+"%' or telescope='"+telescope+"')")
     resultSet = cursor.fetchall()
     cursor.close()

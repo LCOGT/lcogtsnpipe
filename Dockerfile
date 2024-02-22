@@ -6,7 +6,7 @@ ENV iraf /iraf/iraf/
 # To make this a 32 bit version linux64 -> linux
 ENV IRAFARCH linux64
 
-RUN apt-get update \
+RUN apt-get --allow-releaseinfo-change update \
         && apt -y install gcc make flex git gfortran \
         && apt -y install libcurl4-openssl-dev libexpat-dev libreadline-dev gettext \
         && apt-get autoclean \
@@ -18,17 +18,17 @@ RUN mkdir -p $iraf \
         && cd $iraf \
         && git checkout ba22d13 \
         && ./install < /dev/null \
-        && make $IRAFARCH \
+        && make -j4 $IRAFARCH \
         && make sysgen
 
-RUN apt-get update \
+RUN apt-get --allow-releaseinfo-change update \
         && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor procps g++ \
         default-mysql-client libmariadbclient-dev default-libmysqlclient-dev openssh-client wcstools libxml2 vim libssl1.1 zip pkg-config \
         libpng-dev libfreetype6-dev libcfitsio-dev libffi-dev libopenblas-dev libssl-dev \
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update \
+RUN apt-get --allow-releaseinfo-change update \
         && apt-get -y install autoconf \
         && apt-get -y install automake \
         && apt-get -y install libtool-bin \
@@ -51,12 +51,13 @@ RUN pip install cryptography==2.4.1 astropy matplotlib==2.2.5 pyraf mysql-python
 
 RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git
 
-RUN apt-get update && apt-get install -y libxml2-dev libxslt-dev tclsh libxmlrpc-c++8-dev && \ 
+RUN apt-get --allow-releaseinfo-change update && \
+        apt-get install -y libxml2-dev libxslt-dev tclsh libxmlrpc-c++8-dev && \ 
         git clone https://github.com/SAOImageDS9/SAOImageDS9 && \
         cd SAOImageDS9 && \
         git checkout d4f01a3170775dc7b6cb57de43f6feb7184b47b0 && \
         unix/configure && \
-        make && \
+        make -j4 && \
         ln -s /SAOImageDS9/bin/ds9 /usr/bin/ && \
         apt-get autoclean && \
         rm -rf /var/lib/apt/lists/*

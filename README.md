@@ -63,13 +63,11 @@ These instructions only need to be run once, when you set up the pipeline.
         ```
         Now an window should appear.
         
-   7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe`
+   7. Clone this repository: 
+       ```
+       git clone https://github.com/LCOGT/lcogtsnpipe
+       ```
    8. Build the Docker image:
-        * Mac M1/M2 Only:
-          ```
-          docker build --platform linux/amd64 -t lcogtsnpipe lcogtsnpipe
-          ```
-        * Everyone else:
           ```
           docker build -t lcogtsnpipe lcogtsnpipe
           ```

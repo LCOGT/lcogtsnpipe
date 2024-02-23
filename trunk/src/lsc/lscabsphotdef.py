@@ -297,6 +297,10 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
     elif 'fl' in _instrume:
         colorefisso = {'uug': 0.0, 'ggr': 0.109, 'rri': 0.027, 'iri': 0.036, 'BBV': -0.024, 'VBV': -0.014,
                        'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
+    elif 'sq' in _instrume:
+        # all color for sq  are wrong, we need to update the colors once we have the corect values
+        colorefisso = {'uug': 0.0, 'ggr': 0.0, 'rri': 0.0, 'iri': 0.0, 'BBV': -0.0, 'VBV': 0.0,
+                       'UUB': 0.0, 'BUB': 0.0, 'VVR': 0.0, 'RVR': 0.0, 'RRI': 0.0, 'IRI': 0.0, 'ziz': 0.00}
     elif 'fa' in _instrume:
         colorefisso = {'uug': 0.0, 'ggr': 0.109, 'rri': 0.027, 'iri': 0.036, 'BBV': -0.024, 'VBV': -0.014,
                        'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}

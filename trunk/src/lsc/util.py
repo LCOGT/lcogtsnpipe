@@ -161,6 +161,31 @@ def readkey3(hdr,keyword):
                            'type'      : 'OBSTYPE',\
                            'propid'      : 'PROPID',\
                            'userid'      : 'USERID',\
+                           'telescop'  : 'TELESCOP'}
+    elif 'sq' in _instrume: # CMOS
+        useful_keys = {'object'    : 'OBJECT',\
+                           'date-obs'  : 'DATE-OBS',\
+                           'ut'        : 'DATE-OBS',\
+                           'date-night': 'DAY-OBS',\
+                           'RA'        : 'RA',\
+                           'DEC'       : 'DEC',\
+                           'CAT-RA'    : 'CAT-RA',\
+                           'CAT-DEC'   : 'CAT-DEC',\
+                           'datamin'   :  -100.0,\
+                           'datamax'   : 'SATURATE',\
+                           'observer'  : 'OBSERVER',\
+                           'exptime'   : 'EXPTIME',\
+                           'wcserr'    : 'WCSERR',\
+                           'instrume'  : 'INSTRUME',\
+                           'JD'        : 'MJD-OBS',\
+                           'mjd'        : 'MJD-OBS',\
+                           'filter'    : 'FILTER',\
+                           'gain'      : 'GAIN',\
+                           'ron'       : 'RDNOISE',\
+                           'airmass'   : 'AIRMASS',\
+                           'type'      : 'OBSTYPE',\
+                           'propid'      : 'PROPID',\
+                           'userid'      : 'USERID',\
                            'telescop'  : 'TELESCOP'} 
     elif 'fl' in _instrume or 'fa' in _instrume: # sinistro
         useful_keys = {'object'    : 'OBJECT',\

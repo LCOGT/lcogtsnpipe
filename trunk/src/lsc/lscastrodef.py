@@ -69,6 +69,28 @@ def wcsstart(img,CRPIX1='',CRPIX2=''):
         else: CRPIX2= 1000.+CRPIX2
         CDELT1=2
         CDELT2=2
+    elif 'sq' in _instrume:
+        angle=readkey3(hdr,'ROLLERDR')#posang)
+        theta=(angle*pi/180.)
+        pixscale=float(readkey3(hdr,'PIXSCALE'))
+        CDELT0=pixscale/3600.
+        CD1_1=CDELT0*cos(theta)
+        CD1_2=CDELT0*sin(theta)
+        CD2_1=CDELT0*sin(theta)
+        CD2_2=(-1)*CDELT0*cos(theta)
+        if 'SITEID' in hdr:
+            if hdr['SITEID'] in ['elp','tfn','ogg']:
+                CD1_1 = (-1) * CD1_1
+                CD2_2 = (-1) * CD2_2
+        if not CRPIX1:        
+            CRPIX1 = _xdimen/2
+        else: 
+            CRPIX1 = (_xdimen/2)+CRPIX1
+        if not CRPIX2:        
+            CRPIX2 = _ydimen/2
+        else: CRPIX2 = (_ydimen/2)+CRPIX2
+        CDELT1 = 2
+        CDELT2 = 2
     elif 'fl' in _instrume or 'fa' in _instrume or 'ep' in _instrume:
         angle=readkey3(hdr,'ROLLERDR')#posang)
         theta=(angle*pi/180.)
@@ -354,13 +376,13 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
             fwhmgess3=9999
             fwhmgessime=9999
             ellgess3=9999
-        if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa', 'ep']:
+        if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa', 'ep','sq']:
             mbkg3=median(bkg3)
             lsc.util.updateheader(img,0,{'MBKG':(mbkg3,'background level')})
         else:
             mbkg3=readkey3(hdr,'MBKG')
         if fwhmgess3:
-            if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa', 'ep']:
+            if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa', 'ep','sq']:
                 V=(math.pi/(4*math.log(2)))*(45000-float(mbkg3))*(float(fwhmgess3)**2)
             else:                     
                 V=(math.pi/(4*math.log(2)))*(32000-float(mbkg3))*(float(fwhmgess3)**2)
@@ -1361,6 +1383,8 @@ def run_astrometry(im, clobber=True,redo=False):
                     fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.278
                 elif 'ep' in _instrume:
                     fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.27
+                elif 'sq' in _instrume:
+                    fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.734
                 else:
                     fwhm = 5
             else:

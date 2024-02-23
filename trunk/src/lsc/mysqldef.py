@@ -189,6 +189,8 @@ def guess_instrument_type(name):
         insttype = 'Spectral'
     elif prefix == 'ep':
         insttype = 'MUSCAT'
+    elif prefix == 'sq':
+        insttype = 'qhy'
     else:
         insttype = None
     return insttype

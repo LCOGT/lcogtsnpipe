@@ -19,7 +19,7 @@ if __name__ == "__main__":   # main program
     parser = ArgumentParser(description=description)
     parser.add_argument("-e", "--epoch", help='args.epoch to reduce')
     parser.add_argument("-T", "--telescope", default='all')
-    parser.add_argument("-I", "--instrument", default='', help='kb, fl, fs, sinistro, sbig, ep, muscat, sq')
+    parser.add_argument("-I", "--instrument", default='', help='kb, fl, fs, sinistro, sbig, ep, muscat, sq, qhy')
     parser.add_argument("-n", "--name", default='', help='object name')
     parser.add_argument("-d", "--id", default='')
     parser.add_argument("-f", "--filter", default='', nargs='+',

@@ -190,7 +190,7 @@ def guess_instrument_type(name):
     elif prefix == 'ep':
         insttype = 'MUSCAT'
     elif prefix == 'sq':
-        insttype = 'qhy'
+        insttype = 'QHY'
     else:
         insttype = None
     return insttype

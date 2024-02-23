@@ -356,7 +356,7 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
                 else:     fwhmgessime = 9999
             elif 'fl' in _instrume or 'fa' in _instrume:
                 fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.389
-                if _imex:  fwhmgessime = median(array(ccc)) * 0.467
+                if _imex:  fwhmgessime = median(array(ccc)) * 0.389
                 else:     fwhmgessime = 9999
             elif 'fs' in _instrume:
                 fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.30
@@ -369,6 +369,10 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
             elif 'ep' in _instrume:
                 fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.27
                 if _imex:  fwhmgessime = median(array(ccc)) * 0.27
+                else:     fwhmgessime = 9999
+            elif 'sq' in _instrume:
+                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.734
+                if _imex:  fwhmgessime = median(array(ccc)) * 0.734
                 else:     fwhmgessime = 9999
             ellgess3=median(array(ell3))
 

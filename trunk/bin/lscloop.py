@@ -260,9 +260,7 @@ if __name__ == "__main__":   # main program
                         fake_temptel = 'sbig'
                     elif args.telescope == 'fs':
                         fake_temptel = 'spectral'
-                    elif args.telescope == 'fl':
-                        fake_temptel = 'sinistro'
-                    elif args.telescope == 'fa':
+                    elif args.telescope in ['fl', 'fa', '1m0']:
                         fake_temptel = 'sinistro'
                     elif args.telescope == 'ep':
                         fake_temptel = 'muscat'
@@ -330,5 +328,9 @@ if __name__ == "__main__":   # main program
                            str(ll0['psfmag'][i]), str(ll0['zcat'][i]), str(ll0['mag'][i]), str(ll0['abscat'][i]))
                 print '\n###  total number = ' + str(len(ll0['filename']))
                 lsc.myloopdef.run_merge(listfile[ll['dayobs'] == epo], args.force) # merge images using lacos and swarp
+    elif args.stage == 'ingestsloan':
+        lsc.myloopdef.run_ingestsloan('', 'sloan', show=args.show, force=args.force, targetid=args.targetid, tel='fa', filt=args.filter)
+    elif args.stage == 'ingestps1':
+        lsc.myloopdef.run_ingestsloan('', 'ps1', args.ps1frames, show=args.show, force=args.force, targetid=args.targetid, tel='fa', filt=args.filter)
     else:
         print '\n### no data selected'

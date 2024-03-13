@@ -13,6 +13,20 @@ from pyraf import iraf
 from reproject import reproject_interp
 import shutil
 
+def create_variance_image(_data, _gain, _ron):
+    median = np.median(_data)
+    MAD = np.median(np.abs(_data - median)) #median absolute deviation
+
+    #assuming the distribution is gaussian (normal), which is a good approximation
+    #of the poissonian distribution for large number of events, then we can convert
+    #the MAD to a pseudo pseudo standard deviation usinge 1.4826 as the scale factor
+    std = 1.4826 * MAD
+
+    #pssl = previously subtracted sky level
+    pssl = _gain*std**2 - _ron**2/_gain - median
+
+    return _data/_gain + pssl/_gain + _ron**2/_gain**2 #variance in ADUs^2
+
 
 def crossmatchtwofiles(img1, img2, radius=3):
     ''' This module is crossmatch two images:
@@ -182,10 +196,8 @@ if __name__ == "__main__":
                         targnoise = 'targnoise.fits'
 
                         # create the noise images
-                        median = np.median(data_targ)
-                        noise = 1.4826*np.median(np.abs(data_targ - median))
-                        pssl_targ = gain_targ*noise**2 - rn_targ**2/gain_targ - median
-                        noiseimg = data_targ + pssl_targ + rn_targ**2
+                        noiseimg = create_variance_image(data_targ, gain_targ, rn_targ)
+
                         targmask_data = fits.getdata(_dir + targmask0)
                         if noiseimg.size == targmask_data.size:
                             noiseimg[targmask_data > 0] = sat_targ
@@ -197,10 +209,7 @@ if __name__ == "__main__":
                         fits.writeto(targnoise, noiseimg, output_verify='fix', overwrite=True)
 
                         if not os.path.isfile(_dirtemp + tempnoise0):
-                            median = np.median(data_temp)
-                            noise = 1.4826*np.median(np.abs(data_temp - median))
-                            pssl_temp = gain_temp*noise**2 - rn_temp**2/gain_temp - median
-                            noiseimg = data_temp + pssl_temp + rn_temp**2
+                            noiseimg = create_variance_image(data_temp, gain_temp, rn_temp)
                             tempmask_data = fits.getdata(_dirtemp + tempmask0)
                             if noiseimg.size == tempmask_data.size:
                                 noiseimg[tempmask_data > 0] = sat_temp

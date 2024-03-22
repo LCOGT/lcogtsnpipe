@@ -25,7 +25,8 @@ def create_variance_image(_data, _gain, _ron):
     #pssl = previously subtracted sky level
     pssl = _gain*std**2 - _ron**2/_gain - median
 
-    return _data/_gain + pssl/_gain + _ron**2/_gain**2, pssl #variance in ADUs^2
+    #return variance in ADUs^2
+    return _data/_gain + pssl/_gain + _ron**2/_gain**2, pssl 
 
 
 def crossmatchtwofiles(img1, img2, radius=3):

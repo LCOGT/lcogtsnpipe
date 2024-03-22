@@ -25,7 +25,7 @@ def create_variance_image(_data, _gain, _ron):
     #pssl = previously subtracted sky level
     pssl = _gain*std**2 - _ron**2/_gain - median
 
-    return _data/_gain + pssl/_gain + _ron**2/_gain**2 #variance in ADUs^2
+    return _data/_gain + pssl/_gain + _ron**2/_gain**2, pssl #variance in ADUs^2
 
 
 def crossmatchtwofiles(img1, img2, radius=3):
@@ -196,7 +196,7 @@ if __name__ == "__main__":
                         targnoise = 'targnoise.fits'
 
                         # create the noise images
-                        noiseimg = create_variance_image(data_targ, gain_targ, rn_targ)
+                        noiseimg, pssl_targ = create_variance_image(data_targ, gain_targ, rn_targ)
 
                         targmask_data = fits.getdata(_dir + targmask0)
                         if noiseimg.size == targmask_data.size:

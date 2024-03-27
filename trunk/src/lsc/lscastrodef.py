@@ -31,147 +31,37 @@ def vizq(_ra,_dec,catalogue,radius):
     return {'ra':_ra,'dec':_dec,'id':_name,'mag':_mag}
 
 def wcsstart(img,CRPIX1='',CRPIX2=''):
-    from numpy import pi, sin, cos 
+    from numpy import sin, cos, deg2rad
     import lsc
-    from lsc.util import updateheader,readhdr,readkey3
+    from lsc.util import readhdr,readkey3
     hdr=readhdr(img)
-    _instrume=readkey3(hdr,'instrume')
     _RA=readkey3(hdr,'RA')
     _DEC=readkey3(hdr,'DEC')
     _xdimen=readkey3(hdr,'NAXIS1')
     _ydimen=readkey3(hdr,'NAXIS2')
-    _CCDXBIN=readkey3(hdr,'CCDXBIN')
-    if _instrume in ['kb74','kb76']:
-        angle=readkey3(hdr,'ROLLERDR')#posang)
-        theta=(angle*pi/180.)
-        CDELT0=0.000129722   # 1.3042840792028E-4   8.43604528922325E-5  #6.6888889999999995e-05
-        CD1_1=(-1)*CDELT0*cos(theta)
-        CD2_2=(-1)*CDELT0*cos(theta)
-        CD1_2=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        CD2_1=(-1)*abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        if not CRPIX1:        CRPIX1= readkey3(hdr,'ROTCENTX')
-        else: CRPIX1= 1000.+CRPIX1
-        if not CRPIX2:        CRPIX2= readkey3(hdr,'ROTCENTY')
-        else: CRPIX2= 1000.+CRPIX2
-        CDELT1=2
-        CDELT2=2
-    elif 'kb' in _instrume:
-        angle=readkey3(hdr,'ROLLERDR')#posang)
-        theta=(angle*pi/180.)
-        CDELT0=0.000129722   # 1.3042840792028E-4   8.43604528922325E-5  #6.6888889999999995e-05
-        CD1_1=(-1)*CDELT0*cos(theta)
-        CD2_2=(-1)*CDELT0*cos(theta)
-        CD1_2=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        CD2_1=(-1)*abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        if not CRPIX1:        CRPIX1= 1000.
-        else: CRPIX1= 1000.+CRPIX1
-        if not CRPIX2:        CRPIX2= 1000.
-        else: CRPIX2= 1000.+CRPIX2
-        CDELT1=2
-        CDELT2=2
-    elif 'sq' in _instrume:
-        angle=readkey3(hdr,'ROLLERDR')#posang)
-        theta=(angle*pi/180.)
-        pixscale=float(readkey3(hdr,'PIXSCALE'))
-        CDELT0=pixscale/3600.
-        CD1_1=CDELT0*cos(theta)
-        CD1_2=CDELT0*sin(theta)
-        CD2_1=CDELT0*sin(theta)
-        CD2_2=(-1)*CDELT0*cos(theta)
-        if 'SITEID' in hdr:
-            if hdr['SITEID'] in ['elp','tfn','ogg']:
-                CD1_1 = (-1) * CD1_1
-                CD2_2 = (-1) * CD2_2
-        if not CRPIX1:        
-            CRPIX1 = _xdimen/2
-        else: 
-            CRPIX1 = (_xdimen/2)+CRPIX1
-        if not CRPIX2:        
-            CRPIX2 = _ydimen/2
-        else: CRPIX2 = (_ydimen/2)+CRPIX2
-        CDELT1 = 2
-        CDELT2 = 2
-    elif 'fl' in _instrume or 'fa' in _instrume or 'ep' in _instrume:
-        angle=readkey3(hdr,'ROLLERDR')#posang)
-        theta=(angle*pi/180.)
-        pixscale=float(readkey3(hdr,'PIXSCALE'))
-        CDELT0=pixscale/3600.
-        CD1_1=CDELT0*cos(theta)
-        CD1_2=CDELT0*sin(theta)
-        CD2_1=CDELT0*sin(theta)
-        CD2_2=(-1)*CDELT0*cos(theta)
-        if 'SITEID' in hdr:
-            if hdr['SITEID'] in ['elp']:
-                CD1_1 = (-1) * CD1_1
-                CD2_2 = (-1) * CD2_2
-#        CD1_1=(-1)*CDELT0*cos(theta)
-#        CD2_2=(-1)*CDELT0*cos(theta)
-#        CD1_2=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-#        CD2_1=(-1)*abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        if not CRPIX1:        
-            CRPIX1 = _xdimen/2
-        else: 
-            CRPIX1 = (_xdimen/2)+CRPIX1
-        if not CRPIX2:        
-            CRPIX2 = _ydimen/2
-        else: CRPIX2 = (_ydimen/2)+CRPIX2
-        CDELT1 = 2
-        CDELT2 = 2
-    elif _instrume in ['fs03']:
-        angle=readkey3(hdr,'ROTSKYPA')#posang)
-        theta=(angle*pi/180.)
- #       pixscale=0.30*_CCDXBIN
- #       CDELT0=pixscale/3600.
-        CDELT0=0.000083705976   #8.43604528922325E-5  #6.6888889999999995e-05
-        CD1_1=(-1)*CDELT0*cos(theta)
-        CD2_2=CDELT0*cos(theta)
-        CD1_2=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        CD2_1=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        if not CRPIX1:        CRPIX1= 1024.
-        else: CRPIX1= 1024.+CRPIX1
-        if not CRPIX2:        CRPIX2= 1024.
-        else: CRPIX2= 1024.+CRPIX2
-        CDELT1=0.000083705976*(-1)
-        CDELT2=0.000083705976
-    elif 'fs' in _instrume:
-        angle=readkey3(hdr,'ROTSKYPA')#posang)
-        theta=(angle*pi/180.)
- #       pixscale=0.30*_CCDXBIN
- #       CDELT0=pixscale/3600.
-        CDELT0=0.000083568667  # 8.43604528922325E-5  #6.6888889999999995e-05
-        CD1_1=(-1)*CDELT0*cos(theta)
-        CD2_2=CDELT0*cos(theta)
-        CD1_2=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        CD2_1=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        if not CRPIX1:        CRPIX1= 1024.
-        else: CRPIX1= 1024.+CRPIX1
-        if not CRPIX2:        CRPIX2= 1024.
-        else: CRPIX2= 1024.+CRPIX2
-        CDELT1=0.000083568694*(-1)
-        CDELT2=0.000083568694
-    elif 'em' in _instrume.lower():
-        theta=(angle*pi/180.)
-        CDELT0=7.63077724258886e-05 #7.7361111111111123e-05 
-        CD1_1=(-1)*CDELT0*cos(theta)
-        CD2_2=CDELT0*cos(theta)
-        CD1_2=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        CD2_1=abs(CDELT0)*(abs(CDELT0)/CDELT0)*sin(theta)
-        if not CRPIX1:        CRPIX1= readkey3(hdr,'ROTCENTX')
-        if not CRPIX2:        CRPIX2= readkey3(hdr,'ROTCENTY')-100
-        CDELT1=2
-        CDELT2=2
-    else:  print '\n### ERROR: instument not found !!!'
+    binning=readkey3(hdr,'CCDSUM').split()
+    pixscale = float(readkey3(hdr,'PIXSCALE'))
+    position_angle = deg2rad(readkey3(hdr,'ROLLERDR'))
+    CDELT1 = float(binning[0]) * pixscale
+    CDELT2 = float(binning[1]) * pixscale
+    CRVAL1 = hdr.get('CRVAL1', _RA)
+    CRVAL2 = hdr.get('CRVAL2', _DEC)
+    CRPIX1 = hdr.get('CRPIX1', _xdimen // 2)
+    CRPIX2 = hdr.get('CRPIX2', _ydimen // 2)
+    if CRPIX1:
+        CRPIX1 += float(CRPIX1)
+    if CRPIX2:
+        CRPIX2 += float(CRPIX2)
+    CD1_1 = hdr.get('CD1_1', -CDELT1 * cos(position_angle))
+    CD1_2 = hdr.get('CD1_2', CDELT2 * sin(position_angle))
+    CD2_1 = hdr.get('CD2_1', -CDELT1 * sin(position_angle))
+    CD2_2 = hdr.get('CD2_2', CDELT2 * cos(position_angle))
 
-    CTYPE1  = 'RA---TAN'  
-    CTYPE2  = 'DEC--TAN' 
-    CRVAL1=_RA
-    CRVAL2=_DEC
-    WCSDIM  =                   2  
-    LTM1_1  =                   1. 
-    LTM2_2  =                   1.
-    WAT0_001= 'system=image'
-    WAT1_001= 'wtype=tan axtype=ra'
-    WAT2_001= 'wtype=tan axtype=dec'
+    CTYPE1 = 'RA---TAN'  
+    CTYPE2 = 'DEC--TAN' 
+    CRVAL1 = _RA
+    CRVAL2 = _DEC
+    WCSDIM = 2  
     lsc.util.updateheader(img,0,{'CTYPE1':CTYPE1, 'CTYPE2':CTYPE2, 'CRVAL1':CRVAL1, 'CRVAL2':CRVAL2,
                 'CRPIX1':CRPIX1, 'CRPIX2':CRPIX2, 'CDELT1':CDELT1, 'CDELT2':CDELT2,
                 'CD1_1':CD1_1, 'CD2_2':CD2_2, 'CD1_2':CD1_2, 'CD2_1':CD2_1,

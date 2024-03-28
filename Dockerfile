@@ -18,7 +18,7 @@ RUN mkdir -p $iraf \
         && cd $iraf \
         && git checkout ba22d13 \
         && ./install < /dev/null \
-        && make -j4 $IRAFARCH \
+        && make $IRAFARCH \
         && make sysgen
 
 RUN apt-get --allow-releaseinfo-change update \

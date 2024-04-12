@@ -23,6 +23,8 @@ LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public
 # Create gaia, apass, and sloan catalogs for new objects
 * run `comparecatalogs.py` to generate new catalogs
 * Note if you are trying to reduce U band, you need to generate a local catalog. See [Creating an Landolt Catalog](#Creating-a-Landolt-Catalog) for details.
+* As an experimental feature, you can now download Pan-STARRS1 3π catalogs instead of SDSS catalogs for calibrating _griz_ images.
+  To use this feature run `comparecatalogs.py -p`. Note that you will not be able to calibrate _u_-band images. This will only work when `sloan_cat=NULL` in the database (for the initial run). If the pipeline has already determined that a sloan catalog doesn't exist you will have to reset this field manually in the database.
 
 # Cookbook
 ## Basic reduction
@@ -40,7 +42,7 @@ This is a description of the stream-lined steps that are recommended for process
     ds9&
     lscloop.py -n 2016cok -e 20160528-20180104 -s checkpsf --show -f B --no_iraf
     ```
-4. Redo the PSF for any images you marked with `n`. These are selected using the `-b psf` option. Suggestions for improving the PSFs: increase the `--nstars` parameter (e.g. `--nstars 12`) to increase the number of stars that get averaged together to make the PSF; adjust the `--datamax` and `--datamin` parameters to exclude bright stars or cosmic rays (e.g. `--datamax 60000 --datamin 0`); use a different catalog (as described above).
+4. Redo the PSF for any images you marked with `n`. These are selected using the `-b psf` option. Suggestions for improving the PSFs: change the fwhm (`--fwhm` to be bigger or smaller (depending on which stars you want selected), increase the `--nstars` parameter (e.g. `--nstars 12`) to increase the number of stars that get averaged together to make the PSF; adjust the `--datamax` and `--datamin` parameters to exclude bright stars or cosmic rays (e.g. `--datamax 60000 --datamin 0`); use a different catalog (as described above). You can play around with different FWHM values using the `--show` option and saying the PSF is bad, you will then be prompted to enter a new PSF.
 **Example** 
     ```
     lscloop.py -n 2016cok -e 20160528-20180104 -s psf -b psf 
@@ -88,7 +90,7 @@ Where:
 * ```-f FILTER``` run only on observations from one filter or set of filters (U,u,B,g,V,r,R,i,I,z,w,landolt, apass, sloan)
 * ```--id, -d``` run only on a specific image specified by a 3 digit number in the filename. For example you would use ```--id 046``` to run on the file elp1m008-fl05-20180302-0046-s91.
 * ```-T``` run only on observations from one telescope. Valid options: 1m0, 2m0, or 0m4. Note: because of the implementation, there is a bug/feature to `-T` that you can search for any substring in the filename
-* ```-I``` run only on observations from one instrument. Valid options: kb, fl, fs, sinistro, sbig, muscat, ep
+* ```-I``` run only on observations from one instrument. Valid options: kb, fl, fs, sinistro, sbig, muscat, ep, sq, qhy
 * ```-b STAGE``` run only on observations marked at bad at a given stage (where stage is quality, wcs, psf, psfmag, zcat, mag)
 * in many of the quality check stages the user is asked whether a file is good or bad and there are two options for bad, `b` and `n`. In general the `b` option should only be used for unusable images as it removes the observation completely from future processing and hides it. The only way to get this observation back is to run `-s checkquality -b quality`. If you answer `n` that stage of the pipeline will be reset for you to run again (as if the stage failed).
 
@@ -143,9 +145,11 @@ Where:
         * You will then be asked if this image is good with the option to answer: yes, no, or bad. Here if you answer bad, the quality will be set from 127 to 1, indicating that the image should not be used and it will not be included in any future processing. If you mark no, then the psf will be reset, indicating that you would like to try to calibrate the psf again.
 
 * **How to fix this step if the image looks ok but the psf step failed**
-    * Try running with the ```--fwhm``` option. This is especially true for the 0.4m telescopes. Possible values to try: 5 and 7
-    * Try adjusting --datamin or --datamax to select different stars. You can use the datamin and datamax output during the PSF stage to change which stars are selected
-    * Try running with the  --catalog option
+    * Try running with the `--fwhm` option. This is especially true for the 0.4m telescopes. Possible values to try: 5 and 7
+    * Try adjusting `--datamin` or `--datamax` to select different stars. You can use the datamin and datamax output during the PSF stage to change which stars are selected
+    * Try running with the  `--field` option. For some sources, the pipeline may have trouble picking suitable stars using the default 'gaia' catalog. So, try running `-s psf --field apass` or `-s psf --field sloan`.
+    * Try running with `--use-sextractor` argument.
+    * `--field` and `--use-sextractor` commands can be combined with `--datamin` and `--datamax` to select suitable stars.
 
 ### Generate instrumental magnitudes using psf and aperture photometry
 * **Call**: ```-s psfmag```
@@ -206,32 +210,33 @@ Where:
     
 # Creating a Landolt Catalog:
 ### Download landolt standard star catalogs
-* These need to be obtained from LCO (Jamie gave me a zip file with them)
-* Put these files in the directory $LCOSNDIR/standard/cat/landolt
-* Reinstall the pipeline ```python setup.py install```
+* Landolt standard star catalogs (L*.cat) are now part of the pipeline repository and can be found in $LCOSNDIR/standard/cat/landolt. 
+* For SA (selected area) standards, you will need to download your own catalog from [Vizier](https://vizier.u-strasbg.fr/viz-bin/VizieR-3?-source=II/183A/table2&-out.max=1000&-out.all=2&-out.all=2&-out.form=HTML%20Table&-oc.form=sexa). **Warning**: The coordinates in the original published paper have no decimal places, which is not precise enough for our needs. You must manually fix this! You may be able to look up more precise coordinates in [Simbad](https://simbad.cds.unistra.fr/simbad/sim-fid) by searching by identifier, e.g., "SA 109*" (don't forget the wildcard to get all the stars in the field). However, this table does not contain uncertainties on the magnitudes, so you have to manually assemble the final catalog. We then encourage you to then contribute the corrected catalog back to the pipeline for others to use.
+   * Put these files in the directory $LCOSNDIR/standard/cat/landolt
+   * Reinstall the pipeline ```python setup.py install```
 
 ### Download and Calibrate the Standard Star Observations
-* Find standard stars that were observed during the epoch you need in the filter you need (U). Ideally, you also obtain at least 1 other filter (for color correction) - recommended B and V
-* Search archive.lco.global for observation type "STANDARD" and/or proposal "standard" (see note below), set date range, filter, if applicable telescope and site (e.g. fo 2018zd I set site=elp and telescope=fl05)
+* Find standard stars that were observed during the epoch you need in the filter you need (U). The standard reduction practice is to create a landolt catalog for U, B, and V filters and calibrate your data with these. At a minimum, you also obtain B band for the color correction.
+* Search archive.lco.global for observation type "STANDARD" and/or proposal "standard" (see note below), set date range, filter, site, telescope, and instrument. If you can't find a standard on the same night, the next best option is to all for different instruments (but same site and night). If you do this, you will need to use the `--match-by-site` option when you run the `local` stage.
 * You will be using standards from the same telescope and observed on the same night as your observations
-* Use LCOGTingest.py to download and ingest observations. For example ``` LCOGTingest.py -S lsc -T 1m0a -f U -s 2019-09-26 -e 2019-10-08  -r reduced -t STANDARD --public``` Where `-S` is the site (if you want to be this specific), `-T` is the telescope, `-f` is the filter, `-s` is the start date, `-e` is the end date, `-r reduced` downloads files that have already been reduced with BANZAI, and `--public` is always required. Note: the date format has dashes and the search is exclusive of the end data. Also note: for many years in the late 2010s, LCO scheduled some (but not all) standard field observations with observation type EXPOSE instead of STANDARD. You can still identify them by their proposal ID "standard" (i.e., in the command above, replace `-t STANDARD` with `-P standard`).
-* If you are downloading a standard for the first time, manually update the targets table so that the standards you downloaded have `classificationid=1`
+* Use LCOGTingest.py to download and ingest observations. For example ``` LCOGTingest.py -S lsc -T 1m0a -f U -I fl05 -s 2019-09-26 -e 2019-10-08  -r reduced -t STANDARD --public``` Where `-S` is the site, `-T` is the telescope, `-f` is the filter, -I is the instrument, `-s` is the start date, `-e` is the end date, `-r reduced` downloads files that have already been reduced with BANZAI, and `--public` is always required. Note: the date format has dashes and the search is exclusive of the end data. Also note: for many years in the late 2010s, LCO scheduled some (but not all) standard field observations with observation type EXPOSE instead of STANDARD. You can still identify them by their proposal ID "standard" (i.e., in the command above, replace `-t STANDARD` with `-P standard`).
+ Also also note: you cannot search the LCO archive by telescope number (e.g., 1m0-08), but you can search by instrument number (e.g., fl05), which is equivalent for a given night (at least). The image filenames contain both the telescope number and the instrument number.
+* If you are downloading a standard for the first time, manually update the targets table so that the standards you downloaded have `classificationid=1` and to set the catalog to the one you downloaded earlier.
     * ```mysql -u supernova -D supernova -p``` (if you are using docker-compose you also need ```-h supernovadb```)
-    * Get the targetid of the standard you want to update: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE name="L107"``` (you should replace L107 with the name of your standard)
-    * Check that you're selecting the right row: ```SELECT targetnames.targetid, name, classificationid FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE targetid=55``` (you should replace 55 with the targetid you found in the last step)
-    * If `classificationid` is not 1, update `classificationid` for the row selected: ```UPDATE targets SET classificationid=1 WHERE targetid=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard)
+    * Get the targetid and landolt catalog of the standard you want to update: ```SELECT targetnames.targetid, name, classificationid, landolt_cat FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE name="L107"``` (you should replace L107 with the name of your standard)
+    * Check that you're selecting the right row: ```SELECT targetnames.targetid, name, classificationid, landolt_cat FROM targets JOIN targetnames ON targets.id=targetnames.targetid WHERE targetid=55``` (you should replace 55 with the targetid you found in the last step)
+    * If `classificationid` is not 1, update `classificationid` for the row selected: ```UPDATE targets SET classificationid=1 WHERE id=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard)
+   * If `landolt_cat` is empty, you should update it with the name of the catalog you downloaded (e.g. L107_landolt_stetson.cat). ``` UPDATE targets SET landolt_cat=<LANDOLT_FILENAME> WHERE targetid=<TARGETID>``` (where <TARGETID> is replaced with the targetid of your standard and <LANDOLT_FILENAME> is the name of your downloaded landolt catalog)
+* When you run a command with `--standard all`, it queries the database for any standards in the same filter-telescope-night as the SN observations and runs the stage on those images instead. You can check that the standard images are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard all```. If you want to calibrate to a single standard field, you can also give, e.g., `--standard L94`. If a photometric night with a supernova observation and standard star taken on the same telescope with the same instrument does not exist. You should request observations of your SN field with the landolt filters until such a night exists. There is no requirement that your SN be visible at this time. If you get the error `NameError: name 'refcat' is not defined` then you need `comparecatalogs.py` to download catalogs for your supernova.
 * Create photometry catalogs for the standard star images. You need these to calculate the zero points.
 ```
-lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s psf
+lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard all -s psf
 ```
-Where STANDARD is the name of the standard you wish to calibrate.   
-*A word on the `--standard` keyword. The `--standard` flag has two optional inputs with slightly different behavior. When `--standard all` is used, all standards are selected that occur on the same filter-night-site as your supernova observations. When `--standard STANDARD` is used where STANDARD is a specific standard (e.g. L110) then all avaulable standards are given for the range of date, regardless of whether they were observed on the same night and site as your supernova observation. If only a single standard is available for your supernova observations nights and sites, then you can use `--standard all` for the calibration of the standard images (`-s psf` and `-s zcat` as well as the `-s local` stage. However, if multiple standards are available, then you should calibrate them individually with `--standard STANDARD` for the `-s psf` and `-s zcat` stages and then `--standard all` for the `-s local` stage.*  
 * Calculate the zero points for the standard star images. You should run this interactively to make sure there are enough stars identified in the image.
 ```
-lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard STANDARD -s zcat -i --catalog=$LCOSNDIR/standard/cat/landolt/<standard catalog name>
+lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt --standard all -s zcat -i
 ```
-* When you run -s local on the SN (in the next step) with `--standard all`, it queries the database for any standards in the same filter-site-night as the SN observations and applies the zero points from these standards to your SN images. You can check that these are identified correctly with ```lscloop.py -n 'SN 2018zd' -e 20180302-20180330 -f landolt -T 1m0 --standard all```.
-   
+
 ### Create a catalog of stars (local sequence) in SN field for Landolt filters
 * This calculates the apparent magnitude for the stars in a given filter in your SN field and creates a catalog that will be used in the zcat step to generate the zeropoint for each observation. If a single class of telescopes seems to be an outlier, then you should limit the telescopes used to calculate the apparent magnitude to a single class of telescopes with the ```-T 1m0``` flag
 ```
@@ -318,6 +323,29 @@ will select the same instrument given with -T.
     lscloop.py -n NAME -e TEMPDATE --filetype 4 -s cosmic
     ```
 
+### PAN-STARRS (PS1) References
+
+
+1.  Choose a set of science images that includes one image with each camera--filter combination used. Then run the following command once for each of those images, using the ID numbers to choose individual frames. This will take a while.
+    ```
+    lscloop.py -n NAME -e TARGDATE -d ID -s ingestsloan
+    ````
+
+    Make a note of the TEMPDATE for each PS1 frame you download.
+
+2.  Generate PSFs for the PS1 images.
+    ```
+    ds9 &\
+    ```
+    ```
+    lscloop.py -n NAME -e TEMPDATE --filetype 4 -s psf --show --fwhm 5 --use-sextractor
+    ```
+
+3.  Copy the variance images to the right place for use as cosmic ray masks.
+    ```
+    lscloop.py -n NAME -e TEMPDATE --filetype 4 -s cosmic
+    ```
+
 ## Do the Image Subtraction
 
 1.  Run cosmic ray rejection on all the science images. This will take a while.
@@ -340,7 +368,7 @@ will select the same instrument given with -T.
     lscloop.py -n NAME -e TARGDATE-TARGDATE -b psf -s psf --show --fwhm 7 --datamax 75000
     ```
 
-3.  Once all the cosmic ray rejection is done (for science and reference images), run the subtraction. This will take a while. By default, `--tempdate=19990101-20080101` (useful for SDSS), `--temptel=IN`, `--fixpix=False`, and `--difftype=0` (0 = HOTPANTS, 1 = Optimal).
+3.  Once all the cosmic ray rejection is done (for science and reference images), run the subtraction. This will take a while. By default, `--tempdate=19990101-20080101` (useful for SDSS, PS1, and any other archival template image), `--temptel=IN`, `--fixpix=False`, and `--difftype=0` (0 = HOTPANTS, 1 = Optimal).
     ```
     lscloop.py -n NAME -e TARGDATE-TARGDATE --normalize t -T IN \[--tempdate TEMPDATE\] \[--temptel TEMPTEL\] \[--fixpix\] \[--difftype 1\] -s diff
     ```
@@ -421,6 +449,9 @@ By default, `--filetype 3` selects both HOTPANTS and Optimally subtracted images
     - increase the `fwhm`. This value should be printed to the screen during the PSF stage. You can suggest a FWHM to lscloop with the keyword `--fwhm` (e.g. `--fwhm 7`)
     - Remove the brightest star by setting the `--datamax` keyword to a value lower than the first PSF star datamax, which can be read from the output
     - Increase the number of PSF stars using the `--nstars` flag (e.g. `--nstars 12`)
+    - Try using different `--field` for selecting psf stars e.g. `-s psf --field apass` or `-s psf --field sloan`.
+    - Try running with `--use-sextractor` argument.
+    - `--field` and `--use-sextractor` commands can be combined with `--datamin` and `--datamax` to select suitable stars.
    
 * I accidentally marked a file as `b` how do I bring it back? -OR- One of my files disappeared, how do I get it back?
    Files marked with `b` are considered failed observations that no amount of finessing will bring back (e.g. no signal). For this reason, the pipeline hides them from all future processing. The only way to get this observation back is to run `-s checkquality -b quality`. If you answer `n` that stage of the pipeline will be reset for you to run again (as if the stage failed).

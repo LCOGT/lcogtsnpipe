@@ -15,17 +15,20 @@ with warnings.catch_warnings(): # so cronic doesn't email on the "experimental" 
     warnings.simplefilter('ignore')
     from astroquery.sdss import SDSS
 
-def get_other_filters(filename):
-    query = '''SELECT DISTINCT p2.filter FROM
-               photlco AS p1, photlco AS p2,
-               telescopes AS t1, telescopes AS t2
-               WHERE p1.filename='{}'
+def get_other_filters(filename, match_by_site=False):
+    if match_by_site:
+        tel_join = '''photlco AS p1 JOIN telescopes AS t1 ON p1.telescopeid = t1.id,
+                      photlco AS p2 JOIN telescopes AS t2 ON p2.telescopeid = t2.id'''
+        is_match = 't1.shortname = t2.shortname'
+    else:
+        tel_join = 'photlco AS p1, photlco AS p2'
+        is_match = 'p1.telescopeid = p2.telescopeid'
+    query = '''SELECT DISTINCT p2.filter FROM {tel_join}
+               WHERE p1.filename='{filename}'
                AND p2.quality=127
                AND p1.dayobs=p2.dayobs
                AND p1.targetid=p2.targetid
-               AND p1.telescopeid=t1.id
-               AND p2.telescopeid=t2.id
-               AND t1.shortname=t2.shortname'''.format(filename)
+               AND {is_match}'''.format(tel_join=tel_join, filename=filename, is_match=is_match)
     result = lsc.mysqldef.query([query], lsc.conn)
     other_filters = {lsc.sites.filterst1[row['filter']] for row in result}
     return other_filters
@@ -224,7 +227,7 @@ def onclick(event):
                      (aa,sss,bb,sigmaa,sigmab))
 
 
-def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=False,_type='fit',redo=False,show=False,cutmag=-1,_calib='sloan',zcatold=False):
+def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=False,_type='fit',redo=False,show=False,cutmag=-1,_calib='sloan',zcatold=False, match_by_site=False):
     filename = os.path.basename(img)
     status = lsc.myloopdef.checkstage(filename, 'zcat')
     if status < 1:
@@ -297,24 +300,13 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
     elif 'fa' in _instrume:
         colorefisso = {'uug': 0.0, 'ggr': 0.109, 'rri': 0.027, 'iri': 0.036, 'BBV': -0.024, 'VBV': -0.014,
                        'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
-    elif _siteid == 'coj':
-        colorefisso = {'uug': 0.0, 'ggr': 0.137, 'rri': -0.005, 'iri': 0.007, 'BBV': -0.025, 'VBV': 0.017, 'UUB':0.059,
-                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
-    elif _siteid == 'lsc':
-        colorefisso = {'uug': 0.0, 'ggr': 0.120, 'rri': -0.002, 'iri': 0.019, 'BBV': -0.035, 'VBV': 0.000, 'UUB':0.059,
-                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
-    elif _siteid == 'elp':
-        colorefisso = {'uug': 0.0, 'ggr': 0.114, 'rri': -0.004, 'iri': 0.024, 'BBV': -0.039, 'VBV': -0.005, 'UUB':0.059,
-                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
-    elif _siteid == 'cpt':
-        colorefisso = {'uug': 0.0, 'ggr': 0.112, 'rri': -0.001, 'iri': 0.013, 'BBV': -0.030, 'VBV': -0.019, 'UUB':0.059,
-                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
-    elif _siteid == 'tfn': # average of other SBIGs
-        colorefisso = {'uug': 0.0, 'ggr': 0.121, 'rri': -0.003, 'iri': 0.016, 'BBV': -0.032, 'VBV': -0.002, 'UUB':0.059,
-                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
-    else: # don't know where these came from
-        colorefisso = {'uug': 0.0, 'gug': 0.13, 'ggr': -0.02, 'rgr': 0.034, 'rri': 0.025, 'iri': 0.071, 'iiz': 0.110, 'ziz': -0.04,
-                       'UUB': 0.059, 'BUB': -0.095, 'BBV': 0.06, 'VBV': 0.03, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013}
+    elif 'ep' in _instrume:
+        colorefisso = {'uug': 0.0, 'ggr': 0.0087, 'rri': 0.0166, 'iri': 0.0217, 'BBV': 0.0, 'VBV': 0.0,
+                   'UUB': 0.0, 'BUB': 0.0, 'VVR': 0.0, 'RVR': 0.0, 'RRI': 0.0, 'IRI': 0.0, 'ziz': 0.0152}
+    else: # don't attempt a color term if you don't know what the instrument is
+        print('No color terms exist for telescope/instrument set up. No color term applied, use --unfix to calculate a color term from the field stars in the image')
+        colorefisso = {'uug': 0.0, 'gug': 0.0, 'ggr': 0.0, 'rgr': 0.0, 'rri': 0.0, 'iri': 0.0, 'iiz': 0.0, 'ziz': 0.0,
+                       'UUB': 0.0, 'BUB': 0.0, 'BBV': 0.0, 'VBV': 0.0, 'VVR': 0.0, 'RVR': 0.0, 'RRI': 0.0, 'IRI': 0.0}
 
     if _cat and not redo:
         print 'already calibrated'
@@ -484,7 +476,7 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
               _limmag = limmag(img, media, 3, _fwhm)     #   compute limiting magnitude at 3 sigma
               lsc.mysqldef.updatevalue('photlco', ['limmag', 'zn', 'dzn', 'znnum'], [_limmag, media, mediaerr, len(data2)], filename)
 
-        filters_observed = get_other_filters(filename)
+        filters_observed = get_other_filters(filename, match_by_site)
         filters_in_catalog = set(magstd0.keys())
         colors = lsc.sites.chosecolor(filters_observed & filters_in_catalog, False)
         colorvec=colors[lsc.sites.filterst1[_filter]]
@@ -1151,7 +1143,87 @@ def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
         print len(t), 'matching objects. Catalog saved to', output
     else:
         print 'No matching objects.'
-#######################################################################
+
+
+def panstarrs2file(ra, dec, radius=20., mag1=13., mag2=20., output='panstarrs.cat'):
+    '''
+    Download a Pan-STARRS1 DR1 catalog from Vizier
+    '''
+    from astroquery.vizier import Vizier
+    coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree))
+    Vizier.ROW_LIMIT=-1
+    Vizier.columns = ['raMean', 'decMean', 
+                      'objID', 
+                      'gFlags',
+                      'yMeanPSFMag', 'yMeanPSFMagErr', #I'm going to make this u as a pipeline placeholder so this looks like SDSS
+                      'gMeanPSFMag', 'gMeanPSFMagErr', 
+                      'rMeanPSFMag', 'rMeanPSFMagErr', 
+                      'iMeanPSFMag', 'iMeanPSFMagErr', 
+                      'zMeanPSFMag', 'zMeanPSFMagErr']
+    Vizier.column_filters={'nDetections': '>5',
+                                                 'rMeanPSFMag-rMeanKronMag': '<0.05',
+                                                 'gQfPerfect': '>0.85',
+                                                 'rQfPerfect':'>0.85',
+                                                 'iQfPerfect':'>0.85',
+                                                 'zQfPerfect':'>0.85',
+                                                 'rMeanPSFMag':'>{:f}'.format(mag1),
+                                                 'rMeanPSFMag':'<={:f}'.format(mag2)}
+    t = Vizier.query_region(coord,
+                                 radius=float('{:f}'.format(radius))*u.arcmin,
+                                 catalog='II/349')
+    t = t[0]
+
+    #From: https://outerspace.stsci.edu/display/PANSTARRS/PS1+Object+Flags#PS1ObjectFlags-ObjectFilterFlagsvalues,e.g.,columngFlagsintableMeanObject
+    # 8: Ubercal photometry used in average measurement.
+    # 16: PS1 photometry used in average measurement.
+    # 32: PS1 stack photometry exists.
+    # 256: Average magnitude uses only rank 0 detections.
+    # 16384: PS1 stack photometry comes from primary skycell.
+    # 32768: PS1 stack best measurement is a detection (not forced).
+    # 16777216: Extended in this band.
+    good_dq = 8+16+32+256+16384+32768
+    extended_dq = 16777216
+    keep_indx = (t['gFlags']&good_dq==good_dq) & (t['gFlags']&extended_dq != extended_dq)
+    t = t[keep_indx]
+    t.remove_column('gFlags')
+    t.rename_column('ymag', 'umag')
+    t.rename_column('e_ymag', 'e_umag')
+    t['umag'] = 9999.
+    t['e_umag'] = 9999.
+    if t is not None:
+        t['RAJ2000'].format ='%16.12f'
+        t['DEJ2000'].format = '%16.13f'
+        t['objID'].format = '%19d'
+        for filt in 'griz':
+            t[filt + 'mag'].format = '%8.5f'
+            t['e_' + filt + 'mag'].format = '%11.9f'
+        t.meta['comments'] = [
+        'BEGIN CATALOG HEADER',
+        '   type btext',
+        '   nheader 1',
+        '       csystem J2000',
+        '   nfields 111',
+        '       ra     1 0 d degrees ' + t['RAJ2000'].format,
+        '       dec    2 0 d degrees ' + t['DEJ2000'].format,
+        '       id     3 0 c INDEF   ' + t['objID'].format,
+        '       u      4 0 r INDEF   ' + t['umag'].format,
+        '       uerr   5 0 r INDEF   ' + t['e_umag'].format,
+        '       g      6 0 r INDEF   ' + t['gmag'].format,
+        '       gerr   7 0 r INDEF   ' + t['e_gmag'].format,
+        '       r      8 0 r INDEF   ' + t['rmag'].format,
+        '       rerr   9 0 r INDEF   ' + t['e_rmag'].format,
+        '       i     10 0 r INDEF   ' + t['imag'].format,
+        '       ierr  11 0 r INDEF   ' + t['e_imag'].format,
+        '       z     12 0 r INDEF   ' + t['zmag'].format,
+        '       zerr  13 0 r INDEF   ' + t['e_zmag'].format,
+        'END CATALOG HEADER'
+        ]
+        t.write(output, format='ascii.no_header', overwrite=True)
+        print len(t), 'matching objects. Catalog saved to', output
+    else:
+        print 'No matching objects.'
+
+
 def gaia2file(ra, dec, size=26., mag_limit=18., output='gaia.cat'):
 
     from astroquery.gaia import Gaia

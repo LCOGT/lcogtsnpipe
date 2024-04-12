@@ -137,7 +137,7 @@ def readkey3(hdr,keyword):
        _instrume=hdr.get('INSTRUME').lower()
     except: 
        _instrume='none'
-    if 'kb' in _instrume: # SBIG
+    if ('kb' in _instrume) or ('sq' in _instrume): # SBIG or QHY
         useful_keys = {'object'    : 'OBJECT',\
                            'date-obs'  : 'DATE-OBS',\
                            'ut'        : 'DATE-OBS',\
@@ -161,7 +161,7 @@ def readkey3(hdr,keyword):
                            'type'      : 'OBSTYPE',\
                            'propid'      : 'PROPID',\
                            'userid'      : 'USERID',\
-                           'telescop'  : 'TELESCOP'} 
+                           'telescop'  : 'TELESCOP'}
     elif 'fl' in _instrume or 'fa' in _instrume: # sinistro
         useful_keys = {'object'    : 'OBJECT',\
                            'date-obs'  : 'DATE-OBS',\
@@ -277,6 +277,8 @@ def readkey3(hdr,keyword):
                       'CAT-RA'    : 'RA',\
                       'CAT-DEC'   : 'DEC',\
                       'ron'       : 'RDNOISE',\
+                      'mjd'       : 'MJD-OBS',
+                      'ut'        : 'DATE-OBS',
                       'date-obs'  : 'DATE-OBS',\
                       'date-night': 'DAY-OBS',\
                       'datamax'   : 'SATURATE'}
@@ -291,10 +293,12 @@ def readkey3(hdr,keyword):
              except:
                 pass
           elif keyword=='ut':
-             try:
+             if 'T' in value:
                 value = value.split('T')[1]
-             except:
-                pass
+             elif ' ' in value:
+                value = value.split()[1]
+             else:
+                value = ''
           elif keyword=='object':
              value = value.translate(None, ' }{][)(')
           elif keyword=='JD':       
@@ -841,7 +845,8 @@ def getcatalog(name_or_filename, field='', return_field=False):
                                          apass_cat, gaia_cat
                                          from targets, targetnames, targetnames as othernames
                                          where targets.id=targetnames.targetid and targets.id=othernames.targetid
-                                         and targetnames.name="{}"'''.format(name_or_filename)], lsc.conn)
+                                         and targetnames.name like "%{}"'''.format(name_or_filename.replace(' ', '%'))],
+                                     lsc.conn)  # same name matching as gettargetid
     if field:
         fields = [field]
     else:

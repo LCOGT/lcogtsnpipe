@@ -3,6 +3,7 @@ import os
 import numpy as np
 import lsc
 import datetime
+from astropy.table import Table
 
 def jd2date(inputjd):
  jd0 = 2451544.5 # On Jan 1, 2000 00:00:00
@@ -303,13 +304,13 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        out1 = 'PS1'
        imglist2=[]
        for i,img in enumerate(imglist):
-           print i,img
-           hdr = fits.open(img)
-           if os.path.isfile(re.sub('.fits','_1.fits',img)):
-              os.system('rm '+re.sub('.fits','_1.fits',img))
-           fits.writeto(re.sub('.fits','_1.fits',img),hdr[1].data,hdr[1].header)
-           imglist2.append(re.sub('.fits','_1.fits',img))
-
+           print(i, img)
+           hdr = fits.open(img[0])
+           if os.path.isfile(re.sub('unconv','unconv_1',img[0])):
+              os.system('rm '+re.sub('unconv','unconv_1',img[0]))
+           fits.writeto(re.sub('unconv','unconv_1',img[0][-43:]),hdr[0].data,hdr[0].header, overwrite=True)
+           imglist2.append(re.sub('unconv','unconv_1',img[0][-43:]))
+           
        imglist = imglist2
        hdr = fits.getheader(imglist[0])
        _saturate = hdr.get('HIERARCH CELL.SATURATION')
@@ -317,7 +318,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        _gain   = hdr.get('HIERARCH CELL.GAIN')
        _ron   = hdr.get('HIERARCH CELL.READNOISE')
        _mjd = hdr.get('MJD-OBS')
-       _dayobs = jd2date(_mjd+2400000.5).strftime('%Y%d%m')
+       _dayobs = jd2date(_mjd+2400000.5).strftime('%Y%m%d')
        if not _ra:
           _ra = hdr.get('RA_DEG')
        if not _dec:
@@ -337,10 +338,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     if 'date-obs' in hdr:
        _dateobs = hdr.get('date-obs')
     else:
-       _dateobs = jd2date(_mjd+2400000.5).strftime('%Y-%d-%m')
-
-    print imglist[0]
-    print _dateobs, _dayobs, _mjd, _filter
+       _dateobs = jd2date(_mjd+2400000.5).strftime('%Y-%m-%dT%H:%M:%S.%f')
 
     if not output:
        output = _telescope+'_'+str(out1)+'_'+str(_dayobs)+'_'+str(_filter)+'_'+objname +'.fits'
@@ -378,7 +376,8 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        # measure skylevel in all ps1 images
        for jj in imglist:
           img_data,img_header=fits.getdata(jj, header=True)
-          skylevel.append(np.mean(img_data))
+          img_data += 6000
+          skylevel.append(np.nanmean(img_data))
 
 #    elif len(welist):
 #       imglist = [j for j in imglist if j not in welist]
@@ -420,7 +419,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     ar = np.where(ar2 == 0, _saturate, ar)
 
     if len(skylevel):
-        hd['SKYLEVEL'] = (np.mean(skylevel), 'average sky level')
+        hd['SKYLEVEL'] = (np.nanmean(skylevel), 'average sky level')
     hd['L1FWHM']   = (9999,       'FHWM (arcsec) - computed with sextractor')
     hd['WCSERR']   = (0,          'error status of WCS fit. 0 for no error')
     hd['MJD-OBS']  = (_mjd,       'MJD')
@@ -429,7 +428,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     hd['RDNOISE']  = (_ron,       'read out noise')
     hd['PIXSCALE'] = (pixelscale, '[arcsec/pixel] Nominal pixel scale on sky')
     hd['FILTER']   = (_filter,    'filter used')
-    hd['DAY-OBS']   = (_dayobs,    'day of observation')
+    hd['DAY-OBS']  = (_dayobs,    'day of observation')
     hd['AIRMASS']  = (_airmass,   'airmass')
     hd['DATE-OBS'] = (_dateobs,   'date of observation')
     hd['GAIN']     = (_gain,      'gain')
@@ -481,6 +480,62 @@ def northupeastleft(filename='', data=None, header=None):
     else:
         return data, header
 
+def getimages(ra,dec,size=10000,filters="gri"):
+    
+    """Query ps1filenames.py service to get a list of images
+    
+    ra, dec = position in degrees
+    size = image size in pixels (0.25 arcsec/pixel)
+    filters = string with filters to include
+    Returns a table with the results
+    """
+    
+    service = "https://ps1images.stsci.edu/cgi-bin/ps1filenames.py"
+    url = ("{service}?ra={ra}&dec={dec}&size={size}&format=fits"
+           "&filters={filters}").format(**locals())
+    table = Table.read(url, format='ascii')
+    return table
+
+def geturl(ra, dec, size=10000, output_size=None, filters="gri", format="fits", color=False):
+    
+    """Get URL for images in the table
+    
+    ra, dec = position in degrees
+    size = extracted image size in pixels (0.25 arcsec/pixel)
+    output_size = output (display) image size in pixels (default = size).
+                  output_size has no effect for fits format images.
+    filters = string with filters to include
+    format = data format (options are "jpg", "png" or "fits")
+    color = if True, creates a color image (only for jpg or png format).
+            Default is return a list of URLs for single-filter grayscale images.
+    Returns a string with the URL
+    """
+    
+    if color and format == "fits":
+        raise ValueError("color images are available only for jpg or png formats")
+    if format not in ("jpg","png","fits"):
+        raise ValueError("format must be one of jpg, png, fits")
+    table = getimages(ra,dec,size=size,filters=filters)
+    url = ("https://ps1images.stsci.edu/cgi-bin/fitscut.cgi?"
+           "ra={ra}&dec={dec}&size={size}&format={format}").format(**locals())
+    if output_size:
+        url = url + "&output_size={}".format(output_size)
+    # sort filters from red to blue
+    flist = ["yzirg".find(x) for x in table['filter']]
+    table = table[np.argsort(flist)]
+    if color:
+        if len(table) > 3:
+            # pick 3 filters
+            table = table[[0,len(table)//2,len(table)-1]]
+        for i, param in enumerate(["red","green","blue"]):
+            url = url + "&{}={}".format(param,table['filename'][i])
+    else:
+        urlbase = url + "&red="
+        url = []
+        for filename in table['filename']:
+            url.append(urlbase+filename)
+    return url
+
 ##################################################################################
 def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
    import sys
@@ -511,53 +566,26 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
       _telescope = 'sbig'
    elif 'ep' in _instrume:
        _telescope = 'muscat'
+   elif 'sq' in _instrume:
+       _telescope = 'qhy'
 
    print _ra, _dec, _band, _radius
    if survey == 'sloan':
-      frames =  downloadsdss(_ra, _dec, _band, _radius, force)
+      frames = downloadsdss(_ra, _dec, _band, _radius, force)
    elif survey == 'ps1':
-      if len(frames) == 0:
-         delta= 0.22
-         DR = delta/np.cos(_dec*np.pi/180)
-         DD = delta
-         f=open(_object+'_'+_band+'_ps1request.txt','w')
-         f.write('%s   %s   %s\n' %(str(_ra),str(_dec),str(_band)))
-         f.write('%s   %s   %s\n' %(str(_ra+DR),str(_dec+DD),str(_band)))
-         f.write('%s   %s   %s\n' %(str(_ra-DR),str(_dec-DD),str(_band)))
-         f.write('%s   %s   %s\n' %(str(_ra+DR),str(_dec-DD),str(_band)))
-         f.write('%s   %s   %s\n' %(str(_ra-DR),str(_dec+DD),str(_band)))
-         f.close()
-         print '#'*20
-         print "Please submit file:"+_object+'_'+_band+'_ps1request  at this link (you need an account)\n'
-         print "   http://psps.ifa.hawaii.edu/PSI/postage_stamp.php    "
-         print "   select:\n       Survey ID:    3PI          3PI.PV3  \n  "
-         print "   Image Type:       Total Stacked Image, 1 pixel 0.250 "
-         print "   Method of Image Selection by:   Coordinate- Images are selected based on supplied Ra and DEC   "
-         print "   Size of the Postage Stamp:   (x) Arc-Second             Width:  2000         Height: 2000    pixel"
-         print "   Center Coordinate of Image  - Input coordinate From: "
-         print "                  (x)  Upload File           "
-         print "        Choose File:    "+_object+'_'+_band+'_ps1request.txt'
-         print '#'*20
-         answ = raw_input('Do you want to wait that the frames are downloded [y/n]  [y] ? ')
-         if not answ: 
-             answ= 'y'
-         if answ in ['Yes','yes','Y','y']:
-              print 'Which is the last req_name at this page: '
-              answ1 = raw_input('http://psps.ifa.hawaii.edu/PSI/postage_stamp_results.php ? ' )
-              if not answ1:  
-                  sys.exit('no name provided, no PS1 images have been downloaded')
-              else:
-                  print 'try download........'
-                  frames = downloadPS1('./',answ1)
-      else:
-          frames2 = []
-          for img in frames:
-               if '_'+_band+'_' in img:
-                    frames2.append(img)
-
-          frames = frames2
+      # tile around the coordinates of the source by 0.15 deg
+      delta= 0.15
+      DR = delta/np.cos(_dec*np.pi/180)
+      DD = delta
+      frames = []
+      for i in [-2.0, -1.0, 0.0, 1.0, 2.0]:
+          frame = geturl(_ra+i*DR, _dec+i*DD, filters=_band)
+          frames.append(frame)
+      for i in [-2.0, -1.0, 0.0, 1.0, 2.0]:
+          frame = geturl(_ra+i*DR, _dec-i*DD, filters=_band)
+          frames.append(frame)
    if len(frames):
-         out, varimg = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey, show=show)
+       out, varimg = sdss_swarp(frames,_telescope,_ra,_dec,'',_object, survey, show=show)
    else:
        sys.exit('exit, no PS1 images have been downloaded')
    return out, varimg

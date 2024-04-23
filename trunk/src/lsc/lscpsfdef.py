@@ -297,6 +297,7 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
         else:
             ############              run  sextractor                #####################################
             xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
+            print('ran sextractor')
             tot = np.compress(abs(np.array(fluxrad) * 1.6 - fwhm) / fwhm < .5, fluxrad)
             if len(tot) < 5:
                 print 'warning: fwhm from sexractor different from fwhm computed during pre-reduction'

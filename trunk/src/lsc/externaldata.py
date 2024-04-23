@@ -349,10 +349,10 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        #_telescope = string.split(hdr.get('TELESCOP'),' ')[0]
        _saturate = 61000 # used for sloan
        #_ron = 2 # from the code downloadsdss not for decam
-       _gain = hdr.get('ARAWGAIN')
+       #_gain = hdr.get('ARAWGAIN')
        #_saturate = hdr.get('SATURATE')
-       _ron = hdr.get('RDNOISEA')
-       _exp = 1800
+       #_ron = hdr.get('RDNOISEA')
+       #_exp = 1800
        if not _ra:
           _ra = hdr.get('CRVAL1')
        if not _dec:
@@ -483,9 +483,8 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
         hd2 = fits.getheader(imgmask[0])
         ar2 = fits.getdata(imgmask[0])
     print(ar, 'odaayy')
-    #hd2 = fits.getheader(re.sub('.fits', '', output) + '.weight.fits')
-    #ar2 = fits.getdata(re.sub('.fits', '', output) + '.weight.fits')
     variance = 1 / ar2
+
     #  this is to take in account that the weight is normalized
     variance *= (np.median(np.abs(ar - np.median(ar)))*1.48)**2/np.median(variance)
     varimg = re.sub('.fits', '', output) + '.var.fits'
@@ -524,7 +523,10 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
         hd['TELESCOP'] = ('decam', 'name of the telescope')
         hd['INSTRUME'] = ('decam', 'instrument used')
         hd['SITEID'] = ('decam', 'ID code of the Observatory site')
-        hd['EXPTIME'] = (_exp, 'exposure time')
+        #hd['EXPTIME'] = (_exp, 'exposure time')
+        hd['EXPTIME'] = (1, 'dummy exposure time')
+        hd['GAIN']     = (1,      'dummy gain')
+        hd['RDNOISE']  = (0,       'dummy read out noise')
 
     ar, hdr = northupeastleft(data=ar, header=hd)
     out_fits = fits.PrimaryHDU(header=hd, data=ar)
@@ -711,67 +713,67 @@ def downloadPS1(homedir,filename):
 
 ################################################################################################################
 
-def download_decam(_ra, _dec, _fov, _band):
+# def download_decam(_ra, _dec, _fov, _band, _base_path= os.getcwd()):
 
-        #from astroquery.noirlab import Noirlab
-        import astropy.coordinates as coord
-        from astropy import units as u
-        from astropy.coordinates import SkyCoord
-        from astropy.visualization import ZScaleInterval
+#         #from astroquery.noirlab import Noirlab
+#         import astropy.coordinates as coord
+#         from astropy import units as u
+#         from astropy.coordinates import SkyCoord
+#         from astropy.visualization import ZScaleInterval
 
-        # std lib
-        from getpass import getpass
-        import warnings
-        from astropy.utils.exceptions import AstropyWarning
-        warnings.simplefilter('ignore', category=AstropyWarning) # to quiet Astropy warnings
+#         # std lib
+#         from getpass import getpass
+#         import warnings
+#         from astropy.utils.exceptions import AstropyWarning
+#         warnings.simplefilter('ignore', category=AstropyWarning) # to quiet Astropy warnings
 
-        # 3rd party
-        import numpy as np
-        from numpy.core.defchararray import startswith
-        import pylab as plt
-        import matplotlib
+#         # 3rd party
+#         import numpy as np
+#         from numpy.core.defchararray import startswith
+#         import pylab as plt
+#         import matplotlib
 
-        from pyvo.dal import sia
-        from astropy.utils.data import download_file
-        from astropy.io import fits
-        from astropy.wcs import WCS
-        from astropy.visualization import make_lupton_rgb
-        import urllib
-        from urllib import urlretrieve
+#         from pyvo.dal import sia
+#         from astropy.utils.data import download_file
+#         from astropy.io import fits
+#         from astropy.wcs import WCS
+#         from astropy.visualization import make_lupton_rgb
+#         import urllib
+#         from urllib import urlretrieve
         
-        frames=[]
-        #DEF_ACCESS_URL = "https://datalab.noirlab.edu/sia/ls_dr7"
-        #svc_ls_dr7 = sia.SIAService(DEF_ACCESS_URL)
+#         frames=[]
+#         #DEF_ACCESS_URL = "https://datalab.noirlab.edu/sia/ls_dr7"
+#         #svc_ls_dr7 = sia.SIAService(DEF_ACCESS_URL)
         
-        DEF_ACCESS_URL = "https://datalab.noirlab.edu/sia/ls_dr9"
-        svc_ls_dr9 = sia.SIAService(DEF_ACCESS_URL)
+#         DEF_ACCESS_URL = "https://datalab.noirlab.edu/sia/ls_dr9"
+#         svc_ls_dr9 = sia.SIAService(DEF_ACCESS_URL)
 
 
-        imgTable = svc_ls_dr9.search((_ra,_dec), (_fov/np.cos(_dec*np.pi/180), _fov), verbosity=2).to_table()
-        if len(imgTable)==0:
-                print('No data with these coordinates available')
+#         imgTable = svc_ls_dr9.search((_ra,_dec), (_fov/np.cos(_dec*np.pi/180), _fov), verbosity=2).to_table()
+#         if len(imgTable)==0:
+#                 print('No data with these coordinates available')
 
-        base_path= os.getcwd()
+        
                             
-        sel = (imgTable['proctype'] == 'Stack') & (imgTable['instrument_name'] == 'DECam') & \
-                            (startswith(imgTable['obs_bandpass'].astype(str), _band))
+#         sel = (imgTable['proctype'] == 'Stack') & (imgTable['instrument_name'] == 'DECam') & \
+#                             (startswith(imgTable['obs_bandpass'].astype(str), _band))
 
-        row = imgTable[sel]
-        for i in range(len(row)):
-                row = imgTable[sel][i]
-                name_image= row['obs_publisher_did'].split('/')[-1][:-3]
-                output = base_path+'/'+name_image
-                url = row['access_url'] # get the download URL
-                #output = urllib.request.urlretrieve(url, output)
-                #output =urllib.urlopen(url, output)
-                try:
-                    requests = urllib.urlretrieve(url, output)
-                except:
-                    print 'problem '+str(url)
-                    continue
+#         row = imgTable[sel]
+#         for i in range(len(row)):
+#                 row = imgTable[sel][i]
+#                 name_image= row['obs_publisher_did'].split('/')[-1][:-3]
+#                 output = _base_path+'/'+name_image
+#                 url = row['access_url'] # get the download URL
+#                 #output = urllib.request.urlretrieve(url, output)
+#                 #output =urllib.urlopen(url, output)
+#                 try:
+#                     requests = urllib.urlretrieve(url, output)
+#                 except:
+#                     print 'problem '+str(url)
+#                     continue
                 
-                frames.append(output)
-        print(frames, 'este')
+#                 frames.append(output)
+#         print(frames, 'este')
         
         '''
         frames = ['/Users/estefaniapadilla/pipeline_data/data_reduction/22joj/legacysurvey-2203p030-image-g.fits',
@@ -782,7 +784,31 @@ def download_decam(_ra, _dec, _fov, _band):
                 '/Users/estefaniapadilla/pipeline_data/data_reduction/22joj/legacysurvey-2203p030-depth-g.fits',
                 '/Users/estefaniapadilla/pipeline_data/data_reduction/22joj/legacysurvey-2203p030-chi2-g.fits']
         '''
-        return frames
+#        return frames
+    
+def download_decam(_ra, _dec, _fov, _band, _base_path= os.getcwd()):
+   from astroquery.hips2fits import hips2fits
+   import astropy.units as u
+   from astropy.coordinates import Longitude, Latitude, Angle
+
+   hips = 'CDS/P/DSS2/c' ## r and g not working for some pointings
+
+   result = hips2fits.query(
+      hips=hips,
+      width=1200,
+      height=900,
+      ra=Longitude(_ra * u.deg),
+      dec=Latitude(_dec * u.deg),
+      fov=Angle(0.45 * u.deg),
+      projection="AIT",
+      get_query_payload=False,
+      format='fits',
+      min_cut=0.5,
+      max_cut=99.5,
+      cmap=Colormap('viridis'),
+   )
+
+   return result
 
 
 ######################################################################################################################
@@ -875,7 +901,7 @@ def name_change(imglist, objname ='', _telescope=''):
     _dayobs = _dayobs.replace('-', '')
     _saturate = 61000 # used for sloan
     _gain = hdr.get('ARAWGAIN')
-    _ron = hdr.get('RDNOISEA')
+    _ron = hdr.get('RDNOISE')
     _ra = hdr.get('RA')
     _dec = hdr.get('DEC')
     
@@ -902,19 +928,23 @@ def name_change(imglist, objname ='', _telescope=''):
     #hd['MJD-OBS']  = (_mjd,       'MJD')
     hdr['RA']       = (_ra,        'RA')
     hdr['DEC']      = (_dec,       'DEC')
-    hdr['RDNOISE']  = (_ron,       'read out noise')
+    #hdr['RDNOISE']  = (_ron,       'read out noise')
     hdr['PIXSCALE'] = (pixelscale, '[arcsec/pixel] Nominal pixel scale on sky')
     hdr['FILTER']   = (_filter,    'filter used')
     hdr['DAY-OBS']   = (_dayobs,    'day of observation')
-    #hd['AIRMASS']  = (_airmass,   'airmass')
-    #hd['DATE-OBS'] = (_dateobs,   'date of observation')
-    hdr['GAIN']     = (_gain,      'gain')
+    #hdr['GAIN']     = (_gain,      'gain')
     hdr['SATURATE'] = (_saturate,  'saturation level ')
+    hdr['GAIN']     = (1,      'dummy gain')
+    hdr['RDNOISE'] = (0,  'DUMMY ron ')
+    hdr['EXPTIME'] = (1, 'dummy exptime')
     if objname:
         hdr['OBJECT'] = (objname, 'title of the data set')
     hdr['TELESCOP'] = ('decam', 'name of the telescope')
     hdr['INSTRUME'] = ('decam', 'instrument used')
     hdr['SITEID'] = ('decam', 'ID code of the Observatory site')
+    #hdr['EXPTIME'] = (1, 'dummy exptime')
+    #hdr['GAIN']     = (1,      'dummy gain')
+    #hdr['RDNOISE'] = (0,  'DUMMY ron ')
 
     # Close the FITS file
     image_file.close()

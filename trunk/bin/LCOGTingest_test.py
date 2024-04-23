@@ -303,8 +303,8 @@ if __name__ == "__main__":
     print 'Total number of frames:', len(frames), frames
 
     fullpaths = []
-    #filepath = ['/supernova/data/extdata/20210729']
-    #frames ='lsc1m009-fa04-20210729-0059-e91.fits.fz'
+    filepath = ['/supernova/data/extdata/20210729']
+    frames ='lsc1m009-fa04-20210729-0059-e91.fits.fz'
     for frame in frames:
         if '.tar.gz' not in frame['filename']:
         # if '.tar.gz' not in frame:

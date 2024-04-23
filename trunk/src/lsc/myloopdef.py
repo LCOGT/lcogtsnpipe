@@ -291,8 +291,10 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
                             command += ' -c ' + _catalogue
                             break
                 print command
+                print('running wcs')
                 os.system(command)
             elif mode == 'astrometry':
+                print('running astrometry')
                 lsc.lscastrodef.run_astrometry(_dir + img, True, redo)
             else:
                 print str(_mode)+' not defined'

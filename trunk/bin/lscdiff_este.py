@@ -229,7 +229,6 @@ if __name__ == "__main__":
                             print(tempmask0, 'tempmask0')
                             tempmask_reproj, tempmask_foot = reproject_interp(_dirtemp + tempmask0, head_targ)
                             tempmask_reproj = (tempmask_reproj > 0.) | (temp_foot == 0.)
-                            print(tempmask_reproj, 'temp mask reproj')
                             fits.writeto(tempmask, tempmask_reproj.astype('uint8'), head_targ, overwrite=True)
 
                             tempnoise_reproj, tempnoise_foot = reproject_interp(_dirtemp + tempnoise0, head_targ)
@@ -335,48 +334,9 @@ if __name__ == "__main__":
                         else:
                             _afssc = ''
 
-                        if args.difftype == 1:
-                            psftarg = '_targpsf.fits'
-                            psftemp = '_temppsf.fits'
-                            if args.no_iraf:
-                                lsc.myloopdef.seepsf(imgtarg_path.replace('.fits', '.psf.fits'), psftarg)
-                                lsc.myloopdef.seepsf(imgtemp_path.replace('.fits', '.psf.fits'), psftemp)
-                            else:
-                                iraf.noao()
-                                iraf.digiphot()
-                                iraf.daophot(_doprint=0)
-                                os.system('rm {0} {1}'.format(psftarg, psftemp))
-                                iraf.seepsf(imgtarg_path.replace('.fits','.psf.fits'), psftarg)
-                                iraf.seepsf(imgtemp_path.replace('.fits','.psf.fits'), psftemp)
-                            try:
-                                print 'Passing images to PyZOGY'
-                                run_subtraction(imgtarg, imgtemp, psftarg, psftemp,
-                                                           science_mask=targmask,
-                                                           reference_mask=tempmask,
-                                                           science_saturation=sat_targ,
-                                                           reference_saturation=sat_temp,
-                                                           n_stamps=1,
-                                                           output=imgout,
-                                                           normalization=args.normalize,
-                                                           show=args.show,
-                                                           use_mask_for_gain=args.use_mask,
-                                                           pixstack_limit=args.pixstack_limit)
-                            except Exception as e:
-                                print e
-                                print 'PyZOGY failed on', imgtarg0
-                                continue
 
-                            # create fields in header that hotpants does
-                            hotpants_fields = {'TARGET': (imgtarg_path, 'target image'),
-                                               'TEMPLATE': (imgtemp_path, 'template image'),
-                                               'DIFFIM': (imgout, 'Difference Image'),
-                                               'NREGION': (1, 'Number of independent regions'),
-                                               'MASKVAL': (1e-30, 'Value of Masked Pixels')}
-                            lsc.util.updateheader(imgout, 0,  hotpants_fields)
-
-
-                        else:
-                            line = ('hotpants -inim ' + imgtarg + ' -tmplim ' + imgtemp + ' -outim ' + imgout +
+                        if args.difftype == 0:
+                            line = ('hotpants -inim ' + imgtarg + ' -tmplim ' + imgtemp + ' -outim ' + imgout0 +
                                     ' -tu ' + tuthresh + ' -tuk ' + tucthresh +
                                     ' -tl ' + str(min(-pssl_temp,0)) + ' -tg ' + str(gain_temp) +
                                     ' -tr ' + str(rn_temp) + ' -tp ' + str(min(-pssl_temp,0)) +
@@ -405,6 +365,9 @@ if __name__ == "__main__":
                                   ' ' + imgout0.replace('.fits', 'xy.all'))
                         print(imgout, 'imgout')
                         hd = fits.getheader(imgout)
+                        print('should stop here')
+
+                        '''
                         lsc.util.updateheader(imgout, 0,
                                               {'template': (imgtemp0, 'template image'),
                                                'exptemp': (exp_temp,'exposure time template')})
@@ -428,7 +391,7 @@ if __name__ == "__main__":
                             #                    copy all information from target
                         hd = fits.getheader(imgout)
                         dictionary = {}
-
+                        
                         try:
                             ggg0 = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', imgtarg0, '*')
                             for voce in ggg0[0].keys():
@@ -436,7 +399,6 @@ if __name__ == "__main__":
                                     dictionary[voce] = ggg0[0][voce]
                         except:
                             dictionary = {'dateobs': lsc.util.readkey3(hd, 'date-obs'),
-                                          'exptime': lsc.util.readkey3(hd, 'exptime'),
                                           'dayobs': lsc.util.readkey3(hd, 'day-obs'),
                                           'filter': lsc.util.readkey3(hd, 'filter'),
                                           'telescope': lsc.util.readkey3(hd, 'telescop'),
@@ -447,15 +409,6 @@ if __name__ == "__main__":
                                           'instrument': lsc.util.readkey3(hd, 'instrume'),
                                           'ra0': lsc.util.readkey3(hd, 'RA'), 'dec0': lsc.util.readkey3(hd, 'DEC')}
 
-                        dictionary['exptime'] =  lsc.util.readkey3(hd, 'exptime')
-                        dictionary['psf'] = 'X'
-                        dictionary['mag'] = 9999
-                        dictionary['psfmag'] = 9999
-                        dictionary['apmag'] = 9999
-                        dictionary['z1'] = 9999
-                        dictionary['z2'] = 9999
-                        dictionary['c1'] = 9999
-                        dictionary['c2'] = 9999
                         dictionary['filename'] = imgout0
                         dictionary['filepath'] = _dir
                         dictionary['filetype'] = 3
@@ -468,38 +421,17 @@ if __name__ == "__main__":
                                 print dictionary['filepath']
                                 os.mkdir(dictionary['filepath'])
                             if not os.path.isfile(dictionary['filepath'] + imgout0) or args.force in ['yes', True]:
-                                #os.system('mv -v ' + imgout + ' ' + dictionary['filepath'] + imgout0)
-                                os.system('mv -v ' + imgout + ' ' + dictionary['filepath'] + 'este_out.fits')
+                                os.system('mv -v ' + imgout + ' ' + dictionary['filepath'] + imgout0)
                                 os.system('mv -v ' + imgtemp + ' ' + dictionary['filepath'] + imgout0.replace('.diff.', '.ref.'))
                                 print('test este 3')
-                                if args.difftype == 1:
-                                    print('test este 4')
-                                    hdulist = fits.open(imgout.replace('.fits', '.psf.fits'))
-                                    imgdata = hdulist[0].data
-                                    yctr, xctr = np.array(imgdata.shape) / 2
-                                    cutsize = 100
-                                    hdulist[0].data = imgdata[yctr - cutsize : yctr + cutsize, xctr - cutsize : xctr + cutsize]
-                                    psffile_fields = {'PIXSCALE': head_targ['PIXSCALE'],
-                                                      'CRPIX1': cutsize, 'CRPIX2': cutsize, # make a fake WCS solution
-                                                      'CRVAL1': 0, 'CRVAL2': 0,             # where we know the PSF star
-                                                      'CD1_1': 1, 'CD2_2': 1,               # is at (0, 0), which is the
-                                                      'CD1_2': 0, 'CD2_1': 0}               # center of the image
-                                    if args.normalize == 't':
-                                        print('test este 5')
-                                        psffile_fields['EXPTIME'] = head_temp['EXPTIME']
-                                        psffile_fields['SATURATE'] = head_temp['SATURATE']
-                                    elif args.normalize == 'i':
-                                        print('test este 6')
-                                        psffile_fields['EXPTIME'] = head_targ['EXPTIME']
-                                        psffile_fields['SATURATE'] = head_targ['SATURATE']
-                                    hdulist[0].header.update(psffile_fields)
-                                    hdulist.writeto(dictionary['filepath'] + imgout0.replace('.fits', '.zogypsf.fits'), overwrite=True)
-                                    hdulist.close()
+                        '''
+                                
                         ###########################################################################################################
                         #                           choose sn2 file depending on
                         #                           normalization parameter
                         #
                         ##########################################################################################################
+                        '''
                         if args.normalize == 'i':
                             print '\n ### scale to target'
                             imgscale = imgtarg0
@@ -566,3 +498,4 @@ if __name__ == "__main__":
                             lsc.mysqldef.insert_values(conn, 'photpairing', dictionary)
                         else:
                             print 'warning: mysql database not updated, you are not connected to the database'
+                        '''

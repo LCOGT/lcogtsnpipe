@@ -137,7 +137,7 @@ def readkey3(hdr,keyword):
        _instrume=hdr.get('INSTRUME').lower()
     except: 
        _instrume='none'
-    if 'kb' in _instrume: # SBIG
+    if ('kb' in _instrume) or ('sq' in _instrume): # SBIG or QHY
         useful_keys = {'object'    : 'OBJECT',\
                            'date-obs'  : 'DATE-OBS',\
                            'ut'        : 'DATE-OBS',\
@@ -161,7 +161,7 @@ def readkey3(hdr,keyword):
                            'type'      : 'OBSTYPE',\
                            'propid'      : 'PROPID',\
                            'userid'      : 'USERID',\
-                           'telescop'  : 'TELESCOP'} 
+                           'telescop'  : 'TELESCOP'}
     elif 'fl' in _instrume or 'fa' in _instrume: # sinistro
         useful_keys = {'object'    : 'OBJECT',\
                            'date-obs'  : 'DATE-OBS',\

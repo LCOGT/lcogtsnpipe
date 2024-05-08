@@ -258,6 +258,7 @@ Where STANDARD is the standard you calibrated previously. You should use the ful
 * update the targets table of the database (manually) to know about this catalog ```update targets set landolt_cat=CATALOG where id=ID``` where CATALOG is the catalog you moved in the previous step and ID is the id of your supernova
 ### Run the photometry as usual 
 * e.g. ```lscloop.py -n 'SN 2018zd' -e 20180302-20190419 -f landolt -s zcat```
+* note: because you are calculating the conversion from instrumental to apparent magnitudes, you do not need to run any stage before the zcat stage
 
 # Difference Imaging
 Start with the automatically reduced photometry. I will use NAME as the

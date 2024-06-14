@@ -31,15 +31,12 @@ from subprocess import call
 from mysql.connector import connect
 
 
-
 #------------- SETTINGS -------------#
 template_order_labels = ['PS1', 'LCO', 'DECam', 'Skymapper']
 template_order = []
 for t in template_order_labels:
     for f in ['g', 'r', 'i']:
         template_order.append(t+'_'+f)
-
-
 
 
 
@@ -157,6 +154,7 @@ def get_target_list():
 
 
 
+
 def run_subtraction(targets):
     """
         Runs subtraction on narrowed list of targets provided by
@@ -207,8 +205,8 @@ def run_subtraction(targets):
         tempdate = send_query(query, conn)[0][0].encode('utf-8')
         filt = target.filter.replace('p', '')
         instrument = filter(str.isalpha, target.instrument.encode('utf-8'))
-        # command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff --no_iraf".format(objname, date, tel_id, tempdate, filt, instrument)
-        command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {1} -d {2} -s ingestps1 -f {4} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff --no_iraf".format(objname, date, tel_id, tempdate, filt, instrument)
+        command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff --no_iraf".format(objname, date, tel_id, tempdate, filt, instrument)
+        # command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {1} -d {2} -s ingestps1 -f {4} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff --no_iraf".format(objname, date, tel_id, tempdate, filt, instrument)
 
 
         call(command, shell=True)
@@ -245,3 +243,42 @@ def run_subtraction(targets):
 
         ## perform subtraction ##
         subtraction_func(target)
+
+
+
+
+
+    
+
+
+
+def main():
+    target_list = get_target_list()
+    run_subtraction(target_list)
+
+
+#------------- SWITCHBOARD -------------#
+if __name__ == '__main__':
+    main()
+
+
+
+# CREATE TABLE o4_galaxies (
+#     id bigint(20) unsigned,
+#     targetid int(11),
+#     event_id varchar(255),
+#     ra0 double,
+#     dec0 double,
+#     PS1_g varchar(255),
+#     PS1_r varchar(255),
+#     PS1_i varchar(255),
+#     DECam_g varchar(255),
+#     DECam_r varchar(255),
+#     DECam_i varchar(255),
+#     LCO_g varchar(255),
+#     LCO_r varchar(255),
+#     LCO_i varchar(255),
+#     Skymapper_g varchar(255),
+#     Skymapper_r varchar(255),
+#     Skymapper_i varchar(255)
+# );

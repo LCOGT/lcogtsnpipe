@@ -153,3 +153,95 @@ def get_target_list():
 
     print("List of targets: ", target_list)
     return target_list
+
+
+
+
+def run_subtraction(targets):
+    """
+        Runs subtraction on narrowed list of targets provided by
+        get_target_list().
+
+        Info needed for subtraction: 
+         - instrument
+         - target id
+         - filter
+         - date
+         - template date ? how to obtain this
+    
+        **Args**:
+    
+        * targets (list): list of targets to perform subtraction on
+    
+        **Returns**:
+    
+        * none (none): none
+    
+    """
+
+
+    def subtract_LCO(target):
+        print("Perfoming LCO subtraction on {0}.".format(target.objname))
+        print("No commands available.")
+
+
+
+    def subtract_DECam(target):
+        print("Perfoming DEcam subtraction on {0}.".format(target.objname))
+        print("No commands available.")
+
+    def subtract_PS1(target):
+        print("Perfoming PS1 subtraction on {0}.".format(target.objname))
+        objname = target.objname
+        date = target.dayobs
+        tel_id = target.targetid
+        conn = connect(
+            user = 'supernova',
+            password = 'supernova',
+            host = 'supernovadb',
+            database = 'supernova'
+        )
+        filename = getattr(target, target.TEMP_SRC+'_'+target.TEMP_FILT).split('/')[-1]
+        query = "SELECT dayobs FROM photlco WHERE targetid=3 AND filename='{0}'".format(filename)
+        print(query)
+        tempdate = send_query(query, conn)[0][0].encode('utf-8')
+        filt = target.filter.replace('p', '')
+        instrument = filter(str.isalpha, target.instrument.encode('utf-8'))
+        # command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff --no_iraf".format(objname, date, tel_id, tempdate, filt, instrument)
+        command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {1} -d {2} -s ingestps1 -f {4} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff --no_iraf".format(objname, date, tel_id, tempdate, filt, instrument)
+
+
+        call(command, shell=True)
+
+
+
+    def subtract_Skymapper(target):
+        print("Perfoming Skymapper subtraction on {0}.".format(target.objname))
+        print("No commands available.")
+
+
+    subfunc_switchboard = {
+        'LCO':subtract_LCO,
+        'DECam':subtract_DECam,
+        'PS1':subtract_PS1,
+        'Skymapper':subtract_Skymapper,
+    }
+    
+    print("Running subtraction on: ", targets)
+    
+    ## iterate over targets ##
+    for target in targets:
+
+        print("Loading target {0} with target ID {1} and object name {2}".format(target, target.targetid, target.objname))
+
+        ## ingest template with filetype=4
+        print(target.TEMP_SRC)
+        print(target.TEMP_FILT)
+        lsc.mysqldef.ingestredu([getattr(target, target.TEMP_SRC+'_'+target.TEMP_FILT)], 'no', filetype=4)
+
+
+        ## associate with correct subtraction function ##
+        subtraction_func = subfunc_switchboard[target.TEMP_SRC]
+
+        ## perform subtraction ##
+        subtraction_func(target)

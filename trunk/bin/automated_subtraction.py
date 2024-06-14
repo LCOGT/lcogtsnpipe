@@ -75,3 +75,81 @@ class PotentialTarget(object):
         self.TEMP_SRC = None
         self.TEMP_FILT = None
 
+
+
+
+#------------- FUNCTIONS -------------#
+def send_query(query, conn):
+    cursor = conn.cursor()
+    cursor.execute(query)
+    result = cursor.fetchall()
+    return result
+
+
+def get_target_list():
+    """
+        Checks all recent observations for those relevant to GW events
+        and organizes their information in preparation for subtraction. 
+        Designed to run on schedule.
+    
+        **Args**:
+    
+        * none (none): none
+    
+        **Returns**:
+    
+        * target_list (list): list of targets to perform subtraction on
+    
+    """
+    
+
+    ## minimum to date to examine is 3 days ago ##
+    d = datetime.datetime(2023, 9, 01) - datetime.timedelta(3) ## DEBUGGING
+    # d = datetime.date.today() - datetime.timedelta(3)
+
+    ## convert to pipeline-friendly fmt (YYYYMMDD) ##
+    d = d.strftime("%Y%m%d")
+
+    '''
+     grab ID, name, obs fpath/fname, filetype, 
+     obsdate, and filter from obs in both 
+     photlco AND o5 as well as any template info 
+     for associated tampltes
+    '''
+    query  = "SELECT p.targetid, p.objname, p.filepath, p.filename, p.filetype, p.dayobs, p.filter, "
+    query += "o.PS1_g, o.PS1_r, o.PS1_i, "
+    query += "o.DECam_g, o.DECam_r, o.DECam_i, "
+    query += "o.LCO_g, o.LCO_r, o.LCO_i, "
+    query += "o.Skymapper_g, o.Skymapper_r, o.Skymapper_i, p.instrument "
+    query += "FROM photlco p INNER JOIN o4_galaxies o ON p.targetid = o.targetid " ## ensures that only targets in both are considered
+    query += "WHERE p.dayobs >= {0};".format(d)
+
+    ## connect to database ##
+    conn = connect(
+        user = 'supernova',
+        password = 'supernova',
+        host = 'supernovadb',
+        database = 'supernova'
+    )
+ 
+    result = send_query(query, conn)
+
+    ##
+    potential_targets = [PotentialTarget(r) for r in result]
+
+    target_list = []
+    for target in potential_targets:
+        for temp in template_order:
+            if getattr(target, temp) is None or getattr(target, temp) == '--':
+                continue
+            else:
+                target.TEMP_SRC = temp.split('_')[0]
+                target.TEMP_FILT = temp.split('_')[1]
+                if target.TEMP_FILT == target.filter or target.TEMP_FILT+'p' == target.filter:
+                    print("Template found with properties: {0},{1}".format(target.TEMP_SRC, target.TEMP_FILT))
+                    target_list.append(target)
+                    break 
+    
+
+    print("List of targets: ", target_list)
+    return target_list

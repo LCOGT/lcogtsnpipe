@@ -29,3 +29,14 @@ import lsc
 import datetime
 from subprocess import call
 from mysql.connector import connect
+
+
+
+#------------- SETTINGS -------------#
+template_order_labels = ['PS1', 'LCO', 'DECam', 'Skymapper']
+template_order = []
+for t in template_order_labels:
+    for f in ['g', 'r', 'i']:
+        template_order.append(t+'_'+f)
+
+

@@ -369,9 +369,9 @@ will select the same instrument given with -T.
     lscloop.py -n NAME -e TARGDATE-TARGDATE -b psf -s psf --show --fwhm 7 --datamax 75000
     ```
 
-3.  Once all the cosmic ray rejection is done (for science and reference images), run the subtraction. This will take a while. By default, `--tempdate=19990101-20080101` (useful for SDSS, PS1, and any other archival template image), `--temptel=IN`, `--fixpix=False`, and `--difftype=0` (0 = HOTPANTS, 1 = Optimal).
+3.  Once all the cosmic ray rejection is done (for science and reference images), run the subtraction. This will take a while. By default, `--tempdate=19990101-20080101` (useful for SDSS, PS1, and any other archival template image), `--temptel=IN`, `--fixpix=False`, and `--difftype=0` (0 = HOTPANTS, 1 = Optimal). For archival templates, the telescope name (`-T`) must be `kb, fs, fl, fa, ep,` or `sq` and `--temptel` is `PS1` or `SDSS`
     ```
-    lscloop.py -n NAME -e TARGDATE-TARGDATE --normalize t -T IN \[--tempdate TEMPDATE\] \[--temptel TEMPTEL\] \[--fixpix\] \[--difftype 1\] -s diff
+    lscloop.py -n NAME -e TARGDATE-TARGDATE --normalize t -T IN [--tempdate TEMPDATE] [--temptel TEMPTEL] [--fixpix] [--difftype 1] -s diff
     ```
 
     If you want, look over the results. Make sure to choose Frame $>$Tile on DS9.

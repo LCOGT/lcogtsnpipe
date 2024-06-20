@@ -329,7 +329,7 @@ will select the same instrument given with -T.
 
 1.  Choose a set of science images that includes one image with each camera--filter combination used. Then run the following command once for each of those images, using the ID numbers to choose individual frames. This will take a while.
     ```
-    lscloop.py -n NAME -e TARGDATE -d ID -s ingestsloan
+    lscloop.py -n NAME -e TARGDATE -d ID -s ingestps1
     ````
 
     Make a note of the TEMPDATE for each PS1 frame you download.

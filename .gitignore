@@ -1,6 +1,7 @@
 *.fits
 *.*~
 *.pyc
+*.cat
 .idea/
 .AppleDouble
 trunk/build
@@ -9,3 +10,4 @@ data/
 trunk/build/
 trunk/dist/*egg*
 .DS_Store
+trunk/src/lsc/standard

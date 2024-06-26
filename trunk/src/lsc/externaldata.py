@@ -266,11 +266,19 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
         pixelscale = 0.30104  # 2 meter
         _imagesize =  2020
     elif _telescope == 'sbig':
-            pixelscale = 0.467  # 1 meter
-            _imagesize =  2030
+        pixelscale = 0.467  # 1 meter
+        _imagesize =  2030
     elif _telescope == 'sinistro':
-            pixelscale = 0.387  # 1 meter
-            _imagesize =  4020
+        pixelscale = 0.387  # 1 meter
+        _imagesize =  4020
+    elif _telescope == 'muscat':
+        pixelscale = 0.27
+        _imagesize = 2020
+    elif _telescope == 'QHY':
+        pixelscale = 0.74
+        _imagesize = 162
+    else:
+        print(_telescope)
 
     if survey =='sloan':
        out1 = 'SDSS'
@@ -566,6 +574,8 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
       _telescope = 'sbig'
    elif 'ep' in _instrume:
        _telescope = 'muscat'
+   elif 'sq' in _instrume:
+       _telescope = 'qhy'
 
    print _ra, _dec, _band, _radius
    if survey == 'sloan':

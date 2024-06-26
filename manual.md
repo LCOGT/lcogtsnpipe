@@ -90,7 +90,7 @@ Where:
 * ```-f FILTER``` run only on observations from one filter or set of filters (U,u,B,g,V,r,R,i,I,z,w,landolt, apass, sloan)
 * ```--id, -d``` run only on a specific image specified by a 3 digit number in the filename. For example you would use ```--id 046``` to run on the file elp1m008-fl05-20180302-0046-s91.
 * ```-T``` run only on observations from one telescope. Valid options: 1m0, 2m0, or 0m4. Note: because of the implementation, there is a bug/feature to `-T` that you can search for any substring in the filename
-* ```-I``` run only on observations from one instrument. Valid options: kb, fl, fs, sinistro, sbig, muscat, ep
+* ```-I``` run only on observations from one instrument. Valid options: kb, fl, fs, sinistro, sbig, muscat, ep, sq, qhy
 * ```-b STAGE``` run only on observations marked at bad at a given stage (where stage is quality, wcs, psf, psfmag, zcat, mag)
 * in many of the quality check stages the user is asked whether a file is good or bad and there are two options for bad, `b` and `n`. In general the `b` option should only be used for unusable images as it removes the observation completely from future processing and hides it. The only way to get this observation back is to run `-s checkquality -b quality`. If you answer `n` that stage of the pipeline will be reset for you to run again (as if the stage failed).
 
@@ -258,6 +258,7 @@ Where STANDARD is the standard you calibrated previously. You should use the ful
 * update the targets table of the database (manually) to know about this catalog ```update targets set landolt_cat=CATALOG where id=ID``` where CATALOG is the catalog you moved in the previous step and ID is the id of your supernova
 ### Run the photometry as usual 
 * e.g. ```lscloop.py -n 'SN 2018zd' -e 20180302-20190419 -f landolt -s zcat```
+* note: because you are calculating the conversion from instrumental to apparent magnitudes, you do not need to run any stage before the zcat stage
 
 # Difference Imaging
 Start with the automatically reduced photometry. I will use NAME as the
@@ -328,7 +329,7 @@ will select the same instrument given with -T.
 
 1.  Choose a set of science images that includes one image with each camera--filter combination used. Then run the following command once for each of those images, using the ID numbers to choose individual frames. This will take a while.
     ```
-    lscloop.py -n NAME -e TARGDATE -d ID -s ingestsloan
+    lscloop.py -n NAME -e TARGDATE -d ID -s ingestps1
     ````
 
     Make a note of the TEMPDATE for each PS1 frame you download.
@@ -368,9 +369,9 @@ will select the same instrument given with -T.
     lscloop.py -n NAME -e TARGDATE-TARGDATE -b psf -s psf --show --fwhm 7 --datamax 75000
     ```
 
-3.  Once all the cosmic ray rejection is done (for science and reference images), run the subtraction. This will take a while. By default, `--tempdate=19990101-20080101` (useful for SDSS, PS1, and any other archival template image), `--temptel=IN`, `--fixpix=False`, and `--difftype=0` (0 = HOTPANTS, 1 = Optimal).
+3.  Once all the cosmic ray rejection is done (for science and reference images), run the subtraction. This will take a while. By default, `--tempdate=19990101-20080101` (useful for SDSS, PS1, and any other archival template image), `--temptel=IN`, `--fixpix=False`, and `--difftype=0` (0 = HOTPANTS, 1 = Optimal). For archival templates, the telescope name (`-T`) must be `kb, fs, fl, fa, ep,` or `sq` and `--temptel` is `PS1` or `SDSS`
     ```
-    lscloop.py -n NAME -e TARGDATE-TARGDATE --normalize t -T IN \[--tempdate TEMPDATE\] \[--temptel TEMPTEL\] \[--fixpix\] \[--difftype 1\] -s diff
+    lscloop.py -n NAME -e TARGDATE-TARGDATE --normalize t -T IN [--tempdate TEMPDATE] [--temptel TEMPTEL] [--fixpix] [--difftype 1] -s diff
     ```
 
     If you want, look over the results. Make sure to choose Frame $>$Tile on DS9.

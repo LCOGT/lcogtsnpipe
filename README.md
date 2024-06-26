@@ -63,10 +63,14 @@ These instructions only need to be run once, when you set up the pipeline.
         ```
         Now an window should appear.
         
-   7. Clone this repository: `git clone https://github.com/LCOGT/lcogtsnpipe`
+   7. Clone this repository: 
+       ```
+       git clone https://github.com/LCOGT/lcogtsnpipe
+       ```
    8. Build the Docker image:
-        * Mac M1/M2 Only: `docker build --platform linux/amd64 -t lcogtsnpipe lcogtsnpipe`
-        * Everyone else: `docker build -t lcogtsnpipe lcogtsnpipe`
+          ```
+          docker build -t lcogtsnpipe lcogtsnpipe
+          ```
         
    10. Set your environment variables to point to where you want to store data and catalogs.
       You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file
@@ -79,7 +83,12 @@ These instructions only need to be run once, when you set up the pipeline.
        with the correct permissions. If you need to use a pre-existing directory or in case docker doesn't set up the permissions correctly, you may have to update the permissions using
        `chmod -R 777 /path/to/data/`. 
        If you do not set these environment variables, they default to being in `data` and `mysql` in repo directory.
-   11. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
+   11. (MacOS only) Run XQuartz from the Finder.
+   12. (MacOS only) Run this hack in the background to get the X11 forwarding to work:
+       ```
+       socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &
+       ```
+   13. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
        this mental picture is close enough).
           ```
           docker-compose -f lcogtsnpipe/docker-compose.yml up
@@ -105,14 +114,14 @@ These instructions only need to be run once, when you set up the pipeline.
        
       This will take over your current terminal. Eventually, the terminal will print that the mysql host is ready to 
       accept connections
-   13. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
+   14. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
        ```
        docker exec -it lcosnpipe /bin/bash
        ```
        If you're configured correctly, you should be able to open a ds9 window now using `ds9` command. 
-   14. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
+   15. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
        the first time you setup the db.
-   15. From inside the container, run 
+   16. From inside the container, run 
        ```
        cd $LCOSNDIR
        mkdir -p data/lsc data/fts data/0m4 data/floyds data/extdata standard/cat/apass standard/cat/sloan standard/cat/landolt standard/cat/gaia
@@ -127,14 +136,23 @@ Follow these instructions each time you want to use the pipeline.
 
    1. Make sure the MySQL server and Docker daemon are running.
    2. (MacOS only) Run XQuartz from the Finder.
-   3. (MacOS only) Run this hack in the background to get the X11 forwarding to work: `socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &`
+   3. (MacOS only) Run this hack in the background to get the X11 forwarding to work:
+      ```
+      socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &
+      ```
    4. (Linux only) Set you display environment variable to point to the docker connection using 
-   ```
-   export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
-   ```
+      ```
+      export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
+      ```
    5. Make sure your `$LCOSNDIR` and `$LCOSNDBPATH` environment variables are set correctly. 
-   6. From inside the `lcogtsnpipe` directory, run `docker-compose up`
-   7. From a separate terminal you can enter the docker container using `docker exec -it lcosnpipe /bin/bash`
+   6. From inside the `lcogtsnpipe` directory, run
+      ```
+      docker-compose up
+      ```
+   7. From a separate terminal you can enter the docker container using
+      ```
+      docker exec -it lcosnpipe /bin/bash
+      ```
    8. Run your desired pipeline processing commands
    9. When you're done, type `exit` to leave the Docker container.
    10. To stop the set of docker containers (your "pipeline server"), use `control-c` in the terminal you ran `docker-compose up`.

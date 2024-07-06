@@ -211,12 +211,12 @@ Where:
 # Creating a Landolt Catalog:
 ### Download landolt standard star catalogs
 * Landolt standard star catalogs (L*.cat) are now part of the pipeline repository and can be found in $LCOSNDIR/standard/cat/landolt. 
-* For SA (selected area) standards, you will need to download your own catalog from [Vizier](https://vizier.u-strasbg.fr/viz-bin/VizieR-3?-source=II/183A/table2&-out.max=1000&-out.all=2&-out.all=2&-out.form=HTML%20Table&-oc.form=sexa). **Warning**: The coordinates in the original published paper have no decimal places, which is not precise enough for our needs. You must manually fix this! You may be able to look up more precise coordinates in [Simbad](https://simbad.cds.unistra.fr/simbad/sim-fid) by searching by identifier, e.g., "SA 109*" (don't forget the wildcard to get all the stars in the field). However, this table does not contain uncertainties on the magnitudes, so you have to manually assemble the final catalog. We then encourage you to then contribute the corrected catalog back to the pipeline for others to use.
+* For SA (selected area) standards, you may need to create your own catalog. First check Table 2 in [Landolt, 2009](https://ui.adsabs.harvard.edu/abs/2009AJ....137.4186L). This has proper coordinates although, as with all of the catalogs, the colors will need to be converted into magnitudes to match the other landolt catalogs. If the field is not in that paper, you can search [Vizier](https://vizier.u-strasbg.fr/viz-bin/VizieR-3?-source=II/183A/table2&-out.max=1000&-out.all=2&-out.all=2&-out.form=HTML%20Table&-oc.form=sexa). **Warning**: The coordinates in the original (Landolt, 1992) published paper have no decimal places, which is not precise enough for our needs. You must manually fix this! You may be able to look up more precise coordinates in [Simbad](https://simbad.cds.unistra.fr/simbad/sim-fid) by searching by identifier, e.g., "SA 109*" (don't forget the wildcard to get all the stars in the field). However, this table may not contain uncertainties on the magnitudes, so you might have to manually assemble the final catalog. We then encourage you to then contribute the corrected catalog back to the pipeline for others to use.
    * Put these files in the directory $LCOSNDIR/standard/cat/landolt
    * Reinstall the pipeline ```python setup.py install```
 
 ### Download and Calibrate the Standard Star Observations
-* Find standard stars that were observed during the epoch you need in the filter you need (U). The standard reduction practice is to create a landolt catalog for U, B, and V filters and calibrate your data with these. At a minimum, you also obtain B band for the color correction.
+* Find standard stars that were observed during the epoch you need in the filter you need (U). The standard reduction practice is to create a landolt catalog for U, B, and V filters and calibrate your data with these. At a minimum, you also obtain B band for the color correction. [SNEx 2](https://test.supernova.exchange) now has a link to a list all standard star observations that match your supernova observations on the photometry tab between the list of photometry and the plot of photometry.
 * Search archive.lco.global for observation type "STANDARD" and/or proposal "standard" (see note below), set date range, filter, site, telescope, and instrument. If you can't find a standard on the same night, the next best option is to all for different instruments (but same site and night). If you do this, you will need to use the `--match-by-site` option when you run the `local` stage.
 * You will be using standards from the same telescope and observed on the same night as your observations
 * Use LCOGTingest.py to download and ingest observations. For example ``` LCOGTingest.py -S lsc -T 1m0a -f U -I fl05 -s 2019-09-26 -e 2019-10-08  -r reduced -t STANDARD --public``` Where `-S` is the site, `-T` is the telescope, `-f` is the filter, -I is the instrument, `-s` is the start date, `-e` is the end date, `-r reduced` downloads files that have already been reduced with BANZAI, and `--public` is always required. Note: the date format has dashes and the search is exclusive of the end data. Also note: for many years in the late 2010s, LCO scheduled some (but not all) standard field observations with observation type EXPOSE instead of STANDARD. You can still identify them by their proposal ID "standard" (i.e., in the command above, replace `-t STANDARD` with `-P standard`).
@@ -258,6 +258,7 @@ Where STANDARD is the standard you calibrated previously. You should use the ful
 * update the targets table of the database (manually) to know about this catalog ```update targets set landolt_cat=CATALOG where id=ID``` where CATALOG is the catalog you moved in the previous step and ID is the id of your supernova
 ### Run the photometry as usual 
 * e.g. ```lscloop.py -n 'SN 2018zd' -e 20180302-20190419 -f landolt -s zcat```
+* note: because you are calculating the conversion from instrumental to apparent magnitudes, you do not need to run any stage before the zcat stage
 
 # Difference Imaging
 Start with the automatically reduced photometry. I will use NAME as the
@@ -328,7 +329,7 @@ will select the same instrument given with -T.
 
 1.  Choose a set of science images that includes one image with each camera--filter combination used. Then run the following command once for each of those images, using the ID numbers to choose individual frames. This will take a while.
     ```
-    lscloop.py -n NAME -e TARGDATE -d ID -s ingestsloan
+    lscloop.py -n NAME -e TARGDATE -d ID -s ingestps1
     ````
 
     Make a note of the TEMPDATE for each PS1 frame you download.
@@ -368,9 +369,9 @@ will select the same instrument given with -T.
     lscloop.py -n NAME -e TARGDATE-TARGDATE -b psf -s psf --show --fwhm 7 --datamax 75000
     ```
 
-3.  Once all the cosmic ray rejection is done (for science and reference images), run the subtraction. This will take a while. By default, `--tempdate=19990101-20080101` (useful for SDSS, PS1, and any other archival template image), `--temptel=IN`, `--fixpix=False`, and `--difftype=0` (0 = HOTPANTS, 1 = Optimal).
+3.  Once all the cosmic ray rejection is done (for science and reference images), run the subtraction. This will take a while. By default, `--tempdate=19990101-20080101` (useful for SDSS, PS1, and any other archival template image), `--temptel=IN`, `--fixpix=False`, and `--difftype=0` (0 = HOTPANTS, 1 = Optimal). For archival templates, the telescope name (`-T`) must be `kb, fs, fl, fa, ep,` or `sq` and `--temptel` is `PS1` or `SDSS`
     ```
-    lscloop.py -n NAME -e TARGDATE-TARGDATE --normalize t -T IN \[--tempdate TEMPDATE\] \[--temptel TEMPTEL\] \[--fixpix\] \[--difftype 1\] -s diff
+    lscloop.py -n NAME -e TARGDATE-TARGDATE --normalize t -T IN [--tempdate TEMPDATE] [--temptel TEMPTEL] [--fixpix] [--difftype 1] -s diff
     ```
 
     If you want, look over the results. Make sure to choose Frame $>$Tile on DS9.

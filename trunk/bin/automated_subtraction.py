@@ -38,6 +38,9 @@ for t in template_order_labels:
     for f in ['g', 'r', 'i']:
         template_order.append(t+'_'+f)
 
+# INGESTION_MODE = True will download a new set of templates
+# INGESTION_MODE = False will try to use Giacomo's templates
+INGESTION_MODE = True
 
 
 #------------- CLASSES -------------#
@@ -155,7 +158,7 @@ def get_target_list():
 
 
 
-def run_subtraction(targets):
+def run_subtraction(targets, ingestion_mode=False):
     """
         Runs subtraction on narrowed list of targets provided by
         get_target_list().
@@ -165,11 +168,12 @@ def run_subtraction(targets):
          - target id
          - filter
          - date
-         - template date ? how to obtain this
+         - template date
     
         **Args**:
     
         * targets (list): list of targets to perform subtraction on
+        * ingestion_mode (bool): whether to perform on-the-fly template download
     
         **Returns**:
     
@@ -188,11 +192,11 @@ def run_subtraction(targets):
         print("Perfoming DEcam subtraction on {0}.".format(target.objname))
         print("No commands available.")
 
-    def subtract_PS1(target):
+    def subtract_PS1(target, ingestion_mode=False):
         print("Perfoming PS1 subtraction on {0}.".format(target.objname))
         objname = target.objname
         date = target.dayobs
-        tel_id = target.targetid
+        target_id = target.targetid
         conn = connect(
             user = 'supernova',
             password = 'supernova',
@@ -200,12 +204,22 @@ def run_subtraction(targets):
             database = 'supernova'
         )
         filename = getattr(target, target.TEMP_SRC+'_'+target.TEMP_FILT).split('/')[-1]
-        query = "SELECT dayobs FROM photlco WHERE targetid=3 AND filename='{0}'".format(filename)
-        print(query)
-        tempdate = send_query(query, conn)[0][0].encode('utf-8')
-        filt = target.filter.replace('p', '')
-        instrument = filter(str.isalpha, target.instrument.encode('utf-8'))
-        command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff --no_iraf".format(objname, date, tel_id, tempdate, filt, instrument)
+        if ingestion_mode==True:
+            tempdate = '20100101-20160101'
+            filt = target.filter.replace('p', '')
+            instrument = filter(str.isalpha, target.instrument.encode('utf-8'))
+            command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {1} -s ingestps1 -f {4} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff -F".format(objname, date, target_id, tempdate, filt, instrument)
+            print(command)
+            # input()
+
+        else:
+            query = "SELECT dayobs FROM photlco WHERE targetid={1} AND filename='{0}'".format(filename, target_id)
+            print(query)
+            tempdate = send_query(query, conn)[0][0].encode('utf-8')
+            filt = target.filter.replace('p', '')
+            instrument = filter(str.isalpha, target.instrument.encode('utf-8'))
+            command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff -F".format(objname, date, target_id, tempdate, filt, instrument)
+
         # command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {1} -d {2} -s ingestps1 -f {4} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff --no_iraf".format(objname, date, tel_id, tempdate, filt, instrument)
 
 
@@ -237,12 +251,11 @@ def run_subtraction(targets):
         print(target.TEMP_FILT)
         lsc.mysqldef.ingestredu([getattr(target, target.TEMP_SRC+'_'+target.TEMP_FILT)], 'no', filetype=4)
 
-
         ## associate with correct subtraction function ##
         subtraction_func = subfunc_switchboard[target.TEMP_SRC]
 
         ## perform subtraction ##
-        subtraction_func(target)
+        subtraction_func(target, ingestion_mode=ingestion_mode)
 
 
 
@@ -253,32 +266,7 @@ def run_subtraction(targets):
 
 
 def main():
+    global INGESTION_MODE
+
     target_list = get_target_list()
-    run_subtraction(target_list)
-
-
-#------------- SWITCHBOARD -------------#
-if __name__ == '__main__':
-    main()
-
-
-
-# CREATE TABLE o4_galaxies (
-#     id bigint(20) unsigned,
-#     targetid int(11),
-#     event_id varchar(255),
-#     ra0 double,
-#     dec0 double,
-#     PS1_g varchar(255),
-#     PS1_r varchar(255),
-#     PS1_i varchar(255),
-#     DECam_g varchar(255),
-#     DECam_r varchar(255),
-#     DECam_i varchar(255),
-#     LCO_g varchar(255),
-#     LCO_r varchar(255),
-#     LCO_i varchar(255),
-#     Skymapper_g varchar(255),
-#     Skymapper_r varchar(255),
-#     Skymapper_i varchar(255)
-# );
+    run_subtraction(target_list, ingestion_mode=INGESTION_MODE)

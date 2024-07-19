@@ -32,7 +32,7 @@ from mysql.connector import connect
 
 
 #------------- SETTINGS -------------#
-template_order_labels = ['PS1', 'LCO', 'DECam', 'Skymapper']
+template_order_labels = ['PS1', 'LCO', 'DECam', 'Skymapper', 'SDSS']
 template_order = []
 for t in template_order_labels:
     for f in ['g', 'r', 'i']:
@@ -187,7 +187,6 @@ def run_subtraction(targets, ingestion_mode=False):
         print("No commands available.")
 
 
-
     def subtract_DECam(target):
         print("Perfoming DEcam subtraction on {0}.".format(target.objname))
         print("No commands available.")
@@ -232,11 +231,39 @@ def run_subtraction(targets, ingestion_mode=False):
         print("No commands available.")
 
 
+    def subtract_SDSS(target):
+        print("Perfoming SDSS subtraction on {0}.".format(target.objname))
+        print("No commands available.")
+
+        objname = target.objname
+        date = target.dayobs
+        target_id = target.targetid
+        conn = connect(
+            user = 'supernova',
+            password = 'supernova',
+            host = 'supernovadb',
+            database = 'supernova'
+        )
+        filename = getattr(target, target.TEMP_SRC+'_'+target.TEMP_FILT).split('/')[-1]
+        if ingestion_mode==True:
+            tempdate = '20060101-20070101'
+            filt = target.filter.replace('p', '')
+            instrument = filter(str.isalpha, target.instrument.encode('utf-8'))
+            command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {1} -s ingestsdss -f {4} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff -F".format(objname, date, target_id, tempdate, filt, instrument)
+            print(command)
+            # input()
+
+
+        call(command, shell=True)
+
+
+
     subfunc_switchboard = {
         'LCO':subtract_LCO,
         'DECam':subtract_DECam,
         'PS1':subtract_PS1,
         'Skymapper':subtract_Skymapper,
+        'SDSS':subtract_SDSS,
     }
     
     print("Running subtraction on: ", targets)
@@ -270,3 +297,9 @@ def main():
 
     target_list = get_target_list()
     run_subtraction(target_list, ingestion_mode=INGESTION_MODE)
+
+
+#------------- SWITCHBOARD -------------#
+if __name__ == '__main__':
+    main()
+

@@ -139,16 +139,20 @@ def get_target_list():
 
     target_list = []
     for target in potential_targets:
+        FOUND_TEMP = False
         for temp in template_order:
             if getattr(target, temp) is None or getattr(target, temp) == '--':
-                continue
+                pass
             else:
                 target.TEMP_SRC = temp.split('_')[0]
                 target.TEMP_FILT = temp.split('_')[1]
                 if target.TEMP_FILT == target.filter or target.TEMP_FILT+'p' == target.filter:
                     print("Template found with properties: {0},{1}".format(target.TEMP_SRC, target.TEMP_FILT))
                     target_list.append(target)
-                    break 
+                    FOUND_TEMP = True
+                    break
+        if INGESTION_MODE == True and FOUND_TEMP == False:
+            target_list.append(target)
     
 
     print("List of targets: ", target_list)

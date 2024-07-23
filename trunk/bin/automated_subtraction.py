@@ -32,7 +32,7 @@ from mysql.connector import connect
 
 
 #------------- SETTINGS -------------#
-template_order_labels = ['PS1', 'LCO', 'DECam', 'Skymapper', 'SDSS']
+template_order_labels = ['PS1', 'LCO', 'DECam', 'Skymapper']#, 'SDSS']
 template_order = []
 for t in template_order_labels:
     for f in ['g', 'r', 'i']:
@@ -72,8 +72,10 @@ class PotentialTarget(object):
         self.Skymapper_r = unpacked_attr[17]
         self.Skymapper_i = unpacked_attr[18]
         self.instrument = unpacked_attr[19]
+        self.filename = unpacked_attr[20]
         self.TEMP_SRC = None
         self.TEMP_FILT = None
+        self.FOUND_TEMP = False
 
 
 
@@ -116,7 +118,7 @@ def get_target_list():
      photlco AND o5 as well as any template info 
      for associated tampltes
     '''
-    query  = "SELECT p.targetid, p.objname, p.filepath, p.filename, p.filetype, p.dayobs, p.filter, "
+    query  = "SELECT p.targetid, p.objname, p.filepath, p.filename, p.filetype, p.dayobs, p.filter, p.filename"
     query += "o.PS1_g, o.PS1_r, o.PS1_i, "
     query += "o.DECam_g, o.DECam_r, o.DECam_i, "
     query += "o.LCO_g, o.LCO_r, o.LCO_i, "
@@ -148,6 +150,7 @@ def get_target_list():
                 target.TEMP_FILT = temp.split('_')[1]
                 if target.TEMP_FILT == target.filter or target.TEMP_FILT+'p' == target.filter:
                     print("Template found with properties: {0},{1}".format(target.TEMP_SRC, target.TEMP_FILT))
+                    target.FOUND_TEMP = True
                     target_list.append(target)
                     FOUND_TEMP = True
                     break
@@ -274,16 +277,19 @@ def run_subtraction(targets, ingestion_mode=False):
     }
     
     print("Running subtraction on: ", targets)
-    
+    logfile = open("/supernova/github/lcogtsnpipe/LOG.txt", "a")    
     ## iterate over targets ##
     for target in targets:
 
         print("Loading target {0} with target ID {1} and object name {2}".format(target, target.targetid, target.objname))
+        logfile.write("Performing subtraction on obj " + str(target.objname) " with filename " + str(target.filename) + " at time " + str(datetime.datetime.now()) + "\n")
+
 
         ## ingest template with filetype=4
-        print(target.TEMP_SRC)
-        print(target.TEMP_FILT)
-        lsc.mysqldef.ingestredu([getattr(target, target.TEMP_SRC+'_'+target.TEMP_FILT)], 'no', filetype=4)
+        if target.FOUND_TEMP == True:
+            print(target.TEMP_SRC)
+            print(target.TEMP_FILT)
+            lsc.mysqldef.ingestredu([getattr(target, target.TEMP_SRC+'_'+target.TEMP_FILT)], 'no', filetype=4)
 
         ## associate with correct subtraction function ##
         subtraction_func = subfunc_switchboard[target.TEMP_SRC]
@@ -292,7 +298,8 @@ def run_subtraction(targets, ingestion_mode=False):
         subtraction_func(target, ingestion_mode=ingestion_mode)
 
 
-
+    logfile.write("Done\n")
+    logfile.close()
 
 
     

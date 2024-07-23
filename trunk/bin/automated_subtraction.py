@@ -128,7 +128,7 @@ def get_target_list():
     conn = connect(
         user = 'supernova',
         password = 'supernova',
-        host = 'supernovadb',
+        host = 'supernova.science.lco.global',
         database = 'supernova'
     )
  
@@ -199,7 +199,7 @@ def run_subtraction(targets, ingestion_mode=False):
         conn = connect(
             user = 'supernova',
             password = 'supernova',
-            host = 'supernovadb',
+            host = 'supernova.science.lco.global',
             database = 'supernova'
         )
         filename = getattr(target, target.TEMP_SRC+'_'+target.TEMP_FILT).split('/')[-1]
@@ -241,7 +241,7 @@ def run_subtraction(targets, ingestion_mode=False):
         conn = connect(
             user = 'supernova',
             password = 'supernova',
-            host = 'supernovadb',
+            host = 'supernova.science.lco.global',
             database = 'supernova'
         )
         filename = getattr(target, target.TEMP_SRC+'_'+target.TEMP_FILT).split('/')[-1]

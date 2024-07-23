@@ -12,12 +12,12 @@ setup(
     license='LICENSE.txt', 
     description='lsc is a package to reduce PHTOMETRIC SN data',
     long_description=open('README.txt').read(),
-    requires=['numpy','astropy','matplotlib','MySQLdb', 'pyraf', 'reproject'],
+    requires=['numpy','astropy','matplotlib','MySQLdb', 'pyraf'],
     packages=['lsc'],
     package_dir={'': 'src'},
     package_data={'lsc': ["standard/astrometry/*cat","standard/*txt","standard/stdlist/*txt",
                          "standard/cat/*dat","standard/cat/*cat",
                          "standard/cat/sloan/*cat","standard/cat/landolt/*cat","standard/cat/apass/*cat",
                          "standard/cat/sloanprime/*cat","standard/cat/sloannatural/*cat","standard/cat/landoltnatural/*cat",
-                         "standard/sex/*", 'configure']}
+                         "standard/sex/*"]}
 )

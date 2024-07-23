@@ -104,8 +104,8 @@ def get_target_list():
     
 
     ## minimum to date to examine is 3 days ago ##
-    d = datetime.datetime(2023, 9, 01) - datetime.timedelta(3) ## DEBUGGING
-    # d = datetime.date.today() - datetime.timedelta(3)
+    # d = datetime.datetime(2023, 9, 01) - datetime.timedelta(3) ## DEBUGGING
+    d = datetime.date.today() - datetime.timedelta(3)
 
     ## convert to pipeline-friendly fmt (YYYYMMDD) ##
     d = d.strftime("%Y%m%d")
@@ -252,6 +252,9 @@ def run_subtraction(targets, ingestion_mode=False):
             command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {1} -s ingestsdss -f {4} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff -F".format(objname, date, target_id, tempdate, filt, instrument)
             print(command)
             # input()
+
+
+        # command = "lscloop.py -n {0} -e {1} && lscloop.py -n {0} -e {1} -d {2} -s ingestps1 -f {4} && lscloop.py -n {0} -e {3} --filetype 4 -s psf --fwhm 5 --use-sextractor && lscloop.py -n {0} -e {3} --filetype 4 -s cosmic && lscloop.py -n {0} -e {1} -s cosmic && lscloop.py -n {0} -e {1} --normalize i --convolve t -T {5} --tempdate {3} --temptel PS1 --fixpix --difftype 0 -s diff --no_iraf".format(objname, date, tel_id, tempdate, filt, instrument)
 
 
         call(command, shell=True)

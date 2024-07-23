@@ -1,4 +1,5 @@
-from distutils.core import setup
+# from distutils.core import setup
+from setuptools import setup
 from os import path
 from glob import glob
 
@@ -12,7 +13,7 @@ setup(
     license='LICENSE.txt', 
     description='lsc is a package to reduce PHTOMETRIC SN data',
     long_description=open('README.txt').read(),
-    install_requires=['numpy','astropy','matplotlib','MySQLdb', 'pyraf', 'reproject', 'mysql-connector-python-rf'],
+    requires=['numpy','astropy','matplotlib','MySQLdb', 'pyraf', 'reproject', 'mysql-connector-python-rf'],
     packages=['lsc'],
     package_dir={'': 'src'},
     package_data={'lsc': ["standard/astrometry/*cat","standard/*txt","standard/stdlist/*txt",

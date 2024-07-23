@@ -12,6 +12,7 @@ setup(
     license='LICENSE.txt', 
     description='lsc is a package to reduce PHTOMETRIC SN data',
     long_description=open('README.txt').read(),
+    # we also require mysql-connector-python-rf
     requires=['numpy','astropy','matplotlib','MySQLdb', 'pyraf'],
     packages=['lsc'],
     package_dir={'': 'src'},

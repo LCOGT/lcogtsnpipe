@@ -156,7 +156,7 @@ def get_target_list():
                     break
         if INGESTION_MODE == True and FOUND_TEMP == False:
             target.TEMP_SRC = 'PS1'
-            target.TEMP_FILT = target.filter
+            target.TEMP_FILT = target.filter.replace('p', '')
             target_list.append(target)
     
 

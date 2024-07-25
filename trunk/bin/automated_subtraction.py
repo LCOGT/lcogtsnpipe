@@ -41,6 +41,7 @@ for t in template_order_labels:
 # INGESTION_MODE = True will download a new set of templates
 # INGESTION_MODE = False will try to use Giacomo's templates
 INGESTION_MODE = True
+DEFAULT = 'PS1'
 
 
 #------------- CLASSES -------------#
@@ -154,6 +155,7 @@ def get_target_list():
                     FOUND_TEMP = True
                     break
         if INGESTION_MODE == True and FOUND_TEMP == False:
+            target.TEMP_SRC = 'PS1'
             target_list.append(target)
     
 

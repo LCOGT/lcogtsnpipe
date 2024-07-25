@@ -211,7 +211,7 @@ def run_subtraction(targets, ingestion_mode=False):
             host = 'supernova.science.lco.global',
             database = 'supernova'
         )
-        filename = getattr(target, target.TEMP_SRC+'_'+target.TEMP_FILT).split('/')[-1]
+        
         if ingestion_mode==True:
             tempdate = '20100101-20160101'
             filt = target.filter.replace('p', '')
@@ -221,6 +221,7 @@ def run_subtraction(targets, ingestion_mode=False):
             # input()
 
         else:
+            filename = getattr(target, target.TEMP_SRC+'_'+target.TEMP_FILT).split('/')[-1]
             query = "SELECT dayobs FROM photlco WHERE targetid={1} AND filename='{0}'".format(filename, target_id)
             print(query)
             tempdate = send_query(query, conn)[0][0].encode('utf-8')

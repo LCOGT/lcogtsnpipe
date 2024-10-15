@@ -19,60 +19,124 @@ This is likely the quickest way to get the pipeline up and running and requires 
 In the following instructions, the database server and data directories will live locally on your computer, so they will persist outside the Docker.
 The pipeline itself will run inside the Docker container and forward graphics to your local computer.
 
-## Installation
-These instructions only need to be run once, when you set up the pipeline.
+If you're on linux run `$XDG_SESSION_TYPE` to find out whether you are running a `wayland` desktop or `x11` desktop. Depending on that, you will need to follow different instructions.
 
-   1. Install [Docker](https://docs.docker.com/get-docker/).
+## Docker
+- Install [Docker](https://docs.docker.com/get-docker/).
         * Make sure to increase the amount of memory Docker can access (recommended 8 GB). This is needed for certain stages (like `-s cosmic`) to run. On Mac, press the Docker icon in the toolbar, then click Preferences, then Resources, and increase Memory to 8 GB.
-   2. Install [docker-compose](https://docs.docker.com/compose/install/)
-   3. (macOS only) Install [XQuartz](https://www.xquartz.org).
-   4. (macOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
-   5. Allow X11 connections (may be only necessary on Linux): `xhost +local:docker`
-   6. (Linux Only) Modify your X11 config files to allow TCP connections: 
-        1. If you are running gdm or gdm3 for your display manager add the following to `/etc/gdm<3>/custom.conf`
-        ```
-        [security]
-        DisallowTCP=false
-        ```
-        2. If you are running lightdm, add the following to `/usr/share/lightdm/lightdm.conf.d/50-xserver-command.conf`
-        ```
-        [Seat:*]
-        xserver-command=X -core -listen tcp
-        ```
-        and the following to `/etc/lightdm/lightdm.conf`.
-        This file probably won't exist, you may create it if it is missing.
-        ```
-        [Seat:*]
-        xserver-allow-tcp=true
-        xserver-command=X -listen tcp
-        ```
-        3. Reboot your machine after updating the necessary config file.
-        4. To test your X11 setup run
-        ```
-        docker run --rm -it centos:7 /bin/bash
-        yum install -y xorg-x11-apps
+- Install [docker-compose](https://docs.docker.com/compose/install/)
+
+## System-specific configuration
+#### MacOS
+- Install [XQuartz](https://www.xquartz.org).
+- Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
+
+#### Linux Wayland
+- Install [socat](http://www.dest-unreach.org/socat/) with your package manager e.g. `sudo apt install socat`
+
+#### Linux X11
+- Allow X11 connections: `xhost +local:docker`
+- Modify your X11 config files to allow TCP connections: 
+     1. If you are running gdm or gdm3 for your display manager add the following to `/etc/gdm<3>/custom.conf`
+     ```
+     [security]
+     DisallowTCP=false
+     ```
+     2. If you are running lightdm, add the following to `/usr/share/lightdm/lightdm.conf.d/50-xserver-command.conf`
+     ```
+     [Seat:*]
+     xserver-command=X -core -listen tcp
+     ```
+     and the following to `/etc/lightdm/lightdm.conf`.
+     This file probably won't exist, you may create it if it is missing.
+     ```
+     [Seat:*]
+     xserver-allow-tcp=true
+     xserver-command=X -listen tcp
+     ```
+     3. Reboot your machine after updating the necessary config file.
+
+
+## Installation
+These instructions only need to be run once, when you set up the pipeline.  
+
+   1. Clone this repository: 
+      ```
+      git clone https://github.com/LCOGT/lcogtsnpipe
+      ```
+   2. Build the Docker image:
+      ```
+      docker build -t lcogtsnpipe lcogtsnpipe
+      ```
+   3. (MacOS only) Run this hack in the background to get the X11 forwarding to work:
+      ```
+      socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\"
+      ```
+      This will block the current terminal. Open a new terminal/tab and run
+      ```
+      docker run --rm -it -e DISPLAY=${LCOSNDISPLAY:-host.docker.internal:0} lcogtsnpipe /bin/bash
+      xeyes
+      ```
+      If a window appears, your computer is configured correctly. `exit` the container.
+
+   4. (Linux Wayland only) Run the following command for X11 forwarding:
+      ```
+      socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CONNECT:/tmp/.X11-unix/X0
+      ```
+      This will block the current terminal. Open a new terminal/tab and run
+      ```
+      docker run --rm -it -e DISPLAY=${LCOSNDISPLAY:-host.docker.internal:0} lcogtsnpipe /bin/bash
+      xeyes
+      ```
+      If a window appears, your computer is configured correctly. `exit` the container.
+      
+      (Linux Wayland) If you see an error `can't connect to host.docker.internal:0` then `exit` the containter.
+      Run the following commands-
+      ```
+      export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
+      docker run --rm -it -e DISPLAY=${LCOSNDISPLAY:-host.docker.internal:0} lcogtsnpipe /bin/bash
+      xeyes
+      ```
+      A window should appear now. `exit` the container and add
+      ```
+      export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
+      ```
+      in your `~/.bashrc`.
+
+
+   5. (Linux X11 only) Test Display output from docker 
+        1. To test your X11 setup run
+        ```sh
+        docker run --rm -it lcogtsnpipe /bin/bash
         xeyes
         ```
-        If a window appears, your computer is configured correctly. You only have to do this once.
+        If a window appears, your computer is configured correctly.
         
-        If stage 4 results in an error similar to `Error: Can't open display:`, then rerun step 4 with this modified command instead.
+        2. If you get an error similar to `Error: Can't open display:`, then `exit` the container and run this modified command instead.
         ```sh
         docker run --rm -it -e DISPLAY=${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix centos:7 /bin/bash
         yum install -y xorg-x11-apps
         xeyes
         ```
-        Now an window should appear.
-        
-   7. Clone this repository: 
-       ```
-       git clone https://github.com/LCOGT/lcogtsnpipe
-       ```
-   8. Build the Docker image:
-          ```
-          docker build -t lcogtsnpipe lcogtsnpipe
-          ```
-        
-   10. Set your environment variables to point to where you want to store data and catalogs.
+        Now a window should appear. `exit` the container.
+        If you initially had trouble in getting display output from docker and had to use the modified command, you will need to slightly modify your `docker-compose.yml` file in the following manner.
+         ```diff
+                 LCOSNDBUSER: "${LCOSNDBUSER:-supernova}"
+                 LCOSNDBPASS: "${LCOSNDBPASS:-supernova}"
+                 LCOSNDIR: "${LCOSNDIR:-/supernova}"
+                 DISPLAY: "${DISPLAY}"
+               ports:
+                 - "4306:3306"
+               links:
+                 - sn-db:supernovadb
+               depends_on:
+                 - sn-db
+               volumes:
+                 - ${LCOSNDIR:-./data}:${LCOSNDIR:-/supernova}
+                 - /tmp/.X11-unix:/tmp/.X11-unix
+         ```
+   
+   6. Set your environment variables to point to where you want to store data and catalogs.
       You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file
       so that you don't have to set them in every new terminal session.
        ```
@@ -83,50 +147,26 @@ These instructions only need to be run once, when you set up the pipeline.
        with the correct permissions. If you need to use a pre-existing directory or in case docker doesn't set up the permissions correctly, you may have to update the permissions using
        `chmod -R 777 /path/to/data/`. 
        If you do not set these environment variables, they default to being in `data` and `mysql` in repo directory.
-   11. (MacOS only) Run XQuartz from the Finder.
-   12. (MacOS only) Run this hack in the background to get the X11 forwarding to work:
-       ```
-       socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &
-       ```
-   13. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
+   7. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
        this mental picture is close enough).
           ```
           docker-compose -f lcogtsnpipe/docker-compose.yml up
           ```
-          (Linux Only) If you initially had trouble in getting display output from docker in your linux machine (step 6), you will need to slightly modify your `docker-compose.yml` file in the following manner.
-          ```diff
-                    LCOSNDBUSER: "${LCOSNDBUSER:-supernova}"
-                    LCOSNDBPASS: "${LCOSNDBPASS:-supernova}"
-                    LCOSNDIR: "${LCOSNDIR:-/supernova}"
-                    DISPLAY: "${DISPLAY}"
-                  ports:
-                    - "4306:3306"
-                  links:
-                    - sn-db:supernovadb
-                  depends_on:
-                    - sn-db
-                  volumes:
-                    - ${LCOSNDIR:-./data}:${LCOSNDIR:-/supernova}
-                    - /tmp/.X11-unix:/tmp/.X11-unix
-          ```
-   
-          Now, rerun the above command.
-       
-      This will take over your current terminal. Eventually, the terminal will print that the mysql host is ready to 
-      accept connections
-   14. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
+       This will take over your current terminal. Eventually, the terminal will print that the mysql host is ready to 
+       accept connections
+   8. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
        ```
        docker exec -it lcosnpipe /bin/bash
        ```
        If you're configured correctly, you should be able to open a ds9 window now using `ds9` command. 
-   15. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
+   9. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
        the first time you setup the db.
-   16. From inside the container, run 
+   10. From inside the container, run 
        ```
        cd $LCOSNDIR
        mkdir -p data/lsc data/fts data/0m4 data/floyds data/extdata standard/cat/apass standard/cat/sloan standard/cat/landolt standard/cat/gaia
        ```   
-       This only needs to be done the first time you populate data in this directory. 
+       This only needs to be done the first time you populate data in this directory.
 
    You are now ready to use the pipeline!
 
@@ -140,9 +180,9 @@ Follow these instructions each time you want to use the pipeline.
       ```
       socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &
       ```
-   4. (Linux only) Set you display environment variable to point to the docker connection using 
+      (Linux Wayland) Run the following command for X11 forwarding:
       ```
-      export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
+      socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CONNECT:/tmp/.X11-unix/X0 &
       ```
    5. Make sure your `$LCOSNDIR` and `$LCOSNDBPATH` environment variables are set correctly. 
    6. From inside the `lcogtsnpipe` directory, run

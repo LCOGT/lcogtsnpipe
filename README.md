@@ -83,14 +83,17 @@ These instructions only need to be run once, when you set up the pipeline.
       ```
       socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CONNECT:/tmp/.X11-unix/X0
       ```
-      This will block the current terminal. Open a new terminal/tab and run
+      This will block the current terminal.
+
+      (Linux Wayland and X11)
+      Open a new terminal/tab and run
       ```
       docker run --rm -it -e DISPLAY=${LCOSNDISPLAY:-host.docker.internal:0} lcogtsnpipe /bin/bash
       xeyes
       ```
       If a window appears, your computer is configured correctly. `exit` the container.
       
-      (Linux Wayland) If you see an error `can't connect to host.docker.internal:0` then `exit` the containter.
+      If you see an error `can't connect to host.docker.internal:0` then `exit` the containter.
       Run the following commands-
       ```
       export LCOSNDISPLAY=`ifconfig docker0 | grep 'inet ' | cut -d: -f2 | awk '{print $2}'`:0
@@ -103,39 +106,7 @@ These instructions only need to be run once, when you set up the pipeline.
       ```
       in your `~/.bashrc`.
 
-
-   5. (Linux X11 only) Test Display output from docker 
-        1. To test your X11 setup run
-        ```sh
-        docker run --rm -it lcogtsnpipe /bin/bash
-        xeyes
-        ```
-        If a window appears, your computer is configured correctly.
-        
-        2. If you get an error similar to `Error: Can't open display:`, then `exit` the container and run this modified command instead.
-        ```sh
-        docker run --rm -it -e DISPLAY=${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix lcogtsnpipe /bin/bash
-        xeyes
-        ```
-        Now a window should appear. `exit` the container.
-        If you initially had trouble in getting display output from docker and had to use the modified command, you will need to slightly modify your `docker-compose.yml` file in the following manner.
-         ```diff
-                 LCOSNDBUSER: "${LCOSNDBUSER:-supernova}"
-                 LCOSNDBPASS: "${LCOSNDBPASS:-supernova}"
-                 LCOSNDIR: "${LCOSNDIR:-/supernova}"
-                 DISPLAY: "${DISPLAY}"
-               ports:
-                 - "4306:3306"
-               links:
-                 - sn-db:supernovadb
-               depends_on:
-                 - sn-db
-               volumes:
-                 - ${LCOSNDIR:-./data}:${LCOSNDIR:-/supernova}
-                 - /tmp/.X11-unix:/tmp/.X11-unix
-         ```
-   
-   6. Set your environment variables to point to where you want to store data and catalogs.
+   5. Set your environment variables to point to where you want to store data and catalogs.
       You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file
       so that you don't have to set them in every new terminal session.
        ```
@@ -146,21 +117,21 @@ These instructions only need to be run once, when you set up the pipeline.
        with the correct permissions. If you need to use a pre-existing directory or in case docker doesn't set up the permissions correctly, you may have to update the permissions using
        `chmod -R 777 /path/to/data/`. 
        If you do not set these environment variables, they default to being in `data` and `mysql` in repo directory.
-   7. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
+   6. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
        this mental picture is close enough).
           ```
           docker-compose -f lcogtsnpipe/docker-compose.yml up
           ```
        This will take over your current terminal. Eventually, the terminal will print that the mysql host is ready to 
        accept connections
-   8. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
+   9. In a new terminal (making sure the environment variables from step 9 are still set), log in to the pipeline container:
        ```
        docker exec -it lcosnpipe /bin/bash
        ```
        If you're configured correctly, you should be able to open a ds9 window now using `ds9` command. 
-   9. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
+   10. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
        the first time you setup the db.
-   10. From inside the container, run 
+   11. From inside the container, run 
        ```
        cd $LCOSNDIR
        mkdir -p data/lsc data/fts data/0m4 data/floyds data/extdata standard/cat/apass standard/cat/sloan standard/cat/landolt standard/cat/gaia
@@ -182,6 +153,10 @@ Follow these instructions each time you want to use the pipeline.
       (Linux Wayland) Run the following command for X11 forwarding:
       ```
       socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CONNECT:/tmp/.X11-unix/X0 &
+      ```
+      (Linux X11) Run the following command to allow X11 connections:
+      ```
+      xhost +local:docker
       ```
    5. Make sure your `$LCOSNDIR` and `$LCOSNDBPATH` environment variables are set correctly. 
    6. From inside the `lcogtsnpipe` directory, run

@@ -35,7 +35,6 @@ If you're on linux run `$XDG_SESSION_TYPE` to find out whether you are running a
 - Install [socat](http://www.dest-unreach.org/socat/) with your package manager e.g. `sudo apt install socat`
 
 #### Linux X11
-- Allow X11 connections: `xhost +local:docker`
 - Modify your X11 config files to allow TCP connections: 
      1. If you are running gdm or gdm3 for your display manager add the following to `/etc/gdm<3>/custom.conf`
      ```
@@ -55,7 +54,7 @@ If you're on linux run `$XDG_SESSION_TYPE` to find out whether you are running a
      xserver-command=X -listen tcp
      ```
      3. Reboot your machine after updating the necessary config file.
-
+- Allow X11 connections: `xhost +local:docker`
 
 ## Installation
 These instructions only need to be run once, when you set up the pipeline.  

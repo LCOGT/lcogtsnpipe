@@ -114,8 +114,7 @@ These instructions only need to be run once, when you set up the pipeline.
         
         2. If you get an error similar to `Error: Can't open display:`, then `exit` the container and run this modified command instead.
         ```sh
-        docker run --rm -it -e DISPLAY=${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix centos:7 /bin/bash
-        yum install -y xorg-x11-apps
+        docker run --rm -it -e DISPLAY=${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix lcogtsnpipe /bin/bash
         xeyes
         ```
         Now a window should appear. `exit` the container.

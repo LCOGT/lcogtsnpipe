@@ -43,7 +43,7 @@ def get_image_data(lista, magcol=None, errcol=None, refcat=None):
         t.rename_column(magcol, 'instmag')
         t.rename_column(errcol, 'dinstmag')
     elif magcol is not None and errcol is not None:
-        print 'Cross-matching {} catalogs. This may take a while...'.format(len(lista))
+        print('Cross-matching {} catalogs. This may take a while...'.format(len(lista)))
         catalogs = []
         badrows = []
         for i, image in enumerate(t):
@@ -153,7 +153,7 @@ if __name__ == "__main__":
         targets = get_image_data(lista, 'magp3', 'merrp3', refcat)
         
     color_to_use = lsc.sites.chosecolor(targets['filter'], True)
-    colors_to_calculate = set(sum(color_to_use.values(), []))
+    colors_to_calculate = set(sum(list(color_to_use.values()), []))
 
     if args.match_by_site:
         tel_kwd = 'shortname'
@@ -249,14 +249,14 @@ if __name__ == "__main__":
         query = 'INSERT INTO photlco (filename, targetid, mag, dmag) VALUES\n'
         query += ',\n'.join(['("{}", {}, {}, {})'.format(row['filename'], row['targetid'], row['mag'], row['dmag']) for row in targets.filled(9999.)])
         query += '\nON DUPLICATE KEY UPDATE mag=VALUES(mag), dmag=VALUES(dmag)'
-        print query
+        print(query)
         lsc.mysqldef.query([query], lsc.conn)
     elif args.stage == 'abscat': 
        # write all the catalogs to files & put filename in database
         for row in targets:
             good = ~row['mag'].mask
             if not np.any(good):
-                print 'no good magnitudes for', row['filename']
+                print('no good magnitudes for', row['filename'])
                 lsc.mysqldef.updatevalue('photlco', 'abscat', 'X', row['filename'])
                 continue
             outtab = Table([row['ra'][good].T, row['dec'][good].T, row['mag'][good].T, row['dmag'][good].T],
@@ -269,7 +269,7 @@ if __name__ == "__main__":
                              overwrite=args.force, fill_values=[(ascii.masked, '9999.0')])
                 lsc.mysqldef.updatevalue('photlco', 'abscat', outfile, row['filename'])
             except IOError as e:
-                print e, '-- use -F to overwrite'
+                print(e, '-- use -F to overwrite')
     elif args.stage == 'local':
         if args.field == 'landolt':
             filterlist = ['U', 'B', 'V', 'R', 'I']
@@ -288,14 +288,14 @@ if __name__ == "__main__":
             for filt in filterlist:
                 nightly_by_filter = targets[(targets['filter'] == filt) & (np.sum(~targets['mag'].mask, axis=1) > args.minstars)]
                 if not nightly_by_filter:
-                    print 'no calibrated stars in', filt
+                    print('no calibrated stars in', filt)
                     continue
                 fig.clear()
                 ax1 = fig.add_subplot(211)
                 ax2 = fig.add_subplot(212)
                 ax1.set_title('Filter: ' + filt)
                 lgd_handle = ax1.plot(nightly_by_filter['mag'].data.T, color='k', alpha=0.5, marker='_', ls='none')[:1]
-                lgd_handle.append(ax1.errorbar(range(len(catalog)), catalog[filt], yerr=catalog[filt+'err'], marker='o', ls='none'))
+                lgd_handle.append(ax1.errorbar(list(range(len(catalog))), catalog[filt], yerr=catalog[filt+'err'], marker='o', ls='none'))
                 lgd_label = ['individual images', 'output (median of images)']
                 if filt in refcat.colnames:
                     lgd_handle += ax1.plot(refcat[filt], marker='o', mfc='none', ls='none', zorder=10)
@@ -315,7 +315,7 @@ if __name__ == "__main__":
                 if filt in refcat.colnames:
                     lgd_handle += ax2.plot(np.median(nightly_by_filter['offset from refcat'], axis=1), marker='o', mfc='none', ls='none')
                     lgd_label.append('offset from ' + catfile)
-                ax2.set_xticks(range(len(nightly_by_filter)))
+                ax2.set_xticks(list(range(len(nightly_by_filter))))
                 ax2.set_xticklabels(nightly_by_filter['filename'], rotation='vertical', size='xx-small')
                 ax2.set_ylabel('Offset from Median (mag)')
                 ax2.legend(lgd_handle, lgd_label, loc='best')
@@ -338,7 +338,7 @@ if __name__ == "__main__":
                     ax3.legend(loc='best')
                     plt.draw()
                 
-                raw_input('Press enter to continue.')
+                input('Press enter to continue.')
 
         snname = os.path.basename(catfile).split('_')[0] if args.catalog else 'catalog'
         filename = args.output.format(SN=snname, field=args.field,
@@ -349,4 +349,4 @@ if __name__ == "__main__":
             catalog[col].format = '%6.3f'
         catalog.write(filename, format='ascii.fixed_width_no_header', delimiter='',
                       fill_values=[(ascii.masked, '9999.0')])
-        print 'catalog written to', filename
+        print('catalog written to', filename)

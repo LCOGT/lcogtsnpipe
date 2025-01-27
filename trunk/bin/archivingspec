@@ -1,0 +1,403 @@
+#!/usr/bin/env python
+#
+#
+# archiving spectra
+#
+#
+#create table spec (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, filename VARCHAR(50) UNIQUE KEY, directory VARCHAR(100), objname VARCHAR(50), jd DOUBLE, dateobs DATE, exptime FLOAT, filter VARCHAR(20), grism VARCHAR(20), telescope VARCHAR(20), instrument VARCHAR(20), airmass FLOAT, ut TIME, slit VARCHAR(20), status VARCHAR(50), original VARCHAR(50), note VARCHAR(100), ra0 FLOAT, dec0 FLOAT, PROPID VARCHAR(30), observer VARCHAR(30), dateobs2  VARCHAR(23), targid INT default 0);
+#################################################
+from numpy import *
+import string,re,sys,glob,os
+import floyds
+import datetime
+import time
+import lsc
+from astropy.io import fits
+from lsc import conn
+from argparse import ArgumentParser
+
+#hostname, username, passwd, database=lsc.mysqldef.getconnection('lcogt2')
+#conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
+
+#################################################################################
+
+def JDnow(datenow='',verbose=False):
+    _JD0=2455927.5
+    if not datenow:
+        datenow=datetime.datetime(time.gmtime().tm_year, time.gmtime().tm_mon, time.gmtime().tm_mday, time.gmtime().tm_hour, time.gmtime().tm_min, time.gmtime().tm_sec)
+    _JDtoday=_JD0+(datenow-datetime.datetime(2012, 01, 01,00,00,00)).seconds/(3600.*24)+\
+              (datenow-datetime.datetime(2012, 01, 01,00,00,00)).days
+    if verbose: print 'JD= '+str(_JDtoday)
+    return _JDtoday
+
+def MJDnow(datenow='',verbose=False):
+    _JD0=2455927.5
+    if not datenow:
+        datenow=datetime.datetime(time.gmtime().tm_year, time.gmtime().tm_mon, time.gmtime().tm_mday, time.gmtime().tm_hour, time.gmtime().tm_min, time.gmtime().tm_sec)
+    _JDtoday=_JD0+(datenow-datetime.datetime(2012, 01, 01,00,00,00)).seconds/(3600.*24)+\
+              (datenow-datetime.datetime(2012, 01, 01,00,00,00)).days
+    if verbose: print 'JD= '+str(_JDtoday)
+    return _JDtoday-2400000.5
+
+def archivereducedspectrum(img):
+    hdulist = fits.open(img, mode='update')
+    hdr = hdulist[0].header
+    _targid=targimg(img,True)
+    print 'targid '+str(_targid)
+    if 'REDUCER' in hdr:
+        _reducer = hdr.get('REDUCER')
+        print 'reduced by', _reducer
+    else:
+        _reducer = None
+    #    telescope
+    if 'TELESCOP' in hdr:     _telescope=hdr.get('TELESCOP')
+    else:                     _telescope=''
+    #    object
+    if 'object' in hdr: _object=hdr.get('object')
+    elif 'objcat' in hdr: _object=hdr.get('objcat') # TNG format
+    else: _object='spectrum'
+    _object=re.sub('\}','', _object)
+    _object=re.sub('\{','', _object)
+    _object=re.sub('\[','', _object)
+    _object=re.sub('\]','', _object)
+    _object=re.sub('\(','', _object)
+    _object=re.sub('\)','', _object)
+#    _object=re.sub('-','', _object)
+    _object=re.sub(' ','', _object)
+    #    dateobs
+    if 'DATE-OBS' in hdr:  
+        _dateobs=hdr.get('DATE-OBS')
+        if 'T' in _dateobs: _dateobs=string.split(_dateobs,'T')[0]
+    else:     _dateobs=''
+    #   UT
+    if 'UTSTART' in hdr:  _ut=hdr.get('UTSTART')
+    elif 'UT' in hdr: _ut=hdr.get('UT')
+    else:
+        _ut=hdr.get('DATE-OBS')
+        if 'T' in _ut:    _ut=string.split(_ut,'T')[1]
+    # ra and  dec
+    _ra=hdr.get('RA')
+    _dec=hdr.get('DEC')
+    if ':' in str(_ra):      _ra,_dec=lsc.deg2HMS(_ra,_dec)
+    # JD
+    if 'JD' in hdr: _mjd=hdr.get('JD')-2400000.5
+    elif 'JD-OBS' in hdr: _mjd=hdr.get('JD-OBS')-2400000.5
+    elif 'MJD' in hdr: _mjd=hdr.get('MJD')
+    elif 'MJD-OBS' in hdr: _mjd=hdr.get('MJD-OBS')
+    elif 'DATE-OBS' in hdr: 
+        dd=''
+        try:
+            dd=datetime.datetime.strptime(hdr.get('DATE-OBS')[0:-6],'%Y-%m-%dT%H:%M:%S')
+        except:
+            try:
+                dd=datetime.datetime.strptime(hdr.get('DATE-OBS')[0:-6],'%Y-%m-%dT%H:%M')
+            except: pass
+        if dd:     _mjd=MJDnow(dd,False)
+        else:      _mjd=None
+    
+
+    if _telescope in ['fts','ftn','2m0a','2m0-01','2m0-02']:
+        dictionary={'dateobs':_dateobs,'exptime':hdr.get('exptime'), 'filter':hdr.get('filter'),'mjd':_mjd,\
+                    'telescope':_telescope,'airmass':hdr.get('airmass'),'objname':_object,'ut':_ut,\
+                    'instrument':hdr.get('instrume'),'ra0':_ra,'dec0':_dec,'slit':hdr.get('APERWID'),\
+                    'targetid':_targid,'grism':re.sub('/','',hdr.get('GRISM')), 'original':hdr.get('arcfile'),'reducer':_reducer,\
+                    'dayobs':hdr.get('DAY-OBS')}
+        if 'TRACKNUM' in hdr:
+            try:
+#                print hdr['TRACKNUM']
+#                dictionary['tracknumber']=int(hdr['TRACKNUM'])
+#                print 'select r.groupidcode from obslog as o join obsrequests as r where o.requestsid=r.id and o.tracknumber='+str(int(hdr['TRACKNUM']))
+                gruppo=lsc.mysqldef.query(['select r.groupidcode from obslog as o join obsrequests as r where o.requestsid=r.id and o.tracknumber='+\
+                                               str(int(hdr['TRACKNUM']))],conn)
+                if len(gruppo):
+                    dictionary['groupidcode']=gruppo[0]['groupidcode']
+            except:
+                pass
+
+    elif 'gemini' in _telescope.lower():
+        if 'south' in _telescope.lower(): _telescope='gs'
+        else: _telescope='gn'
+        dictionary={'dateobs':_dateobs,'exptime':hdr.get('exptime'), 'filter':hdr.get('filter'),'mjd':_mjd,\
+                    'telescope':_telescope,'airmass':hdr.get('AIRMASS'),'objname':_object,'ut':_ut,\
+                    'instrument':hdr.get('INSTRUME'),'ra0':_ra,'dec0':_dec,'slit':hdr.get('slit'),\
+                    'targetid':_targid,'grism':hdr.get('GRATING'),'original':hdr.get('arcfile'),'reducer':_reducer}
+
+    elif 'TNG' in _telescope:
+        dictionary={'dateobs':_dateobs,'exptime':hdr.get('exptime'), 'filter':hdr.get('flt_id'),'mjd':_mjd,\
+                    'telescope':_telescope,'airmass':hdr.get('airmass'),'objname':_object,'ut':_ut,\
+                    'instrument':hdr.get('instrume'),'ra0':_ra,'dec0':_dec,'slit':hdr.get('slt_id'),\
+                    'targetid':_targid,'grism':hdr.get('grm_id'),'original':hdr.get('filename'),'reducer':_reducer,\
+                    'observer':hdr.get('observer')}
+
+    else:
+        dictionary={'dateobs':_dateobs,'exptime':hdr.get('exptime'), 'filter':hdr.get('filter'),'mjd':_mjd,\
+                    'telescope':_telescope,'airmass':hdr.get('airmass'),'objname':_object,'ut':_ut,\
+                    'instrument':hdr.get('instrume'),'ra0':_ra,'dec0':_dec,'slit':hdr.get('slit'),\
+                    'targetid':_targid,'grism':hdr.get('GRISM'),'original':hdr.get('arcfile'),'reducer':_reducer,\
+                    'observer':hdr.get('observer')}
+
+    dictionary['filename']=string.split(img,'/')[-1]
+    _dir=re.sub(string.split(img,'/')[-1],'',img)
+    dictionary['filepath']=_dir
+    return dictionary
+
+########################################
+
+def targimg(img,verbose=False):
+    _targetid=''
+    hdrt = fits.getheader(img)
+    try:
+        _ra=hdrt.get('RA')
+        _dec=hdrt.get('DEC')
+        if ':' in str(_ra):         _ra,_dec=lsc.deg2HMS(_ra,_dec)
+        if ':' in str(_ra):         _ra,_dec=lsc.deg2HMS(_ra,_dec)
+    except:
+        print 'warning: file corrupted'
+        return ''
+    if 'object' in hdrt:
+        _object=hdrt.get('object')
+    elif 'objcat' in hdrt:
+        _object=hdrt.get('objcat')
+    else: _object=''
+    _object=re.sub(' ','',_object)
+    _object=re.sub('\[','',_object)
+    _object=re.sub('\]','',_object)
+
+    if verbose: 
+        print _ra,_dec,_object
+    if _object: _targetid=lsc.mysqldef.gettargetid(_object,'','',conn,0.01,verbose)
+    if not _targetid:
+       if verbose:
+           print '\n use coordinate to identify target id '
+           print _ra,_dec
+       _targetid=lsc.mysqldef.gettargetid('',_ra,_dec,conn,0.1,verbose)   
+
+    if not _targetid:
+       dictionary={'ra0':_ra,'dec0':_dec}
+       lsc.mysqldef.insert_values(conn,'targets',dictionary)
+       bb=lsc.mysqldef.getfromcoordinate(conn, 'targets', _ra, _dec,.000156)
+       dictionary1={'name':_object,'targetid':bb[0]['id']}
+       lsc.mysqldef.insert_values(conn,'targetnames',dictionary1)
+       _targetid=bb[0]['id']
+    if _targetid:
+       cc=lsc.mysqldef.getfromdataraw(conn,'permissionlog','targetid', str(_targetid),column2='groupname')
+       if len(cc)==0:
+          _JDn=lsc.mysqldef.JDnow()
+          dictionary2={'targetid':_targetid,'jd':_JDn,'groupname':32769}
+          lsc.mysqldef.insert_values(conn,'permissionlog',dictionary2)
+    return _targetid
+
+def uploadspectrum(img, _output, _force, reducer=None):
+    note = '\ninput = '+img+'\n'
+    hdulist = fits.open(img, mode='update')
+    hdr = hdulist[0].header
+    
+    if 'REDUCER' in hdr:
+        if reducer is None:
+            reducer = hdr['REDUCER']
+        elif hdr['REDUCER'] != reducer:
+            print 'Reducer given with -r and reducer in header are different. Which one is correct?'
+            while True:
+                choice = raw_input('(1) {} \t (2) {} '.format(reducer, hdr['REDUCER']))
+                if choice == '1':
+                    break
+                elif choice == '2':
+                    reducer = hdr['REDUCER']
+                    break
+    elif reducer is None and fullname is not None:
+        reducer = raw_input('Who reduced this spectrum? [{}] '.format(fullname))
+        if not reducer:
+            reducer = fullname
+    elif reducer is None:
+        command = ['select distinct reducer from spec']
+        names = lsc.mysqldef.query(command,conn)
+        for name in names:
+            if name['reducer']: 
+                print name['reducer']
+        reducer = raw_input('Who reduced this spectrum? (Copy and paste from above if possible.) ')
+    if reducer:
+        hdr['REDUCER'] = (reducer, 'User who reduced the spectrum')
+        hdulist.close()
+
+    dictionary = archivereducedspectrum(img)
+    _tel = re.sub(' ','',dictionary['telescope'])
+
+###################################### # gemini files in jerod format needs some trick
+    if 'gemini' in _tel.lower():      
+        data,hdr0 = fits.getdata(img, 'sci', header=True)
+        try:        hdr0.__delitem__('AIRMASS')
+        except:     hdr0.remove('AIRMASS') 
+        hed=['TELESCOP','OBSERVAT','RA','DEC','UT','ST','EXPTIME','MASKNAME','GRATING','CENTWAVE','OBSMODE','GAIN','RDNOISE','MJD-OBS',\
+                 'PIXSCALE','DATE-OBS','AIRMASS']
+        for jj in hed:
+            hdr0[jj] = hdr[jj]
+        if 'south' in _tel.lower(): _tel='gs'
+        else: _tel='gn'
+        fits.writeto(re.sub('.fits','0.fits',img), float32(data), hdr0)
+        img=re.sub('.fits','0.fits',img)
+############################################# 
+
+    _grism = dictionary['grism']
+    _date = re.sub('-','',dictionary['dateobs'])
+    if 'T' in _date: string.split(_date,'T')[0]
+    _ut = dictionary['ut']
+    _object = dictionary['objname']
+    if not _output:
+        _output=re.sub('/','',str(_object))+'_'+str(_date)+'_'+str(_grism)+'_'+re.sub(':','',str(_ut))+'.fits'
+    
+    if _tel:
+        directory = lsc.util.workdirectory + 'data/WEB/floyds/'+_date+'_'+_tel+'/'
+        note += 'telescope = '+_tel+'\n'
+    else:
+        directory = lsc.util.workdirectory + 'data/WEB/floyds/'+_date+'_other/'
+        note+= 'WARNING: telescope name not in header\n'
+    dictionary['filepath'] = directory
+    dictionary['filename'] = _output
+
+    if not dictionary['objname']: note += 'ERROR: OBJECT not defined '
+    else:                         note += 'objname = '+str(dictionary['objname'])+'\n'
+    if not dictionary['ra0']:     note += 'ERROR: RA not defined \n'
+    else:                         note += 'RA = '+str(dictionary['ra0'])+'\n'
+    if not dictionary['dec0']:    note += 'ERROR: DEC not defined \n'
+    else:                         note += 'DEC = '+str(dictionary['dec0'])+'\n'
+    if not dictionary['targetid']: note+= 'ERROR: TARGID not defined \n'
+    else:                         note += 'targid = '+str(dictionary['targetid'])+'\n'
+    if not dictionary['dateobs']: note += 'ERROR: DATE-OBS not defined \n'
+    else:                         note += 'dateobs = '+str(dictionary['dateobs'])+'\n'
+
+    if 'ERROR' in note: 
+        return note
+
+    if os.path.isdir(directory): print directory, 'already exists'
+    else:
+      os.system('mkdir ' + directory)
+      print 'creating', directory
+
+    cont = False
+    adding = False
+    while not cont:
+        file_exists = os.path.isfile(directory+_output)
+        db_original_exists = lsc.mysqldef.getfromdataraw(conn, 'spec', 'original', hdr['origname'], column2='id, filename, filepath') if 'origname' in hdr else False
+        if file_exists and _force:
+            replace = 'o'
+            cont = True
+            print 'replacing existing file'
+        elif file_exists: # if -f not given, prompt to choose
+            replace = raw_input('File already exists. What do you want to do? [o]verwrite/[a]dd/[n]othing ')
+            if replace=='o':
+                _force = True
+                cont = True
+                print 'replacing existing file'
+            elif replace=='a':
+                _output = re.sub('.fits','a.fits',_output)
+                dictionary['filename'] = _output
+                print 'changing output to',_output
+                adding = True
+            elif replace=='n':
+                cont = True
+                print 'file not changed'
+        elif db_original_exists and not adding:
+            print 'Another spectrum from this original already exists.'
+            fullpath = db_original_exists[0]['filepath'] + db_original_exists[0]['filename']
+            print fullpath
+            if _force:
+                print 'Deleting that file and database entry.'
+            else:
+                delete = raw_input('Do you want to delete this file and database entry before archiving? [y/[n]] ')
+            if _force or delete == 'y':
+                os.system('rm -v ' + fullpath + ' ' + fullpath.replace('.fits', '.ascii'))
+                lsc.mysqldef.deleteredufromarchive(str(db_original_exists[0]['id']), 'spec', column='id')
+            else:
+                cont = True
+                adding = True
+                print 'other file not changed'
+        else: # file doesn't exist
+            _force = True
+            cont = True
+            print 'adding file'
+    if _force or adding:
+        os.system('cp '+img+' '+directory+_output)
+        xx,yy=floyds.readspectrum(img)
+        data=zip(xx,yy)
+        savetxt(re.sub('.fits','.ascii',directory+_output),data)
+        note += 'output = '+_output+'\n'
+
+    filename = os.path.basename(_output)
+    dbentry_exists = lsc.mysqldef.getfromdataraw(conn,'spec','filename',filename,column2='filename')
+    if dbentry_exists and not _force: # if -f not given and 'n' chosen above, prompt to choose
+        update = raw_input('Spectum already in database. Update entry? [[y]/n] ')
+        if update=='n':
+            print 'database not changed'
+            return note
+
+    if _tel:            # telescope is in the header
+        _telid = lsc.mysqldef.getfromdataraw(conn,'telescopes','name', _tel,column2='id')
+        if not _telid:  # telescope is not yet in the telescopes table
+            print 'Telescope ',_tel,' not recognized.  Adding to telescopes table.'
+            shortname = raw_input('What is the short name of this telescope (e.g., FTN, COJ, LSC)? ')
+            lsc.mysqldef.insert_values(conn,'telescopes',{'name':_tel,'shortname':shortname})
+            _telid = lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
+        dictionary['telescopeid'] = str(_telid[0]['id'])
+
+    _inst = dictionary['instrument']
+    if _inst:
+        _instid = lsc.mysqldef.getfromdataraw(conn,'instruments','name', _inst,column2='id')
+        if not _instid:  # instrument is not yet in the instruments table
+            print 'Instrument ',_inst,' not recognized.  Adding to instruments table.'
+            lsc.mysqldef.insert_values(conn,'instruments',{'name':_inst})
+            _instid = lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
+        dictionary['instrumentid']=str(_instid[0]['id'])
+
+    if snex_uid is not None:
+        dictionary['uploadedby'] = snex_uid
+
+    newdict = dict()
+    for voce in dictionary:
+        if dictionary[voce]: # get rid of empty string entries
+            newdict[voce] = dictionary[voce]
+
+    if dbentry_exists and not _force:
+            print 'updating database'
+            for voce in newdict: lsc.mysqldef.updatevalue('spec',voce,newdict[voce],filename)
+            if snex_uid is not None:
+                update_useractionlog(filename, snex_uid, 'upd')
+    else:
+        if dbentry_exists:
+            print 'replacing database entry'
+            if snex_uid is not None:
+                update_useractionlog(filename, snex_uid, 'del')
+            lsc.mysqldef.deleteredufromarchive(filename,'spec',column='filename')
+        else: print 'adding to database'
+        lsc.mysqldef.insert_values(conn,'spec',newdict)
+        if snex_uid is not None:
+            update_useractionlog(filename, snex_uid)
+    return note
+
+######################################
+def update_useractionlog(filename, snex_uid, mode='add'):
+  row_id = lsc.mysqldef.query(["select id from spec where filename='"+filename+"'"], conn)[0]['id']
+  if mode=='add':   vals = {'columnmodified':'New Row', 'prevvalue':'None', 'newvalue':'Multiple'}
+  elif mode=='del': vals = {'columnmodified':'All', 'prevvalue':'Multiple', 'newvalue':'None'}
+  elif mode=='upd': vals = {'columnmodified':'Multiple', 'prevvalue':'Multiple', 'newvalue':'Multiple'}
+  else: sys.exit('Mode not recognized. User action not logged.')
+
+  vals['userid'] = snex_uid
+  vals['tablemodified'] = 'spec'
+  vals['idmodified'] = row_id
+  lsc.mysqldef.insert_values(conn, 'useractionlog', vals)
+  print 'useractionlog updated:', vals
+
+if __name__ == "__main__":
+    parser = ArgumentParser(description="archive a reduced spectrum")
+    parser.add_argument("filenames", nargs='+', help="spectra to archive")
+    parser.add_argument("-o", "--output", default='', help='output filename')
+    parser.add_argument("-f", "--force", action="store_true", help="overwrite existing file & db entry")
+    parser.add_argument("-r", "--reducer", help="name of reducer")
+    args = parser.parse_args()
+
+    snex_uid, fullname = lsc.mysqldef.get_snex_uid(return_fullname=True)
+    for img in args.filenames:
+        note = uploadspectrum(img, args.output, args.force, args.reducer)
+        print note
+###################
+

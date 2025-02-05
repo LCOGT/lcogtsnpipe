@@ -20,7 +20,7 @@ services:
       LCOSNDBNAME: "${LCOSNDBNAME:-supernova}"
       LCOSNDBUSER: "${LCOSNDBUSER:-supernova}"
       LCOSNDBPASS: "${LCOSNDBPASS:-supernova}"
-      LCOSNDIR: "${LCOSNDIR:-/supernova}"
+      LCOSNDIR: "/supernova"
       DISPLAY: "${LCOSNDISPLAY:-host.docker.internal:0}"
     ports:
       - "4306:3306"
@@ -29,4 +29,4 @@ services:
     depends_on:
       - sn-db
     volumes:
-      - ${LCOSNDIR:-./data}:${LCOSNDIR:-/supernova}
+      - ${LCOSNDIR:-./data}:/supernova

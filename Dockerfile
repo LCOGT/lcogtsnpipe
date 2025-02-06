@@ -2,9 +2,9 @@
 # Changed python image from "stretch" to "buster."
 FROM python:2.7.18-slim-buster
 
-ENV iraf /iraf/iraf/
+ENV iraf=/iraf/iraf/
 # To make this a 32 bit version linux64 -> linux
-ENV IRAFARCH linux64
+ENV IRAFARCH=linux64
 
 RUN apt-get --allow-releaseinfo-change update \
         && apt -y install gcc make flex git gfortran \
@@ -57,7 +57,12 @@ RUN apt-get --allow-releaseinfo-change update && \
         cd SAOImageDS9 && \
         git checkout d4f01a3170775dc7b6cb57de43f6feb7184b47b0 && \
         unix/configure && \
-        make -j4 && \
+        cd openssl && \
+        ./config && \
+        make build_engines && \
+        make && \
+        cd .. && \ 
+        make && \
         ln -s /SAOImageDS9/bin/ds9 /usr/bin/ && \
         apt-get autoclean && \
         rm -rf /var/lib/apt/lists/*
@@ -72,7 +77,7 @@ RUN cd / \
         && make \
         && ln -s /hotpants/hotpants /usr/bin/
 
-ENV LCOSNPIPE /lcogtsnpipe
+ENV LCOSNPIPE=/lcogtsnpipe
 
 RUN mkdir -p /home/supernova/iraf && /usr/sbin/groupadd -g 20000 "domainusers" \
         && /usr/sbin/useradd -g 20000 -d /home/supernova -M -N -u 10197 supernova \

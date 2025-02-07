@@ -1242,12 +1242,10 @@ def gaia2file(ra, dec, size=26., mag_limit=18., output='gaia.cat'):
     response['ra'].format ='%16.12f'
     response['dec'].format = '%16.12f'
     response['phot_g_mean_mag'].format = '%.2f'
-    
-    try:
-        gaia_cat = response['ra', 'dec', 'source_id', 'phot_g_mean_mag']
-        gaia_cat.write(output, format='ascii.commented_header',
-                delimiter=' ', overwrite=True)
-    except ValueError:
-        gaia_cat = response['ra', 'dec', 'SOURCE_ID', 'phot_g_mean_mag']
-        gaia_cat.write(output, format='ascii.commented_header',
-                delimiter=' ', overwrite=True)
+   
+    if 'SOURCE_ID' in response.colnames:
+        print('renaming SOURCE_ID')
+        response.rename_column('SOURCE_ID', 'source_id') 
+    gaia_cat = response['ra', 'dec', 'source_id', 'phot_g_mean_mag']
+    gaia_cat.write(output, format='ascii.commented_header',
+                    delimiter=' ', overwrite=True)

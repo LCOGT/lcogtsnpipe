@@ -278,6 +278,8 @@ if __name__ == "__main__":
 
     if args.username and args.password:
         authtoken = authenticate(args.username, args.password)
+    elif os.getenv('LCO_API_KEY'):
+        authtoken = {'Authorization': 'Token ' + os.environ['LCO_API_KEY']}
     else:
         authtoken = {}
 

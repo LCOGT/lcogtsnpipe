@@ -19,6 +19,11 @@
 ```
 LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public
 ```
+If you wish to download data that is not public yet, request an API key in the GSP slack. Someone at LCO will send it to you privately and you can use it in the following manner (replacing `sdf087asdf987asdf0786987` with your API key):
+```
+export LCO_API_KEY=sdf087asdf987asdf0786987
+LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced
+```
 
 # Create gaia, apass, and sloan catalogs for new objects
 * run `comparecatalogs.py` to generate new catalogs

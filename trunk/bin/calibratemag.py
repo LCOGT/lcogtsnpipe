@@ -132,6 +132,8 @@ if __name__ == "__main__":
             refcat = Table.read(args.catalog, format='ascii', fill_values=[('9999.000', '0')])
             if 'source_id' in refcat.colnames:  # Gaia catalog
                 refcat.rename_column('source_id', 'id')
+            elif 'SOURCE_ID' in refcat.colnames:  # Gaia catalog
+                refcat.rename_column('SOURCE_ID', 'id')
             else:
                 colnames = [row.split()[0] for row in refcat.meta['comments'] if len(row.split()) == 6]
                 for old, new in zip(refcat.colnames, colnames):

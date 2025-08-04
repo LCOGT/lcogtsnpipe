@@ -1,6 +1,6 @@
-# To make this a 32 bit version python:2.7.18-slim-stretch -> i386/python:2.7.18-slim-stretch
-# Changed python image from "stretch" to "buster."
-FROM python:2.7.18-slim-buster
+FROM continuumio/miniconda3
+RUN conda create -y -n lcogtsnpipe python=2
+SHELL ["conda", "run", "-n", "lcogtsnpipe", "/bin/bash", "-c"]
 
 ENV iraf=/iraf/iraf/
 # To make this a 32 bit version linux64 -> linux
@@ -23,7 +23,7 @@ RUN mkdir -p $iraf \
 
 RUN apt-get --allow-releaseinfo-change update \
         && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor procps g++ \
-        default-mysql-client libmariadbclient-dev default-libmysqlclient-dev openssh-client wcstools libxml2 vim libssl1.1 zip pkg-config \
+        default-mysql-client libmariadb-dev default-libmysqlclient-dev openssh-client wcstools libxml2 vim zip pkg-config \
         libpng-dev libfreetype6-dev libcfitsio-dev libffi-dev libopenblas-dev libssl-dev \
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*
@@ -74,6 +74,7 @@ RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
 RUN cd / \
         && git clone https://github.com/acbecker/hotpants.git \
         && cd hotpants \
+        && sed -i 's/^COPTS = .*/& -fcommon/' Makefile \
         && make \
         && ln -s /hotpants/hotpants /usr/bin/
 
@@ -84,7 +85,7 @@ RUN mkdir -p /home/supernova/iraf && /usr/sbin/groupadd -g 20000 "domainusers" \
         && chown -R supernova:domainusers /home/supernova \
         && mkdir -p $LCOSNPIPE
 
-RUN chown -R supernova:domainusers $LCOSNPIPE /usr/local
+RUN chown -R supernova:domainusers $LCOSNPIPE /opt/conda/envs/lcogtsnpipe/
 
 USER supernova
 
@@ -100,4 +101,6 @@ RUN mkiraf --term=xgterm -i
 
 WORKDIR /home/supernova
 
-ENTRYPOINT /bin/bash
+COPY bashrc /home/supernova/.bashrc
+
+ENTRYPOINT ["/bin/bash"]

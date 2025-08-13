@@ -16,10 +16,11 @@ RUN mkdir -p $iraf \
         && cd /iraf \
         && git clone https://github.com/iraf-community/iraf.git \
         && cd $iraf \
-        && git checkout ba22d13 \
+        && git checkout e20dd53 \
         && ./install < /dev/null \
         && make $IRAFARCH \
-        && make sysgen
+        && make sysgen \
+        && make install
 
 RUN apt-get --allow-releaseinfo-change update \
         && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor procps g++ \

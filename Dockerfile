@@ -17,9 +17,7 @@ RUN mkdir -p $iraf \
         && git clone https://github.com/iraf-community/iraf.git \
         && cd $iraf \
         && git checkout e20dd53 \
-        && ./install < /dev/null \
-        && make $IRAFARCH \
-        && make sysgen \
+        && make \
         && make install
 
 RUN apt-get --allow-releaseinfo-change update \

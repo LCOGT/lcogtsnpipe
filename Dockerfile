@@ -1,13 +1,13 @@
 FROM continuumio/miniconda3
 RUN conda create -y -n lcogtsnpipe python=2
-SHELL ["conda", "run", "-n", "lcogtsnpipe", "/bin/bash", "-c"]
+SHELL ["conda", "run", "-n", "lcogtsnpipe", "--live-stream", "/bin/bash", "-c"]
 
 ENV iraf=/iraf/iraf/
 # To make this a 32 bit version linux64 -> linux
 ENV IRAFARCH=linux64
 
 RUN apt-get --allow-releaseinfo-change update \
-        && apt -y install gcc make flex git gfortran \
+        && apt -y install gcc make flex git gfortran zlib1g-dev bison \
         && apt -y install libcurl4-openssl-dev libexpat-dev libreadline-dev gettext \
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*
@@ -96,7 +96,7 @@ RUN python setup.py build -f && python setup.py install -f
 
 WORKDIR /home/supernova/iraf
 
-RUN mkiraf --term=xgterm -i
+RUN mkiraf -i
 
 WORKDIR /home/supernova
 

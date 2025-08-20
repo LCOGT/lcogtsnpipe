@@ -50,21 +50,9 @@ RUN pip install cryptography==2.4.1 astropy matplotlib==2.2.5 pyraf mysql-python
 
 RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git
 
-RUN apt-get --allow-releaseinfo-change update && \
-        apt-get install -y libxml2-dev libxslt-dev tclsh libxmlrpc-c++8-dev && \ 
-        git clone https://github.com/SAOImageDS9/SAOImageDS9 && \
-        cd SAOImageDS9 && \
-        git checkout d4f01a3170775dc7b6cb57de43f6feb7184b47b0 && \
-        unix/configure && \
-        cd openssl && \
-        ./config && \
-        make build_engines && \
-        make && \
-        cd .. && \ 
-        make && \
-        ln -s /SAOImageDS9/bin/ds9 /usr/bin/ && \
-        apt-get autoclean && \
-        rm -rf /var/lib/apt/lists/*
+RUN wget http://ds9.si.edu/download/debian12x86/ds9.debian12x86.8.6.tar.gz \
+        && tar -xzvf ds9.debian12x86.8.6.tar.gz -C /usr/local/bin \
+        && rm -rf ds9.debian12x86.8.6.tar.gz
 
 RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
         && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \

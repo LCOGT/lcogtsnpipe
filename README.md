@@ -27,8 +27,11 @@ These instructions only need to be run once, when you set up the pipeline.
    2. Install [docker-compose](https://docs.docker.com/compose/install/)
    3. (macOS only) Install [XQuartz](https://www.xquartz.org).
    4. (macOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
-   5. Allow X11 connections (may be only necessary on Linux): `xhost +local:docker`
-   6. (Linux Only) Modify your X11 config files to allow TCP connections: 
+   5. Allow X11 connections (may be only necessary on Linux):
+      ```
+      xhost +local:docker
+      ```
+   7. (Linux Only) Modify your X11 config files to allow TCP connections: 
         1. If you are running gdm or gdm3 for your display manager add the following to `/etc/gdm<3>/custom.conf`
         ```
         [security]
@@ -63,14 +66,14 @@ These instructions only need to be run once, when you set up the pipeline.
         ```
         Now an window should appear.
         
-   7. Clone this repository: 
+   8. Clone this repository: 
        ```
        git clone https://github.com/LCOGT/lcogtsnpipe
        ```
-   8. Build the Docker image:
-          ```
-          docker build -t lcogtsnpipe lcogtsnpipe
-          ```
+   9. Build the Docker image:
+      ```
+      docker build -t lcogtsnpipe lcogtsnpipe
+      ```
         
    10. Set your environment variables to point to where you want to store data and catalogs.
       You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file
@@ -119,9 +122,13 @@ These instructions only need to be run once, when you set up the pipeline.
        docker exec -it lcosnpipe /bin/bash
        ```
        If you're configured correctly, you should be able to open a ds9 window now using `ds9` command. 
-   15. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
+   15. From inside the container, initialize the database:
+       ```
+       sh /lcogtsnpipe/init-db.sh
+       ```
+       You only need to run this command 
        the first time you setup the db.
-   16. From inside the container, run 
+   17. From inside the container, run 
        ```
        cd $LCOSNDIR
        mkdir -p data/lsc data/fts data/0m4 data/floyds data/extdata standard/cat/apass standard/cat/sloan standard/cat/landolt standard/cat/gaia

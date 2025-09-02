@@ -23,7 +23,7 @@ RUN mkdir -p $iraf \
 RUN apt-get --allow-releaseinfo-change update \
         && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor procps g++ \
         default-mysql-client libmariadb-dev default-libmysqlclient-dev openssh-client wcstools libxml2 vim zip pkg-config \
-        libpng-dev libfreetype6-dev libcfitsio-dev libffi-dev libopenblas-dev libssl-dev \
+        libpng-dev libfreetype6-dev libcfitsio-dev libffi-dev libopenblas-dev libssl-dev libfftw3-dev libatlas-base-dev \
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*
 
@@ -64,6 +64,14 @@ RUN cd / \
         && sed -i 's/^COPTS = .*/& -fcommon/' Makefile \
         && make \
         && ln -s /hotpants/hotpants /usr/bin/
+        
+RUN cd / \
+        && git clone https://github.com/astromatic/sextractor.git \
+        && cd sextractor \
+        && sh autogen.sh \
+        && ./configure \
+        && make -j 8 \
+        && make install
 
 ENV LCOSNPIPE=/lcogtsnpipe
 
@@ -76,6 +84,8 @@ RUN chown -R supernova:domainusers $LCOSNPIPE /opt/conda/envs/lcogtsnpipe/
 
 USER supernova
 
+ENV USER=supernova
+
 COPY --chown=supernova:domainusers . $LCOSNPIPE
 
 WORKDIR $LCOSNPIPE/trunk
@@ -84,7 +94,7 @@ RUN python setup.py build -f && python setup.py install -f
 
 WORKDIR /home/supernova/iraf
 
-RUN mkiraf -i
+RUN mkiraf -i -d -c
 
 WORKDIR /home/supernova
 

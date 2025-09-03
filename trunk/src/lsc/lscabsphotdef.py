@@ -1108,9 +1108,10 @@ def zeronew(ZZ,maxiter=10,nn=5,verbose=False,show=False):
 #######################################################################
 def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
     '''download an SDSS catalog'''
-    t = SDSS.query_sql('''select P.ra, P.dec, P.objID, P.u, P.err_u, P.g, P.err_g, P.r, P.err_r, P.i, P.err_i, P.z, P.err_z
-                          from PhotoPrimary as P, dbo.fGetNearbyObjEq({}, {}, {}) as N
-                          where P.objID=N.objID and P.type=6 and P.r >= {} and P.r <= {}'''.format(ra, dec, radius, mag1, mag2))
+    sql_command = "select P.ra, P.dec, P.objID, P.u, P.err_u, P.g, P.err_g, P.r, P.err_r, P.i, P.err_i, P.z, P.err_z " + \
+                  "from PhotoPrimary as P, dbo.fGetNearbyObjEq({}, {}, {}) as N " + \
+                  "where P.objID=N.objID and P.type=6 and P.r >= {} and P.r <= {};"
+    t = SDSS.query_sql(sql_command.format(ra, dec, radius, mag1, mag2))
     if t is not None:
         t['ra'].format ='%16.12f'
         t['dec'].format = '%16.13f'

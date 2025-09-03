@@ -66,16 +66,20 @@ These instructions only need to be run once, when you set up the pipeline.
         ```
         Now an window should appear.
         
-   8. Clone this repository: 
+   8. Clone this repository:
        ```
        git clone https://github.com/LCOGT/lcogtsnpipe
        ```
-   9. Build the Docker image:
-      ```
-      docker build -t lcogtsnpipe lcogtsnpipe
-      ```
-        
-   10. Set your environment variables to point to where you want to store data and catalogs.
+   10. Build the Docker image:
+       Linux:
+       ```
+       docker build -t lcogtsnpipe lcogtsnpipe
+       ```
+       Mac:
+       ```
+       docker build -t lcogtsnpipe lcogtsnpipe --platform=linux/x86_64
+       ```
+   12. Set your environment variables to point to where you want to store data and catalogs.
       You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file
       so that you don't have to set them in every new terminal session.
        ```
@@ -86,12 +90,12 @@ These instructions only need to be run once, when you set up the pipeline.
        with the correct permissions. If you need to use a pre-existing directory or in case docker doesn't set up the permissions correctly, you may have to update the permissions using
        `chmod -R 777 /path/to/data/`. 
        If you do not set these environment variables, they default to being in `data` and `mysql` in repo directory.
-   11. (MacOS only) Run XQuartz from the Finder.
-   12. (MacOS only) Run this hack in the background to get the X11 forwarding to work:
+   13. (MacOS only) Run XQuartz from the Finder.
+   14. (MacOS only) Run this hack in the background to get the X11 forwarding to work:
        ```
        socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &
        ```
-   13. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
+   15. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
        this mental picture is close enough).
           ```
           docker-compose -f lcogtsnpipe/docker-compose.yml up

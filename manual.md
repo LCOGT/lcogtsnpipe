@@ -19,6 +19,11 @@
 ```
 LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public
 ```
+If you wish to download data that is not public yet, request an API key in the GSP slack. Someone at LCO will send it to you privately and you can use it in the following manner (replacing `sdf087asdf987asdf0786987` with your API key):
+```
+export LCO_API_KEY=sdf087asdf987asdf0786987
+LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced
+```
 
 # Create gaia, apass, and sloan catalogs for new objects
 * run `comparecatalogs.py` to generate new catalogs
@@ -125,8 +130,12 @@ Where:
 * **How to fix this step if the image looks ok but the wcs failed**
     * rerun lscloop.py with the step ```-s wcs -b wcs``` to run only on those files for which the wcs failed
     * try running with the --catalog option
-    * try using ```--mode astrometry``` to use astrometry.net to solve the WCS
+    * try using ```--mode astrometry``` to use astrometry.net to solve the WCS. Note this only works if astrometry.net has been installed. astrometry.net is not installed in the docker version of the pipeline
     * try using ```--xshift 1 --yshift 1``` to start the solution from a slightly different location
+    * If you get the error: "ERROR: catalog empty 2MASS" this means `lscastrodef.querycatalogue` is failing. It could mean one of two things:
+        - the vizier query in `lscastrodef.vizq` is timing out. If this is the issue, you will either have to wait or manually solve the WCS with astrometry.net and then update the WCS column in the photlco table
+        - the `CRPIX` value in the header of the file you downloaded from SNEx was corrupt. You can check this by looking at the `CRPIX1` and `CRPIX2` header keywords. These should not be very large numbers (like 1E42). If the file is corrupt, you can download it directly from the LCO archive or if you don't have permission, request in the pipeline channel that someone download the files for you (or for large downloads, give you the proper archive permissions).
+        - For either case, you should also check that the apass, sloan, and gaia catalogs you downloaded for the target are not empty
 
 ### Generate a PSF model
 * **Call**: ```-s psf```

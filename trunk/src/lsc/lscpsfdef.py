@@ -81,10 +81,10 @@ def psffit2(img, fwhm, psfstars, hdr, _datamin, _datamax, psffun='gauss',  fixap
     _gain = lsc.util.readkey3(hdr, 'gain')
     if not _ron:
         _ron = 1
-        print 'warning ron not defined'
+        print('warning ron not defined')
     if not _gain:
         _gain = 1
-        print 'warning gain not defined'
+        print('warning gain not defined')
 
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
@@ -92,7 +92,7 @@ def psffit2(img, fwhm, psfstars, hdr, _datamin, _datamax, psffun='gauss',  fixap
     varord = 0  # -1 analitic 0 - numeric
 
     if fixaperture:
-        print 'use fix aperture 5 8 10'
+        print('use fix aperture 5 8 10')
         hdr = lsc.util.readhdr(img+'.fits')
         _pixelscale = lsc.util.readkey3(hdr, 'PIXSCALE')
         a1, a2, a3, a4, = float(5. / _pixelscale), float(5. / _pixelscale), float(8. / _pixelscale), float(
@@ -142,10 +142,10 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
     _gain = lsc.util.readkey3(hdr, 'gain')
     if not _ron:
         _ron = 1
-        print 'warning ron not defined'
+        print('warning ron not defined')
     if not _gain:
         _gain = 1
-        print 'warning gain not defined'
+        print('warning gain not defined')
 
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
@@ -153,7 +153,7 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
     varord = 0  # -1 analitic 0 - numeric
 
     if fixaperture:
-        print 'use fix aperture 5 8 10'
+        print('use fix aperture 5 8 10')
         hdr = lsc.util.readhdr(img+'.fits')
         _pixelscale = lsc.util.readkey3(hdr, 'PIXSCALE')
         a1, a2, a3, a4, = float(5. / _pixelscale), float(5. / _pixelscale), float(8. / _pixelscale), float(
@@ -197,10 +197,10 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
 
     if interactive: # not possible to run pstselect or psf interactively on 64-bit linux (Error 851)
         os.system('cp _psf.mag _psf.pst')
-        print '_' * 80
-        print '>>> Mark good stars with "a" or "d"-elete. Then "f"-it,' + \
-              ' "w"-write and "q"-uit (cursor on ds9)'
-        print '-' * 80
+        print('_' * 80)
+        print('>>> Mark good stars with "a" or "d"-elete. Then "f"-it,' + \
+              ' "w"-write and "q"-uit (cursor on ds9)')
+        print('-' * 80)
     else:
         iraf.pstselect(img+'[0]', '_psf.mag', '_psf.pst', psfstars, interac=False, verify=False)
 
@@ -244,11 +244,11 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                     raise Exception('astrometry not good')
 
             fwhm = seeing / scale
-            print 'FWHM[header]', fwhm, 'pixels'
-        print 'FWHM[input] ', fwhm, 'pixels'
+            print('FWHM[header]', fwhm, 'pixels')
+        print('FWHM[input] ', fwhm, 'pixels')
 
         xdim, ydim = iraf.hselect(img+'[0]', 'i_naxis1,i_naxis2', 'yes', Stdout=1)[0].split()
-        print img, fwhm, threshold, scale, xdim
+        print(img, fwhm, threshold, scale, xdim)
 
         if _datamax is None:
             # When a star near saturation is selected as the first PSF star it leads to an incorrect
@@ -259,7 +259,7 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
         ###################        write file to compute psf     _psf.coo    ############
         #################################################################################
         if _catalog:
-            print '\n#### use catalog to measure the psf'
+            print('\n#### use catalog to measure the psf')
             ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img + '[0]',inwcs='world',outwcs='logical',
                               units='degrees degrees',columns='1 2',formats='%10.1f %10.1f',verbose='no')
             ddd=[i for i in ddd if i[0]!='#']
@@ -278,9 +278,9 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
         elif interactive:
             iraf.display(img + '[0]', 1, fill=True)
             iraf.delete('tmp.lo?', verify=False)
-            print '_' * 80
-            print '>>> Mark reference stars with "a". Then "q"'
-            print '-' * 80
+            print('_' * 80)
+            print('>>> Mark reference stars with "a". Then "q"')
+            print('-' * 80)
             iraf.imexamine(img, 1, wcs='logical', logfile='tmp.log', keeplog=True)
             xyrefer = iraf.fields('tmp.log', '1,2,6,15', Stdout=1)
             xns, yns, _fws = [], [], []
@@ -298,8 +298,8 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
             xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
             tot = np.compress(abs(np.array(fluxrad) * 1.6 - fwhm) / fwhm < .5, fluxrad)
             if len(tot) < 5:
-                print 'warning: fwhm from sexractor different from fwhm computed during pre-reduction'
-                print 'try using option --fwhm xxx'
+                print('warning: fwhm from sexractor different from fwhm computed during pre-reduction')
+                print('try using option --fwhm xxx')
 
             ff = open('tmp.cursor', 'w')
             image_hdu = fits.open(img + '.fits')
@@ -338,8 +338,8 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                     xn.append(float(r.split()[0]))
                     yn.append(float(r.split()[1]))
                     _fw.append(float(r.split()[3]))
-            print 'FWHM: ', righe[-1].split()[-1]
-            print 80 * "#"
+            print('FWHM: ', righe[-1].split()[-1])
+            print(80 * "#")
             ######
             ##############            eliminate double object identification         ###########################
             xns, yns, _fws = [xn[0]], [yn[0]], [_fw[0]]
@@ -381,7 +381,7 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
 #            fstar = np.compress(dflux < np.std(fluxrad), fluxrad)
 #################################################################################################################
 
-        print 80 * "#"
+        print(80 * "#")
         photmag, pst, fitmag = psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun, fixaperture)
 
         if make_sn2:
@@ -419,16 +419,16 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
             _dmag = np.compress(np.array(dmag) < 9.99, np.array(dmag))
             aperture_correction = np.mean(_dmag)
             aperture_correction_err = np.std(_dmag)
-            print '>>> Aperture correction (phot)   %6.3f +/- %5.3f %3d ' % \
-                  (aperture_correction, aperture_correction_err, len(_dmag))
+            print('>>> Aperture correction (phot)   %6.3f +/- %5.3f %3d ' % \
+                  (aperture_correction, aperture_correction_err, len(_dmag)))
             #Sigma clip if there are enough points
             if len(_dmag) > 3:
                 _dmag = np.compress(np.abs(_dmag - np.median(_dmag)) < 2 * np.std(_dmag), _dmag)
                 aperture_correction = np.mean(_dmag)
                 aperture_correction_err = np.std(_dmag)
-                print '>>>         2 sigma rejection)   %6.3f +/- %5.3f %3d  [default]' \
-                      % (aperture_correction, aperture_correction_err, len(_dmag))
-                print '>>>     fwhm   %s  ' % (str(fwhm))
+                print('>>>         2 sigma rejection)   %6.3f +/- %5.3f %3d  [default]' \
+                      % (aperture_correction, aperture_correction_err, len(_dmag)))
+                print('>>>     fwhm   %s  ' % (str(fwhm)))
                 
             for i in range(len(dmag)):
                 if dmag[i] == 9.99:

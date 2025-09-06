@@ -45,7 +45,7 @@ def limmag(img, zeropoint=0, Nsigma_limit=3, _fwhm = 5):
     _pixelscale = lsc.util.readkey3(hdr, 'pixscale')
     _radius = float(_fwhm) / float(_pixelscale)
     if _radius and _gain and _skynoise:
-        print _skynoise, _gain, _radius
+        print(_skynoise, _gain, _radius)
         #    mag = calc_limit_mag(Nsigma_limit, _sky, _gain, _readnoise, _exptime, zeropoint, _radius)
         limit_counts = fsolve(snr_helper, np.median(data), args = [Nsigma_limit, _readnoise, _gain, _skynoise,_radius])[0]
         mag = -2.5 * np.log10(limit_counts / _exptime) + zeropoint
@@ -231,7 +231,7 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
     filename = os.path.basename(img)
     status = lsc.myloopdef.checkstage(filename, 'zcat')
     if status < 1:
-        print 'cannot run zcat stage yet:', filename
+        print('cannot run zcat stage yet:', filename)
         return
 
     hdr = fits.getheader(img.replace('.fits', '.sn2.fits'))
@@ -260,7 +260,7 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
     else:
        catalogpath = os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'standard', 'cat',  _catalogue)
     if not catalogpath:
-        print 'could not find a catalog for', _object, _filter
+        print('could not find a catalog for', _object, _filter)
         return
 
     catalog = os.path.basename(catalogpath)
@@ -274,7 +274,7 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
                 _field = fieldname
                 break
         else:
-            print catalog, 'columns do not match any known field:', set(stdcoo.colnames)
+            print(catalog, 'columns do not match any known field:', set(stdcoo.colnames))
             return
 
     if _calib == 'sloanprime' and ('fs' in _instrume or 'em' in _instrume):
@@ -309,10 +309,10 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
                        'UUB': 0.0, 'BUB': 0.0, 'BBV': 0.0, 'VBV': 0.0, 'VVR': 0.0, 'RVR': 0.0, 'RRI': 0.0, 'IRI': 0.0}
 
     if _cat and not redo:
-        print 'already calibrated'
+        print('already calibrated')
     else:
-     print '_' * 100
-     print 'Calibrating {} to {}'.format(filename, catalog)
+     print('_' * 100)
+     print('Calibrating {} to {}'.format(filename, catalog))
      lsc.mysqldef.updatevalue('photlco', 'zcat', 'X', filename)
 
      column=makecatalogue([img.replace('.fits', '.sn2.fits')])[_filter][img.replace('.fits', '.sn2.fits')]
@@ -343,13 +343,13 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
         iraf.set(stdimage='imt1024')
         iraf.display(img + '[0]',1,fill=True,Stdout=1)
         iraf.tvmark(1,'STDIN',Stdin=list(xy),mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=207,txsize=2)
-        print 'yellow circles sextractor'
+        print('yellow circles sextractor')
 
      stdcoo['x'], stdcoo['y'] = wcs.wcs_world2pix(stdcoo['ra'], stdcoo['dec'], 1)
      if _interactive:
            vector=['{:.1f} {:.1f}'.format(x, y) for x, y in zip(stdcoo['x'],stdcoo['y'])]
            iraf.tvmark(1,'STDIN',Stdin=vector,mark="circle",number='yes',label='no',radii=10,nxoffse=5,nyoffse=5,color=204,txsize=2)
-           print 'red circles catalog'
+           print('red circles catalog')
 
      in_field = (stdcoo['x'] > 0) & (stdcoo['x'] < lsc.util.readkey3(hdr, 'XDIM')) & (stdcoo['y'] > 0) & (stdcoo['y'] < lsc.util.readkey3(hdr, 'YDIM'))
      if np.any(in_field):  ########   go only if standard stars are in the field  ##########
@@ -482,7 +482,7 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
         colorvec=colors[lsc.sites.filterst1[_filter]]
         zero = np.array(zero)
         zeroerr = np.array(zeroerr)
-        print 'attempting these colors:', colorvec
+        print('attempting these colors:', colorvec)
         if not colorvec:
             colorvec.append(2*lsc.sites.filterst1[_filter])
         if not zcatold and show and not _interactive:
@@ -519,7 +519,7 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
                 fisso = None
 
             if len(colore2)==0:
-                print 'no calibration:', lsc.sites.filterst1[_filter], col, _field
+                print('no calibration:', lsc.sites.filterst1[_filter], col, _field)
                 continue
 #                b,a,sa,sb=9999,9999,0,0
             else:
@@ -538,7 +538,7 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
                                     if not np.isfinite(result[ll][kk]): result[ll][kk]=0.0 
                 valore='%3.3s %6.6s %6.6s  %6.6s  %6.6s' %  (str(ll),str(result[ll][0]),str(result[ll][2]),str(result[ll][1]),str(result[ll][3]))
                 lsc.util.updateheader(img.replace('.fits', '.sn2.fits'), 0, {'zp'+ll:(str(valore),'a b sa sb in y=a+bx')})
-                print '### added to header:', valore
+                print('### added to header:', valore)
                 if ll[0]==ll[2]: num=2
                 elif ll[0]==ll[1]: num=1
                 else: raise Exception('somthing wrong with color '+ll)
@@ -562,7 +562,7 @@ def fitcol3(colors, deltas, dcolors=None, ddeltas=None, fixedC=None, filt='', co
         if sum(keep) <= 5: # if there aren't very many points, use fixed color term
             if filt=='g': fixedC = 0.1
             else:         fixedC = 0
-            print 'Not enough points (after rejection). Defaulting to C = {:.2f}.'.format(fixedC)
+            print('Not enough points (after rejection). Defaulting to C = {:.2f}.'.format(fixedC))
     if fixedC is not None: # color term is fixed
         C = fixedC
         zeros = deltas - C*colors
@@ -576,15 +576,17 @@ def fitcol3(colors, deltas, dcolors=None, ddeltas=None, fixedC=None, filt='', co
             global keep, Z, dZ, C, dC
             i = event.ind[0] # find closest point
             keep[i] = not keep[i] # toggle rejection
-            print
+            print()
             Z, dZ, C, dC = calcZC(colors, deltas, dcolors, ddeltas, fixedC, filt, col, show=True, guess=[Z, C])
         cid = plt.gcf().canvas.mpl_connect('pick_event', onpick)
         raw_input('Press enter to continue.')
         plt.gcf().canvas.mpl_disconnect(cid)
     elif fixedC is None and C > 0.3: # if the color term is too crazy, use fixed color term
-        if filt=='g': fixedC = 0.1
-        else:         fixedC = 0
-        print 'C = {:.2f} is too crazy. Redoing with C = {:.2f}.'.format(C, fixedC)
+        if filt=='g':
+            fixedC = 0.1
+        else:
+            fixedC = 0
+        print('C = {:.2f} is too crazy. Redoing with C = {:.2f}.'.format(C, fixedC))
         C = fixedC
         zeros = deltas - C*colors
         dzeros = (ddeltas**2 + (C*dcolors)**2)**0.5
@@ -614,8 +616,8 @@ def calcZC(colors, deltas, dcolors=None, ddeltas=None, #keep=None,
     else:
         Z, C = guess
         dZ, dC = 0, 0
-    print 'zero point = {:5.2f} +/- {:4.2f}'.format(Z, dZ)
-    print 'color term = {:5.2f} +/- {:4.2f}'.format(C, dC)
+    print('zero point = {:5.2f} +/- {:4.2f}'.format(Z, dZ))
+    print('color term = {:5.2f} +/- {:4.2f}'.format(C, dC))
     if show:
         if not plt.gca().get_autoscale_on():
             lims = plt.axis()
@@ -697,8 +699,8 @@ def fitcol(col,dmag,band,color,fissa=''):
     plt.draw()
     raw_input('left-click mark bad, right-click unmark, <d> remove. Return to exit ...')
     plt.close()
-    print '####'
-    print sigmaa,sigmab, aa,bb
+    print('####')
+    print(sigmaa,sigmab, aa,bb)
     return aa,sigmaa,bb,sigmab
 
 #################################################################
@@ -739,9 +741,9 @@ def fitcol2(_col,_dmag,band,col,fixcol='',show=False,rejection=2):
             plt.draw()
             time.sleep(1)
     try:
-        print '###', mean0, sigmaa, slope, sigmab
+        print('###', mean0, sigmaa, slope, sigmab)
     except:
-        print '\n### zeropoint not computed'
+        print('\n### zeropoint not computed')
         mean0,sigmaa,slope,sigmab=9999,9999,9999,9999
     return mean0,sigmaa,slope,sigmab
 
@@ -852,9 +854,9 @@ def makecatalogue(imglist):
 ######################################################################################################
 def finalmag(Z1,Z2,C1,C2,m1,m2):
     color=(Z1-Z2+m1-m2)/(1-(C1-C2))
-    print 'color ',color
-    print Z1,C1,m1
-    print Z2,C2,m2
+    print('color ',color)
+    print(Z1,C1,m1)
+    print(Z2,C2,m2)
     M1=Z1+C1*color+m1
     M2=Z2+C2*color+m2
     return M1,M2
@@ -907,13 +909,13 @@ def zeropoint(data,mag,maxiter=10,nn=2,show=False):
         z2=np.mean(data2)
         std2=np.std(data2)
         if show:
-            print 'rejected '+str(len(data1)-len(data2))+' point'
-            print z1,std1,len(data1)
-            print z2,std2,len(data2)
+            print('rejected '+str(len(data1)-len(data2))+' point')
+            print(z1,std1,len(data1))
+            print(z2,std2,len(data2))
 
         if np.abs(z2-z1)<std2/np.sqrt(len(data2)):
             if show:
-                print 'zero points are within std2 '
+                print('zero points are within std2 ')
                 pl.clf()
                 pl.plot(mag1,data1,'or')
                 pl.plot(mag2,data2,'xg')
@@ -929,9 +931,9 @@ def zeropoint(data,mag,maxiter=10,nn=2,show=False):
             std2=np.std(data2)
         iter += 1
         if show:
-            print 'iteration '+str(iter)
-            print z1,std1,len(data1)
-            print z2,std2,len(data2)
+            print('iteration '+str(iter))
+            print(z1,std1,len(data1))
+            print(z2,std2,len(data2))
             pl.clf()
             pl.plot(mag,data,'or')
             pl.plot(mag2,data2,'*g')
@@ -943,7 +945,7 @@ def zeropoint2(xx,mag,maxiter=10,nn=2,show=False,_cutmag=99):
    if len(xx):
       import numpy as np
       if float(_cutmag)!=99:
-         print 'cut mag '+str(_cutmag)
+         print('cut mag '+str(_cutmag))
          xx=np.compress(mag<_cutmag,xx)
          mag=np.compress(mag<_cutmag,mag)
       data=np.array(xx-mag)
@@ -956,7 +958,7 @@ def zeropoint2(xx,mag,maxiter=10,nn=2,show=False,_cutmag=99):
       z2, std2 = 9999, 9999
       iter=0; 
       if show:  
-            print len(data2)
+            print(len(data2))
             import matplotlib.pyplot as pl
             pl.ion()
             pl.clf()
@@ -968,12 +970,12 @@ def zeropoint2(xx,mag,maxiter=10,nn=2,show=False,_cutmag=99):
           z2=np.mean(data2)
           std2=np.std(data2)
           if show:
-              print 'rejected '+str(len(data1)-len(data2))+' point'
-              print z1,std1,len(data1)
-              print z2,std2,len(data2)
+              print('rejected '+str(len(data1)-len(data2))+' point')
+              print(z1,std1,len(data1))
+              print(z2,std2,len(data2))
           if np.abs(z2-z1)<std2/np.sqrt(len(data2)):
               if show:
-                  print 'zero points are within std2 '
+                  print('zero points are within std2 ')
                   pl.clf()
                   pl.plot(mag1,data1,'or')
                   pl.plot(mag2,data2,'xg')
@@ -989,9 +991,9 @@ def zeropoint2(xx,mag,maxiter=10,nn=2,show=False,_cutmag=99):
               std2=np.std(data2)
           iter += 1
           if show:
-              print 'iteration '+str(iter)
-              print z1,std1,len(data1)
-              print z2,std2,len(data2)
+              print('iteration '+str(iter))
+              print(z1,std1,len(data1))
+              print(z2,std2,len(data2))
               pl.clf()
               pl.plot(mag,data,'or')
               pl.plot(mag2,data2,'*g')
@@ -1018,12 +1020,12 @@ def transform2natural(_instrument,_catalogue,colorefisso,_inputsystem='sloan'):
       _catalogue2['r']=_catalogue2['r']-colorefisso['rri']*np.array(col['ri'])#(_catalogue['r']-_catalogue['i'])
       _catalogue2['i']=_catalogue2['i']-colorefisso['iri']*np.array(col['ri'])#(_catalogue['r']-_catalogue['i'])
       _catalogue2['z']=_catalogue2['z']-colorefisso['ziz']*np.array(col['iz'])#(_catalogue['i']-_catalogue['z'])
-      print 'transform '+str(_inputsystem)+' to natural system'
-      print 'un = u - '+str(colorefisso['uug'])+' * (u-g)'
-      print 'gn = g - '+str(colorefisso['ggr'])+' * (g-r)'
-      print 'rn = r - '+str(colorefisso['rri'])+' * (r-i)'
-      print 'in = i - '+str(colorefisso['iri'])+' * (r-i)'
-      print 'zn = z - '+str(colorefisso['ziz'])+' * (i-z)'
+      print('transform '+str(_inputsystem)+' to natural system')
+      print('un = u - '+str(colorefisso['uug'])+' * (u-g)')
+      print('gn = g - '+str(colorefisso['ggr'])+' * (g-r)')
+      print('rn = r - '+str(colorefisso['rri'])+' * (r-i)')
+      print('in = i - '+str(colorefisso['iri'])+' * (r-i)')
+      print('zn = z - '+str(colorefisso['ziz'])+' * (i-z)')
    elif _inputsystem in ['landolt']:
       col={}
       col['UB']=[(_catalogue2['U'][i]-_catalogue2['B'][i]) if (_catalogue2['U'][i]<99 and _catalogue2['B'][i]<99) else  (_catalogue2['B'][i]-_catalogue2['B'][i]) for i in range(0,len(_catalogue2['U']))]
@@ -1035,12 +1037,12 @@ def transform2natural(_instrument,_catalogue,colorefisso,_inputsystem='sloan'):
       _catalogue2['V']=_catalogue2['V']-colorefisso['VVR']*np.array(col['VR'])#(_catalogue['V']-_catalogue['R'])
       _catalogue2['R']=_catalogue2['R']-colorefisso['RVR']*np.array(col['VR'])#(_catalogue['V']-_catalogue['R'])
       _catalogue2['I']=_catalogue2['I']-colorefisso['IRI']*np.array(col['RI'])#(_catalogue['R']-_catalogue['I'])
-      print 'transform '+str(_inputsystem)+' to natural system'
-      print "Un = U - "+str(colorefisso['UUB'])+" * (U-B)"
-      print "Bn = B - "+str(colorefisso['BBV'])+" * (B-V)"
-      print "Vn = V - "+str(colorefisso['VVR'])+" * (V-R)"
-      print "Rn = R - "+str(colorefisso['RVR'])+" * (V-R)"
-      print "In = I - "+str(colorefisso['IRI'])+" * (R-I)"
+      print('transform '+str(_inputsystem)+' to natural system')
+      print("Un = U - "+str(colorefisso['UUB'])+" * (U-B)")
+      print("Bn = B - "+str(colorefisso['BBV'])+" * (B-V)")
+      print("Vn = V - "+str(colorefisso['VVR'])+" * (V-R)")
+      print("Rn = R - "+str(colorefisso['RVR'])+" * (V-R)")
+      print("In = I - "+str(colorefisso['IRI'])+" * (R-I)")
    elif _inputsystem in ['apass']:
       col={}
       col['BV']=[(_catalogue2['B'][i]-_catalogue2['V'][i]) if (_catalogue2['B'][i]<99 and _catalogue2['V'][i]<99) else  (_catalogue2['B'][i]-_catalogue2['B'][i]) for i in range(0,len(_catalogue2['V']))]
@@ -1051,12 +1053,12 @@ def transform2natural(_instrument,_catalogue,colorefisso,_inputsystem='sloan'):
       _catalogue2['g']=_catalogue2['g']-colorefisso['ggr']*np.array(col['gr']) #(_catalogue['g']-_catalogue['r'])
       _catalogue2['r']=_catalogue2['r']-colorefisso['rri']*np.array(col['ri']) #(_catalogue['r']-_catalogue['i'])
       _catalogue2['i']=_catalogue2['i']-colorefisso['iri']*np.array(col['ri']) #(_catalogue['r']-_catalogue['i'])
-      print 'transform '+str(_inputsystem)+' to natural system'
-      print "Bn = B - "+str(colorefisso['BBV'])+" * (B-V)"
-      print "Vn = V - "+str(colorefisso['BBV'])+" * (B-V)"
-      print "gn = g' - "+str(colorefisso['ggr'])+" * (g'-g')"
-      print "rn = r' - "+str(colorefisso['rri'])+" * (r'-i')"
-      print "in = i' - "+str(colorefisso['iri'])+" * (r'-i')"
+      print('transform '+str(_inputsystem)+' to natural system')
+      print("Bn = B - "+str(colorefisso['BBV'])+" * (B-V)")
+      print("Vn = V - "+str(colorefisso['BBV'])+" * (B-V)")
+      print("gn = g' - "+str(colorefisso['ggr'])+" * (g'-g')")
+      print("rn = r' - "+str(colorefisso['rri'])+" * (r'-i')")
+      print("in = i' - "+str(colorefisso['iri'])+" * (r'-i')")
    return _catalogue2
 
 ##################################################################################
@@ -1076,11 +1078,11 @@ def zeronew(ZZ,maxiter=10,nn=5,verbose=False,show=False):
      while iter < maxiter and len(ZZcut)>5 and cut>0:
           iter+=1
           if verbose:
-               print iter
-               print 'reject  '+str(cut)+' objects'  
-               print 'number of object= '+str(len(ZZcut))
-               print 'median=  '+str(mediancut)
-               print 'sigma= '+str(sigmacut)
+               print(iter)
+               print('reject  '+str(cut)+' objects')
+               print('number of object= '+str(len(ZZcut)))
+               print('median=  '+str(mediancut))
+               print('sigma= '+str(sigmacut))
           # new cut around new median after rejection 
           ZZcut2=np.compress((ZZ < (mediancut+nn*sigmacut)) & (ZZ>(mediancut-nn*sigmacut)),ZZ)  
 
@@ -1092,7 +1094,7 @@ def zeronew(ZZ,maxiter=10,nn=5,verbose=False,show=False):
                sigmacut=sigma2
                mediancut=np.median(ZZcut2)
           if verbose:   
-              print len(ZZcut2),sigmacut,mediancut
+              print(len(ZZcut2),sigmacut,mediancut)
      if show:
           import matplotlib.pyplot as pl
           pl.ion()
@@ -1141,9 +1143,9 @@ def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
         'END CATALOG HEADER'
         ]
         t.write(output, format='ascii.no_header')
-        print len(t), 'matching objects. Catalog saved to', output
+        print(len(t), 'matching objects. Catalog saved to', output)
     else:
-        print 'No matching objects.'
+        print('No matching objects.')
 
 
 def panstarrs2file(ra, dec, radius=20., mag1=13., mag2=20., output='panstarrs.cat'):
@@ -1220,9 +1222,9 @@ def panstarrs2file(ra, dec, radius=20., mag1=13., mag2=20., output='panstarrs.ca
         'END CATALOG HEADER'
         ]
         t.write(output, format='ascii.no_header', overwrite=True)
-        print len(t), 'matching objects. Catalog saved to', output
+        print(len(t), 'matching objects. Catalog saved to', output)
     else:
-        print 'No matching objects.'
+        print('No matching objects.')
 
 
 def gaia2file(ra, dec, size=26., mag_limit=18., output='gaia.cat'):

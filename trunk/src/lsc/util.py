@@ -74,8 +74,8 @@ def readlist(listfile):
                        hdulist= fits.open(ff)
                        imglist.append(ff)
                     except Exception as e:
-                        print 'problem reading header of', ff
-                        print e
+                        print('problem reading header of', ff)
+                        print(e)
            except:              sys.exit('\n##### Error ###\n file '+str(listfile)+' do not  exist\n')
     if len(imglist)==0:
            sys.exit('\n##### Error ###\nIf "'+str(listfile)\
@@ -123,7 +123,7 @@ def readhdr(img):
     try:
         hdr = fits.getheader(img)
     except Exception as e:
-        print "Couldn't read header of {}. Try deleting it and starting over.".format(img)
+        print("Couldn't read header of {}. Try deleting it and starting over.".format(img))
         raise e
     return hdr
     
@@ -338,8 +338,8 @@ def updateheader(filename, dimension, headerdict):
         header.update(headerdict)
         hdulist.close()
     except Exception as e:
-        print 'header of', filename, 'not updated:'
-        print e
+        print('header of', filename, 'not updated:')
+        print(e)
 #################################################################################################
 def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,_erase='yes'):
     goon='True'
@@ -360,17 +360,17 @@ def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,
               sss=iraf.display(img + '[0]', frame, xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase,\
                                    fill='yes', zscale='no', zrange='no', z1=_z1, z2=_z2,Stdout=1)
           except:
-              print ''
-              print '### ERROR: PROBLEM OPENING DS9'
-              print ''
+              print('')
+              print('### ERROR: PROBLEM OPENING DS9')
+              print('')
               goon='False'                 
        else:
         try:  
             sss=iraf.display(img + '[0]', frame, xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase, fill='yes', Stdout=1)
         except:
-            print ''
-            print '### ERROR: PROBLEM OPENING DS9'
-            print ''
+            print('')
+            print('### ERROR: PROBLEM OPENING DS9')
+            print('')
             goon=False
  
        if scale and goon:
@@ -387,7 +387,7 @@ def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,
               else: z11=float(z11)
               if not z22: z22=_z22
               else: z22=float(z22)
-              print z11,z22
+              print(z11,z22)
               sss=iraf.display(img + '[0]',frame,fill='yes', xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase,\
                                    zrange='no', zscale='no', z1=z11, z2=z22, Stdout=1)
               answ0 = raw_input('>>> Cuts OK ? [y/n] ? [y] ')
@@ -396,7 +396,7 @@ def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,
        if goon:
           _z1,_z2=string.split(string.split(sss[0])[0],'=')[1],string.split(string.split(sss[0])[1],'=')[1]
     else:
-        print 'Warning: image '+str(img)+' not found in the directory '
+        print('Warning: image '+str(img)+' not found in the directory ')
     return _z1,_z2,goon
 
 ###########################################################################
@@ -686,7 +686,7 @@ def marksn2(img,fitstab,frame=1,fitstab2='',verbose=False):
    if verbose:
  #     print 2.5*log10(_exptime)
       for i in range(0,len(column['ra0'])):
-         print xy[i],column['ra0'][i],column['dec0'][i],column['magp3'][i],column['magp4'][i],column['smagf'][i],column['magp2'][i]
+         print(xy[i],column['ra0'][i],column['dec0'][i],column['magp3'][i],column['magp4'][i],column['smagf'][i],column['magp2'][i])
 
    if fitstab2:
       vector2=[]
@@ -723,8 +723,8 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
       try:
          out_fits.scale('float32',bzero=0,bscale=1)
       except TypeError as e:
-         print "FITS rescaling failed (but it probably doesn't matter). See Astropy Issue #5955."
-         print e
+         print("FITS rescaling failed (but it probably doesn't matter). See Astropy Issue #5955.")
+         print(e)
       out_fits.writeto(temp_file0, overwrite=True, output_verify='fix')
       ar = fits.getdata(temp_file0)
       lsc.delete(temp_file0)
@@ -735,17 +735,17 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
       if 'gain' in hd:
          gain    = hd['GAIN']
       else:
-         print 'warning GAIN not found'
+         print('warning GAIN not found')
          gain = 1
       if 'saturate' in hd:
          sat     = hd['SATURATE']
       else:
-         print 'warning SATURATE not found'
+         print('warning SATURATE not found')
          sat = 60000
       if 'RDNOISE' in hd:
          rdnoise = hd['RDNOISE']
       else:
-         print 'warning RDNOISE not found'
+         print('warning RDNOISE not found')
          rdnoise = 1
    if '-e91.' in img:
        ar[ar < readkey3(hd, 'datamin')] = sat
@@ -757,8 +757,8 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
        _pssl = gain*noise**2 - rdnoise**2/gain - med # previously subtracted sky level
        ar[ar < -_pssl] = sat                         # change (what will be) negative values to saturated
 
-   print 'gain    sat     noise   sigclip objlim  sigfrac pssl'
-   print '{:<7.1f} {:<7.0f} {:<7.1f} {:<7.1f} {:<7.0f} {:<7.1f} {:<7.2f}'.format(gain, sat, rdnoise, _sigclip, _objlim, _sigfrac, _pssl)
+   print('gain    sat     noise   sigclip objlim  sigfrac pssl')
+   print('{:<7.1f} {:<7.0f} {:<7.1f} {:<7.1f} {:<7.0f} {:<7.1f} {:<7.2f}'.format(gain, sat, rdnoise, _sigclip, _objlim, _sigfrac, _pssl))
 
    niter = 1
    c = lsc.cosmics.cosmicsimage(ar, pssl=_pssl, gain=gain, readnoise=rdnoise, sigclip=5, sigfrac=0.3 , objlim=5, satlevel=sat)
@@ -785,7 +785,7 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    out_fits = fits.PrimaryHDU(header=hd,data=(out3!=0).astype('uint8'))
    out_fits.writeto(outsat, overwrite=True, output_verify='fix')
 
-   print 'time to do cosmic ray rejection:', time.time()-start
+   print('time to do cosmic ray rejection:', time.time()-start)
    return out,outmask,outsat
 
 ##############################################

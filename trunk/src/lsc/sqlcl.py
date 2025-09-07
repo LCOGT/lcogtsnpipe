@@ -65,7 +65,7 @@ def main(argv):
     # Parse command line
     try:
         optlist, args = getopt.getopt(argv[1:],'s:f:q:vlh?')
-    except getopt.error, e:
+    except (getopt.error, e):
         usage(1,e)
         
     for o,a in optlist:
@@ -83,7 +83,7 @@ def main(argv):
     for fname in args:
         try:
             queries.append(open(fname).read())
-        except IOError, e:
+        except (IOError, e):
             usage(1,e)
 
     # Run all queries sequentially

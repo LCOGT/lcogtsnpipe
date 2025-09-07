@@ -698,8 +698,8 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             for jj in ll1.keys():
                 ll1[jj] = []
     if _id:  # ID
-	lista = range(int(_id.split('-')[0]),int(_id.split('-')[-1])+1)
-	print(lista)
+        lista = range(int(_id.split('-')[0]),int(_id.split('-')[-1])+1)
+        print(lista)
         ww = np.array([i for i in range(len(ll1['filter'])) if ((int(ll1['filename'][i].split('-')[3]) in lista))])
         if len(ww) > 0:
             for jj in ll1.keys():

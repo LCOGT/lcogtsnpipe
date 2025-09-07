@@ -629,8 +629,8 @@ def JDnow(datenow='',verbose=False):
    _JD0=2455927.5
    if not datenow:
       datenow=datetime.datetime(time.gmtime().tm_year, time.gmtime().tm_mon, time.gmtime().tm_mday, time.gmtime().tm_hour, time.gmtime().tm_min, time.gmtime().tm_sec)
-   _JDtoday=_JD0+(datenow-datetime.datetime(2012, 01, 01,00,00,00)).seconds/(3600.*24)+\
-             (datenow-datetime.datetime(2012, 01, 01,00,00,00)).days
+   _JDtoday=_JD0+(datenow-datetime.datetime(2012, 1,  1, 00,00,00)).seconds/(3600.*24)+\
+             (datenow-datetime.datetime(2012, 1, 1, 00,00,00)).days
    if verbose: print 'JD= '+str(_JDtoday)
    return _JDtoday
 ###################################
@@ -642,8 +642,8 @@ def MJDnow(datenow='',verbose=False):
    _JD0=55927.
    if not datenow:
       datenow=datetime.datetime(time.gmtime().tm_year, time.gmtime().tm_mon, time.gmtime().tm_mday, time.gmtime().tm_hour, time.gmtime().tm_min, time.gmtime().tm_sec)
-   _JDtoday=_JD0+(datenow-datetime.datetime(2012, 01, 01,00,00,00)).seconds/(3600.*24)+\
-             (datenow-datetime.datetime(2012, 01, 01,00,00,00)).days
+   _JDtoday=_JD0+(datenow-datetime.datetime(2012, 1, 1, 00,00,00)).seconds/(3600.*24)+\
+             (datenow-datetime.datetime(2012, 1, 1, 00,00,00)).days
    if verbose: print 'JD= '+str(_JDtoday)
    return _JDtoday
 ###################################

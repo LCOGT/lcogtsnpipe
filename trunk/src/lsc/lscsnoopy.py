@@ -367,9 +367,10 @@ def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_num
         arty = .5+.25*arty
         if _show:
             _tmp1,_tmp2,goon=lsc.util.display_image('skyfit.fits',1,'', '', False, _xcen=artx, _ycen=arty, _xsize=.25, _ysize=.25, _erase=era)
-	try:
+        try:
             tmpart.append(float(arttruemag[0]))
-	except: pass
+        except:
+            pass
         i=i+1
 
     for i in tmpart:

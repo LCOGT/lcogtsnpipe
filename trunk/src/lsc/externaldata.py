@@ -7,7 +7,7 @@ from astropy.table import Table
 
 def jd2date(inputjd):
  jd0 = 2451544.5 # On Jan 1, 2000 00:00:00
- return datetime.datetime(2000,01,01,00,00,00)+datetime.timedelta(days=inputjd-jd0)
+ return datetime.datetime(2000, 1, 1,00,00,00)+datetime.timedelta(days=inputjd-jd0)
 
 
 def MJDnow(datenow='',verbose=False):
@@ -15,9 +15,10 @@ def MJDnow(datenow='',verbose=False):
    _JD0=55927.
    if not datenow:
       datenow=datetime.datetime(time.gmtime().tm_year, time.gmtime().tm_mon, time.gmtime().tm_mday, time.gmtime().tm_hour, time.gmtime().tm_min, time.gmtime().tm_sec)
-   _JDtoday=_JD0+(datenow-datetime.datetime(2012, 01, 01,00,00,00)).seconds/(3600.*24)+\
-             (datenow-datetime.datetime(2012, 01, 01,00,00,00)).days
-   if verbose: print 'JD= '+str(_JDtoday)
+   _JDtoday=_JD0+(datenow-datetime.datetime(2012,  1, 1,00,00,00)).seconds/(3600.*24)+\
+             (datenow-datetime.datetime(2012, 1, 1,00,00,00)).days
+   if verbose:
+    print('JD= '+str(_JDtoday))
    return _JDtoday
 
 
@@ -39,7 +40,7 @@ def SDSS_gain_dark(camcol, ugriz, run):
             gain = 4.745
             dark = 0.81
         else:
-            print 'ERROR in SDSS_dark_gain: UGRIZ not set!'
+            print('ERROR in SDSS_dark_gain: UGRIZ not set!')
     elif camcol == 2:
         if ugriz == 'u':
             if run < 1100:
@@ -47,7 +48,7 @@ def SDSS_gain_dark(camcol, ugriz, run):
             elif run > 1100:
                 gain = 1.825
             else:
-                print 'ERROR in SDSS_dark_gain: RUN not set!'
+                print('ERROR in SDSS_dark_gain: RUN not set!')
             dark = 12.6025
         elif ugriz == 'g':
                 gain = 3.855
@@ -62,12 +63,12 @@ def SDSS_gain_dark(camcol, ugriz, run):
             elif run > 1500:
                 dark = 6.25
             else:
-                print 'ERROR in SDSS_dark_gain: RUN not set!'
+                print('ERROR in SDSS_dark_gain: RUN not set!')
         elif ugriz == 'z':
             gain = 5.155
             dark = 1.0
         else:
-            print 'ERROR in SDSS_dark_gain: UGRIZ not set!'
+            print('ERROR in SDSS_dark_gain: UGRIZ not set!')
     elif camcol == 3:
         if ugriz == 'u':
             gain = 1.59
@@ -85,7 +86,7 @@ def SDSS_gain_dark(camcol, ugriz, run):
             gain = 4.885
             dark = 1.0
         else:
-            print 'ERROR in SDSS_dark_gain: UGRIZ not set!'
+            print('ERROR in SDSS_dark_gain: UGRIZ not set!')
     elif camcol == 4:
         if ugriz == 'u':
             gain = 1.6
@@ -103,7 +104,7 @@ def SDSS_gain_dark(camcol, ugriz, run):
             elif run > 1500:
                 dark = 7.5625
             else:
-                print 'ERROR in SDSS_dark_gain: RUN not set!'
+                print('ERROR in SDSS_dark_gain: RUN not set!')
         elif ugriz == 'z':
             gain = 4.775
             if run < 1500:
@@ -111,9 +112,9 @@ def SDSS_gain_dark(camcol, ugriz, run):
             elif run > 1500:
                 dark = 12.6025
             else:
-                print 'ERROR in SDSS_dark_gain: RUN not set!'
+                print('ERROR in SDSS_dark_gain: RUN not set!')
         else:
-            print 'ERROR in SDSS_dark_gain: UGRIZ not set!'
+            print('ERROR in SDSS_dark_gain: UGRIZ not set!')
     elif camcol == 5:
         if ugriz == 'u':
             gain = 1.47
@@ -134,9 +135,9 @@ def SDSS_gain_dark(camcol, ugriz, run):
             elif run > 1500:
                 dark = 2.1025
             else:
-                print 'ERROR in SDSS_dark_gain: RUN not set!'
+                print('ERROR in SDSS_dark_gain: RUN not set!')
         else:
-            print 'ERROR in SDSS_dark_gain: UGRIZ not set!'
+            print('ERROR in SDSS_dark_gain: UGRIZ not set!')
     elif camcol == 6:
         if ugriz == 'u':
             gain = 2.17
@@ -154,9 +155,9 @@ def SDSS_gain_dark(camcol, ugriz, run):
             gain = 4.69
             dark = 1.21
         else:
-            print 'ERROR in SDSS_dark_gain: UGRIZ not set!'
+            print('ERROR in SDSS_dark_gain: UGRIZ not set!')
     else:
-        print 'ERROR in SDSS_dark_gain: CAMCOL is not set!'
+        print('ERROR in SDSS_dark_gain: CAMCOL is not set!')
     return gain, dark
 
 def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
@@ -170,9 +171,9 @@ def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
     import numpy as np
     from scipy import interpolate
     pos = coords.SkyCoord(ra=float(_ra)*u.deg,dec=float(_dec)*u.deg)
-    print 'pos =', pos
+    print('pos =', pos)
     xid = SDSS.query_region(pos, spectro=False, radius=_radius*u.arcsec)
-    print xid
+    print(xid)
     if xid:
        pointing=[]
        for i in xid:
@@ -185,7 +186,7 @@ def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
        else: 
           nn=len(pointing)
        filevec=[]
-       print len(pointing)
+       print(len(pointing))
        for run, camcol, field in pointing[:nn]:
           #  naomaggie image
           output1 = _band+'_SDSS_'+str(run)+'_'+str(camcol)+'_'+str(field)+'.fits'
@@ -196,7 +197,7 @@ def downloadsdss(_ra,_dec,_band,_radius=20, force=False):
           #  sky image
           output4 = _band+'_SDSS_'+str(run)+'_'+str(camcol)+'_'+str(field)+'.sky.fits'
           if os.path.isfile(output1) and not force:
-              print 'already downloaded', output1
+              print('already downloaded', output1)
               filevec.append(output2)
               filevec.append(output3)
               continue
@@ -304,7 +305,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        try:
           _mjd = MJDnow(datetime.datetime(int(str(_dayobs)[0:4]),int(str(_dayobs)[4:6]),int(str(_dayobs)[6:8])))
        except:
-          print 'warning, no mjd'
+          print('warning, no mjd')
           _mjd = 0
           _dayobs = '19991231'
 
@@ -392,8 +393,8 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
 #       imgmask = welist
 
 
-    print imgmask
-    print skylevel
+    print(imgmask)
+    print(skylevel)
     sampling = 'BILINEAR' # LANCZOS3
     line = 'swarp ' + ','.join(imglist) + ' -IMAGEOUT_NAME ' + str(output) + \
             ' -WEIGHTOUT_NAME ' + re.sub('.fits', '', output) + '.weight.fits' + \
@@ -407,7 +408,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
 
     if imgmask:
        line += ' -WEIGHT_TYPE MAP_WEIGHT -WEIGHT_IMAGE ' +  ','.join(imgmask)
-    print line
+    print(line)
     os.system(line)
 
     # the output of swarp give the normalized weight 
@@ -472,17 +473,17 @@ def northupeastleft(filename='', data=None, header=None):
         header['crpix1'], header['crpix2'] = header['crpix2'], header['crpix1']
         header['naxis1'], header['naxis2'] = header['naxis2'], header['naxis1']
         header['datasec'] = '[' + ','.join(header['datasec'].strip('[]').split(',')[::-1]) + ']'
-        print 'swapping x and y axes'
+        print('swapping x and y axes')
     if header['cd1_1'] > 0:
         data = data[:,::-1]
         header['cd1_1'] *= -1
         header['cd2_1'] *= -1
-        print 'flipping around x'
+        print('flipping around x')
     if header['cd2_2'] < 0:
         data = data[::-1]
         header['cd2_2'] *= -1
         header['cd1_2'] *= -1
-        print 'flipping around y'
+        print('flipping around y')
     if filename:
         fits.writeto(filename, data, header, overwrite=True, output_verify='fix')
     else:
@@ -577,7 +578,7 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
    elif 'sq' in _instrume:
        _telescope = 'qhy'
 
-   print _ra, _dec, _band, _radius
+   print(_ra, _dec, _band, _radius)
    if survey == 'sloan':
       frames = downloadsdss(_ra, _dec, _band, _radius, force)
    elif survey == 'ps1':
@@ -613,12 +614,12 @@ def downloadPS1(homedir,filename):
     dataStoreBase = 'http://datastore.ipp.ifa.hawaii.edu/pstampresults/'
     dataStoreProduct = directory
     urlOfFileToDownload = dataStoreBase + dataStoreProduct + 'index.txt'
-    print urlOfFileToDownload
+    print(urlOfFileToDownload)
     localFilename = homedir+'pss' + os.path.basename(urlOfFileToDownload)
     try:
        urllib.urlretrieve(urlOfFileToDownload, localFilename)
     except:
-        print 'req_name found on poststamp datastore'
+        print('req_name found on poststamp datastore')
         sys.exit()
     frames = []
     try:
@@ -626,21 +627,21 @@ def downloadPS1(homedir,filename):
         _index=f.readlines()
         f.close()
         for i in range(0,len(_index)):
-            print string.split(_index[i],'|')[0],string.count(string.split(_index[i],'|')[0],'results.fits')
+            print(string.split(_index[i],'|')[0],string.count(string.split(_index[i],'|')[0],'results.fits'))
             if  string.count(string.split(_index[i],'|')[0],'.fits') and string.count(string.split(_index[i],'|')[0],'results.fits')==0:
 
                 urlOfFileToDownload3 = dataStoreBase + dataStoreProduct +string.split(_index[i],'|')[0]
                 urlOfFileToDownload3=re.sub('.txt','',urlOfFileToDownload3)
                 localFilename3 = parent_dir+ os.path.basename(urlOfFileToDownload3)
                 if not os.path.isfile(localFilename3):
-                    print 'downloading file: '+string.split(_index[i],'|')[0]
+                    print('downloading file: '+string.split(_index[i],'|')[0])
                     try:
                         urllib.urlretrieve(urlOfFileToDownload3, localFilename3)
                     except:
-                        print 'problem '+str(urlOfFileToDownload3)
+                        print('problem '+str(urlOfFileToDownload3))
                         pass
                 else:
-                    print 'file already downloaded '
+                    print('file already downloaded ')
 
                 if not os.path.isdir(homedir+filename):
                     os.mkdir(homedir+filename)
@@ -648,10 +649,10 @@ def downloadPS1(homedir,filename):
                 if 'unconv.fits' in string.split(localFilename3,'/')[-1]:
                            frames.append(homedir+filename++'/'+string.split(localFilename3,'/')[-1])
     except:
-        print 'stamp_directory not found '
+        print('stamp_directory not found ')
         sys.exit()
     os.system('rm '+str(homedir)+'pssindex.txt')
-    print 'download COMPLETE '
+    print('download COMPLETE ')
     return frames
 
 ################################################################################################################

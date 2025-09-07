@@ -121,12 +121,12 @@ class cosmicsimage:
 		self.sigcliplow = sigclip * sigfrac
 		self.satlevel = satlevel
         	
-        	self.verbose = verbose
+                self.verbose = verbose
         	
-        	self.pssl = pssl
+                self.pssl = pssl
         	
-        	self.backgroundlevel = None # only calculated and used if required.
-        	self.satstars = None # a mask of the saturated stars, only calculated if required
+                self.backgroundlevel = None # only calculated and used if required.
+                self.satstars = None # a mask of the saturated stars, only calculated if required
 
 	def __str__(self):
 		"""

@@ -31,17 +31,17 @@ try:
     hostname, username, passwd, database = lsc.mysqldef.getconnection('lcogt2')
     conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
 except ImportError as e:
-    print e
-    print 'try running one of these:'
-    print 'pip install mysql-python'
-    print 'conda install mysql-python'
+    print(e)
+    print('try running one of these:')
+    print('pip install mysql-python')
+    print('conda install mysql-python')
 except Exception as e:
-    print e
-    print '### warning: problem connecting to the database'
+    print(e)
+    print('### warning: problem connecting to the database')
 
 def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10, magtype='mag', snex2_upload=False, database='photlco'):
     if len(imglist)==0:
-        print 'error: no images selected'
+        print('error: no images selected')
         return
 
     if magtype == 'mag':
@@ -114,7 +114,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                         mjd1.append(np.mean(mjd0[ww]))
 
                         av,st=weighted_avg_and_std(mag0[ww], 1/(dmag0[ww])**2)
-                        print av,st
+                        print(av,st)
                         mag1.append(av)
                         try:
                             # error underestimate, adding 0.01 to take in account the error in the zeropoint
@@ -262,7 +262,7 @@ def run_cat(imglist, extlist, _interactive=False, stage='abscat', magtype='fit',
         command += ' --minstars ' + str(minstars)
     if match_by_site:
         command += ' --match-by-site'
-    print command
+    print(command)
     os.system(command)
 
 
@@ -270,7 +270,7 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
     for img in imglist:
         status = checkstage(img, 'wcs')
         if status == -4 and redo:
-            print 'wcs not good, try again'
+            print('wcs not good, try again')
             lsc.mysqldef.updatevalue(database, 'quality', 0, os.path.split(img)[-1])
             status = checkstage(img, 'wcs')
         if status >= -1:
@@ -290,22 +290,22 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
                         if _catalogue:
                             command += ' -c ' + _catalogue
                             break
-                print command
+                print(command)
                 os.system(command)
             elif mode == 'astrometry':
                 lsc.lscastrodef.run_astrometry(_dir + img, True, redo)
             else:
-                print str(_mode)+' not defined'
+                print(str(_mode)+' not defined')
         elif status == 0:
-            print 'status ' + str(status) + ': WCS stage not done'
+            print('status ' + str(status) + ': WCS stage not done')
         elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
+            print('status ' + str(status) + ': sn2.fits file not found')
         elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
+            print('status ' + str(status) + ': .fits file not found')
         elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
+            print('status ' + str(status) + ': bad quality image')
         else:
-            print 'status ' + str(status) + ': unknown status'
+            print('status ' + str(status) + ': unknown status')
 
 
 def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=False, fix=True,
@@ -359,7 +359,7 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
         pp = ' -p ' + str(nstars) + ' '
         add_max_apercorr = ' --max_apercorr {}'.format(max_apercorr)
         status = checkstage(img, 'psf')
-        print 'status= ',status
+        print('status= ',status)
         if status == 1:
             rr = '-r'
         if status >= 1:
@@ -369,36 +369,36 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
             # filetype is a integer it should not be passed as string 
             if ggg[0]['filetype'] == 3 and ggg[0]['difftype'] == 0: # HOTPANTS difference images
                 ##################################################################################
-                print '\n### get parameters for difference image'
+                print('\n### get parameters for difference image')
                 hdrdiff=lsc.util.readhdr(_dir+img)
                 if 'PSF' not in hdrdiff:
                     raise Exception('PSF file not defined')
                 imgpsf=hdrdiff['PSF']
-                print '\n### psf file for difference image: '+imgpsf
+                print('\n### psf file for difference image: '+imgpsf)
                 statuspsf = checkstage(imgpsf, 'psf')
-                print statuspsf
+                print(statuspsf)
                 if statuspsf == 2:
-                    print 'psf file for difference image found'
+                    print('psf file for difference image found')
                     gggpsf = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(imgpsf), '*')
                     _dirpsf = gggpsf[0]['filepath']
                     os.system('cp '+_dirpsf+imgpsf.replace('.fits', '.psf.fits')+' '+_dir+
                               img.replace('.fits', '.psf.fits'))
                     lsc.mysqldef.updatevalue('photlco', 'psf', img.replace('.fits', '.psf.fits'),
                                          os.path.basename(img))
-                    print '\n ### copy '+imgpsf.replace('.fits', '.psf.fits')+' in '+img.replace('.fits', '.psf.fits')
+                    print('\n ### copy '+imgpsf.replace('.fits', '.psf.fits')+' in '+img.replace('.fits', '.psf.fits'))
                 else:
-                    print '\n### ERROR: PSF file not found \n please run psf file on image: '+imgpsf
+                    print('\n### ERROR: PSF file not found \n please run psf file on image: '+imgpsf)
                 #####################################################################################
                 if 'PHOTNORM' not in hdrdiff:
                     raise Exception('PHOTNORM file not defined')
                 else:
                     photnorm=hdrdiff['PHOTNORM']
                     if photnorm=='t':
-                        print '\n ### zero point done with template'
+                        print('\n ### zero point done with template')
                         imgtable = hdrdiff['TEMPLATE']
 
                     elif photnorm=='i':
-                        print '\n ### zero point done with target'
+                        print('\n ### zero point done with target')
                         imgtable = hdrdiff['TARGET']
 
                     sntable = imgtable.replace('.fits','.sn2.fits')
@@ -406,26 +406,26 @@ def run_psf(imglist, treshold=5, interactive=False, _fwhm='', show=False, redo=F
                     dirtable = gggtable[0]['filepath']
 
                     if os.path.isfile(dirtable+sntable):
-                        print '\n ### fits table found '
-                        print 'cp ' + dirtable + sntable + ' ' + _dir + img.replace('.fits', '.sn2.fits')
+                        print('\n ### fits table found ')
+                        print('cp ' + dirtable + sntable + ' ' + _dir + img.replace('.fits', '.sn2.fits'))
                         os.system('cp ' + dirtable + sntable + ' ' + _dir + img.replace('.fits', '.sn2.fits'))
                     else:
                         raise Exception('fits table not there, run psf for ' + sntable)
             else: # PyZOGY difference images or unsubtracted images
                 command = 'lscpsf.py ' + _dir + img + ' ' + ii + ' ' + ss + ' ' + rr + ' ' + ff + ' ' + '-t ' + str(
                     treshold) + gg + cc + xx + dmin + dmax + pp + bz + add_max_apercorr + field_cmd
-                print command
+                print(command)
                 os.system(command)
         elif status == 0:
-            print 'status ' + str(status) + ': WCS stage not done'
+            print('status ' + str(status) + ': WCS stage not done')
         elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
+            print('status ' + str(status) + ': sn2.fits file not found')
         elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
+            print('status ' + str(status) + ': .fits file not found')
         elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
+            print('status ' + str(status) + ': bad quality image')
         else:
-            print 'status ' + str(status) + ': unknown status'
+            print('status ' + str(status) + ': unknown status')
     # #################################################################
 
 
@@ -466,14 +466,14 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
 
     for img in imglist:
         status = checkstage(img, 'psfmag')
-        print status
+        print(status)
         if status >= 1:
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
             img0 = img.replace('.fits', '.sn2.fits')
 
             if _ref:
-                print img0, _ref, show
+                print(img0, _ref, show)
                 _ras, _decs = lsc.myloopdef.getcoordfromref(img0, _ref, show)
 
             command = 'lscsn.py ' + _dir + img + ii + ss + rr + cc + ' -x ' + str(_xord) + ' -y ' + str(_yord) + \
@@ -487,19 +487,19 @@ def run_fit(imglist, _ras='', _decs='', _xord=3, _yord=3, _bkg=4, _size=7, _rece
             #        command = command + pp
             #    except:
             #        command = ''
-            #        print 'PSF header not found in ' + str(img)
-            print command
+            #        print('PSF header not found in ' + str(img))
+            print(command)
             os.system(command)
         elif status == 0:
-            print 'status ' + str(status) + ': psf stage not done'
+            print('status ' + str(status) + ': psf stage not done')
         elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
+            print('status ' + str(status) + ': sn2.fits file not found')
         elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
+            print('status ' + str(status) + ': .fits file not found')
         elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
+            print('status ' + str(status) + ': bad quality image')
         else:
-            print 'status ' + str(status) + ': unknown status'
+            print('status ' + str(status) + ': unknown status')
     # #################################################################
 
 
@@ -577,7 +577,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):
     ggg2 = lsc.mysqldef.getfromdataraw(conn, database, 'filename', img2.replace('sn2.fits', 'fits'), '*')
     _dir2 = ggg2[0]['filepath']
 
-    print _dir1, _dir2, img1, img2
+    print(_dir1, _dir2, img1, img2)
 
     dicti1 = lsc.lscabsphotdef.makecatalogue([_dir1 + img1])
     dicti2 = lsc.lscabsphotdef.makecatalogue([_dir2 + img2])
@@ -590,13 +590,13 @@ def getcoordfromref(img2, img1, _show, database='photlco'):
             ra02 = dicti2[i][j]['ra0']
             dec02 = dicti2[i][j]['dec0']
 
-    print _dir1 + img1
+    print(_dir1 + img1)
     t = fits.open(_dir1 + img1)
     tbdata = t[1].data
     hdr1 = t[0].header
     psfx1 = lsc.util.readkey3(hdr1, 'PSFX1')
     psfy1 = lsc.util.readkey3(hdr1, 'PSFY1')
-    print psfx1, psfy1, 'dddd'
+    print(psfx1, psfy1, 'dddd')
     if psfx1 != None and psfy1 != None:
         lll = str(psfx1) + ' ' + str(psfy1)
         aaa = iraf.wcsctran('STDIN', 'STDOUT', _dir1 + img1 + '[0]', Stdin=[lll], inwcs='logical', units='degrees degrees',
@@ -632,11 +632,11 @@ def getcoordfromref(img2, img1, _show, database='photlco'):
         decsn2c = float(decsn1) - np.median(ddec)
 
     if _show:
-        print 'shift in arcsec (ra dec)'
-        print len(pos1), len(ra01)
-        print np.median(rra), np.median(ddec)
-        print 'SN position on image 2 computed'
-        print rasn2c, decsn2c
+        print('shift in arcsec (ra dec)')
+        print(len(pos1), len(ra01))
+        print(np.median(rra), np.median(ddec))
+        print('SN position on image 2 computed')
+        print(rasn2c, decsn2c)
         iraf.display(_dir2 + img2.replace('sn2.fits', 'fits') + '[0]', 2, fill=True, Stdout=1, zsc='yes',
                      zra='yes')  #,z1=0,z2=3000)
         lll = str(rasn2c) + ' ' + str(decsn2c)
@@ -689,7 +689,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                 ll1[jj] = []
     if _filter:  #filter 
         lista = sum([lsc.sites.filterst[fil] for fil in _filter.split(',')], [])
-        print lista
+        print(lista)
         ww = np.array([i for i in range(len(ll1['filter'])) if ll1['filter'][i] in lista])
         if len(ww) > 0:
             for jj in ll1.keys():
@@ -699,7 +699,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
                 ll1[jj] = []
     if _id:  # ID
 	lista = range(int(_id.split('-')[0]),int(_id.split('-')[-1])+1)
-	print lista
+	print(lista)
         ww = np.array([i for i in range(len(ll1['filter'])) if ((int(ll1['filename'][i].split('-')[3]) in lista))])
         if len(ww) > 0:
             for jj in ll1.keys():
@@ -747,7 +747,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
 ####################
     #    add filter using instrument
     if _instrument:
-        print _instrument
+        print(_instrument)
         ww = np.array([i for i in range(len(ll1['instrument'])) if (_instrument in ll1['instrument'][i])])
         if len(ww) > 0:
             for jj in ll1.keys():
@@ -857,7 +857,7 @@ def position(imglist, ra1, dec1, show=False):
                     if len(pos1) >= 1:
                         ra.append(ra00[pos1[np.argmin(distvec)]])
                         dec.append(dec00[pos1[np.argmin(distvec)]])
-                        print i, j, ra00[pos1[np.argmin(distvec)]], dec00[pos1[np.argmin(distvec)]]
+                        print(i, j, ra00[pos1[np.argmin(distvec)]], dec00[pos1[np.argmin(distvec)]])
                     #                        iraf.display(j.replace('.sn2.fits','.fits'),1,fill=True,Stdout=1)
                     #                        lll=str(ra00[pos1[np.argmin(distvec)]])+' '+str(dec00[pos1[np.argmin(distvec)]])
                     #                        aaa=iraf.wcsctran('STDIN','STDOUT',j,Stdin=[lll],inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.5f %10.5f',Stdout=1)[3]
@@ -872,7 +872,7 @@ def position(imglist, ra1, dec1, show=False):
         plt.setp(xticklabels, fontsize='20')
         plt.setp(yticklabels, fontsize='20')
         plt.legend(numpoints=1, markerscale=1.5)
-        print np.median(dec)
+        print(np.median(dec))
         plt.plot(((ra - np.median(ra)) * 3600) * np.cos(np.median(dec) * np.pi / 180.), (dec - np.median(dec)) * 3600, 'or',
              label='position')
     try:
@@ -927,16 +927,16 @@ def checkcat(imglist, database='photlco'):
     plt.figure(figsize=(6, 6))
     for img in imglist:
         status = checkstage(img, 'checkpsf')
-        #print img,status
+        #print(img,status)
         if status >= 1:
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), 'filepath, abscat')
             _dir = ggg[0]['filepath']
-            print _dir, img
+            print(_dir, img)
             catfile = _dir + img.replace('.fits', '.cat')
             if os.path.isfile(catfile):
                 with open(catfile) as f:
                     lines = f.readlines()
-                print len(lines) - 2, 'stars in catalog'
+                print(len(lines) - 2, 'stars in catalog')
                 if len(lines) > 2:
                     mark_stars_on_image(_dir + img, catfile)
                     aa = raw_input('>>>good catalogue [[y]/n] or [b] bad quality ? ')
@@ -944,24 +944,24 @@ def checkcat(imglist, database='photlco'):
                 else: # automatically delete the file if is is only a header
                     aa = 'n'
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
-                    print 'updatestatus bad catalogue'
+                    print('updatestatus bad catalogue')
                     lsc.mysqldef.updatevalue(database, 'abscat', 'X', os.path.basename(img))
                     lsc.util.delete(_dir + img.replace('.fits', '.cat'))
                 if aa in ['bad', 'b', 'B']:
-                    print 'updatestatus bad quality'
+                    print('updatestatus bad quality')
                     lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
             elif ggg[0]['abscat'] != 'X':
                 lsc.mysqldef.updatevalue(database, 'abscat', 'X', os.path.basename(img))
         elif status == 0:
-            print 'status ' + str(status) + ': WCS stage not done'
+            print('status ' + str(status) + ': WCS stage not done')
         elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
+            print('status ' + str(status) + ': sn2.fits file not found')
         elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
+            print('status ' + str(status) + ': .fits file not found')
         elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
+            print('status ' + str(status) + ': bad quality image')
         else:
-            print 'status ' + str(status) + ': unknown status'
+            print('status ' + str(status) + ': unknown status')
 
 
 def checkpsf(imglist, no_iraf=False, database='photlco'):
@@ -974,7 +974,7 @@ def checkpsf(imglist, no_iraf=False, database='photlco'):
         iraf.daophot(_doprint=0)
     for img in imglist:
         status = checkstage(img, 'checkpsf')
-        print img, status
+        print(img, status)
         if status >= 1:
             ggg = lsc.mysqldef.getfromdataraw(conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
@@ -991,28 +991,28 @@ def checkpsf(imglist, no_iraf=False, database='photlco'):
                 aa = raw_input('>>>good psf [[y]/n] or [b] bad quality ? ')
                 if not aa: aa = 'y'
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
-                    print 'updatestatus bad'
+                    print('updatestatus bad')
                     lsc.mysqldef.updatevalue(database, 'psf', 'X', os.path.basename(img))
                     lsc.mysqldef.updatevalue(database, 'psfmag', 9999, os.path.basename(img))
                     if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
-                        print 'rm ' + _dir + img.replace('.fits', '.psf.fits')
+                        print('rm ' + _dir + img.replace('.fits', '.psf.fits'))
                         os.system('rm ' + _dir + img.replace('.fits', '.psf.fits'))
                     if os.path.isfile(_dir + img.replace('.fits', '.sn2.fits')):
-                        print 'rm ' + _dir + img.replace('.fits', '.sn2.fits')
+                        print('rm ' + _dir + img.replace('.fits', '.sn2.fits'))
                         os.system('rm ' + _dir + img.replace('.fits', '.sn2.fits'))
                     if aa in ['bad', 'b', 'B']:
-                        print 'updatestatus bad quality'
+                        print('updatestatus bad quality')
                         lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
         elif status == 0:
-            print 'status ' + str(status) + ': PSF stage not done'
+            print('status ' + str(status) + ': PSF stage not done')
         elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
+            print('status ' + str(status) + ': sn2.fits file not found')
         elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
+            print('status ' + str(status) + ': .fits file not found')
         elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
+            print('status ' + str(status) + ': bad quality image')
         else:
-            print 'status ' + str(status) + ': unknown status'
+            print('status ' + str(status) + ': unknown status')
 
 
 def seepsf(psf_filename, saveto=None):
@@ -1077,8 +1077,8 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
     iraf.set(stdimage='imt2048')
-    print force
-    print _z1, _z2
+    print(force)
+    print(_z1, _z2)
     for img in imglist:
         status = checkstage(img, 'wcs')
         if status >= 0 or force == False:
@@ -1120,33 +1120,33 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
             if not aa:
                 aa = 'y'
             if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
-                print 'updatestatus bad'
+                print('updatestatus bad')
                 lsc.mysqldef.updatevalue(database, 'wcs', 9999, os.path.basename(img))
                 lsc.mysqldef.updatevalue(database, 'psf', 'X', os.path.basename(img))
                 lsc.mysqldef.updatevalue(database, 'psfmag', 9999, os.path.basename(img))
                 if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
-                    print 'rm ' + _dir + img.replace('.fits', '.psf.fits')
+                    print('rm ' + _dir + img.replace('.fits', '.psf.fits'))
                     os.system('rm ' + _dir + img.replace('.fits', '.psf.fits'))
                 if os.path.isfile(_dir + img.replace('.fits', '.sn2.fits')):
-                    print 'rm ' + _dir + img.replace('.fits', '.sn2.fits')
+                    print('rm ' + _dir + img.replace('.fits', '.sn2.fits'))
                     os.system('rm ' + _dir + img.replace('.fits', '.sn2.fits'))
                 if aa in ['bad', 'b', 'B']:
-                    print 'updatestatus bad quality'
+                    print('updatestatus bad quality')
                     lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
             elif aa in ['c', 'C', 'cancel']:
-                print 'remove from database'
+                print('remove from database')
                 os.system('rm ' + _dir + img)
                 lsc.mysqldef.deleteredufromarchive(os.path.basename(img), 'photlco', 'filename')
                 lsc.mysqldef.deleteredufromarchive(os.path.basename(img), 'photpairing', 'nameout')
             #          elif status==0: print 'status '+str(status)+': WCS stage not done' 
         elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
+            print('status ' + str(status) + ': sn2.fits file not found')
         elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
+            print('status ' + str(status) + ': .fits file not found')
         elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
+            print('status ' + str(status) + ': bad quality image')
         else:
-            print 'status ' + str(status) + ': unknown status'
+            print('status ' + str(status) + ': unknown status')
 
     ##################################################################
 
@@ -1202,29 +1202,29 @@ def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, re
                 if _interactive:
                     plt.show()
                 else:
-                    print _output
+                    print(_output)
                     lsc.delete(_output)
                     plt.savefig(_output)
             else:
-                print _dir + img, _targetid
-                print 'SN not found'
+                print(_dir + img, _targetid)
+                print('SN not found')
 
         elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
+            print('status ' + str(status) + ': sn2.fits file not found')
         elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
+            print('status ' + str(status) + ': .fits file not found')
         elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
+            print('status ' + str(status) + ': bad quality image')
         elif status == -5:
-            print 'status ' + str(status) + ': png already done'
+            print('status ' + str(status) + ': png already done')
         else:
-            print 'status ' + str(status) + ': unknown status'
+            print('status ' + str(status) + ': unknown status')
 
 
 def checkfast(imglist, force=True, database='photlco'):
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
-    print force
+    print(force)
     for img in imglist:
         status = checkstage(img, 'wcs')
         if status >= 0 or force == False:
@@ -1239,25 +1239,25 @@ def checkfast(imglist, force=True, database='photlco'):
                 lsc.mysqldef.updatevalue(database, 'psf', 'X', os.path.basename(img))
                 lsc.mysqldef.updatevalue(database, 'psfmag', 9999, os.path.basename(img))
                 if os.path.isfile(_dir + img.replace('.fits', '.psf.fits')):
-                    print 'rm ' + _dir + img.replace('.fits', '.psf.fits')
+                    print('rm ' + _dir + img.replace('.fits', '.psf.fits'))
                     os.system('rm ' + _dir + img.replace('.fits', '.psf.fits'))
                 if os.path.isfile(_dir + img.replace('.fits', '.sn2.fits')):
-                    print 'rm ' + _dir + img.replace('.fits', '.sn2.fits')
+                    print('rm ' + _dir + img.replace('.fits', '.sn2.fits'))
                     os.system('rm ' + _dir + img.replace('.fits', '.sn2.fits'))
-                print 'updatestatus bad quality'
+                print('updatestatus bad quality')
                 lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(img))
             else:
-                print 'updatestatus quality good'
+                print('updatestatus quality good')
                 lsc.mysqldef.updatevalue(database, 'quality', 127, os.path.basename(img))
             #          elif status==0: print 'status '+str(status)+': WCS stage not done' 
         elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
+            print('status ' + str(status) + ': sn2.fits file not found')
         elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
+            print('status ' + str(status) + ': .fits file not found')
         elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
+            print('status ' + str(status) + ': bad quality image')
         else:
-            print 'status ' + str(status) + ': unknown status'
+            print('status ' + str(status) + ': unknown status')
 
     ##################################################################
 def checkcosmic(imglist, database='photlco'):
@@ -1273,35 +1273,36 @@ def checkcosmic(imglist, database='photlco'):
             cleanimg = origimg.replace('.fits', '.clean.fits')
             diffimg = origimg.replace('.fits', '.diff.fits')
             if os.path.isfile(origimg) and os.path.isfile(maskimg):
-                print img, photlcodict[0]['filter']
+                print(img, photlcodict[0]['filter'])
                 iraf.set(stdimage='imt8192')
                 iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
                 iraf.display(maskimg, 2, zscale=False, fill=True, Stdout=1)
                 ans = raw_input('>>> good mask [[y]/n] or [b]ad quality? ')
                 if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
-                    print 'updatestatus bad'
-                    print 'rm', maskimg
+                    print('updatestatus bad')
+                    print('rm', maskimg)
                     os.system('rm ' + maskimg)
-                    print 'rm', cleanimg
+                    print('rm', cleanimg)
                     os.system('rm ' + cleanimg)
-                    print 'rm', diffimg.replace('.fits', '*')
+                    print('rm', diffimg.replace('.fits', '*'))
                     os.system('rm ' + diffimg.replace('.fits', '*'))
-                    print 'delete', os.path.basename(diffimg), 'from database'
+                    print('delete', os.path.basename(diffimg), 'from database')
                     lsc.mysqldef.deleteredufromarchive(os.path.basename(diffimg), 'photlco', 'filename')
                 if ans in ['bad', 'b', 'B']:
-                    print 'updatestatus bad quality'
+                    print('updatestatus bad quality')
                     lsc.mysqldef.updatevalue(database, 'quality', 1, img)
             else:
                 for f in [origimg, maskimg, cleanimg, diffimg]:
-                    if not os.path.isfile(f): print f, 'not found'
+                    if not os.path.isfile(f):
+                        print(f, 'not found')
         elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
+            print('status ' + str(status) + ': sn2.fits file not found')
         elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
+            print('status ' + str(status) + ': .fits file not found')
         elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
+            print('status ' + str(status) + ': bad quality image')
         else:
-            print 'status ' + str(status) + ': unknown status'
+            print('status ' + str(status) + ': unknown status')
 
 def display_subtraction(img):
     ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', img, '*')
@@ -1331,7 +1332,8 @@ def display_subtraction(img):
         plt.tight_layout()
     else:
         for f in [origimg, tempimg, diffimg]:
-            if not os.path.isfile(f): print f, 'not found'
+            if not os.path.isfile(f):
+                print(f, 'not found')
     return diffimg, origimg, tempimg
 
 def checkdiff(imglist, database='photlco'):
@@ -1347,33 +1349,34 @@ def checkdiff(imglist, database='photlco'):
             origimg = diffimg.split('.')[0] + '.' + diffimg.split('.')[-1]
             tempimg = diffimg.replace('diff', 'ref')
             if os.path.isfile(diffimg) and os.path.isfile(origimg) and os.path.isfile(tempimg):
-                print img, photlcodict[0]['filter']
+                print(img, photlcodict[0]['filter'])
                 iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
                 iraf.display(tempimg, 2, fill=True, Stdout=1)
                 iraf.display(diffimg, 3, fill=True, Stdout=1)
                 ans = raw_input('>>> good difference [[y]/n] or [b]ad quality (original image)? ')
                 if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
-                    print 'updatestatus bad'
-                    print 'rm', diffimg.replace('.fits', '*')
+                    print('updatestatus bad')
+                    print('rm', diffimg.replace('.fits', '*'))
                     os.system('rm ' + diffimg.replace('.fits', '*'))
-                    print 'rm', tempimg
+                    print('rm', tempimg)
                     os.system('rm ' + tempimg)
-                    print 'delete', img, 'from database'
+                    print('delete', img, 'from database')
                     lsc.mysqldef.deleteredufromarchive(img, 'photlco', 'filename')
                 if ans in ['bad', 'b', 'B']:
-                    print 'updatestatus bad quality'
+                    print('updatestatus bad quality')
                     lsc.mysqldef.updatevalue(database, 'quality', 1, os.path.basename(origimg))
             else:
                 for f in [origimg, tempimg, diffimg]:
-                    if not os.path.isfile(f): print f, 'not found'
+                    if not os.path.isfile(f):
+                        print(f, 'not found')
         elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
+            print('status ' + str(status) + ': sn2.fits file not found')
         elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
+            print('status ' + str(status) + ': .fits file not found')
         elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
+            print('status ' + str(status) + ': bad quality image')
         else:
-            print 'status ' + str(status) + ': unknown status'
+            print('status ' + str(status) + ': unknown status')
 
 def display_psf_fit(img, datamax=None):
     ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', img, '*')
@@ -1407,25 +1410,25 @@ def checkmag(imglist, datamax=None):
             ogfile, rsfile = display_psf_fit(img, datamax)
             aa = raw_input('>>>good mag [[y]/n] or [b] bad quality ? ')
             if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
-                print 'update status: bad psfmag & mag'
+                print('update status: bad psfmag & mag')
                 lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(img)], lsc.conn)
                 os.system('rm -v ' + ogfile)
                 os.system('rm -v ' + rsfile)
             if aa in ['bad', 'b', 'B']:
-                print 'update status: bad quality'
+                print('update status: bad quality')
                 lsc.mysqldef.updatevalue('photlco', 'quality', 1, img)
         elif status == 1:
-            print 'status ' + str(status) + ': psfmag stage not done'
+            print('status ' + str(status) + ': psfmag stage not done')
         elif status == 0:
-            print 'status ' + str(status) + ': WCS stage not done'
+            print('status ' + str(status) + ': WCS stage not done')
         elif status == -1:
-            print 'status ' + str(status) + ': sn2.fits file not found'
+            print('status ' + str(status) + ': sn2.fits file not found')
         elif status == -2:
-            print 'status ' + str(status) + ': .fits file not found'
+            print('status ' + str(status) + ': .fits file not found')
         elif status == -4:
-            print 'status ' + str(status) + ': bad quality image'
+            print('status ' + str(status) + ': bad quality image')
         else:
-            print 'status ' + str(status) + ': unknown status'
+            print('status ' + str(status) + ': unknown status')
 
 
 def checkpos(imglist, _ra, _dec, database='photlco'):
@@ -1437,12 +1440,12 @@ def checkpos(imglist, _ra, _dec, database='photlco'):
             _dir = ggg[0]['filepath']
             if os.path.isfile(_dir + img.replace('.fits', '.sn2.fits')):  imglist2.append(
                 _dir + img.replace('.fits', '.sn2.fits'))
-    print imglist2, _ra, _dec
+    print(imglist2, _ra, _dec)
     ra, dec = lsc.myloopdef.position(imglist2, _ra, _dec, show=True)
-    print '######## mean ra and dec position  ############'
-    print 'ra= ' + str(ra)
-    print 'dec= ' + str(dec)
-    print '#############'
+    print('######## mean ra and dec position  ############')
+    print('ra= ' + str(ra))
+    print('dec= ' + str(dec))
+    print('#############')
 
 
 def checkquality(imglist, database='photlco'):
@@ -1462,9 +1465,9 @@ def checkquality(imglist, database='photlco'):
                     aa = raw_input('>>>good image [y/[n]] ? ')
                     if not aa: aa = 'n'
                     if aa in ['n', 'N', 'No', 'NO']:
-                        print 'status bad'
+                        print('status bad')
                     else:
-                        print 'updatestatus good'
+                        print('updatestatus good')
                         lsc.mysqldef.updatevalue(database, 'quality', 127, os.path.basename(img))
                         #lsc.mysqldef.updatevalue('photlco','psfmag',9999,os.path.basename(img))
                         #if os.path.isfile(_dir+img.replace('.fits', '.psf.fits')):
@@ -1484,8 +1487,8 @@ def onkeypress2(event):
     dist = np.sqrt((xdata - _mjd) ** 2 + (ydata - _mag) ** 2)
     ii = np.argmin(dist)
     if ii in idd: idd.remove(ii)
-    print _filename[ii]
-    print _mag[ii]
+    print(_filename[ii])
+    print(_mag[ii])
     _dir = lsc.mysqldef.getvaluefromarchive(_database, 'filename', _filename[ii], 'filepath')
     if 'filepath' in _dir[0]:
         _dir = _dir[0]['filepath']
@@ -1510,11 +1513,11 @@ def onkeypress2(event):
                                   {'APMAG1': (9999, 'ap magnitude')})
     elif event.key in ['u']:
         lsc.mysqldef.updatevalue(_database, 'magtype', -1, _filename[ii])
-        print '\n### set as a limit'
+        print('\n### set as a limit')
     elif event.key in ['b']:
         lsc.mysqldef.updatevalue(_database, 'quality', 1, _filename[ii])
-        print '\n### set bad quality'
-    print '\n### press:\n d to cancel value,\n c to check one point\n u to set the upper limit\n b to set bad quality.\n Return to exit ...'
+        print('\n### set bad quality')
+    print('\n### press:\n d to cancel value,\n c to check one point\n u to set the upper limit\n b to set bad quality.\n Return to exit ...')
 
     nonincl = []
     for i in range(len(_mjd)):
@@ -1596,15 +1599,15 @@ class PickablePlot():
             axlims = fig.gca().axis()
         
     def onclick(self, event):
-        print # to get off the raw_input line
+        print()# to get off the raw_input line
         self.i_active = event.ind[0]
         if 'click' in self.hooks:
             self.hooks['click'](self.i_active)
-        print self.selectedmenu
+        print(self.selectedmenu)
 
     def delete_current(self):
         if self.i_active is None:
-            print 'no point selected'
+            print('no point selected')
         else:
             self.xdel = np.append(self.xdel, self.x[self.i_active])
             self.ydel = np.append(self.ydel, self.y[self.i_active])
@@ -1641,10 +1644,10 @@ def plotfast2(setup):
         plt.legend(loc='best', fontsize='small', numpoints=1)
 
     def click_hook(i):
-        print filenames[i], 'selected'
-        print 'mjd = {:.2f}\tmag = {:.2f} ({:+d} shift on plot)'.format(mjds[i], mags[i], shifts[i])
+        print(filenames[i], 'selected')
+        print('mjd = {:.2f}\tmag = {:.2f} ({:+d} shift on plot)'.format(mjds[i], mags[i], shifts[i]))
         dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, mjd, mag, filetype')[0]
-        print 'mjd = {:.2f}\tmag = {:.2f} (from database)'.format(dbrow['mjd'], dbrow['mag'])
+        print('mjd = {:.2f}\tmag = {:.2f} (from database)'.format(dbrow['mjd'], dbrow['mag']))
         plt.figure(2)
         display_psf_fit(filenames[i])
         if int(dbrow['filetype']) == 3:
@@ -1657,7 +1660,7 @@ def plotfast2(setup):
         if _dir:
             lsc.util.updateheader(_dir + filenames[i].replace('.fits', '.sn2.fits'), 0,
                                   {'PSFMAG1': (9999, 'psf magnitude'), 'APMAG1': (9999, 'ap magnitude')})
-        print 'deleted', filenames[i]
+        print('deleted', filenames[i])
 
     def bad_hook(i):
         dbrow = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath, filetype')[0]
@@ -1665,14 +1668,14 @@ def plotfast2(setup):
             os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.fits', '*'))
             os.system('rm -v ' + dbrow['filepath'] + filenames[i].replace('.diff', '.ref'))
             lsc.mysqldef.deleteredufromarchive(filenames[i], 'photlco', 'filename')
-            print 'delete difference image', filenames[i]
+            print('delete difference image', filenames[i])
         else:
             lsc.mysqldef.updatevalue('photlco', 'magtype', -1, filenames[i])
-            print 'marked', filenames[i], 'as bad'
+            print('marked', filenames[i], 'as bad')
 
     def limit_hook(i):
         lsc.mysqldef.updatevalue('photlco', 'quality', 1, filenames[i])
-        print 'changed', filenames[i], 'to upper limit'
+        print('changed', filenames[i], 'to upper limit')
 
     PickablePlot(mjds, np.array(mags) + np.array(shifts),
                 mainmenu='Click to select a point. Press return to exit.',
@@ -1703,7 +1706,7 @@ def plotfast(setup, output='', database='photlco'):  #,band,color,fissa=''):
         for _fil in _setup[_tel]:
             shift = _shift[_fil]
             col = _color[_fil]
-            print _tel, _fil
+            print(_tel, _fil)
             jj = np.array(_setup[_tel][_fil][
                 'mjd'])  #np.compress(np.array(_setup[_tel][_fil]['magtype'])>=1,np.array(_setup[_tel][_fil]['jd']))
             mm = np.array(_setup[_tel][_fil][
@@ -1806,7 +1809,7 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
         ll0['dec'] = []
         if 'ra0' not in ll0.keys():
             for i in ll0['filename']:
-                print i
+                print(i)
                 ggg = lsc.mysqldef.getfromdataraw(conn, 'photlcoraw', 'filename', i, '*')
                 ll0['ra'].append(ggg[0]['ra0'])
                 ll0['dec'].append(ggg[0]['dec0'])
@@ -1857,7 +1860,7 @@ def get_standards(epoch, name, filters, standard_name='all', match_by_site=False
                           start=epochs[0], end=epochs[-1], name=name.replace(' ', '%'))  # same name matching as gettargetid
     if filters:
         query += 'AND (obj.filter="' + '" OR obj.filter="'.join(lsc.sites.filterst[filters]) + '")'
-    print 'Searching for corresponding standard fields. This may take a minute...'
+    print('Searching for corresponding standard fields. This may take a minute...')
     matching_stds = lsc.mysqldef.query([query], lsc.conn)
     if matching_stds:
         final_list = {col: [ll[col] for ll in matching_stds] for col in matching_stds[0]}
@@ -1875,7 +1878,7 @@ def check_missing(lista, database='photlco'):
             xx, yy = xx[0]['filepath'], yy[0]['filepath']
             if not os.path.isfile(yy + i):
                 os.system('cp ' + xx + i + ' ' + yy + i)
-                print xx, str(i), yy + i
+                print(xx, str(i), yy + i)
 
 
 def checkfilevsdatabase(lista, database='photlco'):
@@ -1895,44 +1898,44 @@ def checkfilevsdatabase(lista, database='photlco'):
                     _mag = lsc.util.readkey3(hdr1, 'MAG')
                     if not _mag:  #  mag
                         if lista['mag'][i] != 9999.0:
-                            print lista['filename'][i], _mag, lista['mag'][i], 'mag'
+                            print(lista['filename'][i], _mag, lista['mag'][i], 'mag')
                             lsc.mysqldef.updatevalue(database, 'mag', 9999.0, lista['filename'][i])
                     else:
                         if _mag == 9999.0:
                             if lista['mag'][i] != 9999.0:
-                                print lista['filename'][i], _mag, lista['mag'][i], 'mag'
+                                print(lista['filename'][i], _mag, lista['mag'][i], 'mag')
                                 lsc.mysqldef.updatevalue(database, 'mag', 9999.0, lista['filename'][i])
                         elif _mag != 9999.0:
                             if round(lista['mag'][i], 4) != round(float(_mag), 4):
-                                print lista['filename'][i], _mag, lista['mag'][i], 'mag'
+                                print(lista['filename'][i], _mag, lista['mag'][i], 'mag')
                                 lsc.mysqldef.updatevalue(database, 'mag', _mag, lista['filename'][i])
 
                     if not _psfmag:  #  psfmag
                         if lista['psfmag'][i] != 9999.0:
-                            print lista['filename'][i], _mag, lista['psfmag'][i], 'psfmag'
+                            print(lista['filename'][i], _mag, lista['psfmag'][i], 'psfmag')
                             lsc.mysqldef.updatevalue(database, 'psfmag', 9999.0, lista['filename'][i])
                     else:
                         if _psfmag == 9999.0:
                             if lista['psfmag'][i] != 9999.0:
-                                print lista['filename'][i], _psfmag, lista['psfmag'][i], 'psfmag'
+                                print(lista['filename'][i], _psfmag, lista['psfmag'][i], 'psfmag')
                                 lsc.mysqldef.updatevalue(database, 'psfmag', 9999.0, lista['filename'][i])
                         elif _psfmag != 9999.0:
                             if round(lista['psfmag'][i], 4) != round(float(_psfmag), 4):
-                                print lista['filename'][i], _psfmag, lista['psfmag'][i], 'psfmag'
+                                print(lista['filename'][i], _psfmag, lista['psfmag'][i], 'psfmag')
                                 lsc.mysqldef.updatevalue(database, 'psfmag', _psfmag, lista['filename'][i])
 
                     if not _apmag:  #  apmag
                         if lista['mag'][i] != 9999.0:
-                            print lista['filename'][i], _mag, lista['mag'][i], 'apmag'
+                            print(lista['filename'][i], _mag, lista['mag'][i], 'apmag')
                             lsc.mysqldef.updatevalue(database, 'apmag', 9999.0, lista['filename'][i])
                     else:
                         if _apmag == 9999.0:
                             if lista['apmag'][i] != 9999.0:
-                                print lista['filename'][i], _apmag, lista['apmag'][i], 'apmag'
+                                print(lista['filename'][i], _apmag, lista['apmag'][i], 'apmag')
                                 lsc.mysqldef.updatevalue(database, 'apmag', 9999.0, lista['filename'][i])
                         elif _apmag != 9999.0:
                             if round(lista['apmag'][i], 4) != round(float(_apmag), 4):
-                                print lista['filename'][i], _apmag, lista['apmag'][i], 'apmag'
+                                print(lista['filename'][i], _apmag, lista['apmag'][i], 'apmag')
                                 lsc.mysqldef.updatevalue(database, 'apmag', _apmag, lista['filename'][i])
 
 
@@ -1942,8 +1945,8 @@ def run_merge(imglist, _redu=False):
     stat = 'psf'
     for img in imglist:
         status.append(checkstage(os.path.basename(img), stat))
-    print imglist
-    print status
+    print(imglist)
+    print(status)
     imglist = imglist[np.where(np.array(status) > 0)]
     status = np.array(status)[np.where(np.array(status) > 0)]
 
@@ -1959,7 +1962,7 @@ def run_merge(imglist, _redu=False):
     #     else:    ff=''
     #     tt=' -t '+_type+' '
     command = 'lscmerge.py _tmp.list ' + ii  #+tt+ff
-    print command
+    print(command)
     os.system(command)
 
 ########################################################################################
@@ -1974,7 +1977,7 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
         command += ' --show'
     if force:
         command += ' -F'
-    print command
+    print(command)
     os.system(command)
 
 #####################################################################
@@ -2033,7 +2036,7 @@ def run_diff(listtar, listtemp, _show=False, _force=False, _normalize='i', _conv
     else:
         pixstack_text = ''
     command = 'lscdiff.py _tar.list _temp.list ' + ii + ff + '--normalize ' + _normalize + _convolve + _bgo + fixpix + difftype + ' --suffix ' + suffix + mask + iraf + pixstack_text
-    print command
+    print(command)
     os.system(command)
 
 
@@ -2069,7 +2072,7 @@ def run_template(listtemp, show=False, _force=False, _interactive=False, _ra=Non
         command += ' --uncleaned'
     if _subtract_mag_from_header:
         command += ' --subtract-mag-from-header'
-    print command
+    print(command)
     os.system(command)
 
 
@@ -2129,10 +2132,10 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
             _dir,img = os.path.split(ggg)
             if _dir:
                 _dir = _dir+'/'
-            print _dir + img
+            print(_dir + img)
             if os.path.isfile(_dir + img):
                 if os.path.isfile(_dir + img.replace('.fits', '.var.fits')):
-                    print 'variance image found'
+                    print('variance image found')
                     os.system('cp '+_dir + img+' '+_dir + img.replace('.fits', '.clean.fits'))
                     ar, hd = fits.getdata(_dir + img, header=True)
                     out_fits = fits.PrimaryHDU(header=hd,data=(ar-ar).astype('uint8'))
@@ -2141,15 +2144,15 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
                     if not os.path.isfile(_dir + img.replace('.fits', '.clean.fits')) or not os.path.isfile(_dir + img.replace('.fits', '.mask.fits')) or _force:
                         output, mask, satu = lsc.util.Docosmic(_dir + img, _sigclip, _sigfrac, _objlim)
                         lsc.util.updateheader(output, 0, {'DOCOSMIC': (True, 'Cosmic rejection using LACosmic')})
-                        print 'mv ' + output + ' ' + _dir
+                        print('mv ' + output + ' ' + _dir)
                         os.system('mv ' + output + ' ' + _dir)
                         os.system('mv ' + mask + ' ' + _dir)
                         os.system('mv ' + satu + ' ' + _dir)
-                        print output, mask, satu
+                        print(output, mask, satu)
                     else:
-                        print 'cosmic rejection already done'
+                        print('cosmic rejection already done')
             else:
-                print img, ' not found'
+                print(img, ' not found')
 
 
 ###################################################################
@@ -2160,13 +2163,13 @@ def run_apmag(imglist, database='photlco'):
         if ggg:
             _dir = ggg[0]['filepath']
             img1 = img.replace('.fits', '.sn2.fits')
-            print _dir + img1
+            print(_dir + img1)
             if os.path.isfile(_dir + img1):
                 command = 'lscnewcalib.py ' + _dir + img1
-                print command
+                print(command)
                 os.system(command)
             else:
-                print img1, ' not found'
+                print(img1, ' not found')
 
 ###################################################################
 

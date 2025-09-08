@@ -2,6 +2,8 @@ from astropy.table import Table
 
 def vizq(_ra,_dec,catalogue,radius):
     import os,string,re,subprocess
+    import sys
+    pyversion = sys.version_info[0]
     _site='vizier.u-strasbg.fr'
 #    _site='vizier.cfa.harvard.edu'
     cat={'usnoa2':['I/252/out','USNO-A2.0','Rmag'],\
@@ -15,7 +17,10 @@ def vizq(_ra,_dec,catalogue,radius):
                    cat[catalogue][1]+' -out='+cat[catalogue][2], shell=True, stdout=subprocess.PIPE,\
                    stderr=subprocess.PIPE)
     a,_ = process.communicate()
-    b = a.decode("utf-8")
+    if pyversion <3:
+        b = a
+    else:
+        b = a.decode("ascii")
     aa=b.split('\n')
     bb=[]
     for i in aa:
@@ -157,7 +162,7 @@ def querycatalogue(catalogue,img,method='iraf'):
             colonne3=' 1   2 '
             column={'ra':1,'dec':2,'r':3}
 
-        if  string.count(stdcoo['ra'][0],':'):
+        if  str.count(stdcoo['ra'][0],':'):
             ddd2=iraf.wcsctran('STDIN','STDOUT',img + '[0]',Stdin=lll,Stdout=1,inwcs='world',units='hour degrees',outwcs='logical',columns=colonne3,formats='%10.1f %10.1f')
         else:
             ddd2=iraf.wcsctran('STDIN','STDOUT',img + '[0]',Stdin=lll,Stdout=1,inwcs='world',units='degree degrees',outwcs='logical',columns=colonne3,formats='%10.1f %10.1f')
@@ -172,9 +177,9 @@ def querycatalogue(catalogue,img,method='iraf'):
             acoo1.append(str(stdcoo['ra'][i])+' '+str(stdcoo['dec'][i]))
             apix1.append(str(xx[i])+' '+str(yy[i]))
             am1.append(stdcoo[colonne4[catalogue]][i])
-            if  string.count(stdcoo['ra'][i],':'):
+            if  str.count(stdcoo['ra'][i],':'):
                 stdcoo['ra'][i]=(int(str.split(stdcoo['ra'][i],':')[0])+float(str.split(stdcoo['ra'][i],':')[1])/60+float(str.split(stdcoo['ra'][i],':')[2])/3600.)*15
-                if string.count(str(stdcoo['dec'][i]),'-')==0:   
+                if str.count(str(stdcoo['dec'][i]),'-')==0:   
                     stdcoo['dec'][i]=int(str.split(stdcoo['dec'][i],':')[0])+float(str.split(stdcoo['dec'][i],':')[1])/60+float(str.split(stdcoo['dec'][i],':')[2])/3600.
                 else:
                     stdcoo['dec'][i]=(-1)*(abs(int(str.split(stdcoo['dec'][i],':')[0]))+float(str.split(stdcoo['dec'][i],':')[1])/60+float(str.split(stdcoo['dec'][i],':')[2])/3600.)

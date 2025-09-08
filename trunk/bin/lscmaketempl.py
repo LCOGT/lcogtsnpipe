@@ -78,14 +78,14 @@ if __name__ == "__main__":
 
             if not imgdic[fil]['psf']:
                 psfimg = ''
-                print 'psf not found'
+                print('psf not found')
             else:
-                print '### found psffile'
+                print('### found psffile')
                 goon = True
 
             if goon:
                 psfimg = imgdic[fil]['psf'][0]
-                print img0, psfimg, _ra, _dec
+                print(img0, psfimg, _ra, _dec)
                 if os.path.exists(re.sub('.fits', '.sn2.fits', img0)):
                     hdr1 = lsc.util.readhdr(re.sub('.fits', '.sn2.fits', img0))
                     _xpos = lsc.util.readkey3(hdr1, 'PSFX1')
@@ -110,26 +110,26 @@ if __name__ == "__main__":
                             _mag = float(_magobj) #+ 2.5 * math.log10(float(_exptime))
 
                 if _subtract_mag_from_header or chosemag:
-                    print 'magnitude to be subtracted:', _mag
+                    print('magnitude to be subtracted:', _mag)
                 else:
                     print('do not subtract SN magnitude')
                 #######################  Chose Ra   and    Dec  ##############
                 if chosepos:
-                    print 'choose xpos, ypos interactively'
+                    print('choose xpos, ypos interactively')
                     lsc.util.delete('tmp.log')
                     zz1, zz2, goon = lsc.util.display_image(img, 1, 0, 6000, True)
-                    print '>>> identify target (mark with <a> then press <q>)'
+                    print('>>> identify target (mark with <a> then press <q>)')
                     iraf.imexamine(wcs='logical', logfile='tmp.log', keeplog=True)
                     xytargets = iraf.fields('tmp.log', '1,2', Stdout=1)
                     _xpos, _ypos = string.split(xytargets[0])[0], string.split(xytargets[0])[1]
                     goon = True
                 else:
                     if not _ra or not _dec:
-                        print 'use ra and dec from input database !!! '
+                        print('use ra and dec from input database !!! ')
                         _ra, _dec, _ = lsc.util.checksndb(img0)
 
                     if _ra and _dec:
-                        print 'convert RA, dec to xpos, ypos using header'
+                        print('convert RA, dec to xpos, ypos using header')
                         hdr0 = lsc.util.readhdr(img0)
                         wcs = WCS(hdr0)
                         pix1 = wcs.wcs_world2pix([(float(_ra), float(_dec))], 1)
@@ -139,8 +139,8 @@ if __name__ == "__main__":
                         goon = False
                         sys.exit('need to define coordinates for subtraction')
             if goon:
-                print 'pixel coordinates to subtract:', _xpos, _ypos
-                print img0, psfimg
+                print('pixel coordinates to subtract:', _xpos, _ypos)
+                print(img0, psfimg)
                 imgout = re.sub('.fits', '.temp.fits', string.split(img0, '/')[-1])
                 lsc.util.delete('_tmp.fits,_tmp2.fits,_tmp2.fits.art,' + imgout)
                 _targetid = lsc.mysqldef.targimg(img0)
@@ -191,7 +191,7 @@ if __name__ == "__main__":
                                              verb='no')
                         iraf.imarith(img0, '-', '_tmp2.fits', imgout, verbose='yes')
                     else:
-                        print '\####  copy file '
+                        print('\####  copy file ')
                         lsc.util.imcopy(img0, imgout)
                     if _show:
                         _z11, _z22, goon = lsc.util.display_image(imgout, 2, z11, z22, False)
@@ -206,7 +206,7 @@ if __name__ == "__main__":
                         _mag0 = raw_input('which magnitude  ' + str(_mag) + ' ?')
                         if _mag0:
                             _mag = _mag0
-                print 'insert in the archive'
+                print('insert in the archive')
                 hd = lsc.util.readhdr(imgout)
                 dictionary = {'dateobs': lsc.util.readkey3(hd, 'date-obs'), 'exptime': lsc.util.readkey3(hd, 'exptime'),
                               'dayobs': lsc.util.readkey3(hd, 'day-obs'), 'filter': lsc.util.readkey3(hd, 'filter'),
@@ -227,8 +227,8 @@ if __name__ == "__main__":
                 if ggg and _force:
                     lsc.mysqldef.deleteredufromarchive(string.split(imgout, '/')[-1], 'photlco', 'filename')
                 if not ggg or _force:
-                    print 'insert'
-                    print dictionary
+                    print('insert')
+                    print(dictionary)
                     lsc.mysqldef.insert_values(conn, 'photlco', dictionary)
                 else:
                     for voce in ggg[0].keys():
@@ -236,10 +236,10 @@ if __name__ == "__main__":
                         if voce in dictionary.keys():
                             lsc.mysqldef.updatevalue('photlco', voce, dictionary[voce], string.split(imgout, '/')[-1])
                 if not os.path.isdir(dictionary['filepath']):
-                    print dictionary['filepath']
+                    print(dictionary['filepath'])
                     os.mkdir(dictionary['filepath'])
                 if not os.path.isfile(dictionary['filepath'] + imgout) or _force:
-                    print 'mv ' + imgout + ' ' + dictionary['filepath'] + imgout
+                    print('mv ' + imgout + ' ' + dictionary['filepath'] + imgout)
                     os.system('mv ' + imgout + ' ' + dictionary['filepath'] + imgout)
-                print 'Warning: if this template still contain the target you want to measure, you need to run'
-                print 'stages psf and apmag on the reference image'
+                print('Warning: if this template still contain the target you want to measure, you need to run')
+                print('stages psf and apmag on the reference image')

@@ -43,7 +43,7 @@ def get_image_data(lista, magcol=None, errcol=None, refcat=None):
         t.rename_column(magcol, 'instmag')
         t.rename_column(errcol, 'dinstmag')
     elif magcol is not None and errcol is not None:
-        print 'Cross-matching {} catalogs. This may take a while...'.format(len(lista))
+        print('Cross-matching {} catalogs. This may take a while...'.format(len(lista)))
         catalogs = []
         badrows = []
         for i, image in enumerate(t):
@@ -247,14 +247,14 @@ if __name__ == "__main__":
         query = 'INSERT INTO photlco (filename, targetid, mag, dmag) VALUES\n'
         query += ',\n'.join(['("{}", {}, {}, {})'.format(row['filename'], row['targetid'], row['mag'], row['dmag']) for row in targets.filled(9999.)])
         query += '\nON DUPLICATE KEY UPDATE mag=VALUES(mag), dmag=VALUES(dmag)'
-        print query
+        print(query)
         lsc.mysqldef.query([query], lsc.myloopdef.conn)
     elif args.stage == 'abscat': 
        # write all the catalogs to files & put filename in database
         for row in targets:
             good = ~row['mag'].mask
             if not np.any(good):
-                print 'no good magnitudes for', row['filename']
+                print('no good magnitudes for', row['filename'])
                 lsc.mysqldef.updatevalue('photlco', 'abscat', 'X', row['filename'])
                 continue
             outtab = Table([row['ra'][good].T, row['dec'][good].T, row['mag'][good].T, row['dmag'][good].T],
@@ -267,7 +267,7 @@ if __name__ == "__main__":
                              overwrite=args.force, fill_values=[(ascii.masked, '9999.0')])
                 lsc.mysqldef.updatevalue('photlco', 'abscat', outfile, row['filename'])
             except IOError as e:
-                print e, '-- use -F to overwrite'
+                print( e, '-- use -F to overwrite')
     elif args.stage == 'local':
         if args.field == 'landolt':
             filterlist = ['U', 'B', 'V', 'R', 'I']
@@ -286,7 +286,7 @@ if __name__ == "__main__":
             for filt in filterlist:
                 nightly_by_filter = targets[(targets['filter'] == filt) & (np.sum(~targets['mag'].mask, axis=1) > args.minstars)]
                 if not nightly_by_filter:
-                    print 'no calibrated stars in', filt
+                    print('no calibrated stars in', filt)
                     continue
                 fig.clear()
                 ax1 = fig.add_subplot(211)
@@ -347,4 +347,4 @@ if __name__ == "__main__":
             catalog[col].format = '%6.3f'
         catalog.write(filename, format='ascii.fixed_width_no_header', delimiter='',
                       fill_values=[(ascii.masked, '9999.0')])
-        print 'catalog written to', filename
+        print('catalog written to', filename)

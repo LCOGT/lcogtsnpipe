@@ -23,7 +23,7 @@ for row in phot:
 
 [filename_root, ext] = splitext(args.name)
 filename_snex2 = filename_root + '_snex2' + '.csv'
-print 'Saving new file as {name}'.format(name=filename_snex2)
+print('Saving new file as {name}'.format(name=filename_snex2))
 with open(filename_snex2, 'w') as f:
     for line in lines:
         f.write(line)

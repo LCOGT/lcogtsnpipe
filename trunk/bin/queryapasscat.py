@@ -57,10 +57,10 @@ def vizq(_ra,_dec,catalogue,radius):
                    ' -c.ra='+str(_ra)+' -c.dec='+str(_dec)+' -c.eq=J2000 -c.rm='+str(radius)+\
                    ' -c.geom=b -oc.form=h -sort=_RA*-c.eq -out.add=_RAJ2000,_DEJ2000 -out.max=10000 -out='+\
                    cat[catalogue][1]+' -out="'+cat[catalogue][2]+'"').read()
-    print 'vizquery -mime=tsv  -site='+_site+' -source='+cat[catalogue][0]+\
+    print('vizquery -mime=tsv  -site='+_site+' -source='+cat[catalogue][0]+\
                    ' -c.ra='+str(_ra)+' -c.dec='+str(_dec)+' -c.eq=J2000 -c.rm='+str(radius)+\
                    ' -c.geom=b -oc.form=h -sort=_RA*-c.eq -out.add=_RAJ2000,_DEJ2000 -out.max=10000 -out='+\
-                   cat[catalogue][1]+' -out="'+cat[catalogue][2]+'"'
+                   cat[catalogue][1]+' -out="'+cat[catalogue][2]+'"')
     aa=a.split('\n')
     bb=[]
     for i in aa:
@@ -197,5 +197,5 @@ if __name__ == "__main__":
     _radius=option.radius
     _catalogue=option.cat
     _outputfile=option.output
-    print _ra,_dec,_radius
+    print(_ra,_dec,_radius)
     readapass2(_ra,_dec,_radius,_outputfile)

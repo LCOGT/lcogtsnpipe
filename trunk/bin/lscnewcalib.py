@@ -33,10 +33,10 @@ def vizq(_ra, _dec, catalogue, radius):
                  ' -c.ra=' + str(_ra) + ' -c.dec=' + str(_dec) + ' -c.eq=J2000 -c.rm=' + str(radius) + \
                  ' -c.geom=b -oc.form=h -sort=_RA*-c.eq -out.add=_RAJ2000,_DEJ2000 -out.max=10000 -out=' + \
                  cat[catalogue][1] + ' -out=' + cat[catalogue][2] + '').read()
-    print 'vizquery -mime=tsv  -site=' + _site + ' -source=' + cat[catalogue][0] + \
+    print('vizquery -mime=tsv  -site=' + _site + ' -source=' + cat[catalogue][0] + \
           ' -c.ra=' + str(_ra) + ' -c.dec=' + str(_dec) + ' -c.eq=J2000 -c.rm=' + str(radius) + \
           ' -c.geom=b -oc.form=h -sort=_RA*-c.eq -out.add=_RAJ2000,_DEJ2000 -out.max=10000 -out=' + \
-          cat[catalogue][1] + ' -out=' + cat[catalogue][2] + ''
+          cat[catalogue][1] + ' -out=' + cat[catalogue][2] + '')
     aa = a.split('\n')
     bb = []
     for i in aa:
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     option, args = parser.parse_args()
     imglist = lsc.util.readlist(args[0])
     for img in imglist:
-        print img
+        print(img)
         table = lsc.lscabsphotdef.makecatalogue([img])
         _filter = table.keys()[0]
         _rasex = table[table.keys()[0]][table[table.keys()[0]].keys()[0]]['ra0']
@@ -175,7 +175,7 @@ if __name__ == "__main__":
                     except:
                         pass
 
-                print 'use catalogue from archive for object ' + str(_object)
+                print('use catalogue from archive for object ' + str(_object))
             else:
                 _sloan = ''
             if not _sloan:
@@ -191,7 +191,7 @@ if __name__ == "__main__":
             _catalogue = glob.glob(os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'standard', 'cat', 'landolt', _object + '*'))
             if _catalogue:
                 _landolt = lsc.lscastrodef.readtxt(_catalogue[0])
-                print 'use catalogue from archive for object ' + str(_object)
+                print('use catalogue from archive for object ' + str(_object))
                 for _id in _landolt:
                     try:
                         _landolt[_id] = np.array(_landolt[_id], float)
@@ -227,7 +227,7 @@ if __name__ == "__main__":
             headers = {'zn': [float(ZZ0), 'zeropoint'], 'dzn': [float(std2), 'zeropoint std'],
                        'znnum': [len(data2), 'number of stars used for zeropoint']}
             lsc.util.updateheader(img, 0, headers)
-            print 'zero point ', ZZ0
+            print('zero point ', ZZ0)
             from pyraf import iraf
 
             iraf.astcat(_doprint=0)
@@ -307,20 +307,20 @@ if __name__ == "__main__":
                 ################################################################################
                 if 'diff' in img:
                     if 'apfl1re' in hdr and 'dapfl1re' in hdr:
-                        print 'zeropoint there'
+                        print('zeropoint there')
                         FLUXref = hdr['apfl1re']
                         dFLUXref = hdr['dapfl1re']
                     else:
                         FLUXref = ''
                     if 'ZNref' in hdr:
-                        print 'flux there'
+                        print('flux there')
                         ZZ0ref = hdr['ZNref']
                     else:
                         ZZ0ref = ''
                     if FLUXref and ZZ0ref:
-                        print FLUXref, dFLUXref, flux1, error1
+                        print(FLUXref, dFLUXref, flux1, error1)
                         if float(ZZ0ref) == float(ZZ0):
-                            print 'difference image scaled to the reference, zero point of the difference image is the same'
+                            print('difference image scaled to the reference, zero point of the difference image is the same')
                             magfromflux = -2.5 * np.log10((float(FLUXref)) + (float(flux1) / _exptime))
                             dmagfromflux = 1.0857 * np.sqrt((error1 / _exptime) ** 2 + (float(dFLUXref)) ** 2) / (
                                 (float(flux1) / _exptime) + float(FLUXref))
@@ -329,14 +329,14 @@ if __name__ == "__main__":
                                                           (float(flux1) / _exptime))
                             dmagfromflux = 1.0857 * np.sqrt((error1 / _exptime) ** 2 + (float(dFLUXref)) ** 2) / (
                                 (float(flux1) / _exptime) + float(FLUXref))
-                            print  'this is a difference image\n I found a zeropoint and flux measurment in the reference image'
-                            print  "I'm going to replace tha magnitude at aperture 3 with this value"
+                            print('this is a difference image\n I found a zeropoint and flux measurment in the reference image')
+                            print("I'm going to replace tha magnitude at aperture 3 with this value")
                         mag1 = magfromflux
                         dmag1 = dmagfromflux
-                        print mag1, dmag1
+                        print(mag1, dmag1)
                     else:
-                        print 'Warning: this is a difference image, but I did not find a flux and zeropoint\n'
-                        print 'for the reference image, the reference image does not include the target we are measuring'
+                        print('Warning: this is a difference image, but I did not find a flux and zeropoint\n')
+                        print('for the reference image, the reference image does not include the target we are measuring')
                         ##################################################################################
 
                 lsc.mysqldef.updatevalue('photlco', 'apflux', float(flux1) / _exptime,
@@ -345,7 +345,7 @@ if __name__ == "__main__":
                                          string.split(re.sub('sn2.', '', img), '/')[-1])
 
                 if mag1 != 'INDEF':
-                    print float(mag1)
+                    print(float(mag1))
                     try:
                         lsc.mysqldef.updatevalue('photlco', 'apmag', float(mag1),
                                                  string.split(re.sub('sn2.', '', img), '/')[-1])

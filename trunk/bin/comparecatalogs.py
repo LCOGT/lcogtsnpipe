@@ -21,25 +21,25 @@ else:
 
 for system in args.field:
     targets = lsc.mysqldef.query(['select id, ra0, dec0 from targets where ' + system + '_cat' + cond], lsc.myloopdef.conn)
-    print len(targets), 'targets with no', system, 'catalog'
-    print
+    print(len(targets), 'targets with no', system, 'catalog')
+    print()
     source = 'panstarrs' if system == 'sloan' and args.panstarrs else system
     for target in targets:
         tid = str(target['id'])
-        print 'Target ID', tid
+        print('Target ID', tid)
         names = lsc.mysqldef.query(['select name from targetnames where targetid=' + tid], lsc.myloopdef.conn)
-        print ' aka '.join([n['name'] for n in names])
+        print(' aka '.join([n['name'] for n in names]))
         filepath = os.path.join(default_catdir, system)
         for name in names: # see en.wikipedia.org/wiki/Filename#Comparison_of_filename_limitations
             filename = name['name'].translate(None, ' "*:<>?/|\\') + '_' + source + '.cat'
             fullpath = os.path.join(filepath,  filename)
             fileexists = os.path.isfile(fullpath)
             if fileexists:
-                print 'Adding', filename, 'to database'
+                print('Adding', filename, 'to database')
                 lsc.mysqldef.query(['update targets set ' + system + '_cat="' + filename + '" where id=' + tid], lsc.myloopdef.conn)
                 break
         if not fileexists and system != 'landolt':
-            print 'Querying for catalog...'
+            print('Querying for catalog...')
             if system == 'apass':
                 os.system('queryapasscat.py -r {ra0} -d {dec0} -R {radius} -o '.format(radius=args.radius, **target) + fullpath)
             elif system == 'sloan' and args.panstarrs:
@@ -50,9 +50,9 @@ for system in args.field:
                 lsc.lscabsphotdef.gaia2file(target['ra0'], target['dec0'], output=fullpath)
             fileexists = os.path.isfile(fullpath)
             if fileexists:
-                print 'Adding', filename, 'to database'
+                print('Adding', filename, 'to database')
                 lsc.mysqldef.query(['update targets set ' + system + '_cat="' + filename + '" where id=' + tid], lsc.myloopdef.conn)
         if not fileexists:
-            print 'No catalog exists'
-        print
+            print('No catalog exists')
+        print()
         lsc.mysqldef.query(['update targets set ' + system + '_cat="" where ' + system + '_cat is NULL'], lsc.myloopdef.conn) # change NULL to '' if not in field

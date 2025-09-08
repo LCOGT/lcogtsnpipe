@@ -45,8 +45,8 @@ def checkast(imglist):
         yoff, ystd = round(np.median(__ydist), 2), round(np.std(__ydist), 2)
         if np.isnan(xoff): xoff, xstd = 0, 0
         if np.isnan(yoff): yoff, ystd = 0, 0
-        print xoff, xstd, len(__xdist)
-        print yoff, ystd
+        print(xoff, xstd, len(__xdist))
+        print(yoff, ystd)
         lsc.updateheader(img, 0, {'CRPIX1': (hdr1['CRPIX1'] - xoff, 'Value at ref. pixel on axis 1')})
         lsc.updateheader(img, 0, {'CRPIX2': (hdr1['CRPIX2'] - yoff, 'Value at ref. pixel on axis 2')})
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
             elif 'CCDSCALE' in hdr0:
                 pixelscale = hdr0['CCDSCALE']
             else:
-                print 'Warning: pixel scale not defined'
+                print('Warning: pixel scale not defined')
                 pixelscale = ''
 
             if _tel in ['fts', 'ftn']:
@@ -120,7 +120,7 @@ if __name__ == "__main__":
             else:
                 outname = hdr0['SITEID'] + re.sub('-', '', hdr0['telescop']) + '_' + \
                           hdr0['instrume'] + '_' + hdr0['DAY-OBS'] + '_' + o + '_' + f + '.fits'
-            print outname
+            print(outname)
 
             imglist2 = ''
             imglistnoise = ''
@@ -128,7 +128,7 @@ if __name__ == "__main__":
             imglist22 = []
             for gg in imglist1:
                 kkk = lsc.lscastrodef.finewcs(gg)
-                print gg
+                print(gg)
                 output, mask, satu = lsc.util.Docosmic(gg)  #  cosmic correction on a fly ....not really fly
                 hdm = fits.getheader(output)
                 dmask = fits.getdata(mask)
@@ -164,8 +164,8 @@ if __name__ == "__main__":
                     ' -RDNOISE_DEFAULT ' + str(_ron) + ' -GAIN_KEYWORD NONONO -GAIN_DEFAULT ' + str(_gain)
 #if _tel in ['fts','ftn']:                 line2=line2+' -IMOUT_BITPIX 16 -IMOUT_BSCALE 1.0 -IMOUT_BZERO 32768.0'
 
-            print line
-            print line2
+            print(line)
+            print(line2)
             os.system(line)
 
             ar, hd = fits.getdata(outname, header=True)
@@ -212,7 +212,7 @@ if __name__ == "__main__":
             out_fits.writeto(outname, overwrite=True, output_verify='fix')
             os.system(line2)  # make noise image
 
-            print outname
+            print(outname)
             _targetid = lsc.mysqldef.targimg(outname)
             _tel = lsc.util.readkey3(hd, 'telid')
             dictionary = {'dateobs': lsc.util.readkey3(hd, 'date-obs'), 'exptime': lsc.util.readkey3(hd, 'exptime'),
@@ -234,22 +234,22 @@ if __name__ == "__main__":
             if ggg and force:   lsc.mysqldef.deleteredufromarchive(string.split(outname, '/')[-1], 'photlco',
                                                                    'filename')
             if not ggg or force:
-                print 'insert'
-                print dictionary
+                print('insert')
+                print(dictionary)
                 lsc.mysqldef.insert_values(conn, 'photlco', dictionary)
             else:
                 for voce in ggg[0].keys():
-                    print 'update'
+                    print('update')
                     try:
                         lsc.mysqldef.updatevalue('photlco', voce, dictionary[voce], string.split(outname, '/')[-1])
                     except:
                         pass
             if not os.path.isdir(dictionary['filepath']):
-                print dictionary['filepath']
+                print(dictionary['filepath'])
                 os.mkdir(dictionary['filepath'])
-            print force
+            print(force)
             if not os.path.isfile(dictionary['filepath'] + outname) or force:
-                print 'mv ' + outname + ' ' + dictionary['filepath'] + outname
+                print('mv ' + outname + ' ' + dictionary['filepath'] + outname)
                 os.system('mv ' + outname + ' ' + dictionary['filepath'] + outname)
                 os.chmod(dictionary['filepath'] + outname, 0664)
 
@@ -258,8 +258,8 @@ if __name__ == "__main__":
             for img in imglist1:
                 dictionary = {'namein': string.split(img, '/')[-1], 'nameout': string.split(outname, '/')[-1],
                               'tablein': 'photlco', 'tableout': 'photlco'}
-                print 'insert in out'
-                print dictionary
+                print('insert in out')
+                print(dictionary)
                 lsc.mysqldef.insert_values(conn, 'photpairing', dictionary)
 
             for gg in imglist1:

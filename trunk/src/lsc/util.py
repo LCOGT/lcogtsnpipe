@@ -824,7 +824,7 @@ def checksndb(img):
     filename = os.path.basename(img)
     command = '''select targets.ra0, targets.dec0, classificationid from targets, photlco
                  where targetid=targets.id and filename="{}"'''.format(filename)
-    target = lsc.mysqldef.query([command], lsc.conn)
+    target = lsc.mysqldef.query([command], lsc.myloopdef.conn)
     if target:
         return target[0]['ra0'], target[0]['dec0'], target[0]['classificationid']
     else:
@@ -839,14 +839,14 @@ def getcatalog(name_or_filename, field='', return_field=False):
                                          gaia_cat, filter
                                          from targets, targetnames, photlco
                                          where targets.id=targetnames.targetid and targets.id=photlco.targetid
-                                         and filename="{}"'''.format(name_or_filename)], lsc.conn)
+                                         and filename="{}"'''.format(name_or_filename)], lsc.myloopdef.conn)
     else:
         entries = lsc.mysqldef.query(['''select othernames.name, sloan_cat, landolt_cat,
                                          apass_cat, gaia_cat
                                          from targets, targetnames, targetnames as othernames
                                          where targets.id=targetnames.targetid and targets.id=othernames.targetid
                                          and targetnames.name like "%{}"'''.format(name_or_filename.replace(' ', '%'))],
-                                     lsc.conn)  # same name matching as gettargetid
+                                     lsc.myloopdef.conn)  # same name matching as gettargetid
     if field:
         fields = [field]
     else:

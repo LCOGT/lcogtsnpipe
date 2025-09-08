@@ -20,14 +20,14 @@ else:
     cond = ' is null' # null means we haven't checked yet
 
 for system in args.field:
-    targets = lsc.mysqldef.query(['select id, ra0, dec0 from targets where ' + system + '_cat' + cond], lsc.conn)
+    targets = lsc.mysqldef.query(['select id, ra0, dec0 from targets where ' + system + '_cat' + cond], lsc.myloopdef.conn)
     print len(targets), 'targets with no', system, 'catalog'
     print
     source = 'panstarrs' if system == 'sloan' and args.panstarrs else system
     for target in targets:
         tid = str(target['id'])
         print 'Target ID', tid
-        names = lsc.mysqldef.query(['select name from targetnames where targetid=' + tid], lsc.conn)
+        names = lsc.mysqldef.query(['select name from targetnames where targetid=' + tid], lsc.myloopdef.conn)
         print ' aka '.join([n['name'] for n in names])
         filepath = os.path.join(default_catdir, system)
         for name in names: # see en.wikipedia.org/wiki/Filename#Comparison_of_filename_limitations
@@ -36,7 +36,7 @@ for system in args.field:
             fileexists = os.path.isfile(fullpath)
             if fileexists:
                 print 'Adding', filename, 'to database'
-                lsc.mysqldef.query(['update targets set ' + system + '_cat="' + filename + '" where id=' + tid], lsc.conn)
+                lsc.mysqldef.query(['update targets set ' + system + '_cat="' + filename + '" where id=' + tid], lsc.myloopdef.conn)
                 break
         if not fileexists and system != 'landolt':
             print 'Querying for catalog...'
@@ -51,8 +51,8 @@ for system in args.field:
             fileexists = os.path.isfile(fullpath)
             if fileexists:
                 print 'Adding', filename, 'to database'
-                lsc.mysqldef.query(['update targets set ' + system + '_cat="' + filename + '" where id=' + tid], lsc.conn)
+                lsc.mysqldef.query(['update targets set ' + system + '_cat="' + filename + '" where id=' + tid], lsc.myloopdef.conn)
         if not fileexists:
             print 'No catalog exists'
         print
-        lsc.mysqldef.query(['update targets set ' + system + '_cat="" where ' + system + '_cat is NULL'], lsc.conn) # change NULL to '' if not in field
+        lsc.mysqldef.query(['update targets set ' + system + '_cat="" where ' + system + '_cat is NULL'], lsc.myloopdef.conn) # change NULL to '' if not in field

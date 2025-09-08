@@ -261,7 +261,7 @@ def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_num
     dartf=100
     while dartf>=size-1:
         if _interactive:
-            artfac0 =raw_input('>>> Dispersion of artificial star positions (in units of FWHM) [1] ')
+            artfac0 =lsc.util.userinput('>>> Dispersion of artificial star positions (in units of FWHM) [1] ')
             if not artfac0: artfac0=1
         else:
             artfac0=1

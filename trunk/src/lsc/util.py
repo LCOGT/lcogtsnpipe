@@ -13,6 +13,14 @@ configfile = os.path.join(workdirectory, 'configure')
 if not os.path.exists(configfile):
     configfile = pkg_resources.resource_filename('lsc', 'configure')
 
+pyversion = sys.version_info[0]
+
+def userinput(text):
+    if pyversion <3:
+        inputstring = lsc.util.userinput(text)
+    else:
+        inputstring = input(text)
+    return inputstring
 
 def readpasswd(configfile):
    """ read all information to connect to database from configuration file  
@@ -374,15 +382,15 @@ def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,
             goon=False
  
        if scale and goon:
-          answ0 = raw_input('>>> Cuts OK ? [y/n] ? [y] ')
+          answ0 = userinput('>>> Cuts OK ? [y/n] ? [y] ')
           if not answ0: answ0='y'
           elif answ0=='no' or answ0=='NO': answ0='n' 
 
           while answ0=='n':
               _z11=float(str.split(str.split(sss[0])[0],'=')[1])
               _z22=float(str.split(str.split(sss[0])[1],'=')[1])
-              z11 = raw_input('>>> z1 = ? ['+str(_z11)+'] ? ')
-              z22 = raw_input('>>> z2 = ? ['+str(_z22)+'] ? ')
+              z11 = userinput('>>> z1 = ? ['+str(_z11)+'] ? ')
+              z22 = userinput('>>> z2 = ? ['+str(_z22)+'] ? ')
               if not z11: z11=_z11
               else: z11=float(z11)
               if not z22: z22=_z22
@@ -390,7 +398,7 @@ def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,
               print(z11,z22)
               sss=iraf.display(img + '[0]',frame,fill='yes', xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase,\
                                    zrange='no', zscale='no', z1=z11, z2=z22, Stdout=1)
-              answ0 = raw_input('>>> Cuts OK ? [y/n] ? [y] ')
+              answ0 = userinput('>>> Cuts OK ? [y/n] ? [y] ')
               if not answ0: answ0='y'
               elif answ0=='no' or answ0=='NO': answ0='n'
        if goon:

@@ -336,7 +336,7 @@ if __name__ == "__main__":
                     ax3.legend(loc='best')
                     plt.draw()
                 
-                raw_input('Press enter to continue.')
+                lsc.util.userinput('Press enter to continue.')
 
         snname = os.path.basename(catfile).split('_')[0] if args.catalog else 'catalog'
         filename = args.output.format(SN=snname, field=args.field,

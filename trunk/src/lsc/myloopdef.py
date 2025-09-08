@@ -168,7 +168,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
             }
 
             if int(ftype)==1:
-                phot_type = raw_input('The default photometry type for non-difference imaging is PSF. If this is not PSF photometry please enter "Aperture", "Mixed", or "Unsure": ')
+                phot_type = lsc.util.userinput('The default photometry type for non-difference imaging is PSF. If this is not PSF photometry please enter "Aperture", "Mixed", or "Unsure": ')
                 if phot_type.lower() == 'aperture':
                     upload_extras['photometry_type'] = 'Aperture'
                 elif phot_type.lower() == 'mixed':
@@ -179,7 +179,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                     upload_extras['photometry_type'] = 'PSF'
                     
             elif int(ftype)==3:
-                phot_type = raw_input('The default photometry type for difference imaging is Aperture. If this is not Aperture photometry please enter "PSF", "Mixed", or "Unsure": ')
+                phot_type = lsc.util.userinput('The default photometry type for difference imaging is Aperture. If this is not Aperture photometry please enter "PSF", "Mixed", or "Unsure": ')
                 if phot_type.lower() == 'psf':
                     upload_extras['photometry_type'] = 'PSF'
                 elif phot_type.lower() == 'mixed':
@@ -195,20 +195,20 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
                 else:
                     upload_extras['subtraction_algorithm'] = 'PyZOGY'
 
-                template_source = raw_input('Please enter the source of the template used to perform background subtraction (i.e. LCO or SDSS): ')
+                template_source = lsc.util.userinput('Please enter the source of the template used to perform background subtraction (i.e. LCO or SDSS): ')
                 upload_extras['template_source'] = template_source
 
             ### Prompt user for inputs for a few upload extras
-            reducer_group = raw_input('Please enter the group reducing this data (i.e. LCO, UC Davis, etc.): ')
+            reducer_group = lsc.util.userinput('Please enter the group reducing this data (i.e. LCO, UC Davis, etc.): ')
             if reducer_group!='LCO':
                 upload_extras['reducer_group'] = reducer_group
 
-            final_photometry = raw_input('Is this reduction final? [y/n]')
+            final_photometry = lsc.util.userinput('Is this reduction final? [y/n]')
             if final_photometry == 'y':
                 upload_extras['final_reduction'] = True
             else:
                 upload_extras['final_reduction'] = False
-            used_in = raw_input('Will this data be used in a paper? If so, please enter the name of the first author like "Last Name, First Name": ')
+            used_in = lsc.util.userinput('Will this data be used in a paper? If so, please enter the name of the first author like "Last Name, First Name": ')
             if used_in:
                 upload_extras['used_in'] = used_in
             print(upload_extras)
@@ -218,7 +218,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
             ]
             print('This dataproduct will be assigned to the following groups. If you would like to change these group permissions, you can do so on the page for this target on SNEx2: {}'.format(default_groups))
             ### Upload to snex2
-            username = raw_input('Please enter your SNEx2 username: ')
+            username = lsc.util.userinput('Please enter your SNEx2 username: ')
             password = getpass.getpass(prompt='Please enter your SNEx2 password: ')
             # Send the request
             snex2_upload_url = 'http://test.supernova.exchange/pipeline-upload/photometry-upload/'
@@ -616,7 +616,7 @@ def getcoordfromref(img2, img1, _show, database='photlco'):
     #    plt.plot(ra02,dec02,'xb',markersize=10)
     #    plt.plot(np.array(ra01)[pos1],np.array(dec01)[pos1],'3g',markersize=20)
     #    plt.plot(np.array(ra02)[pos2],np.array(dec02)[pos2],'*m',markersize=10)
-    #    raw_input('ddd')
+    #    lsc.util.userinput('ddd')
     rra = ra01[pos1] - ra02[pos2]
     ddec = dec01[pos1] - dec02[pos2]
     rracut = np.compress((np.abs(np.array(ra02[pos2]) - float(rasn1)) < .05) & (np.abs(np.array(dec02[pos2]) - float(decsn1)) < .05),
@@ -862,7 +862,7 @@ def position(imglist, ra1, dec1, show=False):
                     #                        lll=str(ra00[pos1[np.argmin(distvec)]])+' '+str(dec00[pos1[np.argmin(distvec)]])
                     #                        aaa=iraf.wcsctran('STDIN','STDOUT',j,Stdin=[lll],inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.5f %10.5f',Stdout=1)[3]
                     #                        iraf.tvmark(1,'STDIN',Stdin=list([aaa]),mark="circle",number='yes',label='no',radii=20,nxoffse=5,nyoffse=5,color=205,txsize=2)
-                    #                        raw_input('ddd')
+                    #                        lsc.util.userinput('ddd')
     if show:
         plt.ion()
         plt.xlabel('ra (arcsec)')
@@ -939,7 +939,7 @@ def checkcat(imglist, database='photlco'):
                 print(len(lines) - 2, 'stars in catalog')
                 if len(lines) > 2:
                     mark_stars_on_image(_dir + img, catfile)
-                    aa = raw_input('>>>good catalogue [[y]/n] or [b] bad quality ? ')
+                    aa = lsc.util.userinput('>>>good catalogue [[y]/n] or [b] bad quality ? ')
                     if not aa: aa = 'y'
                 else: # automatically delete the file if is is only a header
                     aa = 'n'
@@ -988,7 +988,7 @@ def checkpsf(imglist, no_iraf=False, database='photlco'):
                     iraf.delete('_psf.psf.fits', verify=False)
                     iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
                     iraf.surface('_psf.psf')
-                aa = raw_input('>>>good psf [[y]/n] or [b] bad quality ? ')
+                aa = lsc.util.userinput('>>>good psf [[y]/n] or [b] bad quality ? ')
                 if not aa: aa = 'y'
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                     print('updatestatus bad')
@@ -1116,7 +1116,7 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
                 apix1 = catvec['pix']
                 iraf.tvmark(1, 'STDIN', Stdin=list(apix1), mark="circle", number='yes', label='no', radii=20, nxoffse=5,
                             nyoffse=5, color=205, txsize=2)
-            aa = raw_input('>>>good wcs [[y]/n] or [b] bad quality ? ')
+            aa = lsc.util.userinput('>>>good wcs [[y]/n] or [b] bad quality ? ')
             if not aa:
                 aa = 'y'
             if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
@@ -1232,7 +1232,7 @@ def checkfast(imglist, force=True, database='photlco'):
             _dir = ggg[0]['filepath']
             iraf.display(_dir + img + '[0]', 1, fill=True, Stdout=1)
             ###########################################
-            aa = raw_input('>>>good or bad quality [[g]/b]? ')
+            aa = lsc.util.userinput('>>>good or bad quality [[g]/b]? ')
             if not aa: aa = 'g'
             if aa in ['bad', 'b', 'B']:
                 lsc.mysqldef.updatevalue(database, 'wcs', 9999, os.path.basename(img))
@@ -1277,7 +1277,7 @@ def checkcosmic(imglist, database='photlco'):
                 iraf.set(stdimage='imt8192')
                 iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
                 iraf.display(maskimg, 2, zscale=False, fill=True, Stdout=1)
-                ans = raw_input('>>> good mask [[y]/n] or [b]ad quality? ')
+                ans = lsc.util.userinput('>>> good mask [[y]/n] or [b]ad quality? ')
                 if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                     print('updatestatus bad')
                     print('rm', maskimg)
@@ -1353,7 +1353,7 @@ def checkdiff(imglist, database='photlco'):
                 iraf.display(origimg + '[0]', 1, fill=True, Stdout=1)
                 iraf.display(tempimg, 2, fill=True, Stdout=1)
                 iraf.display(diffimg, 3, fill=True, Stdout=1)
-                ans = raw_input('>>> good difference [[y]/n] or [b]ad quality (original image)? ')
+                ans = lsc.util.userinput('>>> good difference [[y]/n] or [b]ad quality (original image)? ')
                 if ans in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                     print('updatestatus bad')
                     print('rm', diffimg.replace('.fits', '*'))
@@ -1408,7 +1408,7 @@ def checkmag(imglist, datamax=None):
         status = checkstage(img, 'checkmag')
         if status > 1:
             ogfile, rsfile = display_psf_fit(img, datamax)
-            aa = raw_input('>>>good mag [[y]/n] or [b] bad quality ? ')
+            aa = lsc.util.userinput('>>>good mag [[y]/n] or [b] bad quality ? ')
             if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                 print('update status: bad psfmag & mag')
                 lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(img)], conn)
@@ -1462,7 +1462,7 @@ def checkquality(imglist, database='photlco'):
                 _dir = ggg[0]['filepath']
                 if os.path.isfile(_dir + img):
                     iraf.display(_dir + img + '[0]', 1, fill=True, Stdout=1)
-                    aa = raw_input('>>>good image [y/[n]] ? ')
+                    aa = lsc.util.userinput('>>>good image [y/[n]] ? ')
                     if not aa: aa = 'n'
                     if aa in ['n', 'N', 'No', 'NO']:
                         print('status bad')
@@ -1587,7 +1587,7 @@ class PickablePlot():
             plt.plot(self.xdel, self.ydel, 'kx', ms=10)
             if axlims is not None:
                 plt.axis(axlims)
-            key = raw_input(mainmenu)
+            key = lsc.util.userinput(mainmenu)
             if key in hooks and self.i_active is not None:
                 hooks[key](self.i_active)
             if key == '':
@@ -1599,7 +1599,7 @@ class PickablePlot():
             axlims = fig.gca().axis()
         
     def onclick(self, event):
-        print()# to get off the raw_input line
+        print()# to get off the lsc.util.userinput line
         self.i_active = event.ind[0]
         if 'click' in self.hooks:
             self.hooks['click'](self.i_active)
@@ -1748,7 +1748,7 @@ def plotfast(setup, output='', database='photlco'):  #,band,color,fissa=''):
     if not output:
         plt.ion()
         plt.draw()
-        raw_input('press d to mark. Return to exit ...\n')
+        lsc.util.userinput('press d to mark. Return to exit ...\n')
         plt.close()
     else:
         plt.savefig(output.replace('.txt', '.png'), format='png')

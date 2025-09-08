@@ -579,7 +579,7 @@ def fitcol3(colors, deltas, dcolors=None, ddeltas=None, fixedC=None, filt='', co
             print()
             Z, dZ, C, dC = calcZC(colors, deltas, dcolors, ddeltas, fixedC, filt, col, show=True, guess=[Z, C])
         cid = plt.gcf().canvas.mpl_connect('pick_event', onpick)
-        raw_input('Press enter to continue.')
+        lsc.util.userinput('Press enter to continue.')
         plt.gcf().canvas.mpl_disconnect(cid)
     elif fixedC is None and C > 0.3: # if the color term is too crazy, use fixed color term
         if filt=='g':
@@ -697,7 +697,7 @@ def fitcol(col,dmag,band,color,fissa=''):
     kid = fig.canvas.mpl_connect('key_press_event',onkeypress)
     cid = fig.canvas.mpl_connect('button_press_event',onclick)
     plt.draw()
-    raw_input('left-click mark bad, right-click unmark, <d> remove. Return to exit ...')
+    lsc.util.userinput('left-click mark bad, right-click unmark, <d> remove. Return to exit ...')
     plt.close()
     print('####')
     print(sigmaa,sigmab, aa,bb)

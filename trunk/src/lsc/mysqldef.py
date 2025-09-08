@@ -752,7 +752,7 @@ def get_snex_uid(interactive=True, return_fullname=False):
         snex_uid = None
         fullname = None
         if interactive:
-            snex_user = raw_input('If you have a SNEx username, input it here. Otherwise, press enter. ')
+            snex_user = lsc.util.userinput('If you have a SNEx username, input it here. Otherwise, press enter. ')
             if snex_user:
                 usersdict = query(['select id, firstname, lastname from users where name="' + snex_user + '"'], conn)
                 if usersdict:

@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
                 #######################  chose mag  ##############
                 if chosemag:
-                        _magobj = raw_input('which is the mag of the object  ? ' +str(_mag) + '? ')
+                        _magobj = lsc.util.userinput('which is the mag of the object  ? ' +str(_mag) + '? ')
                         if _magobj == '':
                             _magobj = _mag
                         else:
@@ -152,14 +152,14 @@ if __name__ == "__main__":
                     z11 = float(_z11)
                     z22 = float(_z22)
                     answ = 'y'
-                    answ = raw_input(">>>>> Cuts OK [y/n] [y]?")
+                    answ = lsc.util.userinput(">>>>> Cuts OK [y/n] [y]?")
                     if not answ:
                         answ = 'y'
                     elif answ == 'no':
                         answ = 'n'
                     while answ == 'n':
-                        z11 = raw_input('>>> z1 = ? [' + str(_z11) + '] ? ')
-                        z22 = raw_input('>>> z2 = ? [' + str(_z22) + '] ? ')
+                        z11 = lsc.util.userinput('>>> z1 = ? [' + str(_z11) + '] ? ')
+                        z22 = lsc.util.userinput('>>> z2 = ? [' + str(_z22) + '] ? ')
                         if not z11:
                             z11 = _z11
                         else:
@@ -170,7 +170,7 @@ if __name__ == "__main__":
                             z22 = float(z22)
 
                         _z11, _z22, goon = lsc.util.display_image(img0, 1, z11, z22, False)
-                        answ = raw_input(">>>>> Cuts OK [y/n] [y]?")
+                        answ = lsc.util.userinput(">>>>> Cuts OK [y/n] [y]?")
                         if not answ:
                             answ = 'y'
                         elif answ == 'no':
@@ -195,7 +195,7 @@ if __name__ == "__main__":
                         lsc.util.imcopy(img0, imgout)
                     if _show:
                         _z11, _z22, goon = lsc.util.display_image(imgout, 2, z11, z22, False)
-                        answ = raw_input('ok  ? [[y]/n]')
+                        answ = lsc.util.userinput('ok  ? [[y]/n]')
                         if not answ:
                             answ = 'y'
                     else:
@@ -203,7 +203,7 @@ if __name__ == "__main__":
                     lsc.util.delete('_tmp.fits,_tmp2.fits,_tmp2.fits.art,ddd')
                     if answ == 'n':
                         lsc.util.delete(imgout)
-                        _mag0 = raw_input('which magnitude  ' + str(_mag) + ' ?')
+                        _mag0 = lsc.util.userinput('which magnitude  ' + str(_mag) + ' ?')
                         if _mag0:
                             _mag = _mag0
                 print('insert in the archive')

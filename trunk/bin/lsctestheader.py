@@ -8,7 +8,7 @@ if len(sys.argv) <= 1:
     listfits = glob.glob('*fits')
     for img in listfits:
         print(img)
-    img = raw_input('Which image do you want to test [' + str(listfits[0]) + '] ? ')
+    img = lsc.util.userinput('Which image do you want to test [' + str(listfits[0]) + '] ? ')
     if not img: img = listfits[0]
 else:
     img = sys.argv[1]

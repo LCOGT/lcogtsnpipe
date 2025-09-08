@@ -98,12 +98,12 @@ if __name__ == "__main__":
                     iraf.delete('tmp.psf.fit?', verify=False)
                     iraf.seepsf(img.replace('.fits', '.psf'), '_psf.psf')
                     iraf.surface('_psf.psf')
-                    aa = raw_input('>>>good psf [[y]/n] ? ')
+                    aa = lsc.util.userinput('>>>good psf [[y]/n] ? ')
                     if not aa or aa.lower()[0] == 'y':
                         break
                     if aa.lower()[0] == 'n':
                         result = 0
-                        bb = raw_input('If you want to try again, type the new FWHM (+) or datamax (-). Otherwise press enter to continue. ')
+                        bb = lsc.util.userinput('If you want to try again, type the new FWHM (+) or datamax (-). Otherwise press enter to continue. ')
                         try:
                             bb = float(bb)
                         except ValueError:

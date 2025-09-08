@@ -73,13 +73,13 @@ if __name__ == "__main__":
     else:
         _catalogue2 = [_catalogue]
     for img in imglist:
-        hdr = lsc.readhdr(img)
-        _wcserr = lsc.readkey3(hdr, 'wcserr')
-        _astromet = lsc.readkey3(hdr, 'ASTROMET')
+        hdr = lsc.util.readhdr(img)
+        _wcserr = lsc.util.readkey3(hdr, 'wcserr')
+        _astromet = lsc.util.readkey3(hdr, 'ASTROMET')
         if not int(_wcserr) and _redo == False:
             print('\n#####  astrometry already done')
         else:
-            _instrume = lsc.readkey3(hdr, 'instrume')
+            _instrume = lsc.util.readkey3(hdr, 'instrume')
             if 'fs' in _instrume or 'em' in _instrume:  # FT field are small, half number of star
                 number1, number2, number3 = number1 / 2, number2 / 2, number3 / 2
 
@@ -108,7 +108,7 @@ if __name__ == "__main__":
                                 int(25), 'rxyscale', _t1, _t2, sexvec, True, int(3), _method, _xshift, _yshift)
                 astrostring = str(rmsx3) + ' ' + str(rmsy3) + ' ' + str(num3)
                 lsc.util.updateheader(img, 0, {'ASTROMET': (astrostring, 'rmsx rmsy nstars')})
-            except Exception, e:
+            except(Exception, e):
                 print(e)
                 rmsx3, rmsy3, num3, fwhmgess, ellgess, ccc, rasys3, decsys3, mbkg3 = '', '', '', '', '', '', '', '', ''
                 print('\n### problem with astrometry, lsc.lscastrodef.lscastroloop crashed  ')
@@ -135,8 +135,8 @@ if __name__ == "__main__":
                         print(e)
                         print('zero point calculation failed')
 
-        hdr = lsc.readhdr(img)
-        _astromet = lsc.readkey3(hdr, 'ASTROMET')
+        hdr = lsc.util.readhdr(img)
+        _astromet = lsc.util.readkey3(hdr, 'ASTROMET')
         if _astromet and float(_astromet.split()[0]) < 99. and float(_astromet.split()[1]) < 99.:
             WCSERR = 0
         else:

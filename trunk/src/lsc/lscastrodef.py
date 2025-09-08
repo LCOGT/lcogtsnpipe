@@ -1228,8 +1228,8 @@ def run_astrometry(im, clobber=True,redo=False):
     import string
     print('astrometry for image ' + str(im))
     # Run astrometry.net
-    hdr = lsc.readhdr(im)
-    _wcserr = lsc.readkey3(hdr, 'wcserr')
+    hdr = lsc.util.readhdr(im)
+    _wcserr = lsc.util.readkey3(hdr, 'wcserr')
     done = 0
     if float(_wcserr) == 0: 
         done = 1
@@ -1239,8 +1239,8 @@ def run_astrometry(im, clobber=True,redo=False):
     if done:
         print('already done')
     else:
-        ra = lsc.readkey3(hdr,'RA')
-        dec = lsc.readkey3(hdr,'DEC')
+        ra = lsc.util.readkey3(hdr,'RA')
+        dec = lsc.util.readkey3(hdr,'DEC')
         #    ra = fits.getval(im, 'RA')
         #    dec = fits.getval(im, 'DEC')
         cmd = 'solve-field --crpix-center --no-verify --no-tweak -l 30 '
@@ -1261,8 +1261,8 @@ def run_astrometry(im, clobber=True,redo=False):
         if os.path.exists(basename + '-indx.xyls'):
             os.remove(basename + '-indx.xyls')
         if os.path.exists('tmpwcs.fits'):
-            hdrt = lsc.readhdr('tmpwcs.fits')
-            _instrume = lsc.readkey3(hdrt,'instrume')
+            hdrt = lsc.util.readhdr('tmpwcs.fits')
+            _instrume = lsc.util.readkey3(hdrt,'instrume')
             sexvec = lsc.lscastrodef.sextractor('tmpwcs.fits')
             xpix,ypix,fw,cl,cm,ell,bkg,fl = sexvec
             if len(fw)>1:

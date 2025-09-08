@@ -108,7 +108,7 @@ if __name__ == "__main__":
                                 int(25), 'rxyscale', _t1, _t2, sexvec, True, int(3), _method, _xshift, _yshift)
                 astrostring = str(rmsx3) + ' ' + str(rmsy3) + ' ' + str(num3)
                 lsc.util.updateheader(img, 0, {'ASTROMET': (astrostring, 'rmsx rmsy nstars')})
-            except(Exception, e):
+            except Exception as e:
                 print(e)
                 rmsx3, rmsy3, num3, fwhmgess, ellgess, ccc, rasys3, decsys3, mbkg3 = '', '', '', '', '', '', '', '', ''
                 print('\n### problem with astrometry, lsc.lscastrodef.lscastroloop crashed  ')
@@ -147,10 +147,10 @@ if __name__ == "__main__":
             lsc.util.updateheader(img, 0, {'WCSERR': WCSERR})
         lsc.mysqldef.updatevalue('photlco', 'WCS', WCSERR, img.split('/')[-1])
         lsc.util.updateheader(img, 0, {'L1FWHM': (fwhmgess, 'FHWM (arcsec) - computed with sectractor')})
-        lsc.mysqldef.updatevalue('photlco', 'psf', 'X', string.split(img, '/')[-1] + '.fits')
-        lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, string.split(img, '/')[-1] + '.fits')
-        lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, string.split(img, '/')[-1] + '.fits')
-        lsc.mysqldef.updatevalue('photlco', 'mag', 9999, string.split(img, '/')[-1] + '.fits')
+        lsc.mysqldef.updatevalue('photlco', 'psf', 'X', str.split(img, '/')[-1] + '.fits')
+        lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, str.split(img, '/')[-1] + '.fits')
+        lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, str.split(img, '/')[-1] + '.fits')
+        lsc.mysqldef.updatevalue('photlco', 'mag', 9999, str.split(img, '/')[-1] + '.fits')
         if WCSERR == 9999 or float(_astromet.split()[0]) > 2. or float(_astromet.split()[1]) > 2.:
             if WCSERR != 9999:
                 print('RMS too high')

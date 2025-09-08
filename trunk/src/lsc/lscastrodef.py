@@ -15,14 +15,15 @@ def vizq(_ra,_dec,catalogue,radius):
                    cat[catalogue][1]+' -out='+cat[catalogue][2], shell=True, stdout=subprocess.PIPE,\
                    stderr=subprocess.PIPE)
     a,_ = process.communicate()
-    aa=a.split('\n')
+    b = a.decode("utf-8")
+    aa=b.split('\n')
     bb=[]
     for i in aa:
         if i and i[0]!='#':
             bb.append(i)
     _ra,_dec,_name,_mag=[],[],[],[]
     for ii in bb[3:]:
-        aa=ii.split('\t')
+        aa = ii.split('\t')
         _ra.append(re.sub(' ',':',aa[0]))
         _dec.append(re.sub(' ',':',aa[1]))
         _name.append(aa[2])
@@ -146,6 +147,7 @@ def querycatalogue(catalogue,img,method='iraf'):
             else:  sys.exit('Error: catalogue '+str(catalogue)+' not in the list [usnob1,usnoa2,2mass,apass]')
 
           elif method=='vizir':
+            print('#####',_ra,_dec,catalogue,_size)  
             stdcoo=lsc.lscastrodef.vizq(_ra,_dec,catalogue,_size)
             
             lll=['# END CATALOG HEADER','#']
@@ -171,11 +173,11 @@ def querycatalogue(catalogue,img,method='iraf'):
             apix1.append(str(xx[i])+' '+str(yy[i]))
             am1.append(stdcoo[colonne4[catalogue]][i])
             if  string.count(stdcoo['ra'][i],':'):
-                stdcoo['ra'][i]=(int(string.split(stdcoo['ra'][i],':')[0])+float(string.split(stdcoo['ra'][i],':')[1])/60+float(string.split(stdcoo['ra'][i],':')[2])/3600.)*15
+                stdcoo['ra'][i]=(int(str.split(stdcoo['ra'][i],':')[0])+float(str.split(stdcoo['ra'][i],':')[1])/60+float(str.split(stdcoo['ra'][i],':')[2])/3600.)*15
                 if string.count(str(stdcoo['dec'][i]),'-')==0:   
-                    stdcoo['dec'][i]=int(string.split(stdcoo['dec'][i],':')[0])+float(string.split(stdcoo['dec'][i],':')[1])/60+float(string.split(stdcoo['dec'][i],':')[2])/3600.
+                    stdcoo['dec'][i]=int(str.split(stdcoo['dec'][i],':')[0])+float(str.split(stdcoo['dec'][i],':')[1])/60+float(str.split(stdcoo['dec'][i],':')[2])/3600.
                 else:
-                    stdcoo['dec'][i]=(-1)*(abs(int(string.split(stdcoo['dec'][i],':')[0]))+float(string.split(stdcoo['dec'][i],':')[1])/60+float(string.split(stdcoo['dec'][i],':')[2])/3600.)
+                    stdcoo['dec'][i]=(-1)*(abs(int(str.split(stdcoo['dec'][i],':')[0]))+float(str.split(stdcoo['dec'][i],':')[1])/60+float(str.split(stdcoo['dec'][i],':')[2])/3600.)
 
 
         stdcoo['ra']=array(stdcoo['ra'],float)
@@ -217,16 +219,20 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
             sexvec=lsc.lscastrodef.sextractor(img)
 ###################
         print(xshift,yshift)
+        print('here')
         if xshift!=0 and yshift!=0:
             print('guess astrometry before starting ')
             lsc.lscastrodef.wcsstart(img,xshift,yshift)
 #        ss=datetime.datetime.now()
 #        time.sleep(1)
+        print(catalogue,img,method)
         catvec=lsc.lscastrodef.querycatalogue(catalogue,img,method)
+        print('here22')
         if len(catvec['ra']) == 0:
             sys.exit('ERROR: catalog empty '+catalogue)
         rmsx1,rmsy1,num1,fwhm1,ell1,ccc,bkg1,rasys1,decsys1=lscastrometry2([img],catalogue,_interactive,number1,sexvec,catvec,guess=False,fitgeo=_fitgeo,\
                                                                                  tollerance1=_tollerance1, tollerance2=_tollerance2,_update='yes',imex=_imex,nummin=_numin)
+        print('here3')
         if rmsx1>1 or rmsy1>1:
             catvec=lsc.lscastrodef.querycatalogue(catalogue,img,method)
             rmsx2,rmsy2,num2,fwhm2,ell2,ccc,bkg2,rasys2,decsys2=lscastrometry2([img],catalogue,_interactive,number2,sexvec,catvec,guess=False,fitgeo=_fitgeo,\
@@ -345,8 +351,8 @@ def lscastrometry2(lista,catalogue,_interactive,number,sexvec,catvec,guess=False
     decusno=compress((array(am1)>magsel0) &(array(am1)<magsel11), array(catvec['dec'],float)) 
     xusno,yusno=[],[]
     for i in apixcut:
-            xusno.append(float(string.split(i)[0]))
-            yusno.append(float(string.split(i)[1]))
+            xusno.append(float(str.split(i)[0]))
+            yusno.append(float(str.split(i)[1]))
     xusno,yusno=array(xusno),array(yusno)
     
 #################################################################
@@ -419,15 +425,15 @@ def lscastrometry2(lista,catalogue,_interactive,number,sexvec,catvec,guess=False
                     gg.close()
                     ime=iraf.imexam(input=img, frame=1, logfile='', keeplog='yes', imagecur='tmp.one', wcs='logical', use_disp='no',Stdout=1)
                     try:
-                        _fwhm2=median(compress(array(string.split(ime[3])[-3:],float)<99,(array(string.split(ime[3])[-3:],float))))
+                        _fwhm2=median(compress(array(str.split(ime[3])[-3:],float)<99,(array(str.split(ime[3])[-3:],float))))
                         fwhm2.append(_fwhm2)
                     except: pass
     if len(xref)>=nummin:
             _ccmap1=iraf.ccmap('STDIN','STDOUT',images=img,Stdin=vettoretran,fitgeome=fitgeo,xcolum=3, xxorder=2,\
                                yyorder=2, ycolum=4,lngcolum=1,latcolumn=2,lngunit='degrees',update='No',interact='No',maxiter=3,Stdout=1)
             if 'rms' in _ccmap1[_ccmap1.index('Wcs mapping status')+1]:
-                try:           rmsx,rmsy=array(string.split(string.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2],float)
-                except:        rmsx,rmsy=array(string.split(string.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2])
+                try:           rmsx,rmsy=array(str.split(str.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2],float)
+                except:        rmsx,rmsy=array(str.split(str.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2])
                 if rmsx<2 and rmsy<2:
                     print('\n### update astrometry with non linear order') 
 #                    raw_input('go on ')
@@ -701,7 +707,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
             gg.close()               
             try:
                 phot=iraf.noao.digiphot.daophot.phot(image=img, output='', coords='tmp.one', verify='no', interactive='no',Stdout=1)
-                mag0=float(string.split(phot[0])[4])
+                mag0=float(str.split(phot[0])[4])
                 mag=mag0-kk[filters[_filter]]*float(_airmass)#+2.5*math.log10(float(_exptime))
             except:
                 mag0=999
@@ -841,8 +847,8 @@ def querysloan(ra1,dec1,radius,mr1,mr2):
     _id,_ra,_dec,_u,_g,_r,_i,_z,_type=[],[],[],[],[],[],[],[],[]
     _du,_dg,_dr,_di,_dz=[],[],[],[],[]
     for i in righe[1:]:
-        if len(string.split(i,','))==14:
-            _id0,_ra0,_dec0,_u0,_g0,_r0,_i0,_z0,_du0,_dg0,_dr0,_di0,_dz0,_type0=string.split(i,',')
+        if len(str.split(i,','))==14:
+            _id0,_ra0,_dec0,_u0,_g0,_r0,_i0,_z0,_du0,_dg0,_dr0,_di0,_dz0,_type0=str.split(i,',')
             if mr1 and mr2:
                 if mr1<=float(_r0)<=mr2:
                     _id.append(_id0)
@@ -1089,19 +1095,19 @@ def readapass(_ra,_dec,radius=30,field=''):
     import lsc
     line='/science/ASSM/findassm -c '+str(_ra)+' '+str(_dec)+' -bm '+str(radius)+' '+str(radius)+' -Vb 25.0 -Vf -5.0 -Rr 3.0 -Rb -3.0 -l ApassCat -F BVPgPrPieBeVegereid'
     xxx=os.popen(line).read()
-    yyy=string.split(xxx,'\n')[3:-1]
+    yyy=str.split(xxx,'\n')[3:-1]
     vector={}
     column={}
     yyy[0]=re.sub('J2000','',yyy[0])
     print(yyy[0])
-    for i in range(0,len(string.split(yyy[0]))):
-        if string.split(yyy[0])[i] in ['#RAdeg', 'DECdeg', 'B', 'V', 'Pg', 'Pr', 'Pi', 'eB', 'eV', 'eg', 'er', 'ei']:
-            column[i]=string.split(yyy[0])[i]
+    for i in range(0,len(str.split(yyy[0]))):
+        if str.split(yyy[0])[i] in ['#RAdeg', 'DECdeg', 'B', 'V', 'Pg', 'Pr', 'Pi', 'eB', 'eV', 'eg', 'er', 'ei']:
+            column[i]=str.split(yyy[0])[i]
     print(column)
     zzz=[]
     for j in yyy:
         if j[0]!='#':
-            zzz.append(string.split(j))
+            zzz.append(str.split(j))
     column2={}
     for i in column:
         column2[column[i]]=zip(*zzz)[i]
@@ -1187,8 +1193,8 @@ def finewcs(img):
                                xyorder=_order, yxorder=_order, yyorder=_order, ycolum=4,lngcolum=1,latcolumn=2,\
                                lngunit='degrees',update='No',interact='No',maxiter=3,Stdout=1,verbose='yes')
             if 'rms' in _ccmap1[_ccmap1.index('Wcs mapping status')+1]:
-                try:           rmsx,rmsy=np.array(string.split(string.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2],float)
-                except:        rmsx,rmsy=np.array(string.split(string.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2])
+                try:           rmsx,rmsy=np.array(str.split(str.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2],float)
+                except:        rmsx,rmsy=np.array(str.split(str.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2])
             print(rmsx,rmsy,ff)
             if rmsx<2 and rmsy<2:
                 if rmsx+rmsy<=rmsx0+rmsy0:
@@ -1310,7 +1316,7 @@ def run_astrometry(im, clobber=True,redo=False):
             else:
                 dictionary['WCSERR'] = 0
             lsc.util.updateheader(im, 0, dictionary)
-            lsc.mysqldef.updatevalue('photlco', 'WCS', 0, string.split(im, '/')[-1])
+            lsc.mysqldef.updatevalue('photlco', 'WCS', 0, str.split(im, '/')[-1])
         else:
             print('tmpwcs.fits files do not exist')
 ###################################################################

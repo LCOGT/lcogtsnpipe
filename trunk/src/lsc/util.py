@@ -707,7 +707,7 @@ def marksn2(img,fitstab,frame=1,fitstab2='',verbose=False):
 
 ###############################
 
-def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
+def Docosmic_old(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    import time
    start=time.time()
    import lsc
@@ -790,6 +790,113 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    out_fits = fits.PrimaryHDU(header=hd,data=(out2!=0).astype(pixtype))
    out_fits.writeto(outmask, overwrite=True, output_verify='fix')
 
+   out_fits = fits.PrimaryHDU(header=hd,data=(out3!=0).astype('uint8'))
+   out_fits.writeto(outsat, overwrite=True, output_verify='fix')
+
+   print('time to do cosmic ray rejection:', time.time()-start)
+   return out,outmask,outsat
+
+
+############################################
+
+def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
+   import time
+   start=time.time()
+   import lsc
+   import re,os,string
+   import numpy as np
+   import tempfile
+   import sys
+   pyversion = sys.version_info[0]
+
+   ar, hd = fits.getdata(img, header=True)
+
+   if 'TELID' in hd:
+      _tel=hd['TELID']
+   elif 'telescop' in hd:
+      _tel = hd['telescop']
+   else:
+      _tel='extdata'
+
+   if _tel in ['fts','ftn']:
+      temp_file0 = next(tempfile._get_candidate_names())
+      lsc.delete(temp_file0)
+      out_fits = fits.PrimaryHDU(header=hd,data=ar)
+      try:
+         out_fits.scale('float32',bzero=0,bscale=1)
+      except TypeError as e:
+         print("FITS rescaling failed (but it probably doesn't matter). See Astropy Issue #5955.")
+         print(e)
+      out_fits.writeto(temp_file0, overwrite=True, output_verify='fix')
+      ar = fits.getdata(temp_file0)
+      lsc.delete(temp_file0)
+      gain    = hd['GAIN']
+      sat     = 35000
+      rdnoise = hd['RDNOISE']
+   else:
+      if 'gain' in hd:
+         gain    = hd['GAIN']
+      else:
+         print('warning GAIN not found')
+         gain = 1
+      if 'saturate' in hd:
+         sat     = hd['SATURATE']
+      else:
+         print('warning SATURATE not found')
+         sat = 60000
+      if 'RDNOISE' in hd:
+         rdnoise = hd['RDNOISE']
+      else:
+         print('warning RDNOISE not found')
+         rdnoise = 1
+   if '-e91.' in img:
+       ar[ar < readkey3(hd, 'datamin')] = sat
+       _pssl = 0.
+   else:
+       # need to trick LACosmic into using the right sigma for a sky-subtracted image
+       med = np.median(ar)                           # median pixel of image (in ADU)
+       noise = 1.4826*np.median(np.abs(ar - med))    # using median absolute deviation instead of sigma
+       _pssl = gain*noise**2 - rdnoise**2/gain - med # previously subtracted sky level
+       ar[ar < -_pssl] = sat                         # change (what will be) negative values to saturated
+
+   print('gain    sat     noise   sigclip objlim  sigfrac pssl')
+   print('{:<7.1f} {:<7.0f} {:<7.1f} {:<7.1f} {:<7.0f} {:<7.1f} {:<7.2f}'.format(gain, sat, rdnoise, _sigclip, _objlim, _sigfrac, _pssl))
+
+
+   niter = 1
+   out=re.sub('.fits','.clean.fits',str.split(img,'/')[-1])
+   outmask=re.sub('.fits','.mask.fits',str.split(img,'/')[-1])
+   outsat=re.sub('.fits','.sat.fits',str.split(img,'/')[-1])
+   
+   if pyversion <3:
+       c = lsc.cosmics.cosmicsimage(ar, pssl=_pssl, gain=gain, readnoise=rdnoise, sigclip=5, sigfrac=0.3 , objlim=5, satlevel=sat)
+       c.run(maxiter = niter)
+       out1=c.cleanarray
+       out2=c.cleanarray-c.rawarray
+       out3=c.getsatstars()
+       cosmic_mask = (out2!=0)
+   else:
+       import astroscrappy
+       from astroscrappy import detect_cosmics
+       c = detect_cosmics(ar, gain=gain, readnoise=rdnoise, sigclip=_sigclip, sigfrac=_sigfrac , objlim=_objlim, satlevel=sat,verbose=True)
+
+       cosmic_mask = c[0]
+       out1 = c[1]
+       # this way of selecting saturated star is not ideal
+       # we should do something better
+       out3 =    ar > sat  
+
+   out_fits = fits.PrimaryHDU(header=hd,data=out1)
+   out_fits.writeto(out, overwrite=True, output_verify='fix')
+
+   # we are going to register the mask for the template image,
+   # so it makes sense to save it as a float instead of an int
+   if 'temp' in img: pixtype = 'float32'
+   else:             pixtype = 'uint8'
+   out_fits = fits.PrimaryHDU(header=hd,data=cosmic_mask.astype(pixtype))
+   out_fits.writeto(outmask, overwrite=True, output_verify='fix')
+
+   # check if we are using it and maybe don't write it down
    out_fits = fits.PrimaryHDU(header=hd,data=(out3!=0).astype('uint8'))
    out_fits.writeto(outsat, overwrite=True, output_verify='fix')
 

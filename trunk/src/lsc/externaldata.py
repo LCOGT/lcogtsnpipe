@@ -300,7 +300,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
           _dayobs = re.sub('-','',hdr.get('date-obs'))
 
        if '/' in _dayobs:
-          _dayobs = '19'+''.join(string.split(_dayobs,'/')[::-1])
+          _dayobs = '19'+''.join(str.split(_dayobs,'/')[::-1])
 
        try:
           _mjd = MJDnow(datetime.datetime(int(str(_dayobs)[0:4]),int(str(_dayobs)[4:6]),int(str(_dayobs)[6:8])))
@@ -323,7 +323,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
        imglist = imglist2
        hdr = fits.getheader(imglist[0])
        _saturate = hdr.get('HIERARCH CELL.SATURATION')
-       _filter = string.split(hdr.get('HIERARCH FPA.FILTER'),'.')[0]
+       _filter = str.split(hdr.get('HIERARCH FPA.FILTER'),'.')[0]
        _gain   = hdr.get('HIERARCH CELL.GAIN')
        _ron   = hdr.get('HIERARCH CELL.READNOISE')
        _mjd = hdr.get('MJD-OBS')
@@ -627,14 +627,14 @@ def downloadPS1(homedir,filename):
         _index=f.readlines()
         f.close()
         for i in range(0,len(_index)):
-            print(string.split(_index[i],'|')[0],str.count(string.split(_index[i],'|')[0],'results.fits'))
-            if  str.count(string.split(_index[i],'|')[0],'.fits') and str.count(string.split(_index[i],'|')[0],'results.fits')==0:
+            print(str.split(_index[i],'|')[0],str.count(str.split(_index[i],'|')[0],'results.fits'))
+            if  str.count(str.split(_index[i],'|')[0],'.fits') and str.count(str.split(_index[i],'|')[0],'results.fits')==0:
 
-                urlOfFileToDownload3 = dataStoreBase + dataStoreProduct +string.split(_index[i],'|')[0]
+                urlOfFileToDownload3 = dataStoreBase + dataStoreProduct +str.split(_index[i],'|')[0]
                 urlOfFileToDownload3=re.sub('.txt','',urlOfFileToDownload3)
                 localFilename3 = parent_dir+ os.path.basename(urlOfFileToDownload3)
                 if not os.path.isfile(localFilename3):
-                    print('downloading file: '+string.split(_index[i],'|')[0])
+                    print('downloading file: '+str.split(_index[i],'|')[0])
                     try:
                         urllib.urlretrieve(urlOfFileToDownload3, localFilename3)
                     except:
@@ -645,9 +645,9 @@ def downloadPS1(homedir,filename):
 
                 if not os.path.isdir(homedir+filename):
                     os.mkdir(homedir+filename)
-                os.system('mv '+string.split(localFilename3,'/')[-1]+' '+homedir+filename+'/')
-                if 'unconv.fits' in string.split(localFilename3,'/')[-1]:
-                           frames.append(homedir+filename++'/'+string.split(localFilename3,'/')[-1])
+                os.system('mv '+str.split(localFilename3,'/')[-1]+' '+homedir+filename+'/')
+                if 'unconv.fits' in str.split(localFilename3,'/')[-1]:
+                           frames.append(homedir+filename++'/'+str.split(localFilename3,'/')[-1])
     except:
         print('stamp_directory not found ')
         sys.exit()

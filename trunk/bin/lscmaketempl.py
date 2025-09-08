@@ -121,7 +121,7 @@ if __name__ == "__main__":
                     print('>>> identify target (mark with <a> then press <q>)')
                     iraf.imexamine(wcs='logical', logfile='tmp.log', keeplog=True)
                     xytargets = iraf.fields('tmp.log', '1,2', Stdout=1)
-                    _xpos, _ypos = string.split(xytargets[0])[0], string.split(xytargets[0])[1]
+                    _xpos, _ypos = str.split(xytargets[0])[0], str.split(xytargets[0])[1]
                     goon = True
                 else:
                     if not _ra or not _dec:
@@ -141,7 +141,7 @@ if __name__ == "__main__":
             if goon:
                 print('pixel coordinates to subtract:', _xpos, _ypos)
                 print(img0, psfimg)
-                imgout = re.sub('.fits', '.temp.fits', string.split(img0, '/')[-1])
+                imgout = re.sub('.fits', '.temp.fits', str.split(img0, '/')[-1])
                 lsc.util.delete('_tmp.fits,_tmp2.fits,_tmp2.fits.art,' + imgout)
                 _targetid = lsc.mysqldef.targimg(img0)
                 if _clean:
@@ -223,9 +223,9 @@ if __name__ == "__main__":
                     dictionary['dayobs'] = img0.split('_')[2]
 
                 ###################    insert in photlco
-                ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', string.split(imgout, '/')[-1], '*')
+                ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', str.split(imgout, '/')[-1], '*')
                 if ggg and _force:
-                    lsc.mysqldef.deleteredufromarchive(string.split(imgout, '/')[-1], 'photlco', 'filename')
+                    lsc.mysqldef.deleteredufromarchive(str.split(imgout, '/')[-1], 'photlco', 'filename')
                 if not ggg or _force:
                     print('insert')
                     print(dictionary)
@@ -234,7 +234,7 @@ if __name__ == "__main__":
                     for voce in ggg[0].keys():
                         #                for voce in ['filetype','ra0','dec0']:
                         if voce in dictionary.keys():
-                            lsc.mysqldef.updatevalue('photlco', voce, dictionary[voce], string.split(imgout, '/')[-1])
+                            lsc.mysqldef.updatevalue('photlco', voce, dictionary[voce], str.split(imgout, '/')[-1])
                 if not os.path.isdir(dictionary['filepath']):
                     print(dictionary['filepath'])
                     os.mkdir(dictionary['filepath'])

@@ -95,7 +95,7 @@ def deg2HMS(ra='', dec='', round=False):
       RA, DEC= '', ''
       if dec:
           if str.count(str(dec),':')==2:
-              dec00=string.split(dec,':')
+              dec00=str.split(dec,':')
               dec0,dec1,dec2=float(dec00[0]),float(dec00[1]),float(dec00[2])
               if '-' in str(dec0):       DEC=(-1)*((dec2/60.+dec1)/60.+((-1)*dec0))
               else:                      DEC=(dec2/60.+dec1)/60.+dec0
@@ -107,7 +107,7 @@ def deg2HMS(ra='', dec='', round=False):
               DEC='00'[len(str(dec0)):]+str(dec0)+':'+'00'[len(str(dec1)):]+str(dec1)+':'+'00'[len(str(int(dec2))):]+str(dec2)
       if ra:
           if str.count(str(ra),':')==2:
-              ra00=string.split(ra,':')
+              ra00=str.split(ra,':')
               ra0,ra1,ra2=float(ra00[0]),float(ra00[1]),float(ra00[2])
               RA=((ra2/60.+ra1)/60.+ra0)*15.
           else:

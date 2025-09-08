@@ -70,30 +70,30 @@ def fitsn(img,imgpsf,coordlist,_recenter,fwhm0,original,sn,residual,_show,_inter
     magerr,fitmag,centx,centy=[],[],[],[]
     for i in tmptbl:
         try:
-            fitmag.append(float(string.split(i)[0]))#-2.5*log10(_exptime))
+            fitmag.append(float(str.split(i)[0]))#-2.5*log10(_exptime))
         except:
-            fitmag.append(string.split(i)[0])
+            fitmag.append(str.split(i)[0])
         try:
-            magerr.append(float(string.split(i)[1]))
+            magerr.append(float(str.split(i)[1]))
         except:
-            magerr.append(string.split(i)[1])
-        centx.append(float(string.split(i)[2]))
-        centy.append(float(string.split(i)[3]))
+            magerr.append(str.split(i)[1])
+        centx.append(float(str.split(i)[2]))
+        centy.append(float(str.split(i)[3]))
     tmptbl=iraf.txdump("apori","mag",expr='yes', Stdout=1)
     apori1,apori2,apori3=[],[],[]
     for i in tmptbl:
         try:
-            apori1.append(float(string.split(i)[0]))#-2.5*log10(_exptime))
+            apori1.append(float(str.split(i)[0]))#-2.5*log10(_exptime))
         except:
-            apori1.append(string.split(i)[0])
+            apori1.append(str.split(i)[0])
         try:            
-            apori2.append(float(string.split(i)[1]))#-2.5*log10(_exptime))
+            apori2.append(float(str.split(i)[1]))#-2.5*log10(_exptime))
         except:
-            apori2.append(string.split(i)[1])
+            apori2.append(str.split(i)[1])
         try:
-            apori3.append(float(string.split(i)[2]))#-2.5*log10(_exptime))
+            apori3.append(float(str.split(i)[2]))#-2.5*log10(_exptime))
         except:
-            apori3.append(string.split(i)[2])
+            apori3.append(str.split(i)[2])
             
     iraf.txsort(img+".sn.mag","YCENTER")
     tmptbl=iraf.txdump(img+".sn.mag","mag,merr",expr='yes', Stdout=1) 
@@ -107,27 +107,27 @@ def fitsn(img,imgpsf,coordlist,_recenter,fwhm0,original,sn,residual,_show,_inter
     apmag1,apmag2,apmag3,dapmag1,dapmag2,dapmag3,truemag=[],[],[],[],[],[],[]
     for i in range(len(tmptbl)):
         try:
-            apmag1.append(float(string.split(tmptbl[i])[0]))#-2.5*log10(_exptime))
+            apmag1.append(float(str.split(tmptbl[i])[0]))#-2.5*log10(_exptime))
         except:
             apmag1.append(9999)
         try:
-            apmag2.append(float(string.split(tmptbl[i])[1]))#-2.5*log10(_exptime))
+            apmag2.append(float(str.split(tmptbl[i])[1]))#-2.5*log10(_exptime))
         except:
             apmag2.append(9999)
         try:
-            apmag3.append(float(string.split(tmptbl[i])[2]))#-2.5*log10(_exptime))
+            apmag3.append(float(str.split(tmptbl[i])[2]))#-2.5*log10(_exptime))
         except:
             apmag3.append(9999)
         try:
-            dapmag1.append(float(string.split(tmptbl[i])[3]))#-2.5*log10(_exptime))
+            dapmag1.append(float(str.split(tmptbl[i])[3]))#-2.5*log10(_exptime))
         except:
             dapmag1.append(9999)
         try:
-            dapmag2.append(float(string.split(tmptbl[i])[4]))#-2.5*log10(_exptime))
+            dapmag2.append(float(str.split(tmptbl[i])[4]))#-2.5*log10(_exptime))
         except:
             dapmag2.append(9999)
         try:
-            dapmag3.append(float(string.split(tmptbl[i])[5]))#-2.5*log10(_exptime))
+            dapmag3.append(float(str.split(tmptbl[i])[5]))#-2.5*log10(_exptime))
         except:
             dapmag3.append(9999)
         try:
@@ -293,8 +293,8 @@ def errore(img,imgpsf,coordlist,size,truemag,fwhm0,leng0,_show,_interactive,_num
         ff=open(img+".sn.coo",'r')
         ss=ff.readline()
         ff.close()
-        xbb=float(string.split(ss)[0])
-        ybb=float(string.split(ss)[1])
+        xbb=float(str.split(ss)[0])
+        ybb=float(str.split(ss)[1])
 
         xbb=xbb+artx*fwhm0*artfac0
         ybb=ybb+arty*fwhm0*artfac0

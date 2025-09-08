@@ -71,8 +71,8 @@ if __name__ == "__main__":
     _interactive = option.interactive
     arterr = ''
 
-    _ra = string.split(_ra,',')
-    _dec = string.split(_dec,',')
+    _ra = str.split(_ra,',')
+    _dec = str.split(_dec,',')
 
     if option.recenter == False:
         _recenter = True
@@ -157,11 +157,11 @@ if __name__ == "__main__":
             #######################  plot image, find fwhm  #####################################
             if skip == 0:
                 ######    set database value to 9999 before calculating them again ##################
-                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfdmag', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfx', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfy', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, string.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, str.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfdmag', 9999, str.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfx', 9999, str.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfy', 9999, str.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, str.split(img, '/')[-1] + '.fits')
 
                 iraf.set(stdimage='imt2048')
                 if _interactive:
@@ -207,7 +207,7 @@ if __name__ == "__main__":
                         fwhm0 = lsc.util.readkey3(hdr2, 'PSF_FWHM') / (pixelscale * lsc.util.readkey3(hdr2, 'CCDXBIN'))
                     elif 'CCDSUM' in hdr2:
                         fwhm0 = lsc.util.readkey3(hdr2, 'PSF_FWHM') / (
-                        pixelscale * int(string.split(lsc.util.readkey3(hdr2, 'CCDSUM'))[0]))
+                        pixelscale * int(str.split(lsc.util.readkey3(hdr2, 'CCDSUM'))[0]))
                     else:
                         fwhm0 = lsc.util.readkey3(hdr2, 'PSF_FWHM') / (pixelscale)
                 else:
@@ -259,8 +259,8 @@ if __name__ == "__main__":
 
                     for kk in iraf.fields('tmp.pix', '1,2', Stdout=1):
                         if kk:
-                            xxsn.append(string.split(kk)[0])
-                            yysn.append(string.split(kk)[1])
+                            xxsn.append(str.split(kk)[0])
+                            yysn.append(str.split(kk)[1])
 
                     xxsn = array(xxsn,float)
                     yysn = array(yysn,float)
@@ -275,7 +275,7 @@ if __name__ == "__main__":
                     if _show:
                         iraf.tvmark(1, 'tmp.pix', mark="circle", number='yes', radii=10, nxoffse=5, nyoffse=5,
                                            color=214, txsize=2)
-                    xx0, yy0 = string.split(iraf.fields('tmp.pix', '1,2', Stdout=1)[2])
+                    xx0, yy0 = str.split(iraf.fields('tmp.pix', '1,2', Stdout=1)[2])
                     print('box coordinate ',xx0, yy0)
                     os.system('rm -rf tmp.*')
                 else:
@@ -387,8 +387,8 @@ if __name__ == "__main__":
             ########################################  write  SN coordinates in coo file  ########################
             if skip == 0:
                 if not _interactive:
-                    #_dimension = string.split((string.split(iraf.imheader('original', Stdout=1)[0], ']')[0]), '[')[1]
-                    #aa, bb = string.split(_dimension, ',')
+                    #_dimension = str.split((str.split(iraf.imheader('original', Stdout=1)[0], ']')[0]), '[')[1]
+                    #aa, bb = str.split(_dimension, ',')
                     #aa, bb = float(aa) / 2, float(bb) / 2
                     vector=[]
                     for ii in range(0,len(xxsn)):
@@ -441,7 +441,7 @@ if __name__ == "__main__":
                     nax = int(getheader('original.fits')['NAXIS1'])
                     nay = int(getheader('original.fits')['NAXIS2'])
                     if len(vector) == 1:
-                        xb, yb, value = string.split(vector[0])
+                        xb, yb, value = str.split(vector[0])
                         checkleng0 = 'yes'
                         while checkleng0 == 'yes':
                             if not _interactive:
@@ -523,10 +523,10 @@ if __name__ == "__main__":
                             ff = open('tmptbl', 'r')
                             ss = ff.readlines()
                             ff.close()
-                            xb1 = int(float(string.split(ss[-2])[0]))
-                            yb1 = int(float(string.split(ss[-2])[1]))
-                            xb2 = int(float(string.split(ss[-1])[0]))
-                            yb2 = int(float(string.split(ss[-1])[1]))
+                            xb1 = int(float(str.split(ss[-2])[0]))
+                            yb1 = int(float(str.split(ss[-2])[1]))
+                            xb2 = int(float(str.split(ss[-1])[0]))
+                            yb2 = int(float(str.split(ss[-1])[1]))
 
                         sec = "1 " + str(xb1) + " 1 " + str(nay) + '\n'
                         sec = sec + str(xb2) + ' ' + str(nax) + " 1 " + str(nay) + '\n'
@@ -802,16 +802,16 @@ if __name__ == "__main__":
                 os.system('mv original.fits ' + img + '.og.fits')
                 os.system('mv residual.fits ' + img + '.rs.fits')
                 try:
-                    lsc.mysqldef.updatevalue('photlco', 'psfmag', truemag[0] - DM, string.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'psfmag', truemag[0] - DM, str.split(img, '/')[-1] + '.fits')
                     lsc.mysqldef.updatevalue('photlco', 'psfdmag', max(arterr, magerr[0]),
-                                             string.split(img, '/')[-1] + '.fits')
-                    lsc.mysqldef.updatevalue('photlco', 'psfx', centx[0] + x1 - 1, string.split(img, '/')[-1] + '.fits')
-                    lsc.mysqldef.updatevalue('photlco', 'psfy', centy[0] + y1 - 1, string.split(img, '/')[-1] + '.fits')
-                    lsc.mysqldef.updatevalue('photlco', 'apmag', apmag3[0], string.split(img, '/')[-1] + '.fits')
-                    lsc.mysqldef.updatevalue('photlco', 'dapmag', dapmag3[0], string.split(img, '/')[-1] + '.fits')
+                                             str.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'psfx', centx[0] + x1 - 1, str.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'psfy', centy[0] + y1 - 1, str.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'apmag', apmag3[0], str.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'dapmag', dapmag3[0], str.split(img, '/')[-1] + '.fits')
                     # Update the aperture correction to reflect what is actually applied to the data 
                     # (difference imaging can change the sn2 file leading to a different aperture correction)
-                    lsc.mysqldef.updatevalue('photlco', 'apercorr', apco0, string.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'apercorr', apco0, str.split(img, '/')[-1] + '.fits')
                 except:
                     print('module mysqldef not found')
             else:

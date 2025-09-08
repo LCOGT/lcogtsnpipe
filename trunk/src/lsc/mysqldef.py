@@ -246,8 +246,8 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
             os.remove(fullpath + '.fz')
 ############################################################
 
-      exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
-      exist2=lsc.mysqldef.getfromdataraw(conn,'photlcoraw','filename', string.split(img,'/')[-1],column2='filename, groupidcode')
+      exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', str.split(img,'/')[-1],column2='filename')
+      exist2=lsc.mysqldef.getfromdataraw(conn,'photlcoraw','filename', str.split(img,'/')[-1],column2='filename, groupidcode')
       if exist2:
          print(exist2)
          _groupidcode=exist2[0]['groupidcode']
@@ -257,7 +257,7 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
       if exist:
          if force=='yes':
             print(img,database)
-            lsc.mysqldef.deleteredufromarchive(string.split(img,'/')[-1],dataredutable)
+            lsc.mysqldef.deleteredufromarchive(str.split(img,'/')[-1],dataredutable)
             print('delete line from '+str(database))
             exist = False
             
@@ -313,7 +313,7 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
             lsc.mysqldef.insert_values(conn,dataredutable,dictionary)
          else:
             for voce in dictionary:
-               lsc.mysqldef.updatevalue(dataredutable,voce,dictionary[voce],string.split(img,'/')[-1])
+               lsc.mysqldef.updatevalue(dataredutable,voce,dictionary[voce],str.split(img,'/')[-1])
       else:
          print('already ingested')
 
@@ -411,8 +411,8 @@ def updateDatabase(tarfile):
             print(mydict2[i])
             print('problems')
       print(fitsfile)
-      dir1='/data/obsdata/y20'+string.split(tarfile,'_')[2][-2:]+'/'
-      dir2='/data/obsdata/y20'+string.split(tarfile,'_')[2][-2:]+'/'+string.split(tarfile,'_')[2]+'/'
+      dir1='/data/obsdata/y20'+str.split(tarfile,'_')[2][-2:]+'/'
+      dir2='/data/obsdata/y20'+str.split(tarfile,'_')[2][-2:]+'/'+str.split(tarfile,'_')[2]+'/'
       if not os.path.isdir(dir1):  os.mkdir(dir1)
       if not os.path.isdir(dir2):  os.mkdir(dir2)
       for img in fitsfile:
@@ -425,7 +425,7 @@ def updateDatabase(tarfile):
             directoryraw=bbbb['filepath']
             directoryreduced=re.sub('raw/','',directoryraw)+'reduced/'
          else:     
-            dir3=dir2+string.split(tarfile,'_')[3]+'_'+string.split(tarfile,'_')[4]+'/'
+            dir3=dir2+str.split(tarfile,'_')[3]+'_'+str.split(tarfile,'_')[4]+'/'
             if not os.path.isdir(dir3):  os.mkdir(dir3)
             directoryreduced=dir3+'reduced/'
 

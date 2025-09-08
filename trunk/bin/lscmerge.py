@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
             if _tel in ['fts', 'ftn']:
                 outname = hdr0['SITEID'] + re.sub('-', '', hdr0['TELID']) + '_' + \
-                          hdr0['instrume'] + '_' + re.sub('-', '', string.split(hdr0['DATE-OBS'], 'T')[
+                          hdr0['instrume'] + '_' + re.sub('-', '', str.split(hdr0['DATE-OBS'], 'T')[
                     0]) + '_' + o + '_' + f + '.fits'
             else:
                 outname = hdr0['SITEID'] + re.sub('-', '', hdr0['telescop']) + '_' + \
@@ -134,11 +134,11 @@ if __name__ == "__main__":
                 dmask = fits.getdata(mask)
                 dsat = fits.getdata(satu)
                 out_fits = fits.PrimaryHDU(header=hdm, data=dsat + dmask)
-                out_fits.writeto(re.sub('.fits', '.mask.fits', string.split(gg, '/')[-1]), overwrite=True,
+                out_fits.writeto(re.sub('.fits', '.mask.fits', str.split(gg, '/')[-1]), overwrite=True,
                                  output_verify='fix')
                 imglist2 = imglist2 + ',' + output
-                imgmask = imgmask + ',' + re.sub('.fits', '.mask.fits', string.split(gg, '/')[-1])
-                imglistnoise = imglistnoise + ',' + re.sub('.fits', '.noise.fits', string.split(gg, '/')[-1])
+                imgmask = imgmask + ',' + re.sub('.fits', '.mask.fits', str.split(gg, '/')[-1])
+                imglistnoise = imglistnoise + ',' + re.sub('.fits', '.noise.fits', str.split(gg, '/')[-1])
                 imglist22.append(output)
                 #  check registration among images
             if _checkast:    checkast(imglist22)
@@ -222,7 +222,7 @@ if __name__ == "__main__":
                           'objname': lsc.util.readkey3(hd, 'object'), 'ut': lsc.util.readkey3(hd, 'ut'),
                           'wcs': lsc.util.readkey3(hd, 'wcserr'), 'instrument': lsc.util.readkey3(hd, 'instrume'),
                           'ra0': lsc.util.readkey3(hd, 'RA'), 'dec0': lsc.util.readkey3(hd, 'DEC')}
-            dictionary['filename'] = string.split(outname, '/')[-1]
+            dictionary['filename'] = str.split(outname, '/')[-1]
             dictionary['targetid'] = _targetid
             if _tel in ['fts', 'ftn']:
                 dictionary['filepath'] = os.path.join(lsc.util.workdirectory, 'data/fts/') + lsc.util.readkey3(hd, 'date-night') + '/'
@@ -230,8 +230,8 @@ if __name__ == "__main__":
                 dictionary['filepath'] = os.path.join(lsc.util.workdirectory, 'data/lsc/') + lsc.util.readkey3(hd, 'date-night') + '/'
             dictionary['filetype'] = 2
             ###################    insert in photlco
-            ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', string.split(outname, '/')[-1], '*')
-            if ggg and force:   lsc.mysqldef.deleteredufromarchive(string.split(outname, '/')[-1], 'photlco',
+            ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', str.split(outname, '/')[-1], '*')
+            if ggg and force:   lsc.mysqldef.deleteredufromarchive(str.split(outname, '/')[-1], 'photlco',
                                                                    'filename')
             if not ggg or force:
                 print('insert')
@@ -241,7 +241,7 @@ if __name__ == "__main__":
                 for voce in ggg[0].keys():
                     print('update')
                     try:
-                        lsc.mysqldef.updatevalue('photlco', voce, dictionary[voce], string.split(outname, '/')[-1])
+                        lsc.mysqldef.updatevalue('photlco', voce, dictionary[voce], str.split(outname, '/')[-1])
                     except:
                         pass
             if not os.path.isdir(dictionary['filepath']):
@@ -253,19 +253,19 @@ if __name__ == "__main__":
                 os.system('mv ' + outname + ' ' + dictionary['filepath'] + outname)
                 os.chmod(dictionary['filepath'] + outname, 0664)
 
-            ggg = lsc.mysqldef.getfromdataraw(conn, 'photpairing', 'nameout', string.split(outname, '/')[-1], '*')
-            if ggg:   lsc.mysqldef.deleteredufromarchive(string.split(outname, '/')[-1], 'photpairing', 'nameout')
+            ggg = lsc.mysqldef.getfromdataraw(conn, 'photpairing', 'nameout', str.split(outname, '/')[-1], '*')
+            if ggg:   lsc.mysqldef.deleteredufromarchive(str.split(outname, '/')[-1], 'photpairing', 'nameout')
             for img in imglist1:
-                dictionary = {'namein': string.split(img, '/')[-1], 'nameout': string.split(outname, '/')[-1],
+                dictionary = {'namein': str.split(img, '/')[-1], 'nameout': str.split(outname, '/')[-1],
                               'tablein': 'photlco', 'tableout': 'photlco'}
                 print('insert in out')
                 print(dictionary)
                 lsc.mysqldef.insert_values(conn, 'photpairing', dictionary)
 
             for gg in imglist1:
-                os.system('rm ' + re.sub('.fits', '.mask.fits', string.split(gg, '/')[-1]))
-                os.system('rm ' + re.sub('.fits', '.clean.fits', string.split(gg, '/')[-1]))
-                os.system('rm ' + re.sub('.fits', '.sat.fits', string.split(gg, '/')[-1]))
+                os.system('rm ' + re.sub('.fits', '.mask.fits', str.split(gg, '/')[-1]))
+                os.system('rm ' + re.sub('.fits', '.clean.fits', str.split(gg, '/')[-1]))
+                os.system('rm ' + re.sub('.fits', '.sat.fits', str.split(gg, '/')[-1]))
 
             if os.path.isfile(re.sub('.fits', '.noise.fits', outname)): os.system(
                 'rm -rf ' + re.sub('.fits', '.noise.fits', outname))

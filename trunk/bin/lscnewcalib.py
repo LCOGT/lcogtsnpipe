@@ -49,7 +49,7 @@ def vizq(_ra, _dec, catalogue, radius):
         _dec.append(dd)
         _name.append(aa[2])
     dictionary = {'ra': _ra, 'dec': _dec, 'id': _name}
-    sss = string.split(cat[catalogue][2], ',')
+    sss = str.split(cat[catalogue][2], ',')
     for ii in sss: dictionary[ii] = []
     for ii in bb[3:]:
         aa = ii.split('\t')
@@ -221,9 +221,9 @@ if __name__ == "__main__":
 
             ZZ = np.array(xx - yy)
             data2, std2, ZZ0 = lsc.lscabsphotdef.zeronew(ZZ, maxiter=10, nn=2, verbose=True, show=False)
-            lsc.mysqldef.updatevalue('photlco', 'zn', float(ZZ0), string.split(re.sub('sn2.', '', img), '/')[-1])
-            lsc.mysqldef.updatevalue('photlco', 'dzn', float(std2), string.split(re.sub('sn2.', '', img), '/')[-1])
-            lsc.mysqldef.updatevalue('photlco', 'znnum', len(data2), string.split(re.sub('sn2.', '', img), '/')[-1])
+            lsc.mysqldef.updatevalue('photlco', 'zn', float(ZZ0), str.split(re.sub('sn2.', '', img), '/')[-1])
+            lsc.mysqldef.updatevalue('photlco', 'dzn', float(std2), str.split(re.sub('sn2.', '', img), '/')[-1])
+            lsc.mysqldef.updatevalue('photlco', 'znnum', len(data2), str.split(re.sub('sn2.', '', img), '/')[-1])
             headers = {'zn': [float(ZZ0), 'zeropoint'], 'dzn': [float(std2), 'zeropoint std'],
                        'znnum': [len(data2), 'number of stars used for zeropoint']}
             lsc.util.updateheader(img, 0, headers)
@@ -293,12 +293,12 @@ if __name__ == "__main__":
 
                 #            for ii in aaa: print ii
 
-                epadu = float(string.split([i for i in aaa if 'EPADU' in i][0])[3])
+                epadu = float(str.split([i for i in aaa if 'EPADU' in i][0])[3])
                 aaa = [i for i in aaa if i[0] != '#']
-                rad3, sum3, area3, flux3, mag3, dmag3 = string.split(aaa[-1])[0:6]
-                rad2, sum2, area2, flux2, mag2, dmag2 = string.split(aaa[-2])[0:6]
-                rad1, sum1, area1, flux1, mag1, dmag1 = string.split(aaa[-3])[0:6]
-                MSKY, STDEV, SSKEW, NSKY, NSREJ, SIER, SERROR, _ = string.split(aaa[2])
+                rad3, sum3, area3, flux3, mag3, dmag3 = str.split(aaa[-1])[0:6]
+                rad2, sum2, area2, flux2, mag2, dmag2 = str.split(aaa[-2])[0:6]
+                rad1, sum1, area1, flux1, mag1, dmag1 = str.split(aaa[-3])[0:6]
+                MSKY, STDEV, SSKEW, NSKY, NSREJ, SIER, SERROR, _ = str.split(aaa[2])
                 error1 = np.sqrt(float(flux1) / float(epadu) + float(area1) * (float(STDEV) ** 2) +
                                  (float(area1) ** 2) * float(STDEV) ** 2 / float(NSKY))
 
@@ -340,17 +340,17 @@ if __name__ == "__main__":
                         ##################################################################################
 
                 lsc.mysqldef.updatevalue('photlco', 'apflux', float(flux1) / _exptime,
-                                         string.split(re.sub('sn2.', '', img), '/')[-1])
+                                         str.split(re.sub('sn2.', '', img), '/')[-1])
                 lsc.mysqldef.updatevalue('photlco', 'dapflux', float(error1) / _exptime,
-                                         string.split(re.sub('sn2.', '', img), '/')[-1])
+                                         str.split(re.sub('sn2.', '', img), '/')[-1])
 
                 if mag1 != 'INDEF':
                     print(float(mag1))
                     try:
                         lsc.mysqldef.updatevalue('photlco', 'apmag', float(mag1),
-                                                 string.split(re.sub('sn2.', '', img), '/')[-1])
+                                                 str.split(re.sub('sn2.', '', img), '/')[-1])
                         lsc.mysqldef.updatevalue('photlco', 'dapmag', float(dmag1),
-                                                 string.split(re.sub('sn2.', '', img), '/')[-1])
+                                                 str.split(re.sub('sn2.', '', img), '/')[-1])
                     except:
                         pass
 

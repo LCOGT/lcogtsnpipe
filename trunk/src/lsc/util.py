@@ -6,6 +6,7 @@ from astropy.wcs import WCS
 import lsc
 from glob import glob
 import pkg_resources
+import re
 
 workdirectory = os.getenv('LCOSNDIR', '/supernova/')
 
@@ -17,7 +18,7 @@ pyversion = sys.version_info[0]
 
 def userinput(text):
     if pyversion <3:
-        inputstring = lsc.util.userinput(text)
+        inputstring = raw_input(text)
     else:
         inputstring = input(text)
     return inputstring
@@ -308,7 +309,8 @@ def readkey3(hdr,keyword):
              else:
                 value = ''
           elif keyword=='object':
-             value = value.translate(None, ' }{][)(')
+             value = re.sub(r"[()[]}{]",'',value)
+             #value = value.translate(None, ' }{][)(')
           elif keyword=='JD':       
              value=value+0.5
           elif keyword=='instrume':      value=value.lower()

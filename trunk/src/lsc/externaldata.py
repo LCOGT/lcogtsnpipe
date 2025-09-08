@@ -627,8 +627,8 @@ def downloadPS1(homedir,filename):
         _index=f.readlines()
         f.close()
         for i in range(0,len(_index)):
-            print(string.split(_index[i],'|')[0],string.count(string.split(_index[i],'|')[0],'results.fits'))
-            if  string.count(string.split(_index[i],'|')[0],'.fits') and string.count(string.split(_index[i],'|')[0],'results.fits')==0:
+            print(string.split(_index[i],'|')[0],str.count(string.split(_index[i],'|')[0],'results.fits'))
+            if  str.count(string.split(_index[i],'|')[0],'.fits') and str.count(string.split(_index[i],'|')[0],'results.fits')==0:
 
                 urlOfFileToDownload3 = dataStoreBase + dataStoreProduct +string.split(_index[i],'|')[0]
                 urlOfFileToDownload3=re.sub('.txt','',urlOfFileToDownload3)

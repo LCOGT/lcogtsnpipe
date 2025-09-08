@@ -414,7 +414,7 @@ if __name__ == "__main__":
                         lsc.util.delete("tmplabel")
                         vector = iraf.imexamine('original.fits', 1, wcs='logical', xformat='', yformat='',
                                                 use_display='no', Stdout=1)
-                        if string.count(vector[0], 'z1') == 1: vector = vector[1:]
+                        if str.count(vector[0], 'z1') == 1: vector = vector[1:]
                         ff = open('tmplabel', 'w')
                         for i in vector:
                             ff.write(i + ' \n')

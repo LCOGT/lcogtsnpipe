@@ -164,7 +164,7 @@ if __name__ == "__main__":   # main program
                 unpacked = [os.path.basename(filepath) for filepath, exitcode in zip(packed_files, exitcodes) if exitcode == 0]
                 query = 'update photlco set lastunpacked="{}" where filename="'.format(datetime.utcnow())
                 query += '" or filename="'.join(unpacked) + '"'
-                lsc.mysqldef.query([query], lsc.conn)
+                lsc.mysqldef.query([query], lsc.myloopdef.conn)
 
             if args.stage == 'fpack':
                 is_unpacked = ll['lastunpacked'] != np.array(None)
@@ -180,7 +180,7 @@ if __name__ == "__main__":   # main program
                 p.join()
                 packed = [os.path.basename(filepath) for filepath, exitcode in zip(unpacked_files, exitcodes) if exitcode == 0]
                 query = 'update photlco set lastunpacked=NULL where filename="' + '" or filename="'.join(packed) + '"'
-                lsc.mysqldef.query([query], lsc.conn)
+                lsc.mysqldef.query([query], lsc.myloopdef.conn)
             elif args.stage == 'getmag':  # get final magnitude from mysql
                 lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type, args.uploadtosnex2)
             elif args.stage == 'psf':

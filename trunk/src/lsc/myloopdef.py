@@ -764,7 +764,7 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
             ll1[jj] = np.array(ll1[jj])[temptels == _temptel]
     
     if classid is not None:
-        standards = lsc.mysqldef.query(['select id from targets where classificationid='+str(classid)], lsc.conn)
+        standards = lsc.mysqldef.query(['select id from targets where classificationid='+str(classid)], lsc.myloopdef.conn)
         standard_ids = [row['id'] for row in standards]
         isstd = np.array([targetid in standard_ids for targetid in ll1['targetid']])
         for jj in ll1:
@@ -1158,7 +1158,7 @@ def makestamp(imglist, database='photlco', _z1='', _z2='', _interactive=True, re
         _targetid = ''
         status = lsc.checkstage(img, 'wcs')
         if status >= 0:  # or force==False:
-            ggg = lsc.mysqldef.getfromdataraw(lsc.conn, database, 'filename', str(img), '*')
+            ggg = lsc.mysqldef.getfromdataraw(lsc.myloopdef.conn, database, 'filename', str(img), '*')
             _dir = ggg[0]['filepath']
             _output = _dir + img.replace('.fits', '.png')
             if os.path.isfile(_output):
@@ -1408,7 +1408,7 @@ def checkmag(imglist, datamax=None):
             aa = raw_input('>>>good mag [[y]/n] or [b] bad quality ? ')
             if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                 print 'update status: bad psfmag & mag'
-                lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(img)], lsc.conn)
+                lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(img)], lsc.myloopdef.conn)
                 os.system('rm -v ' + ogfile)
                 os.system('rm -v ' + rsfile)
             if aa in ['bad', 'b', 'B']:
@@ -1652,7 +1652,7 @@ def plotfast2(setup):
             display_subtraction(filenames[i])
 
     def delete_hook(i):
-        lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(filenames[i])], lsc.conn)
+        lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(filenames[i])], lsc.myloopdef.conn)
         _dir = lsc.mysqldef.getvaluefromarchive('photlco', 'filename', filenames[i], 'filepath')[0]['filepath']
         if _dir:
             lsc.util.updateheader(_dir + filenames[i].replace('.fits', '.sn2.fits'), 0,
@@ -1858,7 +1858,7 @@ def get_standards(epoch, name, filters, standard_name='all', match_by_site=False
     if filters:
         query += 'AND (obj.filter="' + '" OR obj.filter="'.join(lsc.sites.filterst[filters]) + '")'
     print 'Searching for corresponding standard fields. This may take a minute...'
-    matching_stds = lsc.mysqldef.query([query], lsc.conn)
+    matching_stds = lsc.mysqldef.query([query], lsc.myloopdef.conn)
     if matching_stds:
         final_list = {col: [ll[col] for ll in matching_stds] for col in matching_stds[0]}
     else:
@@ -2156,7 +2156,7 @@ def run_cosmic(imglist, database='photlco', _sigclip=4.5, _sigfrac=0.2, _objlim=
 
 def run_apmag(imglist, database='photlco'):
     for img in imglist:
-        ggg = lsc.mysqldef.getfromdataraw(lsc.conn, database, 'filename', str(img), '*')
+        ggg = lsc.mysqldef.getfromdataraw(lsc.myloopdef.conn, database, 'filename', str(img), '*')
         if ggg:
             _dir = ggg[0]['filepath']
             img1 = img.replace('.fits', '.sn2.fits')

@@ -29,7 +29,7 @@ def get_other_filters(filename, match_by_site=False):
                AND p1.dayobs=p2.dayobs
                AND p1.targetid=p2.targetid
                AND {is_match}'''.format(tel_join=tel_join, filename=filename, is_match=is_match)
-    result = lsc.mysqldef.query([query], lsc.conn)
+    result = lsc.mysqldef.query([query], lsc.myloopdef.conn)
     other_filters = {lsc.sites.filterst1[row['filter']] for row in result}
     return other_filters
 

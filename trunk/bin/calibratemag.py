@@ -37,7 +37,7 @@ def get_image_data(lista, magcol=None, errcol=None, refcat=None):
                                      zcol1, z1, c1, dz1, dc1, zcol2, z2, c2, dz2, dc2, psfmag, psfdmag, apmag, dapmag
                                      from photlco left join telescopes on photlco.telescopeid=telescopes.id
                                      left join instruments on photlco.instrumentid=instruments.id where ''' +
-                                     ' or '.join(filename_equals)], lsc.conn), masked=True)
+                                     ' or '.join(filename_equals)], lsc.myloopdef.conn), masked=True)
     t['filter'] = [lsc.sites.filterst1[filt] for filt in t['filter']]
     if magcol in t.colnames and errcol in t.colnames:
         t.rename_column(magcol, 'instmag')
@@ -248,7 +248,7 @@ if __name__ == "__main__":
         query += ',\n'.join(['("{}", {}, {}, {})'.format(row['filename'], row['targetid'], row['mag'], row['dmag']) for row in targets.filled(9999.)])
         query += '\nON DUPLICATE KEY UPDATE mag=VALUES(mag), dmag=VALUES(dmag)'
         print query
-        lsc.mysqldef.query([query], lsc.conn)
+        lsc.mysqldef.query([query], lsc.myloopdef.conn)
     elif args.stage == 'abscat': 
        # write all the catalogs to files & put filename in database
         for row in targets:

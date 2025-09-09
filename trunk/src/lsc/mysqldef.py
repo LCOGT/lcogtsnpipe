@@ -432,7 +432,6 @@ def targimg(img='', hdrt=None):
     import lsc
     from lsc.util import readkey3,readhdr
     from lsc.mysqldef import getfromcoordinate
-    from lsc import conn
     import string
     import os, json, requests
     _targetid=''
@@ -448,7 +447,7 @@ def targimg(img='', hdrt=None):
        _ra,_dec=lsc.deg2HMS(_ra,_dec)
 
     #############  define groupid ################
-    aaa=lsc.mysqldef.query(['select idcode, groupidcode from programs'],conn)
+    aaa=lsc.mysqldef.query(['select idcode, groupidcode from programs'],lsc.myloopdef.conn)
     grname=[i['idcode'] for i in aaa]
     gr=[i['groupidcode'] for i in aaa]
     if lsc.util.readkey3(hdrt,'propid') in grname:
@@ -461,7 +460,7 @@ def targimg(img='', hdrt=None):
     ##############################################
 
     ########  define targetid  ##################
-    _targetid=lsc.mysqldef.gettargetid(_object,'','',conn,.01,False)
+    _targetid=lsc.mysqldef.gettargetid(_object,'','',lsc.myloopdef.conn,.01,False)
     if not _targetid:
         print '# no target with this name '+_object
 
@@ -488,16 +487,16 @@ def targimg(img='', hdrt=None):
                         img=img, ra=_ra, dec=_dec, obj=_object)
             raise Exception (error)
 
-        _targetid=lsc.mysqldef.gettargetid('',_ra,_dec,conn,.01,False)
+        _targetid=lsc.mysqldef.gettargetid('',_ra,_dec,lsc.myloopdef.conn,.01,False)
         if _targetid:
             print '# target at this coordinate with a different name, add name '+str(_ra)+' '+str(_dec)
             dictionary1={'name':_object,'targetid':_targetid,'groupidcode':_group}
-            lsc.mysqldef.insert_values(conn,'targetnames',dictionary1)
+            lsc.mysqldef.insert_values(lsc.myloopdef.conn,'targetnames',dictionary1)
 
-            bb2=lsc.mysqldef.query(['select id from targetnames where name = "'+_object+'"'],conn)
+            bb2=lsc.mysqldef.query(['select id from targetnames where name = "'+_object+'"'],lsc.myloopdef.conn)
             dictionary3 = {'userid':67, 'tablemodified': 'targetnames', 'idmodified': bb2[0]['id'],
                           'columnmodified': 'New Row', 'newvalue': 'Multiple'}
-            lsc.mysqldef.insert_values(conn,'useractionlog',dictionary3)
+            lsc.mysqldef.insert_values(lsc.myloopdef.conn,'useractionlog',dictionary3)
         else:
             print 'not found targetid with ra and dec '+str(_ra)+' '+str(_dec)
 
@@ -509,32 +508,32 @@ def targimg(img='', hdrt=None):
           # no target
           print 'add new target '+str(_ra)+' '+str(_dec)+' '+_object
           dictionary={'ra0':_ra,'dec0':_dec}
-          lsc.mysqldef.insert_values(conn,'targets',dictionary)
-          bb=lsc.mysqldef.getfromcoordinate(conn, 'targets', _ra, _dec,.000156)
+          lsc.mysqldef.insert_values(lsc.myloopdef.conn,'targets',dictionary)
+          bb=lsc.mysqldef.getfromcoordinate(lsc.myloopdef.conn, 'targets', _ra, _dec,.000156)
 
           dictionary2 = {'userid':67, 'tablemodified': 'targets', 'idmodified': bb[0]['id'],
                          'columnmodified': 'New Row', 'newvalue': 'Multiple'}
-          lsc.mysqldef.insert_values(conn,'useractionlog',dictionary2)
+          lsc.mysqldef.insert_values(lsc.myloopdef.conn,'useractionlog',dictionary2)
 
           dictionary1 = {'name':_object,'targetid':bb[0]['id'],'groupidcode':_group}
-          lsc.mysqldef.insert_values(conn,'targetnames',dictionary1)
+          lsc.mysqldef.insert_values(lsc.myloopdef.conn,'targetnames',dictionary1)
 
-          bb2=lsc.mysqldef.query(['select id from targetnames where name = "'+_object+'"'],conn)
+          bb2=lsc.mysqldef.query(['select id from targetnames where name = "'+_object+'"'],lsc.myloopdef.conn)
           dictionary3 = {'userid':67, 'tablemodified': 'targetnames', 'idmodified': bb2[0]['id'],
                          'columnmodified': 'New Row', 'newvalue': 'Multiple'}
-          lsc.mysqldef.insert_values(conn,'useractionlog',dictionary3)
+          lsc.mysqldef.insert_values(lsc.myloopdef.conn,'useractionlog',dictionary3)
 
 
           _targetid=bb[0]['id']
           print '\n add a target '+str(_ra)+' '+str(_dec)+' '+str(bb[0]['id'])
 
     if _targetid and _group:
-       cc=lsc.mysqldef.getfromdataraw(conn,'permissionlog','targetid', str(_targetid),column2='groupname')
+       cc=lsc.mysqldef.getfromdataraw(lsc.myloopdef.conn,'permissionlog','targetid', str(_targetid),column2='groupname')
        if len(cc)==0:
           _JDn=lsc.mysqldef.JDnow()
           print img
           dictionary2={'targetid':_targetid,'jd':_JDn,'groupname':_group}
-          lsc.mysqldef.insert_values(conn,'permissionlog',dictionary2)
+          lsc.mysqldef.insert_values(lsc.myloopdef.conn,'permissionlog',dictionary2)
     return _targetid
 
 #################################################################################
@@ -686,8 +685,8 @@ def gettargetid(_name,_ra,_dec,conn,_radius=.01,verbose=False):
 ###############################################################
 def get_snex_uid(interactive=True, return_fullname=False):
     from getpass import getuser
-    from lsc import conn
-    usersdict = query(['select id, firstname, lastname from users where name="{}"'.format(getuser())], conn)
+    import lsc
+    usersdict = query(['select id, firstname, lastname from users where name="{}"'.format(getuser())], lsc.myloopdef.conn)
     if usersdict: # if your UNIX username matches your SNEx username
         snex_uid = usersdict[0]['id']
         fullname = usersdict[0]['firstname'] + ' ' + usersdict[0]['lastname']
@@ -698,7 +697,7 @@ def get_snex_uid(interactive=True, return_fullname=False):
         if interactive:
             snex_user = raw_input('If you have a SNEx username, input it here. Otherwise, press enter. ')
             if snex_user:
-                usersdict = query(['select id, firstname, lastname from users where name="' + snex_user + '"'], conn)
+                usersdict = query(['select id, firstname, lastname from users where name="' + snex_user + '"'], lsc.myloopdef.conn)
                 if usersdict:
                   snex_uid = usersdict[0]['id']
                   fullname = usersdict[0]['firstname'] + ' ' + usersdict[0]['lastname']

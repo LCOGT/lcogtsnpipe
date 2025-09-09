@@ -239,7 +239,7 @@ if __name__ == "__main__":
             from iraf import ptools
 
             targ = lsc.mysqldef.targimg(img)
-            aa = lsc.mysqldef.query(['select ra0,dec0 from targets where id="' + str(targ) + '"'], lsc.conn)
+            aa = lsc.mysqldef.query(['select ra0,dec0 from targets where id="' + str(targ) + '"'], lsc.myloopdef.conn)
             if len(aa) > 0:
                 rasn = aa[0]['ra0']
                 decsn = aa[0]['dec0']

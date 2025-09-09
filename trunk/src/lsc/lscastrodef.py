@@ -2,6 +2,8 @@ from astropy.table import Table
 
 def vizq(_ra,_dec,catalogue,radius):
     import os,string,re,subprocess
+    import sys
+    pyversion = sys.version_info[0]
     _site='vizier.u-strasbg.fr'
 #    _site='vizier.cfa.harvard.edu'
     cat={'usnoa2':['I/252/out','USNO-A2.0','Rmag'],\
@@ -15,14 +17,18 @@ def vizq(_ra,_dec,catalogue,radius):
                    cat[catalogue][1]+' -out='+cat[catalogue][2], shell=True, stdout=subprocess.PIPE,\
                    stderr=subprocess.PIPE)
     a,_ = process.communicate()
-    aa=a.split('\n')
+    if pyversion <3:
+        b = a
+    else:
+        b = a.decode("ascii")
+    aa=b.split('\n')
     bb=[]
     for i in aa:
         if i and i[0]!='#':
             bb.append(i)
     _ra,_dec,_name,_mag=[],[],[],[]
     for ii in bb[3:]:
-        aa=ii.split('\t')
+        aa = ii.split('\t')
         _ra.append(re.sub(' ',':',aa[0]))
         _dec.append(re.sub(' ',':',aa[1]))
         _name.append(aa[2])
@@ -109,7 +115,7 @@ def querycatalogue(catalogue,img,method='iraf'):
                         if min(array(stdcoo[jj],float)) != 9999:
                             break
                         else:
-                            print 'no magnitudes in this filter, try a different filter '+jj
+                            print('no magnitudes in this filter, try a different filter '+jj)
 
                 lll=['# END CATALOG HEADER','#']
                 for ff in range(0,len(stdcoo['ra'])):
@@ -117,7 +123,7 @@ def querycatalogue(catalogue,img,method='iraf'):
                 #colonne4={'usnoa2':'mag','usnob1':'mag','2mass':'mag','gsc1':'mag'}
                 colonne3=' 1   2 '
                 column={'ra':1,'dec':2,'r':3}
-                print 'catalogue from user'
+                print('catalogue from user')
             else:
                 sys.exit('Error: catalogue '+str(catalogue)+' not in the list [usnob1,usnoa2,2mass]')
         else:
@@ -146,6 +152,7 @@ def querycatalogue(catalogue,img,method='iraf'):
             else:  sys.exit('Error: catalogue '+str(catalogue)+' not in the list [usnob1,usnoa2,2mass,apass]')
 
           elif method=='vizir':
+            print('#####',_ra,_dec,catalogue,_size)  
             stdcoo=lsc.lscastrodef.vizq(_ra,_dec,catalogue,_size)
             
             lll=['# END CATALOG HEADER','#']
@@ -155,7 +162,7 @@ def querycatalogue(catalogue,img,method='iraf'):
             colonne3=' 1   2 '
             column={'ra':1,'dec':2,'r':3}
 
-        if  string.count(stdcoo['ra'][0],':'):
+        if  str.count(stdcoo['ra'][0],':'):
             ddd2=iraf.wcsctran('STDIN','STDOUT',img + '[0]',Stdin=lll,Stdout=1,inwcs='world',units='hour degrees',outwcs='logical',columns=colonne3,formats='%10.1f %10.1f')
         else:
             ddd2=iraf.wcsctran('STDIN','STDOUT',img + '[0]',Stdin=lll,Stdout=1,inwcs='world',units='degree degrees',outwcs='logical',columns=colonne3,formats='%10.1f %10.1f')
@@ -170,12 +177,12 @@ def querycatalogue(catalogue,img,method='iraf'):
             acoo1.append(str(stdcoo['ra'][i])+' '+str(stdcoo['dec'][i]))
             apix1.append(str(xx[i])+' '+str(yy[i]))
             am1.append(stdcoo[colonne4[catalogue]][i])
-            if  string.count(stdcoo['ra'][i],':'):
-                stdcoo['ra'][i]=(int(string.split(stdcoo['ra'][i],':')[0])+float(string.split(stdcoo['ra'][i],':')[1])/60+float(string.split(stdcoo['ra'][i],':')[2])/3600.)*15
-                if string.count(str(stdcoo['dec'][i]),'-')==0:   
-                    stdcoo['dec'][i]=int(string.split(stdcoo['dec'][i],':')[0])+float(string.split(stdcoo['dec'][i],':')[1])/60+float(string.split(stdcoo['dec'][i],':')[2])/3600.
+            if  str.count(stdcoo['ra'][i],':'):
+                stdcoo['ra'][i]=(int(str.split(stdcoo['ra'][i],':')[0])+float(str.split(stdcoo['ra'][i],':')[1])/60+float(str.split(stdcoo['ra'][i],':')[2])/3600.)*15
+                if str.count(str(stdcoo['dec'][i]),'-')==0:   
+                    stdcoo['dec'][i]=int(str.split(stdcoo['dec'][i],':')[0])+float(str.split(stdcoo['dec'][i],':')[1])/60+float(str.split(stdcoo['dec'][i],':')[2])/3600.
                 else:
-                    stdcoo['dec'][i]=(-1)*(abs(int(string.split(stdcoo['dec'][i],':')[0]))+float(string.split(stdcoo['dec'][i],':')[1])/60+float(string.split(stdcoo['dec'][i],':')[2])/3600.)
+                    stdcoo['dec'][i]=(-1)*(abs(int(str.split(stdcoo['dec'][i],':')[0]))+float(str.split(stdcoo['dec'][i],':')[1])/60+float(str.split(stdcoo['dec'][i],':')[2])/3600.)
 
 
         stdcoo['ra']=array(stdcoo['ra'],float)
@@ -216,18 +223,21 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
         if not sexvec:
             sexvec=lsc.lscastrodef.sextractor(img)
 ###################
-        print xshift,yshift
+        print(xshift,yshift)
+        print('here')
         if xshift!=0 and yshift!=0:
-            print 'guess astrometry before starting '
+            print('guess astrometry before starting ')
             lsc.lscastrodef.wcsstart(img,xshift,yshift)
 #        ss=datetime.datetime.now()
 #        time.sleep(1)
+        print(catalogue,img,method)
         catvec=lsc.lscastrodef.querycatalogue(catalogue,img,method)
+        print('here22')
         if len(catvec['ra']) == 0:
-            print 'cazzo'
             sys.exit('ERROR: catalog empty '+catalogue)
         rmsx1,rmsy1,num1,fwhm1,ell1,ccc,bkg1,rasys1,decsys1=lscastrometry2([img],catalogue,_interactive,number1,sexvec,catvec,guess=False,fitgeo=_fitgeo,\
                                                                                  tollerance1=_tollerance1, tollerance2=_tollerance2,_update='yes',imex=_imex,nummin=_numin)
+        print('here3')
         if rmsx1>1 or rmsy1>1:
             catvec=lsc.lscastrodef.querycatalogue(catalogue,img,method)
             rmsx2,rmsy2,num2,fwhm2,ell2,ccc,bkg2,rasys2,decsys2=lscastrometry2([img],catalogue,_interactive,number2,sexvec,catvec,guess=False,fitgeo=_fitgeo,\
@@ -282,7 +292,7 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
                 V=(math.pi/(4*math.log(2)))*(32000-float(mbkg3))*(float(fwhmgess3)**2)
             magsat=-2.5*math.log10(V)
         else:        magsat=9999
-    print rmsx3,rmsy3,num3,fwhmgess3,ellgess3,fwhmgessime,rasys3,decsys3,magsat
+    print(rmsx3,rmsy3,num3,fwhmgess3,ellgess3,fwhmgessime,rasys3,decsys3,magsat)
     return  rmsx3,rmsy3,num3,fwhmgess3,ellgess3,fwhmgessime,rasys3,decsys3,magsat
 
 #################################################################################################
@@ -322,7 +332,7 @@ def lscastrometry2(lista,catalogue,_interactive,number,sexvec,catvec,guess=False
     if verbose:            display_image(img,1,'','',False)
     if verbose:
             iraf.tvmark(1,'STDIN',Stdin=list(apix1),mark="circle",number='no',label='no',radii=10,nxoffse=5,nyoffse=5,color=205,txsize=4)
-            raw_input('mark catalogue '+str(len(apix1)))
+            lsc.util.userinput('mark catalogue '+str(len(apix1)))
     else:  
 #        ss=datetime.datetime.now()
         time.sleep(.7)
@@ -346,14 +356,14 @@ def lscastrometry2(lista,catalogue,_interactive,number,sexvec,catvec,guess=False
     decusno=compress((array(am1)>magsel0) &(array(am1)<magsel11), array(catvec['dec'],float)) 
     xusno,yusno=[],[]
     for i in apixcut:
-            xusno.append(float(string.split(i)[0]))
-            yusno.append(float(string.split(i)[1]))
+            xusno.append(float(str.split(i)[0]))
+            yusno.append(float(str.split(i)[1]))
     xusno,yusno=array(xusno),array(yusno)
     
 #################################################################
     if verbose:
             iraf.tvmark(1,'STDIN',Stdin=list(apixcut),mark="circle",number='yes',label='no',radii=12,nxoffse=5,nyoffse=5,color=204,txsize=3)
-            raw_input('brightest '+str(number)+' objects')
+            lsc.util.userinput('brightest '+str(number)+' objects')
 
 ##############    sextractor   ##################
     if len(xpix)>=number:
@@ -368,7 +378,7 @@ def lscastrometry2(lista,catalogue,_interactive,number,sexvec,catvec,guess=False
             for i in range(0,len(xpix)):
                 sexpix.append(str(xpix[i])+' '+str(ypix[i]))
             iraf.tvmark(1,'STDIN',Stdin=list(sexpix),mark="circle",number='no',label='no',radii=8,nxoffse=5,nyoffse=5,color=206,txsize=2)
-            raw_input('print sex '+str(len(sexpix)))
+            lsc.util.userinput('print sex '+str(len(sexpix)))
 
     xsex,ysex=array(xpix),array(ypix)
     fwsex=array(fw)
@@ -420,18 +430,18 @@ def lscastrometry2(lista,catalogue,_interactive,number,sexvec,catvec,guess=False
                     gg.close()
                     ime=iraf.imexam(input=img, frame=1, logfile='', keeplog='yes', imagecur='tmp.one', wcs='logical', use_disp='no',Stdout=1)
                     try:
-                        _fwhm2=median(compress(array(string.split(ime[3])[-3:],float)<99,(array(string.split(ime[3])[-3:],float))))
+                        _fwhm2=median(compress(array(str.split(ime[3])[-3:],float)<99,(array(str.split(ime[3])[-3:],float))))
                         fwhm2.append(_fwhm2)
                     except: pass
     if len(xref)>=nummin:
             _ccmap1=iraf.ccmap('STDIN','STDOUT',images=img,Stdin=vettoretran,fitgeome=fitgeo,xcolum=3, xxorder=2,\
                                yyorder=2, ycolum=4,lngcolum=1,latcolumn=2,lngunit='degrees',update='No',interact='No',maxiter=3,Stdout=1)
             if 'rms' in _ccmap1[_ccmap1.index('Wcs mapping status')+1]:
-                try:           rmsx,rmsy=array(string.split(string.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2],float)
-                except:        rmsx,rmsy=array(string.split(string.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2])
+                try:           rmsx,rmsy=array(str.split(str.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2],float)
+                except:        rmsx,rmsy=array(str.split(str.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2])
                 if rmsx<2 and rmsy<2:
-                    print '\n### update astrometry with non linear order' 
-#                    raw_input('go on ')
+                    print('\n### update astrometry with non linear order') 
+#                    lsc.util.userinput('go on ')
                     _ccmap1=iraf.ccmap('STDIN','STDOUT',images=img,Stdin=vettoretran,fitgeome=fitgeo,xcolum=3, xxorder=2,\
                                        yyorder=2, ycolum=4,lngcolum=1,latcolumn=2,lngunit='degrees',update='Yes',interact='No',maxiter=3,Stdout=1)
                     xy = iraf.wcsctran('STDIN',output="STDOUT",Stdin=vettoretran,Stdout=1,image=img + '[0]',inwcs='physical', outwcs='world',column="3 4",formats='%10.6f %10.6f',verbose='yes')[3:]
@@ -478,7 +488,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
     hdr=readhdr(img)
     _airmass=readkey3(hdr,'AIRMASS')
     if not _airmass: 
-        print '\n### warning: airmass at starting exposure'
+        print('\n### warning: airmass at starting exposure')
         _airmass=readkey3(hdr,'airmass')
     _exptime=readkey3(hdr,'exptime')
     _filter=readkey3(hdr,'filter')
@@ -491,7 +501,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
     if _siteid in lsc.sites.extinction:
         kk = lsc.sites.extinction[_siteid]
     else:
-        print _siteid
+        print(_siteid)
         sys.exit('siteid not in lsc.sites.extinction')
     if catalogue:
         catalog_path = os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'standard', 'cat', catalogue+'.cat')
@@ -522,8 +532,8 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
     _ra=readkey3(hdr,'RA')
     _dec=readkey3(hdr,'DEC')
     magsel0,magsel1=12,18
-    print _ra,_dec
-    print 'sloan to file take degree degree'
+    print(_ra,_dec)
+    print('sloan to file take degree degree')
     _ids=lsc.lscastrodef.sloan2file(_ra,_dec,20,float(magsel0),float(magsel1),'_tmpsloan.cat')
     ascifile='_tmpsloan.cat'
     stdcooS=lsc.lscastrodef.readtxt(ascifile)
@@ -536,7 +546,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
     idstdS=standardpixS['id']
     xstdS=compress((array(xstdS,float)<readkey3(hdr,'naxis1'))&(array(xstdS,float)>0)&(array(ystdS,float)>0)&(array(ystdS,float)<readkey3(hdr,'naxis2')),xstdS)
    ##############
-    print _filter
+    print(_filter)
     if _filter in ['B', 'V', 'R', 'I']:
         if _field=='sloan':   standardpix,stdcoo={'ra':[9999],'dec':[9999],'id':[1]},{'ra':[9999],'dec':[9999]}
         else:
@@ -554,8 +564,9 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
                     standardpix=standardpixS
                     stdcoo=stdcooS
                     stdcoo=lsc.lscastrodef.transformsloanlandolt(stdcoo)
-                    print '\n### transform sloan in landolt'
-                else:    standardpix,stdcoo={'ra':[9999],'dec':[9999],'id':[1]},{'ra':[9999],'dec':[9999]}
+                    print('\n### transform sloan in landolt')
+                else:
+                    standardpix,stdcoo={'ra':[9999],'dec':[9999],'id':[1]},{'ra':[9999],'dec':[9999]}
     elif _filter in  ['SDSS-U','SDSS-G','SDSS-R','SDSS-I','Pan-Starrs-Z']:
         if _field=='landolt':   standardpix,stdcoo={'ra':[9999],'dec':[9999],'id':[1]},{'ra':[9999],'dec':[9999]}
         else:
@@ -573,8 +584,9 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
                     standardpix=standardpixL
                     stdcoo=stdcooL
                     stdcoo=lsc.lscastrodef.transformlandoltsloan(stdcoo)
-                    print '\n### transform landolt to sloan'
-                else:   standardpix,stdcoo={'ra':[9999],'dec':[9999],'id':[1]},{'ra':[9999],'dec':[9999]}
+                    print('\n### transform landolt to sloan')
+                else:
+                    standardpix,stdcoo={'ra':[9999],'dec':[9999],'id':[1]},{'ra':[9999],'dec':[9999]}
 
     xstd=standardpix['ra']
     ystd=standardpix['dec']
@@ -585,7 +597,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
     if len(xstd0)>1:  ########   go only if standard stars are in the field  ##########
         magstd0={}
         airmass0={}
-        print '\n###  standard field: '+str(_field)
+        print('\n###  standard field: '+str(_field))
         ###############  sextractor on standard field
         namesex=lsc.util.defsex('default.sex')
         os.system("sex '"+img+"[0]' -c "+namesex+" > _logsex")
@@ -623,7 +635,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
         ###################
         colorvec=colors[filters[_filter]]
         if _field=='landolt':
-            print '\n###  landolt system'
+            print('\n###  landolt system')
             for _filtlandolt in 'UBVRI':
                 if _filtlandolt==filters[_filter]: airmass0[_filtlandolt]=_airmass
                 else: airmass0[_filtlandolt]=1
@@ -640,7 +652,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
             fileph['VR']=array(array(magstd0['V'],float)-array(magstd0['R'],float),str)
             fileph['RI']=array(array(magstd0['R'],float)-array(magstd0['I'],float),str)
         elif _field=='sloan':
-            print _filter
+            print(_filter)
             for _filtsloan in 'ugriz':
                 if _filtsloan==filters[_filter]: airmass0[_filtsloan]=_airmass
                 else: airmass0[_filtsloan]=1
@@ -658,7 +670,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
             fileph['iz']=array(array(magstd0['i'],float)-array(magstd0['z'],float),str)
         distvec,pos0,pos1=lsc.lscastrodef.crossmatch(array(rastd0),array(decstd0),array(rasex),array(decsex),10) 
         fwhm0 = half_total_flux_radius_to_fwhm(median(array(fw,float)[pos1]))
-        print '\n fwhm = '+str(fwhm0)
+        print('\n fwhm = '+str(fwhm0))
         iraf.noao.digiphot.mode='h'
         iraf.noao.digiphot.daophot.photpars.zmag = 0
         iraf.noao.digiphot.daophot.daopars.psfrad = fwhm0*4
@@ -692,15 +704,15 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
             fil.write('%6.6s\t%6.6s\t%6.6s\n' % (str(1),str(1),str(1)))  # exptime
             fil.write('%6.6s\t%6.6s\t%6.6s\n' % (str(airmass0['J']),str(airmass0['H']),str(airmass0['K'])))
 
-        print '\n KK   filter airmass \n '
-        print str(kk[filters[_filter]]),str(filters[_filter]),str(_airmass)
+        print('\n KK   filter airmass \n ')
+        print(str(kk[filters[_filter]]),str(filters[_filter]),str(_airmass))
         for i in range(0,len(pos1)): 
             gg=open('tmp.one','w')
             gg.write(str(xsex[pos1[i]])+' '+str(ysex[pos1[i]])+'\n')
             gg.close()               
             try:
                 phot=iraf.noao.digiphot.daophot.phot(image=img, output='', coords='tmp.one', verify='no', interactive='no',Stdout=1)
-                mag0=float(string.split(phot[0])[4])
+                mag0=float(str.split(phot[0])[4])
                 mag=mag0-kk[filters[_filter]]*float(_airmass)#+2.5*math.log10(float(_exptime))
             except:
                 mag0=999
@@ -738,7 +750,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
             if len(colore)==0:
                     b,a,RR=9999,9999,9999
                     result=''
-                    print 'no calibration, '+_filter+' '+_field
+                    print('no calibration, '+_filter+' '+_field)
             elif len(colore)>1:
                 lsc.util.updateheader(img,0,{'PHOTZP':(median(zero),'MAG=-2.5*log(data)+PHOTZP ')})
                 if _field=='landolt':      a, b, RR=lsc.lscastrodef.linreg(colore, zero)
@@ -769,7 +781,7 @@ def zeropoint(img,_field,verbose=False,catalogue=''):
                 legend(numpoints=1,markerscale=1.5)
                 show()
     else: 
-        print 'no calibration, '+_filter+' '+_field
+        print('no calibration, '+_filter+' '+_field)
         result=''
     delete('tmp.*,detection*')
     return result
@@ -808,7 +820,7 @@ def linreg(X, Y):
         real, real, real = linreg(list, list)
     Returns coefficients to the regression line "y=ax+b" from x[] and y[], and R^2 Value
     """
-    if len(X) != len(Y):  raise ValueError, 'unequal length'
+    if len(X) != len(Y):  raise ValueError('unequal length')
     N = len(X)
     Sx = Sy = Sxx = Syy = Sxy = 0.0
     for x, y in map(None, X, Y):
@@ -840,8 +852,8 @@ def querysloan(ra1,dec1,radius,mr1,mr2):
     _id,_ra,_dec,_u,_g,_r,_i,_z,_type=[],[],[],[],[],[],[],[],[]
     _du,_dg,_dr,_di,_dz=[],[],[],[],[]
     for i in righe[1:]:
-        if len(string.split(i,','))==14:
-            _id0,_ra0,_dec0,_u0,_g0,_r0,_i0,_z0,_du0,_dg0,_dr0,_di0,_dz0,_type0=string.split(i,',')
+        if len(str.split(i,','))==14:
+            _id0,_ra0,_dec0,_u0,_g0,_r0,_i0,_z0,_du0,_dg0,_dr0,_di0,_dz0,_type0=str.split(i,',')
             if mr1 and mr2:
                 if mr1<=float(_r0)<=mr2:
                     _id.append(_id0)
@@ -1032,7 +1044,7 @@ def sextractor(img):
 
         namesex=defsex('default.sex')
         os.system("sex '"+img+"[0]' -c "+namesex+" -CLEAN YES -SATUR_LEVEL "+str(_saturation)+' > _logsex')
-        print 'sex '+img+'[0] -c '+namesex+' -CLEAN YES -SATUR_LEVEL '+str(_saturation)+' > _logsex'
+        print('sex '+img+'[0] -c '+namesex+' -CLEAN YES -SATUR_LEVEL '+str(_saturation)+' > _logsex')
         delete(namesex)
         delete('_logsex')
         xpix=iraf.proto.fields('detections.cat',fields='2',Stdout=1)
@@ -1054,7 +1066,7 @@ def sextractor(img):
         xpix=compress((array(xpix)!=''),array(xpix,float))
 
         try:
-            print len(fl),_xdim,_ydim
+            print(len(fl),_xdim,_ydim)
             ww=asarray([i for i in range(len(xpix)) if ((xpix[i]<_xdim) or (ypix[i]<_ydim))], dtype=int)
             cl,cm,fw,ell,xpix,ypix,bkg,fl=cl[ww],cm[ww],fw[ww],ell[ww],xpix[ww],ypix[ww],bkg[ww],fl[ww]
 
@@ -1077,7 +1089,7 @@ def sextractor(img):
             fw=compress((array(fw)<=15)&(array(fw)>=-2),array(fw))
         except: 
             xpix,ypix,fw,cl,cm,ell=[],[],[],[],[],[]
-            print '\n### ERROR Filtering the sextractor detections, please check that sextractor is working ......'
+            print('\n### ERROR Filtering the sextractor detections, please check that sextractor is working ......')
         delete('detections.cat')
         return xpix,ypix,fw,cl,cm,ell,bkg,fl
 
@@ -1088,19 +1100,19 @@ def readapass(_ra,_dec,radius=30,field=''):
     import lsc
     line='/science/ASSM/findassm -c '+str(_ra)+' '+str(_dec)+' -bm '+str(radius)+' '+str(radius)+' -Vb 25.0 -Vf -5.0 -Rr 3.0 -Rb -3.0 -l ApassCat -F BVPgPrPieBeVegereid'
     xxx=os.popen(line).read()
-    yyy=string.split(xxx,'\n')[3:-1]
+    yyy=str.split(xxx,'\n')[3:-1]
     vector={}
     column={}
     yyy[0]=re.sub('J2000','',yyy[0])
-    print  yyy[0]
-    for i in range(0,len(string.split(yyy[0]))):
-        if string.split(yyy[0])[i] in ['#RAdeg', 'DECdeg', 'B', 'V', 'Pg', 'Pr', 'Pi', 'eB', 'eV', 'eg', 'er', 'ei']:
-            column[i]=string.split(yyy[0])[i]
-    print column
+    print(yyy[0])
+    for i in range(0,len(str.split(yyy[0]))):
+        if str.split(yyy[0])[i] in ['#RAdeg', 'DECdeg', 'B', 'V', 'Pg', 'Pr', 'Pi', 'eB', 'eV', 'eg', 'er', 'ei']:
+            column[i]=str.split(yyy[0])[i]
+    print(column)
     zzz=[]
     for j in yyy:
         if j[0]!='#':
-            zzz.append(string.split(j))
+            zzz.append(str.split(j))
     column2={}
     for i in column:
         column2[column[i]]=zip(*zzz)[i]
@@ -1121,7 +1133,7 @@ def readapass(_ra,_dec,radius=30,field=''):
     header=header+'# END CATALOG HEADER\n#\n'
     ff.write(header)
     m=1
-    print column2.keys()
+    print(column2.keys())
     for i in range(0,len(column2[column2.keys()[0]])):
         ff.write('%14s %14s  %3s  ' % (str(column2['#RAdeg'][i]),str(column2['DECdeg'][i]),str(m)))
         m=m+1
@@ -1168,8 +1180,8 @@ def finewcs(img):
     elif len(pos0)>10:  _order=3
     else:               _order=2
 
-    print _order
-    print len(pos0)
+    print(_order)
+    print(len(pos0))
 
     xxx=np.array(bbb[1])[pos1]
     yyy=np.array(bbb[2])[pos1]
@@ -1186,16 +1198,16 @@ def finewcs(img):
                                xyorder=_order, yxorder=_order, yyorder=_order, ycolum=4,lngcolum=1,latcolumn=2,\
                                lngunit='degrees',update='No',interact='No',maxiter=3,Stdout=1,verbose='yes')
             if 'rms' in _ccmap1[_ccmap1.index('Wcs mapping status')+1]:
-                try:           rmsx,rmsy=np.array(string.split(string.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2],float)
-                except:        rmsx,rmsy=np.array(string.split(string.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2])
-            print rmsx,rmsy,ff
+                try:           rmsx,rmsy=np.array(str.split(str.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2],float)
+                except:        rmsx,rmsy=np.array(str.split(str.split(_ccmap1[_ccmap1.index('Wcs mapping status')+1],':')[-1])[0:2])
+            print(rmsx,rmsy,ff)
             if rmsx<2 and rmsy<2:
                 if rmsx+rmsy<=rmsx0+rmsy0:
                     rmsx0,rmsy0=rmsx,rmsy
                     bestvalue=ff
-        print rmsx,rmsy,bestvalue
+        print(rmsx,rmsy,bestvalue)
         if rmsx0<2 and rmsy0<2:
-            print 'update wcs with distortion correction'  
+            print('update wcs with distortion correction')
             _ccmap1=iraf.ccmap('STDIN','STDOUT',images=img,Stdin=vector4,fitgeome=bestvalue,xcolum=3, xxorder=_order,\
                                xyorder=_order, yxorder=_order, yyorder=_order, ycolum=4,lngcolum=1,latcolumn=2,\
                                lngunit='degrees',update='Yes',interact='No',maxiter=3,Stdout=1,verbose='yes')
@@ -1225,21 +1237,21 @@ def run_astrometry(im, clobber=True,redo=False):
     import shutil
     import numpy as np
     import string
-    print 'astrometry for image ' + str(im)
+    print('astrometry for image ' + str(im))
     # Run astrometry.net
-    hdr = lsc.readhdr(im)
-    _wcserr = lsc.readkey3(hdr, 'wcserr')
+    hdr = lsc.util.readhdr(im)
+    _wcserr = lsc.util.readkey3(hdr, 'wcserr')
     done = 0
     if float(_wcserr) == 0: 
         done = 1
-    print redo
+    print(redo)
     if redo: 
         done = 0
     if done:
-        print 'already done'
+        print('already done')
     else:
-        ra = lsc.readkey3(hdr,'RA')
-        dec = lsc.readkey3(hdr,'DEC')
+        ra = lsc.util.readkey3(hdr,'RA')
+        dec = lsc.util.readkey3(hdr,'DEC')
         #    ra = fits.getval(im, 'RA')
         #    dec = fits.getval(im, 'DEC')
         cmd = 'solve-field --crpix-center --no-verify --no-tweak -l 30 '
@@ -1250,18 +1262,18 @@ def run_astrometry(im, clobber=True,redo=False):
         if clobber: cmd += '--overwrite '
         cmd += '--solved none --match none --rdls none --wcs none --corr none '
         cmd += ' --use-source-extractor --fits-image {}'.format(im)
-        print cmd
+        print(cmd)
         os.system(cmd)
         basename = im[:-5]
         if os.path.exists(basename + '.axy'):
             os.remove(basename + '.axy')
         else:
-            print 'axy files do not exist'
+            print('axy files do not exist')
         if os.path.exists(basename + '-indx.xyls'):
             os.remove(basename + '-indx.xyls')
         if os.path.exists('tmpwcs.fits'):
-            hdrt = lsc.readhdr('tmpwcs.fits')
-            _instrume = lsc.readkey3(hdrt,'instrume')
+            hdrt = lsc.util.readhdr('tmpwcs.fits')
+            _instrume = lsc.util.readkey3(hdrt,'instrume')
             sexvec = lsc.lscastrodef.sextractor('tmpwcs.fits')
             xpix,ypix,fw,cl,cm,ell,bkg,fl = sexvec
             if len(fw)>1:
@@ -1309,7 +1321,7 @@ def run_astrometry(im, clobber=True,redo=False):
             else:
                 dictionary['WCSERR'] = 0
             lsc.util.updateheader(im, 0, dictionary)
-            lsc.mysqldef.updatevalue('photlco', 'WCS', 0, string.split(im, '/')[-1])
+            lsc.mysqldef.updatevalue('photlco', 'WCS', 0, str.split(im, '/')[-1])
         else:
-            print 'tmpwcs.fits files do not exist'
+            print('tmpwcs.fits files do not exist')
 ###################################################################

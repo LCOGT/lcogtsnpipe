@@ -6,6 +6,7 @@ from astropy.wcs import WCS
 import lsc
 from glob import glob
 import pkg_resources
+import re
 
 workdirectory = os.getenv('LCOSNDIR', '/supernova/')
 
@@ -13,6 +14,14 @@ configfile = os.path.join(workdirectory, 'configure')
 if not os.path.exists(configfile):
     configfile = pkg_resources.resource_filename('lsc', 'configure')
 
+pyversion = sys.version_info[0]
+
+def userinput(text):
+    if pyversion <3:
+        inputstring = raw_input(text)
+    else:
+        inputstring = input(text)
+    return inputstring
 
 def readpasswd(configfile):
    """ read all information to connect to database from configuration file  
@@ -47,15 +56,15 @@ def ReadAscii2(ascifile):
    vec1,vec2=[],[]
    for line in ss:
       if line[0]!='#':
-         vec1.append(float(string.split(line)[0]))
-         vec2.append(float(string.split(line)[1]))
+         vec1.append(float(str.split(line)[0]))
+         vec2.append(float(str.split(line)[1]))
    return vec1,vec2
 #########################################################################
 def readlist(listfile):
     import string,os,sys,re,glob
     if '*' in listfile:
         imglist=glob.glob(listfile)
-    elif ',' in listfile: imglist = string.split(listfile,sep=',')
+    elif ',' in listfile: imglist = str.split(listfile,sep=',')
     else:
         try:            hdulist= fits.open(listfile)
         except:           hdulist=[]
@@ -74,8 +83,8 @@ def readlist(listfile):
                        hdulist= fits.open(ff)
                        imglist.append(ff)
                     except Exception as e:
-                        print 'problem reading header of', ff
-                        print e
+                        print('problem reading header of', ff)
+                        print(e)
            except:              sys.exit('\n##### Error ###\n file '+str(listfile)+' do not  exist\n')
     if len(imglist)==0:
            sys.exit('\n##### Error ###\nIf "'+str(listfile)\
@@ -93,7 +102,7 @@ def delete(listfile):
             if not ff=='\n' and ff[0]!='#':
                 ff=re.sub('\n','',ff)
                 imglist.append(ff)
-    elif ',' in listfile: imglist = string.split(listfile,sep=',')
+    elif ',' in listfile: imglist = str.split(listfile,sep=',')
     else:       imglist=[listfile]    
     lista=[]
     for _file in imglist:   lista=lista+glob.glob(_file)
@@ -123,7 +132,7 @@ def readhdr(img):
     try:
         hdr = fits.getheader(img)
     except Exception as e:
-        print "Couldn't read header of {}. Try deleting it and starting over.".format(img)
+        print("Couldn't read header of {}. Try deleting it and starting over.".format(img))
         raise e
     return hdr
     
@@ -300,7 +309,8 @@ def readkey3(hdr,keyword):
              else:
                 value = ''
           elif keyword=='object':
-             value = value.translate(None, ' }{][)(')
+             value = re.sub(r"[()[]}{]",'',value)
+             #value = value.translate(None, ' }{][)(')
           elif keyword=='JD':       
              value=value+0.5
           elif keyword=='instrume':      value=value.lower()
@@ -338,8 +348,8 @@ def updateheader(filename, dimension, headerdict):
         header.update(headerdict)
         hdulist.close()
     except Exception as e:
-        print 'header of', filename, 'not updated:'
-        print e
+        print('header of', filename, 'not updated:')
+        print(e)
 #################################################################################################
 def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,_erase='yes'):
     goon='True'
@@ -360,43 +370,43 @@ def display_image(img,frame,_z1,_z2,scale,_xcen=0.5,_ycen=0.5,_xsize=1,_ysize=1,
               sss=iraf.display(img + '[0]', frame, xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase,\
                                    fill='yes', zscale='no', zrange='no', z1=_z1, z2=_z2,Stdout=1)
           except:
-              print ''
-              print '### ERROR: PROBLEM OPENING DS9'
-              print ''
+              print('')
+              print('### ERROR: PROBLEM OPENING DS9')
+              print('')
               goon='False'                 
        else:
         try:  
             sss=iraf.display(img + '[0]', frame, xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase, fill='yes', Stdout=1)
         except:
-            print ''
-            print '### ERROR: PROBLEM OPENING DS9'
-            print ''
+            print('')
+            print('### ERROR: PROBLEM OPENING DS9')
+            print('')
             goon=False
  
        if scale and goon:
-          answ0 = raw_input('>>> Cuts OK ? [y/n] ? [y] ')
+          answ0 = userinput('>>> Cuts OK ? [y/n] ? [y] ')
           if not answ0: answ0='y'
           elif answ0=='no' or answ0=='NO': answ0='n' 
 
           while answ0=='n':
-              _z11=float(string.split(string.split(sss[0])[0],'=')[1])
-              _z22=float(string.split(string.split(sss[0])[1],'=')[1])
-              z11 = raw_input('>>> z1 = ? ['+str(_z11)+'] ? ')
-              z22 = raw_input('>>> z2 = ? ['+str(_z22)+'] ? ')
+              _z11=float(str.split(str.split(sss[0])[0],'=')[1])
+              _z22=float(str.split(str.split(sss[0])[1],'=')[1])
+              z11 = userinput('>>> z1 = ? ['+str(_z11)+'] ? ')
+              z22 = userinput('>>> z2 = ? ['+str(_z22)+'] ? ')
               if not z11: z11=_z11
               else: z11=float(z11)
               if not z22: z22=_z22
               else: z22=float(z22)
-              print z11,z22
+              print(z11,z22)
               sss=iraf.display(img + '[0]',frame,fill='yes', xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase,\
                                    zrange='no', zscale='no', z1=z11, z2=z22, Stdout=1)
-              answ0 = raw_input('>>> Cuts OK ? [y/n] ? [y] ')
+              answ0 = userinput('>>> Cuts OK ? [y/n] ? [y] ')
               if not answ0: answ0='y'
               elif answ0=='no' or answ0=='NO': answ0='n'
        if goon:
-          _z1,_z2=string.split(string.split(sss[0])[0],'=')[1],string.split(string.split(sss[0])[1],'=')[1]
+          _z1,_z2=str.split(str.split(sss[0])[0],'=')[1],str.split(str.split(sss[0])[1],'=')[1]
     else:
-        print 'Warning: image '+str(img)+' not found in the directory '
+        print('Warning: image '+str(img)+' not found in the directory ')
     return _z1,_z2,goon
 
 ###########################################################################
@@ -417,15 +427,15 @@ def readstandard(standardfile):
     magnitude=[]
     for i in liststd:
        if i[0]!='#':
-          star.append(string.split(i)[0])
-          _ra=string.split(string.split(i)[1],':')
-          _dec=string.split(string.split(i)[2],':')
+          star.append(str.split(i)[0])
+          _ra=str.split(str.split(i)[1],':')
+          _dec=str.split(str.split(i)[2],':')
           ra.append((float(_ra[0])+((float(_ra[1])+(float(_ra[2])/60.))/60.))*15)
           if '-' in str(_dec[0]):
              dec.append((-1)*(abs(float(_dec[0]))+((float(_dec[1])+(float(_dec[2])/60.))/60.)))
           else:
              dec.append(float(_dec[0])+((float(_dec[1])+(float(_dec[2])/60.))/60.))
-          try:   magnitude.append(string.split(i)[3])
+          try:   magnitude.append(str.split(i)[3])
           except:  magnitude.append(999)
     return array(star),array(ra),array(dec),array(magnitude)
 
@@ -459,9 +469,9 @@ def readspectrum(img):
         try:
            WAT= head['WAT2_001']
            pix = array(range(1,naxis1+1,1))
-           crpix1=string.split(string.split(WAT,'"')[1])[0]
-           crval1=string.split(string.split(WAT,'"')[1])[3]
-           cdelt1=string.split(string.split(WAT,'"')[1])[4]
+           crpix1=str.split(str.split(WAT,'"')[1])[0]
+           crval1=str.split(str.split(WAT,'"')[1])[3]
+           cdelt1=str.split(str.split(WAT,'"')[1])[4]
            lam = (pix-float(crpix1))*float(cdelt1)+float(crval1)
         except:
            graf=0
@@ -485,11 +495,11 @@ def defsex(filename):
     f.close()   
     ff=open(filename,'w')
     for i in ss:
-        if string.count(i,'PARAMETERS_NAME')==1:
+        if str.count(i,'PARAMETERS_NAME')==1:
             ff.write('PARAMETERS_NAME  "'+lsc.__path__[0]+'/standard/sex/default.param"\n')
-        elif string.count(i,'FILTER_NAME')==1:
+        elif str.count(i,'FILTER_NAME')==1:
             ff.write('FILTER_NAME  "'+lsc.__path__[0]+'/standard/sex/default.conv"\n')
-        elif string.count(i,'STARNNW_NAME')==1:
+        elif str.count(i,'STARNNW_NAME')==1:
             ff.write('STARNNW_NAME "'+lsc.__path__[0]+'/standard/sex/default.nnw"\n')
         else:
             ff.write(i)
@@ -510,27 +520,27 @@ def defswarp(filename,imgname,_combine,gain='',ron='',pixelscale=0.4699,_ra='',_
     f.close()   
     ff=open(filename,'w')
     for i in ss:
-        if string.count(i,'IMAGEOUT_NAME')==1:
+        if str.count(i,'IMAGEOUT_NAME')==1:
             ff.write('IMAGEOUT_NAME    '+str(imgname)+'  # Output filename \n')
-        elif string.count(i,'WEIGHTOUT_NAME')==1:
+        elif str.count(i,'WEIGHTOUT_NAME')==1:
             ff.write('WEIGHTOUT_NAME   '+str(re.sub('.fits','.weight.fits',imgname))+'  # Output weight-map filename  \n')
-        elif string.count(i,'COMBINE_TYPE')==1:
+        elif str.count(i,'COMBINE_TYPE')==1:
             ff.write('COMBINE_TYPE    '+str(_combine)+'  # MEDIAN,AVERAGE,MIN,MAX,WEIGHTED,CHI2 \n')
-        elif string.count(i,'GAIN_DEFAULT')==1:
+        elif str.count(i,'GAIN_DEFAULT')==1:
            if gain:
               ff.write('GAIN_DEFAULT    '+str(gain)+'  # Default gain if no FITS keyword found \n')
            else:     ff.write(i)
-        elif string.count(i,'RDNOISE_DEFAULT')==1:
+        elif str.count(i,'RDNOISE_DEFAULT')==1:
            if ron:
               ff.write('RDNOISE_DEFAULT    '+str(ron)+'  # Default ron if no FITS keyword found \n')
            else:     ff.write(i)
-        elif string.count(i,'PIXEL_SCALE')==1:
+        elif str.count(i,'PIXEL_SCALE')==1:
               ff.write('PIXEL_SCALE    '+str(pixelscale)+','+str(pixelscale)+'  #  \n')
-        elif string.count(i,'PIXELSCALE_TYPE')==1:
+        elif str.count(i,'PIXELSCALE_TYPE')==1:
               ff.write('PIXELSCALE_TYPE MANUAL,MANUAL  #  \n')
-        elif string.count(i,'CENTER_TYPE')==1:
+        elif str.count(i,'CENTER_TYPE')==1:
               ff.write('CENTER_TYPE MANUAL,MANUAL  #  \n')
-        elif string.count(i,'Coordinates of the image center')==1:
+        elif str.count(i,'Coordinates of the image center')==1:
               ff.write('CENTER '+str(_ra)+','+str(_dec)+'  #  \n')
         else:
             ff.write(i)
@@ -686,7 +696,7 @@ def marksn2(img,fitstab,frame=1,fitstab2='',verbose=False):
    if verbose:
  #     print 2.5*log10(_exptime)
       for i in range(0,len(column['ra0'])):
-         print xy[i],column['ra0'][i],column['dec0'][i],column['magp3'][i],column['magp4'][i],column['smagf'][i],column['magp2'][i]
+         print(xy[i],column['ra0'][i],column['dec0'][i],column['magp3'][i],column['magp4'][i],column['smagf'][i],column['magp2'][i])
 
    if fitstab2:
       vector2=[]
@@ -699,7 +709,7 @@ def marksn2(img,fitstab,frame=1,fitstab2='',verbose=False):
 
 ###############################
 
-def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
+def Docosmic_old(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    import time
    start=time.time()
    import lsc
@@ -723,8 +733,8 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
       try:
          out_fits.scale('float32',bzero=0,bscale=1)
       except TypeError as e:
-         print "FITS rescaling failed (but it probably doesn't matter). See Astropy Issue #5955."
-         print e
+         print("FITS rescaling failed (but it probably doesn't matter). See Astropy Issue #5955.")
+         print(e)
       out_fits.writeto(temp_file0, overwrite=True, output_verify='fix')
       ar = fits.getdata(temp_file0)
       lsc.delete(temp_file0)
@@ -735,17 +745,17 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
       if 'gain' in hd:
          gain    = hd['GAIN']
       else:
-         print 'warning GAIN not found'
+         print('warning GAIN not found')
          gain = 1
       if 'saturate' in hd:
          sat     = hd['SATURATE']
       else:
-         print 'warning SATURATE not found'
+         print('warning SATURATE not found')
          sat = 60000
       if 'RDNOISE' in hd:
          rdnoise = hd['RDNOISE']
       else:
-         print 'warning RDNOISE not found'
+         print('warning RDNOISE not found')
          rdnoise = 1
    if '-e91.' in img:
        ar[ar < readkey3(hd, 'datamin')] = sat
@@ -757,16 +767,16 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
        _pssl = gain*noise**2 - rdnoise**2/gain - med # previously subtracted sky level
        ar[ar < -_pssl] = sat                         # change (what will be) negative values to saturated
 
-   print 'gain    sat     noise   sigclip objlim  sigfrac pssl'
-   print '{:<7.1f} {:<7.0f} {:<7.1f} {:<7.1f} {:<7.0f} {:<7.1f} {:<7.2f}'.format(gain, sat, rdnoise, _sigclip, _objlim, _sigfrac, _pssl)
+   print('gain    sat     noise   sigclip objlim  sigfrac pssl')
+   print('{:<7.1f} {:<7.0f} {:<7.1f} {:<7.1f} {:<7.0f} {:<7.1f} {:<7.2f}'.format(gain, sat, rdnoise, _sigclip, _objlim, _sigfrac, _pssl))
 
    niter = 1
    c = lsc.cosmics.cosmicsimage(ar, pssl=_pssl, gain=gain, readnoise=rdnoise, sigclip=5, sigfrac=0.3 , objlim=5, satlevel=sat)
    c.run(maxiter = niter)
 
-   out=re.sub('.fits','.clean.fits',string.split(img,'/')[-1])
-   outmask=re.sub('.fits','.mask.fits',string.split(img,'/')[-1])
-   outsat=re.sub('.fits','.sat.fits',string.split(img,'/')[-1])
+   out=re.sub('.fits','.clean.fits',str.split(img,'/')[-1])
+   outmask=re.sub('.fits','.mask.fits',str.split(img,'/')[-1])
+   outsat=re.sub('.fits','.sat.fits',str.split(img,'/')[-1])
 
    out1=c.cleanarray
    out2=c.cleanarray-c.rawarray
@@ -785,7 +795,114 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
    out_fits = fits.PrimaryHDU(header=hd,data=(out3!=0).astype('uint8'))
    out_fits.writeto(outsat, overwrite=True, output_verify='fix')
 
-   print 'time to do cosmic ray rejection:', time.time()-start
+   print('time to do cosmic ray rejection:', time.time()-start)
+   return out,outmask,outsat
+
+
+############################################
+
+def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
+   import time
+   start=time.time()
+   import lsc
+   import re,os,string
+   import numpy as np
+   import tempfile
+   import sys
+   pyversion = sys.version_info[0]
+
+   ar, hd = fits.getdata(img, header=True)
+
+   if 'TELID' in hd:
+      _tel=hd['TELID']
+   elif 'telescop' in hd:
+      _tel = hd['telescop']
+   else:
+      _tel='extdata'
+
+   if _tel in ['fts','ftn']:
+      temp_file0 = next(tempfile._get_candidate_names())
+      lsc.delete(temp_file0)
+      out_fits = fits.PrimaryHDU(header=hd,data=ar)
+      try:
+         out_fits.scale('float32',bzero=0,bscale=1)
+      except TypeError as e:
+         print("FITS rescaling failed (but it probably doesn't matter). See Astropy Issue #5955.")
+         print(e)
+      out_fits.writeto(temp_file0, overwrite=True, output_verify='fix')
+      ar = fits.getdata(temp_file0)
+      lsc.delete(temp_file0)
+      gain    = hd['GAIN']
+      sat     = 35000
+      rdnoise = hd['RDNOISE']
+   else:
+      if 'gain' in hd:
+         gain    = hd['GAIN']
+      else:
+         print('warning GAIN not found')
+         gain = 1
+      if 'saturate' in hd:
+         sat     = hd['SATURATE']
+      else:
+         print('warning SATURATE not found')
+         sat = 60000
+      if 'RDNOISE' in hd:
+         rdnoise = hd['RDNOISE']
+      else:
+         print('warning RDNOISE not found')
+         rdnoise = 1
+   if '-e91.' in img:
+       ar[ar < readkey3(hd, 'datamin')] = sat
+       _pssl = 0.
+   else:
+       # need to trick LACosmic into using the right sigma for a sky-subtracted image
+       med = np.median(ar)                           # median pixel of image (in ADU)
+       noise = 1.4826*np.median(np.abs(ar - med))    # using median absolute deviation instead of sigma
+       _pssl = gain*noise**2 - rdnoise**2/gain - med # previously subtracted sky level
+       ar[ar < -_pssl] = sat                         # change (what will be) negative values to saturated
+
+   print('gain    sat     noise   sigclip objlim  sigfrac pssl')
+   print('{:<7.1f} {:<7.0f} {:<7.1f} {:<7.1f} {:<7.0f} {:<7.1f} {:<7.2f}'.format(gain, sat, rdnoise, _sigclip, _objlim, _sigfrac, _pssl))
+
+
+   niter = 1
+   out=re.sub('.fits','.clean.fits',str.split(img,'/')[-1])
+   outmask=re.sub('.fits','.mask.fits',str.split(img,'/')[-1])
+   outsat=re.sub('.fits','.sat.fits',str.split(img,'/')[-1])
+   
+   if pyversion <3:
+       c = lsc.cosmics.cosmicsimage(ar, pssl=_pssl, gain=gain, readnoise=rdnoise, sigclip=5, sigfrac=0.3 , objlim=5, satlevel=sat)
+       c.run(maxiter = niter)
+       out1=c.cleanarray
+       out2=c.cleanarray-c.rawarray
+       out3=c.getsatstars()
+       cosmic_mask = (out2!=0)
+   else:
+       import astroscrappy
+       from astroscrappy import detect_cosmics
+       c = detect_cosmics(ar, gain=gain, readnoise=rdnoise, sigclip=_sigclip, sigfrac=_sigfrac , objlim=_objlim, satlevel=sat,verbose=True)
+
+       cosmic_mask = c[0]
+       out1 = c[1]
+       # this way of selecting saturated star is not ideal
+       # we should do something better
+       out3 =    ar > sat  
+
+   out_fits = fits.PrimaryHDU(header=hd,data=out1)
+   out_fits.writeto(out, overwrite=True, output_verify='fix')
+
+   # we are going to register the mask for the template image,
+   # so it makes sense to save it as a float instead of an int
+   if 'temp' in img: pixtype = 'float32'
+   else:             pixtype = 'uint8'
+   out_fits = fits.PrimaryHDU(header=hd,data=cosmic_mask.astype(pixtype))
+   out_fits.writeto(outmask, overwrite=True, output_verify='fix')
+
+   # check if we are using it and maybe don't write it down
+   out_fits = fits.PrimaryHDU(header=hd,data=(out3!=0).astype('uint8'))
+   out_fits.writeto(outsat, overwrite=True, output_verify='fix')
+
+   print('time to do cosmic ray rejection:', time.time()-start)
    return out,outmask,outsat
 
 ##############################################
@@ -809,7 +926,7 @@ def checksnlist(img,listfile):
     lll=[str(rastd[argmin(dd)])+' '+str(decstd[argmin(dd)])]
     from pyraf import iraf
     bbb=iraf.wcsctran('STDIN','STDOUT',img+'[0]',Stdin=lll,inwcs='world',units='degrees degrees',outwcs='logical',columns='1 2',formats='%10.5f %10.5f',Stdout=1)[3]
-    if 'INDEF' not in bbb and float(string.split(bbb)[0])<=_xdimen and float(string.split(bbb)[1])<=_ydimen and float(string.split(bbb)[0])>=0 and float(string.split(bbb)[1])>=0:
+    if 'INDEF' not in bbb and float(str.split(bbb)[0])<=_xdimen and float(str.split(bbb)[1])<=_ydimen and float(str.split(bbb)[0])>=0 and float(str.split(bbb)[1])>=0:
         #print str(std[argmin(dd)])+' in the field '+str(bbb)
         _RA=rastd[argmin(dd)]
         _DEC=decstd[argmin(dd)]

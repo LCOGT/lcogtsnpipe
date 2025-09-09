@@ -22,8 +22,8 @@ if __name__ == '__main__':
         for img in imglist:
             image0, varimg = lsc.sloanimage(img,'sloan','', args.show, args.force)
     elif imgtype =='ps1':
-        print "WARNING: PS1 ingestion works at the moment with single object and filter\n "
-        print "please, do not provide multiple objects and filter in the same query"
+        print("WARNING: PS1 ingestion works at the moment with single object and filter\n ")
+        print("please, do not provide multiple objects and filter in the same query")
 #        if not ps1frames:
 #            sys.exit('ERROR: you need to provide the PS1 files')
 #        else:
@@ -35,7 +35,7 @@ if __name__ == '__main__':
             image0, varimg = lsc.sloanimage(img,'ps1',frames, args.show)
     else:
         image0=''
-        print 'add here ingestion of different images (DES)'
+        print('add here ingestion of different images (DES)')
 
     if image0:
         hdr = fits.getheader(image0)

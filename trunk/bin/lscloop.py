@@ -121,32 +121,32 @@ if __name__ == "__main__":   # main program
                                 'photlco', filetype, args.groupidcode, args.instrument, args.temptel, args.difftype, None, args.targetid)
     if ll:
         if args.stage != 'merge':
-            print '##' * 50
-            print '# IMAGE                                    OBJECT           FILTER           WCS            ' \
-                  ' PSF           PSFMAG    APMAG       ZCAT          MAG      ABSCAT'
+            print('##' * 50)
+            print('# IMAGE                                    OBJECT           FILTER           WCS            ' \
+                  ' PSF           PSFMAG    APMAG       ZCAT          MAG      ABSCAT')
             for i in range(0, len(ll['filename'])):
                 try:
-                    print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
+                    print('%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
                           (ll['filename'][i].replace('.fits', ''), ll['objname'][i], ll['filter'][i],
                            str(ll['wcs'][i]), ll['psf'][i].replace('.fits', ''),
                            str(round(ll['psfmag'][i], 4)), str(round(ll['apmag'][i], 4)), ll['zcat'][i].replace('.cat', ''),
-                           str(round(ll['mag'][i], 4)), ll['abscat'][i].replace('.cat', ''))
+                           str(round(ll['mag'][i], 4)), ll['abscat'][i].replace('.cat', '')))
                 except:
-                    print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
+                    print('%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
                           (ll['filename'][i].replace('.fits', ''), ll['objname'][i], ll['filter'][i],
                            str(ll['wcs'][i]), ll['psf'][i],
                            str(ll['psfmag'][i]), str(ll['apmag'][i]), ll['zcat'][i].replace('.cat', ''),
-                           str(ll['mag'][i]), ll['abscat'][i])
-            print '\n###  total number = ' + str(len(ll['filename']))
+                           str(ll['mag'][i]), ll['abscat'][i]))
+            print('\n###  total number = ' + str(len(ll['filename'])))
             if args.standard:
                 mm = lsc.myloopdef.get_standards(args.epoch, args.name, filters, args.standard, args.match_by_site)
                 for i in range(len(mm['filename'])):
-                    print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
+                    print('%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
                           (str(mm['filename'][i]), str(mm['objname'][i]), str(mm['filter'][i]),
                            str(mm['wcs'][i]), str(mm['psf'][i]),
                            str(mm['psfmag'][i]), str(mm['zcat'][i]), str(mm['mag'][i]),
-                           str(mm['abscat'][i]))
-                print '\n###  total number = ' + str(len(mm['filename']))
+                           str(mm['abscat'][i])))
+                print('\n###  total number = ' + str(len(mm['filename'])))
                 if args.stage not in ['mag', 'abscat', 'local']:
                     ll = mm
             else:
@@ -319,18 +319,18 @@ if __name__ == "__main__":   # main program
             elif args.stage == 'checkdiff':
                 lsc.myloopdef.checkdiff(ll['filename'])
             elif args.stage:
-                print args.stage + ' not defined'
+                print(args.stage + ' not defined')
     # ################################################
         else: # if args.stage == 'merge'
             for epo in np.unique(ll['dayobs']):
-                print '\n#### ' + str(epo)
+                print('\n#### ' + str(epo))
                 ll0 = {key: val[ll['dayobs'] == epo] for key, val in ll.items()}
                 for i in range(0, len(ll0['filename'])):
-                    print '%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
+                    print('%s\t%12s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s\t%9s' % \
                           (str(ll0['filename'][i]), str(ll0['objname'][i]), str(ll0['filter'][i]), str(ll0['wcs'][i]),
                            str(ll0['psf'][i]),
-                           str(ll0['psfmag'][i]), str(ll0['zcat'][i]), str(ll0['mag'][i]), str(ll0['abscat'][i]))
-                print '\n###  total number = ' + str(len(ll0['filename']))
+                           str(ll0['psfmag'][i]), str(ll0['zcat'][i]), str(ll0['mag'][i]), str(ll0['abscat'][i])))
+                print('\n###  total number = ' + str(len(ll0['filename'])))
                 lsc.myloopdef.run_merge(listfile[ll['dayobs'] == epo], args.force) # merge images using lacos and swarp
     else:
-        print '\n### no data selected'
+        print('\n### no data selected')

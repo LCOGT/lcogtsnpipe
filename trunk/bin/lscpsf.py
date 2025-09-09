@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     for img in imglist:
         if os.path.exists(img.replace('.fits', '.psf.fits')) and not option.redo:
-            print img + ': psf already calculated'
+            print(img + ': psf already calculated')
         else:
             if 'optimal' in img: # PyZOGY difference images
                 img_for_psf = img.replace('.fits', '.zogypsf')
@@ -92,18 +92,18 @@ if __name__ == "__main__":
                 result, fwhm, aperture_correction = lsc.lscpsfdef.ecpsf(img_for_psf, fwhm0, option.threshold, psfstars,
                                                    option.distance, option.interactive, psffun, fixaperture,
                                                    catalog, option.datamin, datamax, option.show, make_sn2, max_apercorr=option.max_apercorr)
-                print '\n### ' + str(result)
+                print('\n### ' + str(result))
                 if option.show:
 #                    lsc.util.marksn2(img + '.fits', img + '.sn2.fits', 1, '')
                     iraf.delete('tmp.psf.fit?', verify=False)
                     iraf.seepsf(img.replace('.fits', '.psf'), '_psf.psf')
                     iraf.surface('_psf.psf')
-                    aa = raw_input('>>>good psf [[y]/n] ? ')
+                    aa = lsc.util.userinput('>>>good psf [[y]/n] ? ')
                     if not aa or aa.lower()[0] == 'y':
                         break
                     if aa.lower()[0] == 'n':
                         result = 0
-                        bb = raw_input('If you want to try again, type the new FWHM (+) or datamax (-). Otherwise press enter to continue. ')
+                        bb = lsc.util.userinput('If you want to try again, type the new FWHM (+) or datamax (-). Otherwise press enter to continue. ')
                         try:
                             bb = float(bb)
                         except ValueError:
@@ -117,19 +117,19 @@ if __name__ == "__main__":
 
             iraf.delete("tmp.*", verify="no")
             iraf.delete("_psf.*", verify="no")
-            print  "********** Completed in ", int(time.time() - start_time), "sec"
-            print result
+            print( "********** Completed in ", int(time.time() - start_time), "sec")
+            print(result)
             try:
                 basename = os.path.basename(img)
                 if result == 1:
                     lsc.mysqldef.updatevalue('photlco', 'psf', basename.replace('.fits', '.psf.fits'), basename)
                 else:
-                    print 'psf not good, database not updated '
+                    print('psf not good, database not updated ')
                     lsc.mysqldef.updatevalue('photlco', 'psf', 'X', basename)
                 lsc.mysqldef.updatevalue('photlco', 'fwhm', fwhm, basename)
                 lsc.mysqldef.updatevalue('photlco', 'mag', 9999, basename)
                 lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, basename)
                 lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, basename)
             except:
-                print 'module mysqldef not found'
+                print('module mysqldef not found')
 

@@ -2,14 +2,20 @@
 #######################################################################
 def dbConnect(lhost, luser, lpasswd, ldb):
    import sys
-   import MySQLdb,os,string
+   import os,string
+   
    try:
-      conn = MySQLdb.connect (host = lhost,
+       import MySQLdb as msql
+   except:
+       import pymysql as msql
+
+   try:
+      conn = msql.connect (host = lhost,
                               user = luser,
                             passwd = lpasswd,
                                 db = ldb)
-   except MySQLdb.Error, e:
-      print "Error %d: %s" % (e.args[0], e.args[1])
+   except (msql.Error, e):
+      print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return conn
 
@@ -32,16 +38,21 @@ def getconnection(site):
 
 def getmissing(conn, epoch0, epoch2,telescope,datatable='photlco'):
    import sys
-   import lsc
-   import MySQLdb,os,string
-   print epoch0, epoch2,telescope
+   import os,string
+#   import lsc
    try:
-      cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+      import MySQLdb as msql
+   except:
+      import pymysql as msql
+
+   print(epoch0, epoch2,telescope)
+   try:
+      cursor = conn.cursor (msql.cursors.DictCursor)
       if telescope =='all':
          if epoch2:
-            print "select raw.filename, raw.objname from photlcoraw as raw where "+\
+            print("select raw.filename, raw.objname from photlcoraw as raw where "+\
                 " raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
-                " and NOT EXISTS(select * from "+str(datatable)+" as redu where raw.filename = redu.filename)"
+                " and NOT EXISTS(select * from "+str(datatable)+" as redu where raw.filename = redu.filename)")
             cursor.execute ("select raw.filename, raw.objname from photlcoraw as raw where "+\
                                " raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
                                " and NOT EXISTS(select * from "+str(datatable)+" as redu where raw.filename = redu.filename)")
@@ -52,16 +63,16 @@ def getmissing(conn, epoch0, epoch2,telescope,datatable='photlco'):
       else:
          fntel = telescope.replace('-', '') # 1m0-01 (input) --> 1m001 (in filename)
          if epoch2:  
-            print "select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
+            print("select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
                                " or raw.telescope = '"+telescope+"') and raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)"
+                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
             cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
                                " or raw.telescope = '"+telescope+"') and raw.dayobs < "+str(epoch2)+" and raw.dayobs >= "+str(epoch0)+\
                                " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
          else:
-            print "select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
+            print("select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
                                " or raw.telescope = '"+telescope+"') and raw.dayobs = "+str(epoch0)+\
-                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)"
+                               " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
             cursor.execute ("select raw.filename, raw.objname from photlcoraw raw where (raw.filename like '%"+fntel+"%'"+\
                                " or raw.telescope = '"+telescope+"') and raw.dayobs = "+str(epoch0)+\
                                " and NOT EXISTS(select * from "+str(datatable)+" redu where raw.filename = redu.filename)")
@@ -69,30 +80,39 @@ def getmissing(conn, epoch0, epoch2,telescope,datatable='photlco'):
       if cursor.rowcount == 0:
          pass
       cursor.close ()
-   except MySQLdb.Error, e:
-      print "Error %d: %s" % (e.args[0], e.args[1])
+   except (msql.Error, e):
+      print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return resultSet
 
 def getfromdataraw(conn, table, column, value,column2='*'):
    import sys
-   import MySQLdb,os,string
+   import os,string   
    try:
-      cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+       import MySQLdb as msql
+   except:
+       import pymysql as msql
+       
+   try:
+      cursor = conn.cursor (msql.cursors.DictCursor)
       cursor.execute ("select "+column2+" from "+str(table)+" where "+column+"="+"'"+value+"'")
       resultSet = cursor.fetchall ()
       if cursor.rowcount == 0:
          pass
       cursor.close ()
-   except MySQLdb.Error, e:
-      print "Error %d: %s" % (e.args[0], e.args[1])
+   except (msql.Error, e):
+      print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return resultSet
 
 
 def getlistfromraw(conn, table, column, value1, value2, column2='*', telescope='all'):
-    import MySQLdb
-    cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+    try:
+       import MySQLdb as msql
+    except:
+       import pymysql as msql
+   
+    cursor = conn.cursor(msql.cursors.DictCursor)
     if not value2:
         value2 = value1
     if telescope=='all':
@@ -108,13 +128,17 @@ def getlistfromraw(conn, table, column, value1, value2, column2='*', telescope='
 
 def updatevalue(table,column,value,filename,connection='lcogt2',filename0='filename'):
    import sys
-   import MySQLdb,os,string
+   import os,string
    import lsc
+   try:
+       import MySQLdb as msql
+   except:
+       import pymysql as msql
 
    hostname, username, passwd, database=lsc.mysqldef.getconnection(connection)
    conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
    try:
-      cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+      cursor = conn.cursor (msql.cursors.DictCursor)
       if isinstance(column, list):
          columns = column
       else:
@@ -127,20 +151,24 @@ def updatevalue(table,column,value,filename,connection='lcogt2',filename0='filen
          values = [value]
       column_equals_value = ', '.join(['{}={}'.format(col, val) for col, val in zip(columns, values)])
       query = "UPDATE {} SET {} WHERE {}='{}'".format(table, column_equals_value, filename0, filename)
-      print query
+      print(query)
       cursor.execute(query)
       resultSet = cursor.fetchall ()
       if cursor.rowcount == 0:
          pass
       conn.commit()
       cursor.close ()
-   except MySQLdb.Error, e:
-      print "Error %d: %s" % (e.args[0], e.args[1])
+   except (msql.Error, e):
+      print("Error %d: %s" % (e.args[0], e.args[1]))
 
 ###########################################################################
 
 def insert_values(conn,table,values):
-    import sys,string,os,re,MySQLdb,os,string,datetime
+    import sys,string,os,re,os,string,datetime
+    try:
+       import MySQLdb as msql
+    except:
+       import pymysql as msql
 
     datecreated_tables = ['atels','groups','iaunames','instruments','notes',
                           'obsrequests','photlco','photlcoraw','photpairing',
@@ -167,15 +195,15 @@ def insert_values(conn,table,values):
 
     sql = insertFromDict(table, values)
     try:
-        cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+        cursor = conn.cursor (msql.cursors.DictCursor)
         cursor.execute(sql, values)
         resultSet = cursor.fetchall ()
         if cursor.rowcount == 0:
             pass
         conn.commit()
         cursor.close ()
-    except MySQLdb.Error, e:
-        print "Error %d: %s" % (e.args[0], e.args[1])
+    except (msql.Error, e):
+        print("Error %d: %s" % (e.args[0], e.args[1]))
 
 ########################################################################
 
@@ -218,19 +246,19 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
             os.remove(fullpath + '.fz')
 ############################################################
 
-      exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', string.split(img,'/')[-1],column2='filename')
-      exist2=lsc.mysqldef.getfromdataraw(conn,'photlcoraw','filename', string.split(img,'/')[-1],column2='filename, groupidcode')
+      exist=lsc.mysqldef.getfromdataraw(conn,dataredutable,'filename', str.split(img,'/')[-1],column2='filename')
+      exist2=lsc.mysqldef.getfromdataraw(conn,'photlcoraw','filename', str.split(img,'/')[-1],column2='filename, groupidcode')
       if exist2:
-         print exist2
+         print(exist2)
          _groupidcode=exist2[0]['groupidcode']
       else:
          _groupidcode=''
 
       if exist:
          if force=='yes':
-            print img,database
-            lsc.mysqldef.deleteredufromarchive(string.split(img,'/')[-1],dataredutable)
-            print 'delete line from '+str(database)
+            print(img,database)
+            lsc.mysqldef.deleteredufromarchive(str.split(img,'/')[-1],dataredutable)
+            print('delete line from '+str(database))
             exist = False
             
       if not exist or force =='update':
@@ -256,7 +284,7 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
 
          _telid=lsc.mysqldef.getfromdataraw(conn,'telescopes','name',_tel,column2='id')
          if not _telid:
-           print 'Telescope ',_tel,' not recognized.  Adding to telescopes table.'
+           print('Telescope ',_tel,' not recognized.  Adding to telescopes table.')
            # the short name is needed to calibrate the magnitude with extinction
            lsc.mysqldef.insert_values(conn, 'telescopes', {'name': _tel, 'shortname': readkey3(hdr,'SITEID')})
            
@@ -266,15 +294,15 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
 
          _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
          if not _instid:
-           print 'Instrument ',_inst,' not recognized.  Adding to instruments table.'
+           print('Instrument ',_inst,' not recognized.  Adding to instruments table.')
            lsc.mysqldef.insert_values(conn, 'instruments', {'name': _inst, 'type': guess_instrument_type(_inst)})
            _instid=lsc.mysqldef.getfromdataraw(conn,'instruments','name',_inst,column2='id')
          instid=_instid[0]['id']
          dictionary['instrumentid']=str(instid)
          dictionary['lastunpacked'] = str(datetime.utcnow())
 
-         print dictionary
-         print 'insert reduced'
+         print(dictionary)
+         print('insert reduced')
 
          # we need to update the connection before quering again the database
          hostname, username, passwd, database=lsc.mysqldef.getconnection('lcogt2')
@@ -285,16 +313,17 @@ def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
             lsc.mysqldef.insert_values(conn,dataredutable,dictionary)
          else:
             for voce in dictionary:
-               lsc.mysqldef.updatevalue(dataredutable,voce,dictionary[voce],string.split(img,'/')[-1])
+               lsc.mysqldef.updatevalue(dataredutable,voce,dictionary[voce],str.split(img,'/')[-1])
       else:
-         print 'already ingested'
+         print('already ingested')
 
 ###############################################################################################################################
 
 def getvaluefromarchive(table,column,value,column2):
    import sys
-   import MySQLdb,os,string
+   import os,string
    import lsc
+   
    hostname, username, passwd, database=lsc.mysqldef.getconnection('lcogt2')
    conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
    resultSet=lsc.mysqldef.getfromdataraw(conn, table, column, value,column2)
@@ -307,28 +336,34 @@ def getvaluefromarchive(table,column,value,column2):
 
 def deleteredufromarchive(filename,archive='photlco',column='filename'):
    import sys
-   import MySQLdb,os,string
+   import os,string
    import lsc
+
+   try:
+      import MySQLdb as msql
+   except:
+      import pymysql as msql
+   
    hostname, username, passwd, database=lsc.mysqldef.getconnection('lcogt2')
    conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
 #######
    try:
-      cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+      cursor = conn.cursor (msql.cursors.DictCursor)
       cursor.execute ("delete  from "+str(archive)+" where "+str(column)+"="+"'"+filename+"'")
       resultSet = cursor.fetchall ()
       if cursor.rowcount == 0:
          pass
       conn.commit()
       cursor.close ()
-   except MySQLdb.Error, e:
-      print "Error %d: %s" % (e.args[0], e.args[1])
+   except (msql.Error, e):
+      print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return resultSet
 
 ###################################################################################################################
 def updateDatabase(tarfile):
    import string,os,re,math,sys,shutil,glob,socket,pickle
-   import MySQLdb
+#   import MySQLdb
    host=socket.gethostname()
    import ntt
    from ntt.util import readkey3,readhdr
@@ -370,19 +405,19 @@ def updateDatabase(tarfile):
                   else:
                      updatevalue(table,column,hh[column],_input)
             else:
-               print 'warning: command  not recognise'
+               print('warning: command  not recognise')
          except:
-            print '#####################'
-            print mydict2[i]
-            print 'problems'
-      print fitsfile
-      dir1='/data/obsdata/y20'+string.split(tarfile,'_')[2][-2:]+'/'
-      dir2='/data/obsdata/y20'+string.split(tarfile,'_')[2][-2:]+'/'+string.split(tarfile,'_')[2]+'/'
+            print('#####################')
+            print(mydict2[i])
+            print('problems')
+      print(fitsfile)
+      dir1='/data/obsdata/y20'+str.split(tarfile,'_')[2][-2:]+'/'
+      dir2='/data/obsdata/y20'+str.split(tarfile,'_')[2][-2:]+'/'+str.split(tarfile,'_')[2]+'/'
       if not os.path.isdir(dir1):  os.mkdir(dir1)
       if not os.path.isdir(dir2):  os.mkdir(dir2)
       for img in fitsfile:
          arcfile=readkey3(readhdr(img),'ARCFILE')
-         print arcfile
+         print(arcfile)
          try:
             bbbb=getvaluefromarchive('datarawNTT','filename',arcfile,'*')
          except:  bbbb=''
@@ -390,7 +425,7 @@ def updateDatabase(tarfile):
             directoryraw=bbbb['filepath']
             directoryreduced=re.sub('raw/','',directoryraw)+'reduced/'
          else:     
-            dir3=dir2+string.split(tarfile,'_')[3]+'_'+string.split(tarfile,'_')[4]+'/'
+            dir3=dir2+str.split(tarfile,'_')[3]+'_'+str.split(tarfile,'_')[4]+'/'
             if not os.path.isdir(dir3):  os.mkdir(dir3)
             directoryreduced=dir3+'reduced/'
 
@@ -403,7 +438,14 @@ def updateDatabase(tarfile):
 
 def getfromcoordinate(conn, table, ra0, dec0,distance):
    import sys
-   import MySQLdb,os,string
+   import os,string
+
+   try:
+      import MySQLdb as msql
+   except:
+      import pymysql as msql
+
+   
    #  this is acually not needed
    if table=='targets':
       ra1='ra0'
@@ -413,7 +455,7 @@ def getfromcoordinate(conn, table, ra0, dec0,distance):
       dec1='dec0'
    ####
    try:
-      cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+      cursor = conn.cursor (msql.cursors.DictCursor)
       command=["set @sc = pi()/180","set @ra = "+str(ra0), "set @dec = "+str(dec0),"set @distance = "+str(distance),"SELECT *,abs(2*asin( sqrt( sin((a.dec0-@dec)*@sc/2)*sin((a.dec0-@dec)*@sc/2) + cos(a.dec0*@sc)*cos(@dec*@sc)*sin((a.ra0-@ra)*@sc/2)*sin((a.ra0-@ra)*@sc/2.0) )))*180/pi() as hsine FROM "+str(table)+" as a HAVING hsine<@distance order by a.ra0 desc"]
       for ccc in command:
          cursor.execute (ccc)
@@ -421,8 +463,8 @@ def getfromcoordinate(conn, table, ra0, dec0,distance):
       if cursor.rowcount == 0:
          pass
       cursor.close ()
-   except MySQLdb.Error, e:
-      print "Error %d: %s" % (e.args[0], e.args[1])
+   except (msql.Error, e):
+      print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return resultSet
 
@@ -462,7 +504,7 @@ def targimg(img='', hdrt=None):
     ########  define targetid  ##################
     _targetid=lsc.mysqldef.gettargetid(_object,'','',lsc.myloopdef.conn,.01,False)
     if not _targetid:
-        print '# no target with this name '+_object
+        print('# no target with this name '+_object)
 
         if type(_ra) is not float or type(_dec) is not float:
             error = '\n\033[1m\033[91mERROR: \033[0m' \
@@ -489,7 +531,7 @@ def targimg(img='', hdrt=None):
 
         _targetid=lsc.mysqldef.gettargetid('',_ra,_dec,lsc.myloopdef.conn,.01,False)
         if _targetid:
-            print '# target at this coordinate with a different name, add name '+str(_ra)+' '+str(_dec)
+            print('# target at this coordinate with a different name, add name '+str(_ra)+' '+str(_dec))
             dictionary1={'name':_object,'targetid':_targetid,'groupidcode':_group}
             lsc.mysqldef.insert_values(lsc.myloopdef.conn,'targetnames',dictionary1)
 
@@ -498,15 +540,15 @@ def targimg(img='', hdrt=None):
                           'columnmodified': 'New Row', 'newvalue': 'Multiple'}
             lsc.mysqldef.insert_values(lsc.myloopdef.conn,'useractionlog',dictionary3)
         else:
-            print 'not found targetid with ra and dec '+str(_ra)+' '+str(_dec)
+            print('not found targetid with ra and dec '+str(_ra)+' '+str(_dec))
 
     else:
-        print 'found name= '+_object+'  targetid= '+str(_targetid)
+        print('found name= '+_object+'  targetid= '+str(_targetid))
     ##############################################
 
     if not _targetid:
           # no target
-          print 'add new target '+str(_ra)+' '+str(_dec)+' '+_object
+          print('add new target '+str(_ra)+' '+str(_dec)+' '+_object)
           dictionary={'ra0':_ra,'dec0':_dec}
           lsc.mysqldef.insert_values(lsc.myloopdef.conn,'targets',dictionary)
           bb=lsc.mysqldef.getfromcoordinate(lsc.myloopdef.conn, 'targets', _ra, _dec,.000156)
@@ -525,13 +567,13 @@ def targimg(img='', hdrt=None):
 
 
           _targetid=bb[0]['id']
-          print '\n add a target '+str(_ra)+' '+str(_dec)+' '+str(bb[0]['id'])
+          print('\n add a target '+str(_ra)+' '+str(_dec)+' '+str(bb[0]['id']))
 
     if _targetid and _group:
        cc=lsc.mysqldef.getfromdataraw(lsc.myloopdef.conn,'permissionlog','targetid', str(_targetid),column2='groupname')
        if len(cc)==0:
           _JDn=lsc.mysqldef.JDnow()
-          print img
+          print(img)
           dictionary2={'targetid':_targetid,'jd':_JDn,'groupname':_group}
           lsc.mysqldef.insert_values(lsc.myloopdef.conn,'permissionlog',dictionary2)
     return _targetid
@@ -589,27 +631,39 @@ def getsky(data):
 
 def getlike(conn, table, column, value,column2='*'):
    import sys
-   import MySQLdb,os,string
+   import os,string
+
    try:
-      cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+      import MySQLdb as msql
+   except:
+      import pymysql as msql
+      
+   try:
+      cursor = conn.cursor (msql.cursors.DictCursor)
       cursor.execute ("select "+column2+" from "+str(table)+" where "+column+" like "+"'%"+value+"%'")
       resultSet = cursor.fetchall ()
       if cursor.rowcount == 0:
          pass
       cursor.close ()
-   except MySQLdb.Error, e:
-      print "Error %d: %s" % (e.args[0], e.args[1])
+   except (msql.Error, e):
+      print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return resultSet
 
 ##################################################################
 
 def query(command,conn):
-   import MySQLdb,os,string
+   import os,string
+
+   try:
+      import MySQLdb as msql
+   except:
+      import pymysql as msql
+
    lista=''
    #from lsc import conn
    try:
-        cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+        cursor = conn.cursor (msql.cursors.DictCursor)
         for i in command:
             cursor.execute (i)
             lista = cursor.fetchall ()
@@ -617,8 +671,8 @@ def query(command,conn):
                 pass
         conn.commit()
         cursor.close ()
-   except MySQLdb.Error, e: 
-        print "Error %d: %s" % (e.args[0], e.args[1])
+   except (msql.Error, e): 
+        print("Error %d: %s" % (e.args[0], e.args[1]))
    return lista
 
 ###############################
@@ -628,9 +682,10 @@ def JDnow(datenow='',verbose=False):
    _JD0=2455927.5
    if not datenow:
       datenow=datetime.datetime(time.gmtime().tm_year, time.gmtime().tm_mon, time.gmtime().tm_mday, time.gmtime().tm_hour, time.gmtime().tm_min, time.gmtime().tm_sec)
-   _JDtoday=_JD0+(datenow-datetime.datetime(2012, 01, 01,00,00,00)).seconds/(3600.*24)+\
-             (datenow-datetime.datetime(2012, 01, 01,00,00,00)).days
-   if verbose: print 'JD= '+str(_JDtoday)
+   _JDtoday=_JD0+(datenow-datetime.datetime(2012, 1,  1, 00,00,00)).seconds/(3600.*24)+\
+             (datenow-datetime.datetime(2012, 1, 1, 00,00,00)).days
+   if verbose:
+      print('JD= '+str(_JDtoday))
    return _JDtoday
 ###################################
 
@@ -641,9 +696,10 @@ def MJDnow(datenow='',verbose=False):
    _JD0=55927.
    if not datenow:
       datenow=datetime.datetime(time.gmtime().tm_year, time.gmtime().tm_mon, time.gmtime().tm_mday, time.gmtime().tm_hour, time.gmtime().tm_min, time.gmtime().tm_sec)
-   _JDtoday=_JD0+(datenow-datetime.datetime(2012, 01, 01,00,00,00)).seconds/(3600.*24)+\
-             (datenow-datetime.datetime(2012, 01, 01,00,00,00)).days
-   if verbose: print 'JD= '+str(_JDtoday)
+   _JDtoday=_JD0+(datenow-datetime.datetime(2012, 1, 1, 00,00,00)).seconds/(3600.*24)+\
+             (datenow-datetime.datetime(2012, 1, 1, 00,00,00)).days
+   if verbose:
+      print('JD= '+str(_JDtoday))
    return _JDtoday
 ###################################
 
@@ -659,8 +715,8 @@ def gettargetid(_name,_ra,_dec,conn,_radius=.01,verbose=False):
          _ra,_dec=lsc.deg2HMS(_ra,_dec) 
       lista=lsc.mysqldef.getfromcoordinate(conn, 'targets', _ra, _dec,_radius)
       if verbose:
-         print _ra,_dec,_radius
-         print lista
+         print(_ra,_dec,_radius)
+         print(lista)
    if lista:
         ll0={}
         for jj in lista[0].keys(): ll0[jj]=[]
@@ -679,7 +735,7 @@ def gettargetid(_name,_ra,_dec,conn,_radius=.01,verbose=False):
    else:
         _targetid=''
         if verbose:   
-            print 'no objects'
+            print('no objects')
    return _targetid
 
 ###############################################################
@@ -691,17 +747,17 @@ def get_snex_uid(interactive=True, return_fullname=False):
         snex_uid = usersdict[0]['id']
         fullname = usersdict[0]['firstname'] + ' ' + usersdict[0]['lastname']
     else:
-        print 'Your username is not associated with a SNEx account.'
+        print('Your username is not associated with a SNEx account.')
         snex_uid = None
         fullname = None
         if interactive:
-            snex_user = raw_input('If you have a SNEx username, input it here. Otherwise, press enter. ')
+            snex_user = lsc.util.userinput('If you have a SNEx username, input it here. Otherwise, press enter. ')
             if snex_user:
                 usersdict = query(['select id, firstname, lastname from users where name="' + snex_user + '"'], lsc.myloopdef.conn)
                 if usersdict:
                   snex_uid = usersdict[0]['id']
                   fullname = usersdict[0]['firstname'] + ' ' + usersdict[0]['lastname']
                 else:
-                  print 'SNEx username not found.'
+                  print('SNEx username not found.')
     if return_fullname: return snex_uid, fullname
     else: return snex_uid

@@ -71,8 +71,8 @@ if __name__ == "__main__":
     _interactive = option.interactive
     arterr = ''
 
-    _ra = string.split(_ra,',')
-    _dec = string.split(_dec,',')
+    _ra = str.split(_ra,',')
+    _dec = str.split(_dec,',')
 
     if option.recenter == False:
         _recenter = True
@@ -121,7 +121,7 @@ if __name__ == "__main__":
             hdr = lsc.util.readhdr(imglong)
             _instrument = lsc.util.readkey3(hdr, 'instrume')
             filter = lsc.util.readkey3(hdr, 'filter')
-            print '##########  ' + str(filter) + '  ##############'
+            print('##########  ' + str(filter) + '  ##############')
             ###################        added for difference images ###############
             DM = 0
             if 'CONVOL00' in hdr:
@@ -129,9 +129,9 @@ if __name__ == "__main__":
                     _difexp  = lsc.util.readkey3(hdr, 'exptime')
                     _targexp = lsc.util.readkey3(hdr, 'exptarg')
                     _tempexp = lsc.util.readkey3(hdr, 'exptemp')
-                    print _difexp, _targexp, _tempexp
+                    print(_difexp, _targexp, _tempexp)
                     DM = 2.5*log10(_targexp)-2.5*log10(_difexp)
-            print '#### ',str(DM)
+            print('#### ',str(DM))
             ######################################################################
             if not psflist:
                 psfimage = img + '.psf'
@@ -146,7 +146,7 @@ if __name__ == "__main__":
                     skip = 1
             else:
                 sys.exit('psf not computed')
-            print psfimage
+            print(psfimage)
             if not os.path.exists(psfimage + '.fits'):
                 sys.exit('missing psf file')
             if redo:
@@ -157,11 +157,11 @@ if __name__ == "__main__":
             #######################  plot image, find fwhm  #####################################
             if skip == 0:
                 ######    set database value to 9999 before calculating them again ##################
-                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfdmag', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfx', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'psfy', 9999, string.split(img, '/')[-1] + '.fits')
-                lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, string.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfmag', 9999, str.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfdmag', 9999, str.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfx', 9999, str.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'psfy', 9999, str.split(img, '/')[-1] + '.fits')
+                lsc.mysqldef.updatevalue('photlco', 'apmag', 9999, str.split(img, '/')[-1] + '.fits')
 
                 iraf.set(stdimage='imt2048')
                 if _interactive:
@@ -180,13 +180,13 @@ if __name__ == "__main__":
                                     hostname, username, passwd, database = lsc.mysqldef.getconnection('lcogt2')
                                     conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
                                 except ImportError as e:
-                                    print e
-                                    print 'try running one of these:'
-                                    print 'pip install mysql-python'
-                                    print 'conda install mysql-python'
+                                    print(e)
+                                    print('try running one of these:')
+                                    print('pip install mysql-python')
+                                    print('conda install mysql-python')
                                 except Exception as e:
-                                    print e
-                                    print '### warning: problem connecting to the database'
+                                    print(e)
+                                    print('### warning: problem connecting to the database')
                                 template_filename = hdr['TEMPLATE']
                                 template_db_info = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', str(template_filename), '*')
                                 template_filepath = template_db_info[0]['filepath']  
@@ -207,16 +207,16 @@ if __name__ == "__main__":
                         fwhm0 = lsc.util.readkey3(hdr2, 'PSF_FWHM') / (pixelscale * lsc.util.readkey3(hdr2, 'CCDXBIN'))
                     elif 'CCDSUM' in hdr2:
                         fwhm0 = lsc.util.readkey3(hdr2, 'PSF_FWHM') / (
-                        pixelscale * int(string.split(lsc.util.readkey3(hdr2, 'CCDSUM'))[0]))
+                        pixelscale * int(str.split(lsc.util.readkey3(hdr2, 'CCDSUM'))[0]))
                     else:
                         fwhm0 = lsc.util.readkey3(hdr2, 'PSF_FWHM') / (pixelscale)
                 else:
                     fwhm0 = lsc.util.readkey3(hdr2, 'PSF_FWHM') / pixelscale
                 if not apco0:
-                    print '\n### warning: apco not found'
+                    print('\n### warning: apco not found')
                     apco0 = 0
                 if not fwhm0:
-                    print '\n### warning: fwhm not found'
+                    print('\n### warning: fwhm not found')
                     fwhm0 = 6
             ##################################################################################
 
@@ -225,15 +225,15 @@ if __name__ == "__main__":
             if skip == 0:
                 if not _ra0 and not _dec0:
                     try:
-                        print 'no box coordinate from input, take coordinate from database'
+                        print('no box coordinate from input, take coordinate from database')
                         _ra0, _dec0, _ = lsc.util.checksndb(img + '.fits')
                     except:
-                        print 'no coordinate from database'
+                        print('no coordinate from database')
                         _ra0, _dec0 = '', ''
                 if not _ra[0] and not _dec[0]:
-                    print 'no sn coordinate from input'
+                    print('no sn coordinate from input')
                     if _ra0:
-                        print 'use coordinate from the box for the SN'
+                        print('use coordinate from the box for the SN')
                         _ra= [_ra0]
                     else:
                         sys.exit('no box and sn coordinate ')
@@ -259,13 +259,13 @@ if __name__ == "__main__":
 
                     for kk in iraf.fields('tmp.pix', '1,2', Stdout=1):
                         if kk:
-                            xxsn.append(string.split(kk)[0])
-                            yysn.append(string.split(kk)[1])
+                            xxsn.append(str.split(kk)[0])
+                            yysn.append(str.split(kk)[1])
 
                     xxsn = array(xxsn,float)
                     yysn = array(yysn,float)
 
-                    print 'SN coordinate ',xxsn, yysn
+                    print('SN coordinate ',xxsn, yysn)
 
                 if _ra0 and _dec0:
                     os.system('rm -rf tmp.*')
@@ -275,8 +275,8 @@ if __name__ == "__main__":
                     if _show:
                         iraf.tvmark(1, 'tmp.pix', mark="circle", number='yes', radii=10, nxoffse=5, nyoffse=5,
                                            color=214, txsize=2)
-                    xx0, yy0 = string.split(iraf.fields('tmp.pix', '1,2', Stdout=1)[2])
-                    print 'box coordinate ',xx0, yy0
+                    xx0, yy0 = str.split(iraf.fields('tmp.pix', '1,2', Stdout=1)[2])
+                    print('box coordinate ',xx0, yy0)
                     os.system('rm -rf tmp.*')
                 else:
                     xx0, yy0 = '', ''
@@ -287,8 +287,8 @@ if __name__ == "__main__":
                 if _interactive:
                     repeat = 'y'
                     while repeat == 'y':
-                        print "_____________________________________________"
-                        print "  MARK SN REGION WITH - x -, EXIT  - q -"
+                        print("_____________________________________________")
+                        print("  MARK SN REGION WITH - x -, EXIT  - q -")
                         try:
                             iraf.imexamine(img + '.fits', 1, wcs='logical', logfile='tmp.log', keeplog=True)
                             xytargets = iraf.fields('tmp.log', '1,2', Stdout=1)
@@ -299,7 +299,7 @@ if __name__ == "__main__":
                             ff.write(str(xx0) + ' ' + str(yy0) + ' -1' + ' \n')
                             ff.close()
                             iraf.tvmark(1, 'tmplabel', autol='no', mark="cross", inter='no', label='no', txsize=4)
-                            repeat = raw_input('### repeat selection ? [y/n] ? [n] ')
+                            repeat = lsc.util.userinput('### repeat selection ? [y/n] ? [n] ')
                             if not repeat:
                                 repeat = 'n'
                             elif repeat == 'yes':
@@ -308,8 +308,8 @@ if __name__ == "__main__":
                                 repeat = 'y'
                         except:
                             #x = y = value = 0
-                            print '### WARNING: SN REGION NOT SELECTED !!!'
-                            repeat = raw_input('### repeat selection ? [y/n] ? [n] ')
+                            print('### WARNING: SN REGION NOT SELECTED !!!')
+                            repeat = lsc.util.userinput('### repeat selection ? [y/n] ? [n] ')
                             if not repeat:    repeat = 'n'
                             if repeat in ['Y', 'y', 'YES', 'yes', 'Yes']:
                                 repeat = 'y'
@@ -334,7 +334,7 @@ if __name__ == "__main__":
                 else:
                     repeat = 'n'
                     while repeat in ['n','no','NO','N']:
-                        size = raw_input('Size of the cut frame (fwhm) [' + str(_size) + '] ? ')
+                        size = lsc.util.userinput('Size of the cut frame (fwhm) [' + str(_size) + '] ? ')
                         if not size:
                             size = _size
                         else:
@@ -344,7 +344,7 @@ if __name__ == "__main__":
                         iraf.set(stdimage='imt512')
                         _tmp1, _tmp2, goon = lsc.util.display_image('original.fits', 1, '', '', False, _xsize=.5,
                                                                     _ysize=.5)
-                        repeat = raw_input('### ok ? [y/n] ? [y] ')
+                        repeat = lsc.util.userinput('### ok ? [y/n] ? [y] ')
                         if not repeat:
                             repeat = 'y'
                 x1 = float(xx0) - size * fwhm0
@@ -359,14 +359,14 @@ if __name__ == "__main__":
                     z11, z22 = _z11, _z22
                 if _interactive:
                     answ = 'y'
-                    answ = raw_input(">>>>> Cuts OK [y/n] [y]?")
+                    answ = lsc.util.userinput(">>>>> Cuts OK [y/n] [y]?")
                     if not answ:
                         answ = 'y'
                     elif answ == 'no':
                         answ = 'n'
                     while answ == 'n':
-                        z11 = raw_input('>>> z1 = ? [' + str(_z11) + '] ? ')
-                        z22 = raw_input('>>> z2 = ? [' + str(_z22) + '] ? ')
+                        z11 = lsc.util.userinput('>>> z1 = ? [' + str(_z11) + '] ? ')
+                        z22 = lsc.util.userinput('>>> z2 = ? [' + str(_z22) + '] ? ')
                         if not z11:
                             z11 = _z11
                         else:
@@ -376,7 +376,7 @@ if __name__ == "__main__":
                         else:
                             z22 = float(z22)
                         _z11, _z22, goon = lsc.util.display_image('original.fits', 1, z11, z22, False)
-                        answ = raw_input(">>>>> Cuts OK [y/n] [y]?")
+                        answ = lsc.util.userinput(">>>>> Cuts OK [y/n] [y]?")
                         if not answ:
                             answ = 'y'
                         elif answ == 'no':
@@ -387,8 +387,8 @@ if __name__ == "__main__":
             ########################################  write  SN coordinates in coo file  ########################
             if skip == 0:
                 if not _interactive:
-                    #_dimension = string.split((string.split(iraf.imheader('original', Stdout=1)[0], ']')[0]), '[')[1]
-                    #aa, bb = string.split(_dimension, ',')
+                    #_dimension = str.split((str.split(iraf.imheader('original', Stdout=1)[0], ']')[0]), '[')[1]
+                    #aa, bb = str.split(_dimension, ',')
                     #aa, bb = float(aa) / 2, float(bb) / 2
                     vector=[]
                     for ii in range(0,len(xxsn)):
@@ -406,15 +406,15 @@ if __name__ == "__main__":
                     answ0 = 'n'
                     while answ0 == 'n':
                         _tmp1, _tmp2, goon = lsc.util.display_image('original.fits', 1, z11, z22, False)
-                        print "   ", str(z11), str(z22)
-                        print "__________________________________________________"
-                        print "IDENTIFY SN AND CO-STARS(S) WITH - x -, EXIT - q -"
-                        print "__________________________________________________"
-                        print " 1 1 'ID. SN AND CO-STAR(S) WITH -x- EXIT -q-'"
+                        print("   ", str(z11), str(z22))
+                        print("__________________________________________________")
+                        print("IDENTIFY SN AND CO-STARS(S) WITH - x -, EXIT - q -")
+                        print("__________________________________________________")
+                        print(" 1 1 'ID. SN AND CO-STAR(S) WITH -x- EXIT -q-'")
                         lsc.util.delete("tmplabel")
                         vector = iraf.imexamine('original.fits', 1, wcs='logical', xformat='', yformat='',
                                                 use_display='no', Stdout=1)
-                        if string.count(vector[0], 'z1') == 1: vector = vector[1:]
+                        if str.count(vector[0], 'z1') == 1: vector = vector[1:]
                         ff = open('tmplabel', 'w')
                         for i in vector:
                             ff.write(i + ' \n')
@@ -423,7 +423,7 @@ if __name__ == "__main__":
                             iraf.tvmark(1, 'tmplabel', autol='no', mark="circle", radii=10, inter='no',
                                         label='no', number='yes', pointsize=20, txsize=2, color=204)
                         os.system('cp tmplabel ' + img + '.sn.coo')
-                        answ0 = raw_input(">>>>> SN AND CO-STARS(S) IDENTIFICATIONS OK [y/n] [y]?")
+                        answ0 = lsc.util.userinput(">>>>> SN AND CO-STARS(S) IDENTIFICATIONS OK [y/n] [y]?")
                         if not answ0:
                             answ0 = 'y'
                         elif answ0 == 'no':
@@ -433,7 +433,7 @@ if __name__ == "__main__":
 
             if skip == 0:
                 ############################ BACKGROUND FIT   ###############################
-                print ' ************  background fit **********************'
+                print(' ************  background fit **********************')
                 answ0 = 'n'
                 while answ0 == 'n':
                     lsc.util.delete("sky.fits,bg.fits,bgs.fits,sn.fits,residual.fits")
@@ -441,20 +441,20 @@ if __name__ == "__main__":
                     nax = int(getheader('original.fits')['NAXIS1'])
                     nay = int(getheader('original.fits')['NAXIS2'])
                     if len(vector) == 1:
-                        xb, yb, value = string.split(vector[0])
+                        xb, yb, value = str.split(vector[0])
                         checkleng0 = 'yes'
                         while checkleng0 == 'yes':
                             if not _interactive:
                                     leng0 = _fb
                             else:
-                                leng0 = raw_input('>>> length of square for background in units of FWHM [3] ? ')
+                                leng0 = lsc.util.userinput('>>> length of square for background in units of FWHM [3] ? ')
                                 if not leng0:
                                     leng0 = 3
                             try:
                                 float(leng0)
                                 checkleng0 = 'no'
                             except:
-                                print 'WARNING: the FWHM should be a number !!!!'
+                                print('WARNING: the FWHM should be a number !!!!')
                                 checkleng0 == 'yes'
                         if _show:
                             iraf.tvmark(1, img + ".sn.coo", auto='no', mark="rectangle",
@@ -482,12 +482,12 @@ if __name__ == "__main__":
                                     xbgord0 = _xbgord0
                                     ybgord0 = _ybgord0
                             else:
-                                xbgord0 = raw_input('>>> Order of function in x for bg fit [' + str(_xbgord0) + '] ? ')
+                                xbgord0 = lsc.util.userinput('>>> Order of function in x for bg fit [' + str(_xbgord0) + '] ? ')
                                 if not xbgord0:
                                     xbgord0 = _xbgord0
                                 else:
                                     _xbgord0 = xbgord0
-                                ybgord0 = raw_input(
+                                ybgord0 = lsc.util.userinput(
                                     '>>> Order of function in y for bg fit ? [' + str(_ybgord0) + '] ? ')
                                 if not ybgord0:
                                     ybgord0 = _ybgord0
@@ -498,13 +498,13 @@ if __name__ == "__main__":
                                 float(ybgord0)
                                 checkorder = 'no'
                             except:
-                                print 'WARNING: value not valid !!'
+                                print('WARNING: value not valid !!')
                                 checimsurfitkorder = 'yes'
                         iraf.imsurfit("original", "bg", xorder=xbgord0, yorder=ybgord0, regions="section",
                                       section="sec")
                     else:
                         if not _interactive:
-                            print 'select'
+                            print('select')
                             xb1 = int(min(xxsn) - fwhm0*_fb)
                             xb2 = int(max(xxsn) + fwhm0*_fb)
                             yb1 = int(min(yysn) - fwhm0*_fb)
@@ -516,17 +516,17 @@ if __name__ == "__main__":
                             ff = open('tmplabel', 'w')
                             ff.write('')
                             ff.close()
-                            print ">>>  Mark corners of bg-region with  >b<, exit  >q<"
+                            print(">>>  Mark corners of bg-region with  >b<, exit  >q<")
                             iraf.tvmark(1, "tmplabel", autol='no', mark="none", inter='no', label='yes', txsize=2,
                                         color=204)
                             iraf.tvmark(1, "", logfile="tmptbl", autol='yes', mark="cross", inter='yes', color=204)
                             ff = open('tmptbl', 'r')
                             ss = ff.readlines()
                             ff.close()
-                            xb1 = int(float(string.split(ss[-2])[0]))
-                            yb1 = int(float(string.split(ss[-2])[1]))
-                            xb2 = int(float(string.split(ss[-1])[0]))
-                            yb2 = int(float(string.split(ss[-1])[1]))
+                            xb1 = int(float(str.split(ss[-2])[0]))
+                            yb1 = int(float(str.split(ss[-2])[1]))
+                            xb2 = int(float(str.split(ss[-1])[0]))
+                            yb2 = int(float(str.split(ss[-1])[1]))
 
                         sec = "1 " + str(xb1) + " 1 " + str(nay) + '\n'
                         sec = sec + str(xb2) + ' ' + str(nax) + " 1 " + str(nay) + '\n'
@@ -548,12 +548,12 @@ if __name__ == "__main__":
                                     xbgord0 = _xbgord0
                                     ybgord0 = _ybgord0
                             else:
-                                xbgord0 = raw_input('>>> Order of function in x for bg fit [' + str(_xbgord0) + '] ? ')
+                                xbgord0 = lsc.util.userinput('>>> Order of function in x for bg fit [' + str(_xbgord0) + '] ? ')
                                 if not xbgord0:
                                     xbgord0 = _xbgord0
                                 else:
                                     _xbgord0 = xbgord0
-                                ybgord0 = raw_input('>>> Order of function in y for bg fit [' + str(_ybgord0) + '] ? ')
+                                ybgord0 = lsc.util.userinput('>>> Order of function in y for bg fit [' + str(_ybgord0) + '] ? ')
                                 if not ybgord0:
                                     ybgord0 = _ybgord0
                                 else:
@@ -563,7 +563,7 @@ if __name__ == "__main__":
                                 float(ybgord0)
                                 checkorder = 'no'
                             except:
-                                print 'WARNING: value not valid !!'
+                                print('WARNING: value not valid !!')
                                 checkorder = 'yes'
                         iraf.imsurfit("original", "bg", xorder=xbgord0, yorder=ybgord0, regions="sections",
                                       sections="sec")
@@ -603,14 +603,14 @@ if __name__ == "__main__":
                     if not _interactive:
                         answ0 = 'y'
                     else:
-                        answ0 = raw_input(">>> Background fit OK [y/n] [y] ?")
+                        answ0 = lsc.util.userinput(">>> Background fit OK [y/n] [y] ?")
                         if not answ0:
                             answ0 = 'y'
                         elif answ0 == 'no':
                             answ0 = 'n'
 
                 ####################################    FITSN        ###################################
-                print img, psfimage, 'xxxxx'
+                print(img, psfimage, 'xxxxx')
                 if _dmax is None:
                     _dmax = lsc.util.readkey3(hdr, 'datamax')
                 if _dmin is None and 'optimal' in img:
@@ -623,7 +623,7 @@ if __name__ == "__main__":
                 #################       Iterate Beckground    ###################################
                 if _interactive:
                     if not _numiter:
-                        answ0 = raw_input(">>> Iterate on background [y/n] [y] ?")
+                        answ0 = lsc.util.userinput(">>> Iterate on background [y/n] [y] ?")
                         if not answ0: answ0 = 'y'
                     elif _numiter >= 1:
                         answ0 = 'y'
@@ -638,9 +638,9 @@ if __name__ == "__main__":
                 _count = 0
                 while answ0 == 'y':
                     _count = _count + 1
-                    print '######'
-                    print '###### iteration number  ' + str(_count)
-                    print '######'
+                    print('######')
+                    print('###### iteration number  ' + str(_count))
+                    print('######')
                     lsc.util.delete("sn.fits,residual.fits,snfit.fits,tmp.fits")
                     checkorder = 'yes'
                     while checkorder == 'yes':
@@ -652,12 +652,12 @@ if __name__ == "__main__":
                                 xbgord0 = _xbgord0
                                 ybgord0 = _ybgord0
                         else:
-                            xbgord0 = raw_input('>>> Order of function in x for bg fit [' + str(_xbgord0) + '] ? ')
+                            xbgord0 = lsc.util.userinput('>>> Order of function in x for bg fit [' + str(_xbgord0) + '] ? ')
                             if not xbgord0:
                                 xbgord0 = _xbgord0
                             else:
                                 _xbgord0 = xbgord0
-                            ybgord0 = raw_input('>>> Order of function in x for bg fit [' + str(_ybgord0) + '] ? ')
+                            ybgord0 = lsc.util.userinput('>>> Order of function in x for bg fit [' + str(_ybgord0) + '] ? ')
                             if not ybgord0:
                                 ybgord0 = _ybgord0
                             else:
@@ -667,7 +667,7 @@ if __name__ == "__main__":
                             float(ybgord0)
                             checkorder = 'no'
                         except:
-                            print 'WARNING: value not valid !!'
+                            print('WARNING: value not valid !!')
                             checkorder = 'yes'
                     iraf.imsurfit("skyfit", "tmp", regions="all", xorder=xbgord0, yorder=ybgord0)
                     midpt = np.mean(fits.getdata("tmp.fits"))
@@ -677,10 +677,10 @@ if __name__ == "__main__":
                     apori1, apori2, apori3, apmag1, apmag2, apmag3, dapmag1, dapmag2, dapmag3, fitmag, truemag, magerr, centx, centy = \
                         lsc.lscsnoopy.fitsn( img, psfimage, img + '.sn.coo', _recenter, fwhm0, 'original', 'sn',
                                              'residual', _show, _interactive, _dmax, _dmin, z11, z22, midpt, _size, apco0)
-                    print _numiter, _count
+                    print(_numiter, _count)
                     if _interactive:
                         if not _numiter:
-                            answ0 = raw_input(">>> Iterate on background [y/n] [y] ?")
+                            answ0 = lsc.util.userinput(">>> Iterate on background [y/n] [y] ?")
                             if not answ0: answ0 = 'y'
                         elif _count >= _numiter:
                             answ0 = 'n'
@@ -692,19 +692,19 @@ if __name__ == "__main__":
                         else:
                             answ0 = 'y'
 
-                print "***************************************************************************"
-                print "#id  x_ori    y_ori      x       y      ap_ori   ap_bgsub   fit_mag   err_art err_fit"
+                print("***************************************************************************")
+                print("#id  x_ori    y_ori      x       y      ap_ori   ap_bgsub   fit_mag   err_art err_fit")
                 for i in range(len(fitmag)):
-                    print "SN", i, str(centx[i] + x1 - 1), str(centy[i] + y1 - 1), str(centx[i]), str(
+                    print("SN", i, str(centx[i] + x1 - 1), str(centy[i] + y1 - 1), str(centx[i]), str(
                         centy[i]), "  ", str(apori3[i]), "  ", str(apmag3[i]), "  ", str(truemag[i]), "  ", str(
-                        arterr), "  ", str(magerr[i])
-                print "**************************************************************************"
+                        arterr), "  ", str(magerr[i]))
+                print("**************************************************************************")
                 ##########            AGGIUSTAMENTO MANUALE                     ###############
                 newmag = list(array(truemag))
                 if not _interactive:
                     answ0 = 'n'
                 else:
-                    answ0 = raw_input(">>> Not yet happy ? Do you want to adjust manually stellar peak ? [y/n] [n] ")
+                    answ0 = lsc.util.userinput(">>> Not yet happy ? Do you want to adjust manually stellar peak ? [y/n] [n] ")
                     if not answ0:
                         answ0 = 'n'
                     elif answ0 == 'yes':
@@ -713,8 +713,8 @@ if __name__ == "__main__":
                 while answ0 == 'y':
                     checkdm = 'yes'
                     while checkdm == 'yes':
-                        if len(truemag) > 1: print "!!!! WARNING: all components scaled accordingly !!!!"
-                        _dmag0 = raw_input(">>> D(mag) adjustment (positive=fainter) [" + str(dmag0) + "]")
+                        if len(truemag) > 1: print("!!!! WARNING: all components scaled accordingly !!!!")
+                        _dmag0 = lsc.util.userinput(">>> D(mag) adjustment (positive=fainter) [" + str(dmag0) + "]")
                         if _dmag0: dmag0 = _dmag0
                         try:
                             float(dmag0)
@@ -729,7 +729,7 @@ if __name__ == "__main__":
                         dmag0 = newmag[0] - truemag[0]
                     except:
                         dmag0 = newmag[0]
-                    answ0 = raw_input(">>> again ? [y/n] [y] ")
+                    answ0 = lsc.util.userinput(">>> again ? [y/n] [y] ")
                     if not answ0:
                         answ0 = 'y'
                     elif answ0 == 'yes':
@@ -741,7 +741,7 @@ if __name__ == "__main__":
                 if not _interactive:
                     answ0 = 'n'
                 else:
-                    answ0 = raw_input(">>> Errors estimate (through artificial star experiment ?) [y/n] [y] ")
+                    answ0 = lsc.util.userinput(">>> Errors estimate (through artificial star experiment ?) [y/n] [y] ")
                     if not answ0:
                         answ0 = 'y'
                     elif answ0 == 'yes':
@@ -753,11 +753,11 @@ if __name__ == "__main__":
                                                                  False, _numiter, z11, z22, midpt, nax, nay, xbgord0,
                                                                  ybgord0, _recenter, apco0, _dmax, _dmin)
                     except:
-                        print '\n### warningstamp size too small: artificail error = 0 '
+                        print('\n### warningstamp size too small: artificail error = 0 ')
                         _arterr2, _arterr = 0.0, 0.0
 
                     if _interactive:
-                        arterr = raw_input("arterr ? [%6.6s] " % (str(_arterr)))
+                        arterr = lsc.util.userinput("arterr ? [%6.6s] " % (str(_arterr)))
                         if not arterr: arterr = _arterr
                     else:
                         arterr = _arterr
@@ -767,17 +767,17 @@ if __name__ == "__main__":
                 #
                 #fine:
                 if DM:
-                    print 'different image with template PSF: apply DM : '+str(DM)
+                    print('different image with template PSF: apply DM : '+str(DM))
 
-                print "***************************************************************************"
-                print "#id  x_ori   y_ori     x     y    ap_ori ap_bgsub  fit_mag  err_art  err_fit"
-                print "# id   ap_original ap_bgsub  fit_mag  err_art  err_fit"  #,  >> nome0//".ec"
-                print "# SN_FIT  "  #, >> nome0//".ec"
-                print "# id ap_ori ap-bg  fit_mag"  #, >> nome0//".ec"
+                print("***************************************************************************")
+                print("#id  x_ori   y_ori     x     y    ap_ori ap_bgsub  fit_mag  err_art  err_fit")
+                print("# id   ap_original ap_bgsub  fit_mag  err_art  err_fit")  #,  >> nome0//".ec"
+                print("# SN_FIT  ")#, >> nome0//".ec"
+                print("# id ap_ori ap-bg  fit_mag")#, >> nome0//".ec"
                 for i in range(len(fitmag)):
-                    print "SN", i, str(centx[i] + x1 - 1), str(centy[i] + y1 - 1), str(centx[i]), str(
+                    print("SN", i, str(centx[i] + x1 - 1), str(centy[i] + y1 - 1), str(centx[i]), str(
                         centy[i]), "  ", str(apori3[i]), "  ", str(apmag3[i]), "  ", str(truemag[i]), "  ", str(
-                        arterr), "  ", str(magerr[i])
+                        arterr), "  ", str(magerr[i]))
                     if truemag[i] == 'INDEF':
                         truemag[i], arterr, magerr[i] = 9999, 0.0, 0.0
                     if apmag3[i] == 'INDEF':
@@ -802,19 +802,19 @@ if __name__ == "__main__":
                 os.system('mv original.fits ' + img + '.og.fits')
                 os.system('mv residual.fits ' + img + '.rs.fits')
                 try:
-                    lsc.mysqldef.updatevalue('photlco', 'psfmag', truemag[0] - DM, string.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'psfmag', truemag[0] - DM, str.split(img, '/')[-1] + '.fits')
                     lsc.mysqldef.updatevalue('photlco', 'psfdmag', max(arterr, magerr[0]),
-                                             string.split(img, '/')[-1] + '.fits')
-                    lsc.mysqldef.updatevalue('photlco', 'psfx', centx[0] + x1 - 1, string.split(img, '/')[-1] + '.fits')
-                    lsc.mysqldef.updatevalue('photlco', 'psfy', centy[0] + y1 - 1, string.split(img, '/')[-1] + '.fits')
-                    lsc.mysqldef.updatevalue('photlco', 'apmag', apmag3[0], string.split(img, '/')[-1] + '.fits')
-                    lsc.mysqldef.updatevalue('photlco', 'dapmag', dapmag3[0], string.split(img, '/')[-1] + '.fits')
+                                             str.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'psfx', centx[0] + x1 - 1, str.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'psfy', centy[0] + y1 - 1, str.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'apmag', apmag3[0], str.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'dapmag', dapmag3[0], str.split(img, '/')[-1] + '.fits')
                     # Update the aperture correction to reflect what is actually applied to the data 
                     # (difference imaging can change the sn2 file leading to a different aperture correction)
-                    lsc.mysqldef.updatevalue('photlco', 'apercorr', apco0, string.split(img, '/')[-1] + '.fits')
+                    lsc.mysqldef.updatevalue('photlco', 'apercorr', apco0, str.split(img, '/')[-1] + '.fits')
                 except:
-                    print 'module mysqldef not found'
+                    print('module mysqldef not found')
             else:
-                print 'already done'
+                print('already done')
         else:
-            print '####\n#### WARNING: empty space in the list !!\n####'
+            print('####\n#### WARNING: empty space in the list !!\n####')

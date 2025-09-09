@@ -2,8 +2,6 @@
 
 if __name__ == '__main__':
     import lsc
-    from lsc import conn
-    from lsc import readkey3, readhdr
     import argparse
     import os
     from astropy.io import fits

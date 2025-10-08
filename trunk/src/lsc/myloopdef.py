@@ -1378,10 +1378,10 @@ def checkdiff(imglist, database='photlco'):
 def display_psf_fit(img, datamax=None):
     ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', img, '*')
     ogfile = ggg[0]['filepath'] + img.replace('.fits', '.og.fits')
-    rsfile = ggg[0]['filepath'] + img.replace('.fits', '.rs.fits')
-    if os.path.isfile(ogfile) and os.path.isfile(rsfile):
+    sffile = ggg[0]['filepath'] + img.replace('.fits', '.sf.fits')
+    if os.path.isfile(ogfile) and os.path.isfile(sffile):
         ogdata, hdr = fits.getdata(ogfile, header=True)
-        rsdata = fits.getdata(rsfile)
+        rsdata = fits.getdata(sffile)
         if datamax is None:
             datamax = lsc.util.readkey3(hdr, 'datamax')
         plt.clf()
@@ -1397,20 +1397,21 @@ def display_psf_fit(img, datamax=None):
             axL.legend()
         plt.colorbar(im, ax=[axL, axR], orientation='horizontal')
         plt.gcf().text(0.5, 0.99, u'{filename}\nfilter = {filter}\npsfmag = {psfmag:.2f} \u00b1 {psfdmag:.2f} mag\nmag = {mag:.2f} \u00b1 {dmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
-    return ogfile, rsfile
+    return ogfile, sffile
 
 def checkmag(imglist, datamax=None):
     plt.ion()
     for img in imglist:
         status = checkstage(img, 'checkmag')
         if status > 1:
-            ogfile, rsfile = display_psf_fit(img, datamax)
+            ogfile, sffile = display_psf_fit(img, datamax)
             aa = raw_input('>>>good mag [[y]/n] or [b] bad quality ? ')
             if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                 print 'update status: bad psfmag & mag'
                 lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(img)], lsc.conn)
                 os.system('rm -v ' + ogfile)
                 os.system('rm -v ' + rsfile)
+                os.system('rm -v ' + sffile)
             if aa in ['bad', 'b', 'B']:
                 print 'update status: bad quality'
                 lsc.mysqldef.updatevalue('photlco', 'quality', 1, img)

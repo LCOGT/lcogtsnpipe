@@ -1384,7 +1384,7 @@ def display_psf_fit(img, datamax=None):
         sfdata = fits.getdata(sffile)
     else:
         sfdata = None
-    if os.path.isfile(ogfile) and os.path.isfile(sffile):
+    if os.path.isfile(ogfile) and os.path.isfile(rsfile):
         ogdata, hdr = fits.getdata(ogfile, header=True)
         rsdata = fits.getdata(rsfile)
         if datamax is None:
@@ -1392,10 +1392,8 @@ def display_psf_fit(img, datamax=None):
         plt.clf()
         axL = plt.subplot(1, 3, 1, adjustable='box-forced')
         axC = plt.subplot(1, 3, 2, adjustable='box-forced')
-        axR = plt.subplot(1, 3, 3, sharex=axL, sharey=axL, adjustable='box-forced')
         axL.set_title('Original')
         axC.set_title('Original-2D bkg fit - PSF fit')
-        axR.set_title('Original - PSF fit')
         vmin = np.percentile(ogdata, 5)
         vmax = np.percentile(ogdata, 95)
         im = axL.imshow(ogdata, vmin=vmin, vmax=vmax, origin='lower')
@@ -1404,11 +1402,15 @@ def display_psf_fit(img, datamax=None):
         if len(i_sat):
             axL.plot(i_sat, j_sat, 'rx', label='{:d} pixels > {:.0f} ADU'.format(len(i_sat), datamax))
             axL.legend()
-        plt.colorbar(im, ax=[axL, axC, axR], orientation='horizontal')
+        if sfdata is None:
+            plt.colorbar(im, ax=[axL, axC], orientation='horizontal')
         plt.gcf().text(0.5, 0.99, u'{filename}\nfilter = {filter}\npsfmag = {psfmag:.2f} \u00b1 {psfdmag:.2f} mag\nmag = {mag:.2f} \u00b1 {dmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
     if os.path.isfile(sffile):
         sfdata = fits.getdata(sffile)
+        axR = plt.subplot(1, 3, 3, sharex=axL, sharey=axL, adjustable='box-forced')
         axR.imshow(sfdata, vmin=vmin, vmax=vmax, origin='lower')
+        axR.set_title('Original - PSF fit')
+        plt.colorbar(im, ax=[axL, axC, axR], orientation='horizontal')
     else:
         sffile = None
     return ogfile, rsfile, sffile

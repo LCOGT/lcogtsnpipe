@@ -41,9 +41,14 @@ frames = get_metadata(authtoken, start=start, end=end, OBSTYPE='EXPOSE', RLEVEL=
 for telid in ['2m0a', '1m0a', '0m4a', '0m4b', '0m4c']:
     frames += get_metadata(authtoken, start=start, end=end, PROPID='Photometric standards', OBSTYPE='STANDARD', TELID=telid, RLEVEL=91)  # all photometric standards (except SQA)
     frames += get_metadata(authtoken, start=start, end=end, PROPID='Photometric standards', OBSTYPE='EXPOSE', TELID=telid, RLEVEL=91)  # all photometric standards (except SQA)
-frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=0, public=False)        # all FTN spectra SNEx is a co-I
-frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=0, public=False)        # all FTS spectra SNEx is a co-I
-frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en12', RLEVEL=0, public=False)        # all FTS spectra SNEx is a co-I
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', basename = 'e91-1d', public=False)        # all FTN spectra SNEx is a co-I, checks basename for Banzai-floyds 1ds
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05',  basename = 'e91-1d', public=False)        # all FTS spectra SNEx is a co-I, checks basename for Banzai-floyds 1ds
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en12',  basename = 'e91-1d', public=False)        # all FTS spectra SNEx is a co-I, checks basename for Banzai-floyds 1ds
+
+frames = get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=0, public=False)        # all FTN spectra SNEx is a co-I, keeping e00 for floyds inbox (IRAF) reductions
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05',  RLEVEL=0, public=False)        # all FTS spectra SNEx is a co-I, keeping e00 for floyds inbox (IRAF) reductions
+frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en12',  RLEVEL=0, public=False)        # all FTS spectra SNEx is a co-I, keeping e00 for floyds inbox (IRAF) reductions
+
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en06', RLEVEL=0, PROPID='FLOYDS standards')  # FTN standard star spectra
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en05', RLEVEL=0, PROPID='FLOYDS standards')  # FTS standard star spectra
 frames += get_metadata(authtoken, start=start, end=end, INSTRUME='en12', RLEVEL=0, PROPID='FLOYDS standards')  # FTS standard star spectra
@@ -62,12 +67,20 @@ for frame in frames:
         traceback.print_exc()
         continue
     try:
-        dbdict = db_ingest(filepath, filename)
+        if '-en' in filename: #ingesting the 1d spectra into both speclcoraw and spec
+            table_raw = 'speclcoraw' # this table is what the scheduler checks, shouldn't be updated with versions
+            dbdict = db_ingest(filepath, filename,table_raw)
+        if 'e91-1d' in filename: # only ingest the banzai floyds directly into spec
+            table_reduced = 'spec' # this table will track version control of spectra that get re-reduced
+            dbdict = db_ingest(filepath, filename,table_reduced)
+        if '-en' not in filename and 'e91-1d' not in filename: # all others are photlcoraw
+            table = 'photlcoraw'
+            dbdict = db_ingest(filepath, filename,table)
     except:
         logger.error('!!! FAILED TO INGEST {}'.format(filename))
         traceback.print_exc()
         continue
-    if '-en' in filename and '-e00.fits' in filename:
+    if '-en' in filename and '-e00' in filename: #ignoring banzai files
         try:
             fits2png(filepath + filename)
         except:

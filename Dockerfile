@@ -2,9 +2,9 @@ FROM continuumio/miniconda3
 RUN conda create -y -n lcogtsnpipe python=2
 SHELL ["conda", "run", "-n", "lcogtsnpipe", "--live-stream", "/bin/bash", "-c"]
 
-ENV iraf=/iraf/iraf/
+ENV iraf /iraf/iraf/
 # To make this a 32 bit version linux64 -> linux
-ENV IRAFARCH=linux64
+ENV IRAFARCH linux64
 
 RUN apt-get --allow-releaseinfo-change update \
         && apt -y install gcc make flex git gfortran zlib1g-dev bison \
@@ -73,7 +73,7 @@ RUN cd / \
         && make -j 8 \
         && make install
 
-ENV LCOSNPIPE=/lcogtsnpipe
+ENV LCOSNPIPE /lcogtsnpipe
 
 RUN mkdir -p /home/supernova/iraf && /usr/sbin/groupadd -g 20000 "domainusers" \
         && /usr/sbin/useradd -g 20000 -d /home/supernova -M -N -u 10197 supernova \

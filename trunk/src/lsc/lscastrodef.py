@@ -9,10 +9,12 @@ def vizq(_ra,_dec,catalogue,radius):
          'usnob1':['I/284/out','USNO-B1.0','R2mag'],\
          'apass':['I/322A/out','UCAC4','rmag,UCAC4'],\
          'sdss7':['II/294/sdss7','rmag','rmag']}
-    process=subprocess.Popen('vizquery -mime=tsv -site='+_site+' -source='+cat[catalogue][0]+\
+    line =   'vizquery -mime=tsv -site='+_site+' -source='+cat[catalogue][0]+\
                    ' -c.ra='+str(_ra)+' -c.dec='+str(_dec)+' -c.eq=J2000 -c.rm='+str(radius)+\
                    ' -c.geom=b -oc.form=h -sort=_RA*-c.eq -out.add=_RAJ2000,_DEJ2000 -out.max=10000 -out='+\
-                   cat[catalogue][1]+' -out='+cat[catalogue][2], shell=True, stdout=subprocess.PIPE,\
+                   cat[catalogue][1]+' -out='+cat[catalogue][2]
+    print(line)
+    process=subprocess.Popen(line, shell=True, stdout=subprocess.PIPE,\
                    stderr=subprocess.PIPE)
     a,_ = process.communicate()
     aa=a.split('\n')
@@ -146,6 +148,7 @@ def querycatalogue(catalogue,img,method='iraf'):
             else:  sys.exit('Error: catalogue '+str(catalogue)+' not in the list [usnob1,usnoa2,2mass,apass]')
 
           elif method=='vizir':
+            print(_ra,_dec,catalogue,_size)
             stdcoo=lsc.lscastrodef.vizq(_ra,_dec,catalogue,_size)
             
             lll=['# END CATALOG HEADER','#']
@@ -163,6 +166,8 @@ def querycatalogue(catalogue,img,method='iraf'):
         for i in ddd2[ddd2.index('# END CATALOG HEADER')+2:]:
             xx.append(float(i.split()[column['ra']-1]))
             yy.append(float(i.split()[column['dec']-1]))
+
+        print(min(xx),max(xx),min(yy),max(yy))
 #######
         acoo1=[]
         apixx1,apixy1,am1,apix1=[],[],[],[]
@@ -186,16 +191,21 @@ def querycatalogue(catalogue,img,method='iraf'):
                     try: am1[jj]=float(re.sub('L','',str(am1[jj])))
                     except: am1[jj]=999
 
+        print(len(stdcoo['ra']))
         for key in stdcoo.keys():
             try:
                 stdcoo[key]=compress((array(xx)<int(int(hdr['NAXIS1'])+100))&(array(xx)>-100)&(array(yy)<int(int(hdr['NAXIS2'])+100))&(array(yy)>-100),array(stdcoo[key]))
-            except:  pass
+            except Exception as e:
+                print(e)
+                pass
         stdcoo['coo']=compress((array(xx)<int(int(hdr['NAXIS1'])+100))&(array(xx)>-100)&(array(yy)<int(int(hdr['NAXIS2'])+100))&(array(yy)>-100),array(acoo1))
         stdcoo['pix']=compress((array(xx)<int(int(hdr['NAXIS1'])+100))&(array(xx)>-100)&(array(yy)<int(int(hdr['NAXIS2'])+100))&(array(yy)>-100),array(apix1))
         stdcoo['mag']=compress((array(xx)<int(int(hdr['NAXIS1'])+100))&(array(xx)>-100)&(array(yy)<int(int(hdr['NAXIS2'])+100))&(array(yy)>-100),array(am1,float))
         stdcoo['x']=compress((array(xx)<int(int(hdr['NAXIS1'])+100))&(array(xx)>-100)&(array(yy)<int(int(hdr['NAXIS2'])+100))&(array(yy)>-100),array(xx,float))
         stdcoo['y']=compress((array(xx)<int(int(hdr['NAXIS1'])+100))&(array(xx)>-100)&(array(yy)<int(int(hdr['NAXIS2'])+100))&(array(yy)>-100),array(yy,float))
-
+        if len(stdcoo['ra']) ==0:
+            print('Warning no crossmatch between catalog and detections, maybe wcs is very off')
+        
         return stdcoo
 #############################################################
 
@@ -222,14 +232,15 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
             lsc.lscastrodef.wcsstart(img,xshift,yshift)
 #        ss=datetime.datetime.now()
 #        time.sleep(1)
-        catvec=lsc.lscastrodef.querycatalogue(catalogue,img,method)
+        print(catalogue,img,method)
+        catvec = lsc.lscastrodef.querycatalogue(catalogue,img,method)
         if len(catvec['ra']) == 0:
             print 'cazzo'
             sys.exit('ERROR: catalog empty '+catalogue)
         rmsx1,rmsy1,num1,fwhm1,ell1,ccc,bkg1,rasys1,decsys1=lscastrometry2([img],catalogue,_interactive,number1,sexvec,catvec,guess=False,fitgeo=_fitgeo,\
                                                                                  tollerance1=_tollerance1, tollerance2=_tollerance2,_update='yes',imex=_imex,nummin=_numin)
         if rmsx1>1 or rmsy1>1:
-            catvec=lsc.lscastrodef.querycatalogue(catalogue,img,method)
+            catvec = lsc.lscastrodef.querycatalogue(catalogue,img,method)
             rmsx2,rmsy2,num2,fwhm2,ell2,ccc,bkg2,rasys2,decsys2=lscastrometry2([img],catalogue,_interactive,number2,sexvec,catvec,guess=False,fitgeo=_fitgeo,\
                                                                                      tollerance1=_tollerance1, tollerance2=_tollerance2,_update='yes',imex=_imex,nummin=_numin)
             if rmsx2>1 or rmsy2>1:

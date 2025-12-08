@@ -27,7 +27,7 @@ def authenticate(username, password):
 
 def get_metadata(authtoken={}, limit=None, **kwargs):
     '''Get the list of files meeting criteria in kwargs'''
-    url = 'https://archive-api.lco.global/frames/?' + '&'.join(
+    url = 'https://archive-api.lco.global/frames/?limit=5000&' + '&'.join(
             [key + '=' + str(val) for key, val in kwargs.items() if val is not None])
     url = url.replace('False', 'false')
     url = url.replace('True', 'true')

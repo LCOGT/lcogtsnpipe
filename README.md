@@ -27,8 +27,11 @@ These instructions only need to be run once, when you set up the pipeline.
    2. Install [docker-compose](https://docs.docker.com/compose/install/)
    3. (macOS only) Install [XQuartz](https://www.xquartz.org).
    4. (macOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
-   5. Allow X11 connections (may be only necessary on Linux): `xhost +local:docker`
-   6. (Linux Only) Modify your X11 config files to allow TCP connections: 
+   5. Allow X11 connections (may be only necessary on Linux):
+      ```
+      xhost +local:docker
+      ```
+   7. (Linux Only) Modify your X11 config files to allow TCP connections: 
         1. If you are running gdm or gdm3 for your display manager add the following to `/etc/gdm<3>/custom.conf`
         ```
         [security]
@@ -63,16 +66,20 @@ These instructions only need to be run once, when you set up the pipeline.
         ```
         Now an window should appear.
         
-   7. Clone this repository: 
+   8. Clone this repository:
        ```
        git clone https://github.com/LCOGT/lcogtsnpipe
        ```
-   8. Build the Docker image:
-          ```
-          docker build -t lcogtsnpipe lcogtsnpipe
-          ```
-        
-   10. Set your environment variables to point to where you want to store data and catalogs.
+   10. Build the Docker image:
+       Linux:
+       ```
+       docker build -t lcogtsnpipe lcogtsnpipe
+       ```
+       Mac:
+       ```
+       docker build -t lcogtsnpipe lcogtsnpipe --platform=linux/x86_64
+       ```
+   12. Set your environment variables to point to where you want to store data and catalogs.
       You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file
       so that you don't have to set them in every new terminal session.
        ```
@@ -83,12 +90,12 @@ These instructions only need to be run once, when you set up the pipeline.
        with the correct permissions. If you need to use a pre-existing directory or in case docker doesn't set up the permissions correctly, you may have to update the permissions using
        `chmod -R 777 /path/to/data/`. 
        If you do not set these environment variables, they default to being in `data` and `mysql` in repo directory.
-   11. (MacOS only) Run XQuartz from the Finder.
-   12. (MacOS only) Run this hack in the background to get the X11 forwarding to work:
+   13. (MacOS only) Run XQuartz from the Finder.
+   14. (MacOS only) Run this hack in the background to get the X11 forwarding to work:
        ```
        socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &
        ```
-   13. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
+   15. Startup your "pipeline server" (this is really a couple of docker containers instead of a true virtual machine, but
        this mental picture is close enough).
           ```
           docker-compose -f lcogtsnpipe/docker-compose.yml up
@@ -119,9 +126,13 @@ These instructions only need to be run once, when you set up the pipeline.
        docker exec -it lcosnpipe /bin/bash
        ```
        If you're configured correctly, you should be able to open a ds9 window now using `ds9` command. 
-   15. From inside the container, initialize the database: `sh /lcogtsnpipe/init-db.sh`. You only need to run this command 
+   15. From inside the container, initialize the database:
+       ```
+       sh /lcogtsnpipe/init-db.sh
+       ```
+       You only need to run this command 
        the first time you setup the db.
-   16. From inside the container, run 
+   17. From inside the container, run 
        ```
        cd $LCOSNDIR
        mkdir -p data/lsc data/fts data/0m4 data/floyds data/extdata standard/cat/apass standard/cat/sloan standard/cat/landolt standard/cat/gaia

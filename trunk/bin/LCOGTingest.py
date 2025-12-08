@@ -32,7 +32,6 @@ def get_metadata(authtoken={}, limit=5000, **kwargs):
     url = url.replace('False', 'false')
     url = url.replace('True', 'true')
     logger.info(url)
-    print(url)
     response = requests.get(url, headers=authtoken, stream=True).json()
     frames = response['results']
     if len(frames)==limit:

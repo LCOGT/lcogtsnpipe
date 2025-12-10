@@ -25,16 +25,17 @@ def authenticate(username, password):
         authtoken = {'Authorization': 'Token ' + token}
     return authtoken
 
-def get_metadata(authtoken={}, limit=None, **kwargs):
+def get_metadata(authtoken={}, limit=5000, **kwargs):
     '''Get the list of files meeting criteria in kwargs'''
-    url = 'https://archive-api.lco.global/frames/?' + '&'.join(
+    url = 'https://archive-api.lco.global/frames/?limit='+str(limit)+'&' + '&'.join(
             [key + '=' + str(val) for key, val in kwargs.items() if val is not None])
     url = url.replace('False', 'false')
     url = url.replace('True', 'true')
     logger.info(url)
-
     response = requests.get(url, headers=authtoken, stream=True).json()
     frames = response['results']
+    if len(frames)==limit:
+        print('WARNING: the number of frames returned matches the limit of '+str(limit)+'. It is possible that there are more frames. To increase the limit add -l <limit> in your LCOGTingest call')
     while response['next'] and (limit is None or len(frames) < limit):
         logger.info(response['next'])
         response = requests.get(response['next'], headers=authtoken, stream=True).json()
@@ -252,7 +253,7 @@ if __name__ == "__main__":
     parser = ArgumentParser(description='Downloads data from archive.lco.global')
     parser.add_argument("-u", "--username")
     parser.add_argument("-p", "--password")
-    parser.add_argument("-l", "--limit", type=int, help="maximum number of frames to return")
+    parser.add_argument("-l", "--limit", default=5000, type=int, help="maximum number of frames to return")
     parser.add_argument("-F", "--force-dl", action="store_true", help="download files even if they already exist")
     parser.add_argument("-G", "--force-db", action="store_true", help="reingest files even if they already exist")
     parser.add_argument("-H", "--force-tn", action="store_true", help="regenerate thumbnails even if they already exist")
@@ -267,7 +268,7 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--start", help="start date")
     parser.add_argument("-e", "--end", help="end date")
     parser.add_argument("-c", "--coords", nargs=2, help="target coordinates in degrees, space separated")
-
+    parser.add_argument("-b", "--basename", help="target filename without the .fits, must be exact match for faster querying")
     parser.add_argument("-t", "--obstype", choices=['ARC', 'BIAS', 'CATALOG', 'DARK', 'EXPERIMENTAL',
                                         'EXPOSE', 'LAMPFLAT', 'SKYFLAT', 'SPECTRUM', 'STANDARD'])
     parser.add_argument("-r", "--reduction", choices=['raw', 'quicklook', 'reduced'])
@@ -299,7 +300,7 @@ if __name__ == "__main__":
     frames = get_metadata(authtoken, limit=args.limit, SITEID=args.site, TELID=args.telescope,
                           INSTRUME=args.instrument, FILTER=args.filter, PROPID=args.proposal, OBJECT=args.name,
                           start=args.start, end=args.end, OBSTYPE=args.obstype, RLEVEL=rlevel, public=args.public,
-                          covers='POINT({} {})'.format(*args.coords) if args.coords else None)
+                          basename_exact=args.basename, covers='POINT({} {})'.format(*args.coords) if args.coords else None)
 
     print 'Total number of frames:', len(frames)
 

@@ -24,6 +24,10 @@ If you wish to download data that is not public yet, request an API key in the G
 export LCO_API_KEY=sdf087asdf987asdf0786987
 LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced
 ```
+You can alternately download a single frame using the ```-b``` flag for the basename, or the full filename without an extension.
+```
+LCOGTingest.py -b tfn1m014-fa05-20251202-0156-s91
+```
 
 # Create gaia, apass, and sloan catalogs for new objects
 * run `comparecatalogs.py` to generate new catalogs

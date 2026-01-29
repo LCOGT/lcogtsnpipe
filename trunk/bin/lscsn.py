@@ -792,7 +792,6 @@ if __name__ == "__main__":
                     lsc.util.updateheader(img + '.sn2.fits', 0, headers)
                 lsc.util.delete("apori")
                 lsc.util.delete("sec")
-                lsc.util.delete("skyfit.fits")
                 lsc.util.delete("sn.fits")
                 lsc.util.delete("artsn.fits")
                 lsc.util.delete("artsky.fits,artbgs.fits")
@@ -801,6 +800,7 @@ if __name__ == "__main__":
                 lsc.util.delete(img + ".sn.*")
                 os.system('mv original.fits ' + img + '.og.fits')
                 os.system('mv residual.fits ' + img + '.rs.fits')
+                os.system('mv skyfit.fits ' + img + '.sf.fits')
                 try:
                     lsc.mysqldef.updatevalue('photlco', 'psfmag', truemag[0] - DM, string.split(img, '/')[-1] + '.fits')
                     lsc.mysqldef.updatevalue('photlco', 'psfdmag', max(arterr, magerr[0]),

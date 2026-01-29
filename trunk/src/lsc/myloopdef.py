@@ -1378,39 +1378,56 @@ def checkdiff(imglist, database='photlco'):
 def display_psf_fit(img, datamax=None):
     ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', img, '*')
     ogfile = ggg[0]['filepath'] + img.replace('.fits', '.og.fits')
+    sffile = ggg[0]['filepath'] + img.replace('.fits', '.sf.fits')
     rsfile = ggg[0]['filepath'] + img.replace('.fits', '.rs.fits')
+    if os.path.isfile(sffile):
+        sfdata = fits.getdata(sffile)
+    else:
+        sfdata = None
     if os.path.isfile(ogfile) and os.path.isfile(rsfile):
         ogdata, hdr = fits.getdata(ogfile, header=True)
         rsdata = fits.getdata(rsfile)
         if datamax is None:
             datamax = lsc.util.readkey3(hdr, 'datamax')
         plt.clf()
-        axL = plt.subplot(1, 2, 1, adjustable='box-forced')
-        axR = plt.subplot(1, 2, 2, sharex=axL, sharey=axL, adjustable='box-forced')
+        axL = plt.subplot(1, 3, 1, adjustable='box-forced')
+        axC = plt.subplot(1, 3, 2, adjustable='box-forced')
+        axL.set_title('Original')
+        axC.set_title('Original-2D bkg fit - PSF fit')
         vmin = np.percentile(ogdata, 5)
         vmax = np.percentile(ogdata, 95)
         im = axL.imshow(ogdata, vmin=vmin, vmax=vmax, origin='lower')
-        axR.imshow(rsdata, vmin=vmin, vmax=vmax, origin='lower')
+        axC.imshow(rsdata, vmin=vmin, vmax=vmax, origin='lower')
         j_sat, i_sat = np.where(ogdata > datamax)
         if len(i_sat):
             axL.plot(i_sat, j_sat, 'rx', label='{:d} pixels > {:.0f} ADU'.format(len(i_sat), datamax))
             axL.legend()
-        plt.colorbar(im, ax=[axL, axR], orientation='horizontal')
+        if sfdata is None:
+            plt.colorbar(im, ax=[axL, axC], orientation='horizontal')
         plt.gcf().text(0.5, 0.99, u'{filename}\nfilter = {filter}\npsfmag = {psfmag:.2f} \u00b1 {psfdmag:.2f} mag\nmag = {mag:.2f} \u00b1 {dmag:.2f} mag'.format(**ggg[0]), va='top', ha='center')
-    return ogfile, rsfile
+    if os.path.isfile(sffile):
+        sfdata = fits.getdata(sffile)
+        axR = plt.subplot(1, 3, 3, sharex=axL, sharey=axL, adjustable='box-forced')
+        axR.imshow(sfdata, vmin=vmin, vmax=vmax, origin='lower')
+        axR.set_title('Original - PSF fit')
+        plt.colorbar(im, ax=[axL, axC, axR], orientation='horizontal')
+    else:
+        sffile = None
+    return ogfile, rsfile, sffile
 
 def checkmag(imglist, datamax=None):
     plt.ion()
     for img in imglist:
         status = checkstage(img, 'checkmag')
         if status > 1:
-            ogfile, rsfile = display_psf_fit(img, datamax)
+            ogfile, rsfile, sffile = display_psf_fit(img, datamax)
             aa = raw_input('>>>good mag [[y]/n] or [b] bad quality ? ')
             if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:
                 print 'update status: bad psfmag & mag'
                 lsc.mysqldef.query(['update photlco set psfmag=9999, psfdmag=9999, apmag=9999, dapmag=9999, mag=9999, dmag=9999 where filename="{}"'.format(img)], lsc.conn)
                 os.system('rm -v ' + ogfile)
                 os.system('rm -v ' + rsfile)
+                os.system('rm -v ' + sffile)
             if aa in ['bad', 'b', 'B']:
                 print 'update status: bad quality'
                 lsc.mysqldef.updatevalue('photlco', 'quality', 1, img)

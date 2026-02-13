@@ -1,12 +1,14 @@
-FROM continuumio/miniconda3
+FROM continuumio/miniconda3:25.3.1-1
 RUN conda create -y -n lcogtsnpipe python=2
 SHELL ["conda", "run", "-n", "lcogtsnpipe", "--live-stream", "/bin/bash", "-c"]
 
-ENV iraf /iraf/iraf/
+ENV iraf=/iraf/iraf/
 # To make this a 32 bit version linux64 -> linux
-ENV IRAFARCH linux64
+ENV IRAFARCH=linux64
 
-RUN apt-get --allow-releaseinfo-change update \
+RUN sed -i 's/http:/https:/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true \
+        && sed -i 's/http:/https:/g' /etc/apt/sources.list 2>/dev/null || true \
+        && apt-get --allow-releaseinfo-change update \
         && apt -y install gcc make flex git gfortran zlib1g-dev bison \
         && apt -y install libcurl4-openssl-dev libexpat-dev libreadline-dev gettext \
         && apt-get autoclean \
@@ -16,14 +18,14 @@ RUN mkdir -p $iraf \
         && cd /iraf \
         && git clone https://github.com/iraf-community/iraf.git \
         && cd $iraf \
-        && git checkout e20dd53 \
+        && git checkout a12a399 \
         && make \
         && make install
 
 RUN apt-get --allow-releaseinfo-change update \
-        && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor procps g++ \
+        && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 source-extractor procps g++ \
         default-mysql-client libmariadb-dev default-libmysqlclient-dev openssh-client wcstools libxml2 vim zip pkg-config \
-        libpng-dev libfreetype6-dev libcfitsio-dev libffi-dev libopenblas-dev libssl-dev libfftw3-dev libatlas-base-dev \
+        libpng-dev libfreetype6-dev libcfitsio-dev libffi-dev libopenblas-dev libssl-dev libfftw3-dev libopenblas-dev \
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*
 
@@ -39,7 +41,7 @@ RUN apt-get --allow-releaseinfo-change update \
         && make \
         && ln -s /swarp/src/swarp /usr/bin/
 
-RUN ln -s /usr/bin/sextractor /usr/bin/sex
+RUN ln -s /usr/bin/source-extractor /usr/bin/sex
 
 RUN pip install numpy>=1.12
 
@@ -64,16 +66,8 @@ RUN cd / \
         && sed -i 's/^COPTS = .*/& -fcommon/' Makefile \
         && make \
         && ln -s /hotpants/hotpants /usr/bin/
-        
-RUN cd / \
-        && git clone https://github.com/astromatic/sextractor.git \
-        && cd sextractor \
-        && sh autogen.sh \
-        && ./configure \
-        && make -j 8 \
-        && make install
 
-ENV LCOSNPIPE /lcogtsnpipe
+ENV LCOSNPIPE=/lcogtsnpipe
 
 RUN mkdir -p /home/supernova/iraf && /usr/sbin/groupadd -g 20000 "domainusers" \
         && /usr/sbin/useradd -g 20000 -d /home/supernova -M -N -u 10197 supernova \

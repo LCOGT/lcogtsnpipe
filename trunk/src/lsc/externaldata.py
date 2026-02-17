@@ -655,3 +655,71 @@ def downloadPS1(homedir,filename):
     return frames
 
 ################################################################################################################
+
+def DECam_ref(_ra, _dec, _fov):
+
+        from astroquery.noirlab import Noirlab
+        import astropy.coordinates as coord
+        from astropy import units as u
+        from astropy.coordinates import SkyCoord
+        from astropy.visualization import ZScaleInterval
+
+        # std lib
+        from getpass import getpass
+        import warnings
+        from astropy.utils.exceptions import AstropyWarning
+        warnings.simplefilter('ignore', category=AstropyWarning) # to quiet Astropy warnings
+
+        # 3rd party
+        import numpy as np
+        from numpy.core.defchararray import startswith
+        import pylab as plt
+        import matplotlib
+        %matplotlib inline
+
+        from pyvo.dal import sia
+        from astropy.utils.data import download_file
+        from astropy.io import fits
+        from astropy.wcs import WCS
+        from astropy.visualization import make_lupton_rgb
+
+        
+        DEF_ACCESS_URL = "https://datalab.noirlab.edu/sia/ls_dr7"
+        svc_ls_dr7 = sia.SIAService(DEF_ACCESS_URL)
+
+        
+        imgTable = svc_ls_dr7.search((_ra,_dec), (fov/np.cos(dec*np.pi/180), _fov), verbosity=2).to_table()
+        if len(imgTable)==0:
+                print('No data with these coordinates available')
+
+        else:
+                sel = (imgTable['proctype'] == 'Stack') & (imgTable['prodtype'] == 'image') & \
+                            (startswith(imgTable['obs_bandpass'].astype(str),'g'))
+
+                row = imgTable[sel]
+                row = imgTable[sel][0]
+                url = row['access_url'] # get the download URL
+                filename = download_file(url,cache=True,show_progress=False,timeout=120)
+                hdu = fits.open(filename)[0]
+                image = hdu.data
+                hdr = hdu.header
+                wcs = WCS(hdr)
+
+
+                return image
+
+
+######################################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+

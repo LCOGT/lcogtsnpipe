@@ -264,6 +264,10 @@ You can access the database from your host machine, e.g. with sequelpro by setti
         ```
         conda install MySQL-python
         ```
+    8. Install mysql-connector-python-rf
+        ```
+        pip install mysql-connector-python-rf
+        ```
 5. Install the pipeline
     1. Install git if you do not already have it (https://ucdavis.github.io/DS4S/#setup)
     2. Download the pipeline:

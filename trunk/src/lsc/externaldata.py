@@ -545,17 +545,27 @@ def geturl(ra, dec, size=10000, output_size=None, filters="gri", format="fits", 
     return url
 
 ##################################################################################
-def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
+def sloanimage(img,survey='sloan',frames=[], show=False, force=False, targetid=None, tel='', filt=''):
    import sys
-   from lsc import readhdr, readkey3,deg2HMS,display_image
-   if show:
-      display_image(img,1,True,'','')
-   hdr = readhdr(img)
-   _ra = readkey3(hdr,'RA')
-   _dec = readkey3(hdr,'DEC')
-   _object = readkey3(hdr,'object')
-   _instrume = readkey3(hdr,'instrume')
-   _filter = readkey3(hdr,'filter')
+   from lsc import readhdr, readkey3,deg2HMS,display_image, conn
+   from lsc.mysqldef import query
+   if img:
+      if show:
+         display_image(img,1,True,'','')
+      hdr = readhdr(img)
+      _ra = readkey3(hdr,'RA')
+      _dec = readkey3(hdr,'DEC')
+      _object = readkey3(hdr,'object')
+      _instrume = readkey3(hdr,'instrume')
+      _filter = readkey3(hdr,'filter')
+   elif targetid:
+      targetquery = query(['select ra0, dec0 from targets where id={}'.format(targetid)], conn)
+      namequery = query(['select name from targetnames where targetid={}'.format(targetid)], conn)
+      _ra = float(targetquery[0]['ra0'])
+      _dec = float(targetquery[0]['dec0'])
+      _object = namequery[0]['name']
+      _instrume = tel
+      _filter = filt
    _radius = 1100
    filt={'up':'u','gp':'g','rp':'r','ip':'i','zs':'z'}
 

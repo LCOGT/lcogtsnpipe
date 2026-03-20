@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import lsc
-from LCOGTingest import *
+import os
+from LCOGTingest import db_ingest
 from argparse import ArgumentParser
 import logging
 

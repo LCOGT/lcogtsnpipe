@@ -14,7 +14,7 @@ if __name__ == "__main__":
     parser.add_argument("-F", "--force", action="store_true", help="reingest files even if they already exist")
     args = parser.parse_args()
 
-    print(f'Ingesting {len(args.frames)} frames')
+    logger.info(f'Ingesting {len(args.frames)} frames')
 
     fullpaths = [os.path.abspath(frame) for frame in args.frames]
     for frame in fullpaths:

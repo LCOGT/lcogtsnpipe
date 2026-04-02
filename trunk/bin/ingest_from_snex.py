@@ -18,5 +18,5 @@ if __name__ == "__main__":
 
     fullpaths = [os.path.abspath(frame) for frame in args.frames]
     for frame in fullpaths:
-        dbdict = db_ingest(*os.path.split(frame), args.force)
+        dbdict = db_ingest(*os.path.split(frame), force=args.force)
     lsc.mysqldef.ingestredu(fullpaths, force='yes' if args.force else 'no')  # ingest new data into photlco

@@ -4,6 +4,8 @@
 *.cat
 .idea/
 .AppleDouble
+venv_py3/
+__pycache__/
 trunk/build
 mysql/
 data/

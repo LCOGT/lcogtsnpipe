@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lsc"
+version = "2.0.0"
+description = "lsc is a package to reduce photometric SN data"
+readme = "README.txt"
+license = {text = "LICENSE.txt"}
+requires-python = ">=3.10"
+authors = [
+    {name = "S. Valenti", email = "svalenti@lcogt.net"},
+]
+dependencies = [
+    "numpy>=1.24",
+    "astropy>=5.0",
+    "matplotlib>=3.5",
+    "scipy>=1.10",
+    "requests",
+    "PyMySQL",
+    "reproject",
+    "astroquery",
+]
+
+[project.optional-dependencies]
+iraf = ["pyraf"]
+dev = ["pytest", "pytest-cov", "flake8"]
+
+[project.urls]
+Homepage = "https://github.com/LCOGT/lcogtsnpipe"
+
+[project.scripts]
+lscloop = "lsc._scripts:lscloop_main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+lsc = [
+    "standard/astrometry/*cat",
+    "standard/*txt",
+    "standard/stdlist/*txt",
+    "standard/cat/*dat",
+    "standard/cat/*cat",
+    "standard/cat/sloan/*cat",
+    "standard/cat/landolt/*cat",
+    "standard/cat/apass/*cat",
+    "standard/cat/sloanprime/*cat",
+    "standard/cat/sloannatural/*cat",
+    "standard/cat/landoltnatural/*cat",
+    "standard/sex/*",
+    "configure",
+]
+
+[tool.setuptools]
+script-files = [
+    "bin/back_populate_apercorr.py",
+    "bin/calibratemag.py",
+    "bin/comparecatalogs.py",
+    "bin/format_snex2.py",
+    "bin/ingest_from_snex.py",
+    "bin/ingestall.py",
+    "bin/ingesttar.py",
+    "bin/LCOGTingest.py",
+    "bin/lscastro.py",
+    "bin/lscdiff.py",
+    "bin/lscingestsloan.py",
+    "bin/lscloop.py",
+    "bin/lscmaketempl.py",
+    "bin/lscmerge.py",
+    "bin/lscnewcalib.py",
+    "bin/lscpsf.py",
+    "bin/lscsn.py",
+    "bin/lsctestheader.py",
+    "bin/queryapasscat.py",
+    "bin/querysloancat.py",
+    "bin/runlsc.py",
+]

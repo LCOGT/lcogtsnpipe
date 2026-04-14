@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import os
 import time
 import lsc
-import subprocess32
+import subprocess
 from argparse import ArgumentParser
 
 commandsn = {'LSQ12fxd': ' -x 3 -y 3 --bkg 3 --size 6',
@@ -65,14 +65,14 @@ commandsn = {'LSQ12fxd': ' -x 3 -y 3 --bkg 3 --size 6',
 def run_cmd(cmd, logfile=None, timeout=3600):
     logfile.write(cmd + '\n')
     logfile.flush()
-    proc = subprocess32.Popen(cmd, shell=True, stdout=logfile, stderr=logfile)
+    proc = subprocess.Popen(cmd, shell=True, stdout=logfile, stderr=logfile)
     try:
         proc.wait(timeout)
-    except subprocess32.TimeoutExpired as e:
+    except subprocess.TimeoutExpired as e:
         proc.kill()
         logfile.close()
         with open(logfile.name, 'r') as f:
-            print f.read()
+            print(f.read())
         raise e
 
 ###########################################################

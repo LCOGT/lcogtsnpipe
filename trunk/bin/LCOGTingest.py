@@ -45,7 +45,7 @@ def get_metadata(authtoken={}, limit=5000, **kwargs):
 def download_frame(frame, force=False):
     '''Download a single image from the LCOGT archive and put it in the right directory'''
     filename = frame['filename']
-    dayobs = re.search('(20\d\d)(0\d|1[0-2])([0-2]\d|3[01])', filename).group()
+    dayobs = re.search(r'(20\d\d)(0\d|1[0-2])([0-2]\d|3[01])', filename).group()
     if 'fs' in frame['INSTRUME']:
         daydir = 'data/fts/' + dayobs + '/'
     elif frame['INSTRUME'] == 'en06':
@@ -302,7 +302,7 @@ if __name__ == "__main__":
                           start=args.start, end=args.end, OBSTYPE=args.obstype, RLEVEL=rlevel, public=args.public,
                           basename_exact=args.basename, covers='POINT({} {})'.format(*args.coords) if args.coords else None)
 
-    print 'Total number of frames:', len(frames)
+    print('Total number of frames:', len(frames))
 
     fullpaths = []
     for frame in frames:

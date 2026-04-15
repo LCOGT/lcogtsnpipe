@@ -311,7 +311,7 @@ class cosmicsimage:
         satpixels = self.rawarray > self.satlevel # the candidate pixels
         
         # We build a smoothed version of the image to look for large stars and their support :
-        m5 = ndimage.filters.median_filter(self.rawarray, size=5, mode='mirror')
+        m5 = ndimage.median_filter(self.rawarray, size=5, mode='mirror')
         # We look where this is above half the satlevel
         largestruct = m5 > (self.satlevel/2.0)
         # The rough locations of saturated stars are now :
@@ -428,7 +428,7 @@ class cosmicsimage:
         
         if verbose:  print("Creating noise model ...")
         # We build a custom noise map, so to compare the laplacian to
-        m5 = ndimage.filters.median_filter(self.cleanarray, size=5, mode='mirror')
+        m5 = ndimage.median_filter(self.cleanarray, size=5, mode='mirror')
         # We keep this m5, as I will use it later for the interpolation.
         m5clipped = m5.clip(min=0.00001) # As we will take the sqrt
         noise = (1.0/self.gain) * np.sqrt(self.gain*m5clipped + self.readnoise*self.readnoise)
@@ -441,7 +441,7 @@ class cosmicsimage:
         # This s is called sigmap in the original lacosmic.cl
          
         # We remove the large structures (s prime) :
-        sp = s - ndimage.filters.median_filter(s, size=5, mode='mirror')
+        sp = s - ndimage.median_filter(s, size=5, mode='mirror')
          
         if verbose:
             print("Selecting candidate cosmic rays ...")
@@ -467,8 +467,8 @@ class cosmicsimage:
             print("Building fine structure image ...")
             
         # We build the fine structure image :
-        m3 = ndimage.filters.median_filter(self.cleanarray, size=3, mode='mirror')
-        m37 = ndimage.filters.median_filter(m3, size=7, mode='mirror')
+        m3 = ndimage.median_filter(self.cleanarray, size=3, mode='mirror')
+        m37 = ndimage.median_filter(m3, size=7, mode='mirror')
         f = m3 - m37
         # In the article that's it, but in lacosmic.cl f is divided by the noise...
         # Ok I understand why, it depends on if you use sp/f or L+/f as criterion.
@@ -548,7 +548,7 @@ class cosmicsimage:
         if verbose :
             print("Finding holes ...")
 
-        m3 = ndimage.filters.median_filter(self.cleanarray, size=3, mode='mirror')
+        m3 = ndimage.median_filter(self.cleanarray, size=3, mode='mirror')
         h = (m3 - self.cleanarray).clip(min=0.0)
         
         tofits("h.fits", h)
@@ -566,7 +566,7 @@ class cosmicsimage:
         
         tofits("lplus.fits", lplus)
         
-         m5 = ndimage.filters.median_filter(self.cleanarray, size=5, mode='mirror')
+         m5 = ndimage.median_filter(self.cleanarray, size=5, mode='mirror')
          m5clipped = m5.clip(min=0.00001)
          noise = (1.0/self.gain) * np.sqrt(self.gain*m5clipped + self.readnoise*self.readnoise)
  
@@ -574,7 +574,7 @@ class cosmicsimage:
          # This s is called sigmap in the original lacosmic.cl
          
          # We remove the large structures (s prime) :
-         sp = s - ndimage.filters.median_filter(s, size=5, mode='mirror')
+         sp = s - ndimage.median_filter(s, size=5, mode='mirror')
          
          holes = sp > self.sigclip    
         """

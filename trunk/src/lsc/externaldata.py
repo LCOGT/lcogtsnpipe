@@ -606,8 +606,7 @@ def downloadPS1(homedir,filename):
     import string
     import os
     import re
-    import urllib
-    import urllib2
+    import urllib.request
     parent_dir = os.getcwd()+'/'
     directory=filename+'/'
     os.system('rm '+str(homedir)+'pssindex.txt')
@@ -617,13 +616,13 @@ def downloadPS1(homedir,filename):
     print(urlOfFileToDownload)
     localFilename = homedir+'pss' + os.path.basename(urlOfFileToDownload)
     try:
-       urllib.urlretrieve(urlOfFileToDownload, localFilename)
+       urllib.request.urlretrieve(urlOfFileToDownload, localFilename)
     except:
         print('req_name found on poststamp datastore')
         sys.exit()
     frames = []
     try:
-        f=file(homedir+'pssindex.txt','r')
+        f=open(homedir+'pssindex.txt','r')
         _index=f.readlines()
         f.close()
         for i in range(0,len(_index)):
@@ -636,7 +635,7 @@ def downloadPS1(homedir,filename):
                 if not os.path.isfile(localFilename3):
                     print('downloading file: '+str.split(_index[i],'|')[0])
                     try:
-                        urllib.urlretrieve(urlOfFileToDownload3, localFilename3)
+                        urllib.request.urlretrieve(urlOfFileToDownload3, localFilename3)
                     except:
                         print('problem '+str(urlOfFileToDownload3))
                         pass

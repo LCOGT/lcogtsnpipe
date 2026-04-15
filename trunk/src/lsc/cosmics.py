@@ -114,7 +114,7 @@ class cosmicsimage:
         """
         self.rawarray = rawarray + pssl # internally, we will always work "with sky".
         self.cleanarray = self.rawarray.copy() # In lacosmiciteration() we work on this guy
-        self.mask = np.cast['bool'](np.zeros(self.rawarray.shape)) # All False, no cosmics yet
+        self.mask = np.asarray(np.zeros(self.rawarray.shape), dtype=bool) # All False, no cosmics yet
         
         self.gain = gain
         self.readnoise = readnoise
@@ -227,19 +227,19 @@ class cosmicsimage:
         # This is a list of the indices of cosmic affected pixels.
         #print cosmicindices
         
-        # We put cosmic ray pixels to np.Inf to flag them :
-        self.cleanarray[mask] = np.Inf
+        # We put cosmic ray pixels to np.inf to flag them :
+        self.cleanarray[mask] = np.inf
         
         # Now we want to have a 2 pixel frame of Inf padding around our image.
         w = self.cleanarray.shape[0]
         h = self.cleanarray.shape[1]
-        padarray = np.zeros((w+4,h+4))+np.Inf
+        padarray = np.zeros((w+4,h+4))+np.inf
         padarray[2:w+2,2:h+2] = self.cleanarray.copy() # that copy is important, we need 2 independent arrays
         
-        # The medians will be evaluated in this padarray, skipping the np.Inf.
-        # Now in this copy called padarray, we also put the saturated stars to np.Inf, if available :
+        # The medians will be evaluated in this padarray, skipping the np.inf.
+        # Now in this copy called padarray, we also put the saturated stars to np.inf, if available :
         if self.satstars is not None:
-            padarray[2:w+2,2:h+2][self.satstars] = np.Inf
+            padarray[2:w+2,2:h+2][self.satstars] = np.inf
             # Viva python, I tested this one, it works...
         
         # A loop through every cosmic pixel :
@@ -248,17 +248,17 @@ class cosmicsimage:
             y = cosmicpos[1]
             cutout = padarray[x:x+5, y:y+5].ravel() # remember the shift due to the padding !
             #print cutout
-            # Now we have our 25 pixels, some of them are np.Inf, and we want to take the median
-            goodcutout = cutout[cutout != np.Inf]
-            #print np.alen(goodcutout)
+            # Now we have our 25 pixels, some of them are np.inf, and we want to take the median
+            goodcutout = cutout[cutout != np.inf]
+            #print len(goodcutout)
             
-            if np.alen(goodcutout) >= 25 :
+            if len(goodcutout) >= 25 :
                 # This never happened, but you never know ...
                 try:
                     raise RuntimeError("Mega error in clean !")
                 except RuntimeError as  e:
                     print(e.args)
-            elif np.alen(goodcutout) > 0 :
+            elif len(goodcutout) > 0 :
                 replacementvalue = np.median(goodcutout)
             else :    
                 # i.e. no good pixels : Shit, a huge cosmic, we will have to improvise ...
@@ -348,7 +348,7 @@ class cosmicsimage:
             if np.sum(overlap) > 0:
                 outmask = np.logical_or(outmask, thisisland) # we add thisisland to the mask
             
-        self.satstars = np.cast['bool'](outmask)
+        self.satstars = np.asarray(outmask, dtype=bool)
         
         if verbose:
                 print("Mask of saturated stars done")
@@ -495,7 +495,7 @@ class cosmicsimage:
             print("Finding neighboring pixels affected by cosmic rays ...")
             
         # We grow these cosmics a first time to determine the immediate neighborhod  :
-        growcosmics = np.cast['bool'](signal.convolve2d(np.cast['float32'](cosmics), growkernel, mode="same", boundary="symm"))
+        growcosmics = np.asarray(signal.convolve2d(np.asarray(cosmics, dtype=np.float32), growkernel, mode="same", boundary="symm"), dtype=bool)
         
         # From this grown set, we keep those that have sp > sigmalim
         # so obviously not requiring sp/f > objlim, otherwise it would be pointless
@@ -503,7 +503,7 @@ class cosmicsimage:
         
         # Now we repeat this procedure, but lower the detection limit to sigmalimlow :
             
-        finalsel = np.cast['bool'](signal.convolve2d(np.cast['float32'](growcosmics), growkernel, mode="same", boundary="symm"))
+        finalsel = np.asarray(signal.convolve2d(np.asarray(growcosmics, dtype=np.float32), growkernel, mode="same", boundary="symm"), dtype=bool)
         finalsel = np.logical_and(sp > self.sigcliplow, finalsel)
         
         # Again, we have to kick out pixels on saturated stars :
@@ -582,11 +582,11 @@ class cosmicsimage:
         # We have to kick out pixels on saturated stars :
         if self.satstars is not None:
              if verbose:
-                 print "Masking saturated stars ..."
+                 print("Masking saturated stars ...")
              holes = np.logical_and(np.logical_not(self.satstars), holes)
         
         if verbose:
-            print "%i hole pixels found" % np.sum(holes)
+            print("%i hole pixels found" % np.sum(holes))
         
         # We update the mask with the holes we have found :
         self.mask = np.logical_or(self.mask, holes)
@@ -668,7 +668,7 @@ def tofits(outfilename, pixelarray, hdr = None, verbose = True):
         print("FITS export shape : (%i, %i)" % (pixelarrayshape[0], pixelarrayshape[1]))
 
     if pixelarray.dtype.name == "bool":
-        pixelarray = np.cast["uint8"](pixelarray)
+        pixelarray = np.asarray(pixelarray, dtype=np.uint8)
 
     if os.path.isfile(outfilename):
         os.remove(outfilename)
@@ -725,7 +725,7 @@ def rebin(a, newshape):
         
     shape = a.shape
     lenShape = len(shape)
-    factor = np.asarray(shape)/np.asarray(newshape)
+    factor = (np.asarray(shape) // np.asarray(newshape)).astype(int)
     #print factor
     evList = ['a.reshape('] + \
                  ['newshape[%d],factor[%d],'%(i,i) for i in range(lenShape)] + \
@@ -747,5 +747,5 @@ def rebin2x2(a):
             print(e.args)
         
         
-    return rebin(a, inshape/2)
+    return rebin(a, (inshape//2).tolist())
 

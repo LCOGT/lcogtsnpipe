@@ -5,14 +5,14 @@ from astropy.nddata import Cutout2D
 from astropy.wcs import WCS
 import lsc
 from glob import glob
-import pkg_resources
+from importlib.resources import files as _pkg_files
 import re
 
 workdirectory = os.getenv('LCOSNDIR', '/supernova/')
 
 configfile = os.path.join(workdirectory, 'configure')
 if not os.path.exists(configfile):
-    configfile = pkg_resources.resource_filename('lsc', 'configure')
+    configfile = str(_pkg_files('lsc').joinpath('configure'))
 
 pyversion = sys.version_info[0]
 
@@ -324,7 +324,7 @@ def readkey3(hdr,keyword):
     else:
        value=''
     if type(value) == str:
-       value = value.replace('\#', '')
+       value = value.replace('\\#', '')
     if value == 'ftn':
       value = '2m0-01'
     elif value == 'fts':

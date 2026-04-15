@@ -896,7 +896,7 @@ def mark_stars_on_image(imgfile, catfile, fig=None):
     if catfile.endswith('fits'):
         cat = Table.read(catfile)
     else:
-        cat = Table.read(catfile, format='ascii.commented_header', header_start=1, delimiter='\s')
+        cat = Table.read(catfile, format='ascii.commented_header', header_start=1, delimiter=r'\s')
     coords = SkyCoord(cat['ra'], cat['dec'], unit=(u.hourangle, u.deg))
     i, j = wcs.wcs_world2pix(coords.ra, coords.dec, 0)
     ax.autoscale(False)

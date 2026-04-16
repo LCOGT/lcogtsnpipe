@@ -155,12 +155,12 @@ class cosmicsimage:
             print("Labeling mask pixels ...")
         # We morphologicaly dilate the mask to generously connect "sparse" cosmics :
         #dilstruct = np.ones((5,5))
-        dilmask = ndimage.morphology.binary_dilation(self.mask, structure=dilstruct, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
+        dilmask = ndimage.binary_dilation(self.mask, structure=dilstruct, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
         # origin = 0 means center
-        (labels, n) = ndimage.measurements.label(dilmask)
+        (labels, n) = ndimage.label(dilmask)
         #print "Number of cosmic ray hits : %i" % n
         #tofits(labels, "labels.fits", verbose = False)
-        slicecouplelist = ndimage.measurements.find_objects(labels)
+        slicecouplelist = ndimage.find_objects(labels)
         # Now we have a huge list of couples of numpy slice objects giving a frame around each object
         # For plotting purposes, we want to transform this into the center of each object.
         if len(slicecouplelist) != n:
@@ -176,7 +176,7 @@ class cosmicsimage:
         centers = [[(tup[0].start + tup[0].stop)/2.0, (tup[1].start + tup[1].stop)/2.0] for tup in slicecouplelist]
         # We also want to know how many pixels where affected by each cosmic ray.
         # Why ? Dunno... it's fun and available in scipy :-)
-        sizes = ndimage.measurements.sum(self.mask.ravel(), labels.ravel(), np.arange(1,n+1,1))
+        sizes = ndimage.sum(self.mask.ravel(), labels.ravel(), np.arange(1,n+1,1))
         retdictlist = [{"name":"%i" % size, "x":center[0], "y":center[1]} for (size, center) in zip(sizes, centers)]
         
         if verbose:
@@ -191,11 +191,11 @@ class cosmicsimage:
         size = 3 or 5 decides how to dilate.
         """
         if size == 3:
-            dilmask = ndimage.morphology.binary_dilation(self.mask, structure=growkernel, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
+            dilmask = ndimage.binary_dilation(self.mask, structure=growkernel, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
         elif size == 5:
-            dilmask = ndimage.morphology.binary_dilation(self.mask, structure=dilstruct, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
+            dilmask = ndimage.binary_dilation(self.mask, structure=dilstruct, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
         else:
-            dismask = self.mask.copy()
+            dilmask = self.mask.copy()
         
         return dilmask
         
@@ -327,12 +327,12 @@ class cosmicsimage:
         # We dilate the satpixels alone, to ensure connectivity in glitchy regions and to add a safety margin around them.
         #dilstruct = np.array([[0,1,0], [1,1,1], [0,1,0]])
         
-        dilsatpixels = ndimage.morphology.binary_dilation(satpixels, structure=dilstruct, iterations=2, mask=None, output=None, border_value=0, origin=0, brute_force=False)
+        dilsatpixels = ndimage.binary_dilation(satpixels, structure=dilstruct, iterations=2, mask=None, output=None, border_value=0, origin=0, brute_force=False)
         # It turns out it's better to think large and do 2 iterations...
         
         
         # We label these :
-        (dilsatlabels, nsat) = ndimage.measurements.label(dilsatpixels)
+        (dilsatlabels, nsat) = ndimage.label(dilsatpixels)
         #tofits(dilsatlabels, "test.fits")
         
         if verbose:

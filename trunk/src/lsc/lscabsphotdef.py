@@ -6,7 +6,10 @@ import astropy.units as u
 import numpy as np
 import warnings
 from scipy import stats
-from scipy import odr
+try:
+    import odrpack as odr
+except ImportError:
+    from scipy import odr
         
 import matplotlib.pyplot as plt
 import lsc

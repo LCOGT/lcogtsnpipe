@@ -18,7 +18,7 @@ RUN mkdir -p $iraf \
         && cd /iraf \
         && git clone https://github.com/iraf-community/iraf.git \
         && cd $iraf \
-        && git checkout a12a399 \
+        && git checkout d980a65 \
         && make \
         && make install
 

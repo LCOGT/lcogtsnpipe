@@ -1981,8 +1981,10 @@ def run_merge(imglist, _redu=False):
 
 ########################################################################################
 
-def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=False):
-    command = 'lscingestsloan.py ' + ' '.join(imglist)
+def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=False, targetid=None, tel='fa', filt=''):
+    command = 'lscingestsloan.py'
+    if imglist:
+        command += ' '.join(imglist)
     if imgtype != 'sloan':
         command += ' --type ' + imgtype
     if ps1frames:
@@ -1991,6 +1993,8 @@ def run_ingestsloan(imglist,imgtype = 'sloan', ps1frames='', show=False, force=F
         command += ' --show'
     if force:
         command += ' -F'
+    if targetid and filt:
+        command += ' --targetid ' + str(targetid) + ' --tel ' + tel + ' --filter ' + filt[0]
     print command
     os.system(command)
 

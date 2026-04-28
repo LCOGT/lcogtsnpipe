@@ -14,7 +14,8 @@
     * [Database](##Database)
 
 # Ingest data
-* Download observations from SNEx and run ingesttar.py. This data will have already been reduced with BANZAI.
+There are two options to download data depending on where you have permissions. If you have access to observations in the LCO archive, it is recommended that you use the `LCOGTingest.py` option. If you only have access through SNEx, then use the `ingest_from_snex.py` option.
+* Download observations from SNEx using the `Download All Images` Button at the bottom of the Images Tab. This will start to download from the LCO archive in a new tab. These data will have already been reduced with BANZAI. Unzip the file downloaded. Ingest these observations into your supernova database by running ```ingest_from_snex.py *.fz``` You can include the path to your files in the command line. 
 * Download observations from archive.lco.global using LCOGTingest.py. It is recommended that you download data reduced with BANZAI. This will only work for public data (e.g., standard stars images and observations from over 1 year ago) unless you have an account for the observing portal. For example (all arguments optional; see ```LCOGTingest.py -h``` for options):
 ```
 LCOGTingest.py -n NAME -s YYYY-MM-DD -e YYYY-MM-DD -t EXPOSE -r reduced --public

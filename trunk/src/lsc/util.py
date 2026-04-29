@@ -324,7 +324,7 @@ def readkey3(hdr,keyword):
     else:
        value=''
     if type(value) == str:
-       value = value.replace('\#', '')
+       value = value.replace('\\#', '')
     if value == 'ftn':
       value = '2m0-01'
     elif value == 'fts':

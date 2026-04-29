@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 description = ">> make different image using hotpants"
-usage = "%prog imagein  imagetem [options] "
+usage = "%(prog)s imagein imagetem [options]"
 import os
 import warnings
 import lsc
@@ -48,31 +48,31 @@ if __name__ == "__main__":
     parser.add_argument("targlist", help='list of images with the target in them')
     parser.add_argument("templist", help='list of template images')
     parser.add_argument("-f", "--force", dest="force", action="store_true",
-                      default=False, help=' force archiving \t\t\t [%default]')
+                      default=False, help=' force archiving \t\t\t [%(default)s]')
     parser.add_argument("--show", dest="show", action="store_true",
-                      default=False, help=' show result  \t\t\t [%default]')
+                      default=False, help=' show result  \t\t\t [%(default)s]')
     parser.add_argument("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing the subtraction')
     parser.add_argument('--suffix', default='.diff.fits', help='suffix for difference images')
 
     hotpants = parser.add_argument_group("hotpants parameters")
     hotpants.add_argument("--nrxy", dest="nrxy", default='1,1',
-                        help='Number of image region in x y directions \t [%default]')
+                                                help='Number of image region in x y directions \t [%(default)s]')
     hotpants.add_argument("--nsxy", dest="nsxy", default='8,8',
-                        help="Number of region's stamps in x y directions\t [%default]")
+                                                help="Number of region's stamps in x y directions\t [%(default)s]")
     hotpants.add_argument("--ko", dest="ko", default='2',
-                        help='spatial order of kernel variation within region\t [%default]')
+                                                help='spatial order of kernel variation within region\t [%(default)s]')
     hotpants.add_argument("--bgo", dest="bgo", default='2',
-                        help='spatial order of background variation within region \t [%default]')
+                                                help='spatial order of background variation within region \t [%(default)s]')
     hotpants.add_argument("--afssc", dest="afssc", default=False,
-                        action="store_true", help='use selected stamps \t\t\t [%default]')
+                                                action="store_true", help='use selected stamps \t\t\t [%(default)s]')
     hotpants.add_argument("--normalize", dest="normalize", default='i', choices=['i', 't'],
-                        help='normalize zero point to image [i] or template [t] \t [%default]')
+                                                help='normalize zero point to image [i] or template [t] \t [%(default)s]')
     hotpants.add_argument("--convolve", dest="convolve", default='', choices=['i', 't', ''],
-                        help='convolve direction to image [i] or template [t] \t [%default]')
+                                                help='convolve direction to image [i] or template [t] \t [%(default)s]')
     hotpants.add_argument("--interpolation", dest="interpolation", default='drizzle',
                           choices=['drizzle', 'nearest', 'linear', 'poly3', 'poly5', 'spline3'],
-                        help='interpolation algorithm  [drizzle,nearest,linear,poly3,poly5,spline3]\t [%default]')
+                                                help='interpolation algorithm  [drizzle,nearest,linear,poly3,poly5,spline3]\t [%(default)s]')
     parser.add_argument("--difftype", type=int, choices=[0, 1], default=0, help='Choose hotpants (0) or optimal (1) subtraction \t [%(default)s]')
     parser.add_argument("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
     parser.add_argument("--no-iraf", action='store_true', help='transform images in Python instead of IRAF'

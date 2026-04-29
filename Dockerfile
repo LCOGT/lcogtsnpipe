@@ -1,12 +1,14 @@
-FROM continuumio/miniconda3
-RUN conda create -y -n lcogtsnpipe python=2
+FROM continuumio/miniconda3:25.3.1-1
+RUN conda create -y -n lcogtsnpipe python=3.11 pip
 SHELL ["conda", "run", "-n", "lcogtsnpipe", "--live-stream", "/bin/bash", "-c"]
 
 ENV iraf=/iraf/iraf/
 # To make this a 32 bit version linux64 -> linux
 ENV IRAFARCH=linux64
 
-RUN apt-get --allow-releaseinfo-change update \
+RUN sed -i 's/http:/https:/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true \
+        && sed -i 's/http:/https:/g' /etc/apt/sources.list 2>/dev/null || true \
+        && apt-get --allow-releaseinfo-change update \
         && apt -y install gcc make flex git gfortran zlib1g-dev bison \
         && apt -y install libcurl4-openssl-dev libexpat-dev libreadline-dev gettext \
         && apt-get autoclean \
@@ -16,14 +18,14 @@ RUN mkdir -p $iraf \
         && cd /iraf \
         && git clone https://github.com/iraf-community/iraf.git \
         && cd $iraf \
-        && git checkout e20dd53 \
+        && git checkout d980a65 \
         && make \
         && make install
 
 RUN apt-get --allow-releaseinfo-change update \
-        && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 sextractor procps g++ \
+        && apt-get -y install libx11-dev libcfitsio-bin wget x11-apps libtk8.6 source-extractor procps g++ \
         default-mysql-client libmariadb-dev default-libmysqlclient-dev openssh-client wcstools libxml2 vim zip pkg-config \
-        libpng-dev libfreetype6-dev libcfitsio-dev libffi-dev libopenblas-dev libssl-dev libfftw3-dev libatlas-base-dev \
+        libpng-dev libfreetype6-dev libcfitsio-dev libffi-dev libopenblas-dev libssl-dev libfftw3-dev libopenblas-dev \
         && apt-get autoclean \
         && rm -rf /var/lib/apt/lists/*
 
@@ -39,16 +41,23 @@ RUN apt-get --allow-releaseinfo-change update \
         && make \
         && ln -s /swarp/src/swarp /usr/bin/
 
-RUN ln -s /usr/bin/sextractor /usr/bin/sex
+RUN ln -s /usr/bin/source-extractor /usr/bin/sex
 
-RUN pip install numpy>=1.12
+RUN python -m pip install --upgrade pip setuptools wheel
+
+RUN python -m pip install "numpy>=1.12,<2"
 
 # Running this line to assign the instance reconnect
 RUN sed  '/st_mysql_options options;/a unsigned int reconnect;' /usr/include/mysql/mysql.h -i.bkp 
 
-RUN pip install cryptography==2.4.1 astropy matplotlib==2.2.5 pyraf mysql-python scipy astroquery==v0.4 statsmodels==0.10 cython reproject
+RUN python -m pip install cryptography astropy matplotlib pyraf mysqlclient scipy astroquery statsmodels cython reproject
 
-RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git
+RUN python -m pip install sep
+
+RUN git clone https://github.com/dguevel/PyZOGY.git /tmp/PyZOGY \
+        && sed -i 's/PyZOGY.__main__ : main/PyZOGY.__main__:main/' /tmp/PyZOGY/setup.py \
+        && python -m pip install /tmp/PyZOGY \
+        && rm -rf /tmp/PyZOGY
 
 RUN wget http://ds9.si.edu/download/debian12x86/ds9.debian12x86.8.6.tar.gz \
         && tar -xzvf ds9.debian12x86.8.6.tar.gz -C /usr/local/bin \
@@ -64,14 +73,6 @@ RUN cd / \
         && sed -i 's/^COPTS = .*/& -fcommon/' Makefile \
         && make \
         && ln -s /hotpants/hotpants /usr/bin/
-        
-RUN cd / \
-        && git clone https://github.com/astromatic/sextractor.git \
-        && cd sextractor \
-        && sh autogen.sh \
-        && ./configure \
-        && make -j 8 \
-        && make install
 
 ENV LCOSNPIPE=/lcogtsnpipe
 

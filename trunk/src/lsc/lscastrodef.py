@@ -995,7 +995,7 @@ def transformsloanlandolt(stdcoo):
 
 def transformlandoltsloan(stdcoo):
     #  jordi et al 2006
-    from numpy import array
+    from numpy import array, where
     if 'B' and 'V' in stdcoo:
         if 'g' not in stdcoo:  
             stdcoo['g']=array(stdcoo['V'],float)+0.630*(array(stdcoo['B'],float)-array(stdcoo['V'],float))-0.124
@@ -1004,7 +1004,7 @@ def transformlandoltsloan(stdcoo):
             VR=(array(stdcoo['V'],float)-array(stdcoo['R'],float))
             a=array(stdcoo['R'],float)+0.267*VR+0.088 # V-R < 0.93
             b=array(stdcoo['R'],float)+0.77*VR-0.37  #  V-R > 0.93
-            stdcoo['r']=[ (a[i], b[i]) [ VR[i] <= 0.93 ] for i in range(0, len(VR)) ]
+            stdcoo['r']=where(VR <= 0.93, a, b)
     if 'R' and 'I' in stdcoo:
         if 'i' not in stdcoo:  
             stdcoo['i']=array(stdcoo['I'],float)-0.247*(array(stdcoo['R'],float)-array(stdcoo['I'],float))+0.329
@@ -1013,7 +1013,7 @@ def transformlandoltsloan(stdcoo):
             VR=(array(stdcoo['V'],float)-array(stdcoo['R'],float))
             a=array(stdcoo['R'],float)+0.267*VR+0.088 # V-R < 0.93
             b=array(stdcoo['R'],float)+0.77*VR-0.37  #  V-R > 0.93
-            stdcoo['r']=[ (a[i], b[i]) [ VR[i] <= 0.93 ] for i in range(0, len(VR)) ]
+            stdcoo['r']=where(VR <= 0.93, a, b)
         if 'z' not in stdcoo:  
             stdcoo['z']= array(stdcoo['r'],float) - 1.584*(array(stdcoo['R'],float)-array(stdcoo['I'],float)) +  (0.386)
     for fil in 'ugriz':

@@ -12,6 +12,7 @@ __pycache__/
 ## IRAF / pyraf runtime cache
 trunk/pyraf/
 trunk/src/pyraf/
+pyraf/
 
 ## Coverage reports
 .coverage

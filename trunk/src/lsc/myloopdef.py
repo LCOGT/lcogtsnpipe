@@ -156,7 +156,7 @@ def run_getmag(imglist, _output='', _interactive=False, _show=False, _bin=1e-10,
     output_table['mag'].format = '%.4f'
     output_table['dmag'].format = '%.4f'
     if _output:
-        output_table.write(_output, format='ascii')
+        output_table.write(_output, format='ascii', overwrite=True)
         if snex2_upload:
             ### Make it snex2 readable
             os.system('format_snex2.py -n ' + _output)
@@ -1885,7 +1885,7 @@ def checkfilevsdatabase(lista, database='photlco'):
     if lista:
         if len(lista['filename']) > 0:
             for i in range(0, len(lista['filename'])):
-                imgsn = lista['filepath'][i] + lista['filename'].replace('.fits', '.sn2.fits')
+                imgsn = lista['filepath'][i] + lista['filename'][i].replace('.fits', '.sn2.fits')
                 if os.path.isfile(imgsn):
                     hdr1 = lsc.util.readhdr(imgsn)
                     _filter = lsc.util.readkey3(hdr1, 'filter')

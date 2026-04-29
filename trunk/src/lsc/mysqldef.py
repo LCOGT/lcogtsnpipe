@@ -14,7 +14,7 @@ def dbConnect(lhost, luser, lpasswd, ldb):
                               user = luser,
                             passwd = lpasswd,
                                 db = ldb)
-   except (msql.Error, e):
+   except msql.Error as e:
       print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return conn
@@ -80,7 +80,7 @@ def getmissing(conn, epoch0, epoch2,telescope,datatable='photlco'):
       if cursor.rowcount == 0:
          pass
       cursor.close ()
-   except (msql.Error, e):
+   except msql.Error as e:
       print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return resultSet
@@ -100,7 +100,7 @@ def getfromdataraw(conn, table, column, value,column2='*'):
       if cursor.rowcount == 0:
          pass
       cursor.close ()
-   except (msql.Error, e):
+   except msql.Error as e:
       print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return resultSet
@@ -158,7 +158,7 @@ def updatevalue(table,column,value,filename,connection='lcogt2',filename0='filen
          pass
       conn.commit()
       cursor.close ()
-   except (msql.Error, e):
+   except msql.Error as e:
       print("Error %d: %s" % (e.args[0], e.args[1]))
 
 ###########################################################################
@@ -202,7 +202,7 @@ def insert_values(conn,table,values):
             pass
         conn.commit()
         cursor.close ()
-    except (msql.Error, e):
+    except msql.Error as e:
         print("Error %d: %s" % (e.args[0], e.args[1]))
 
 ########################################################################
@@ -355,7 +355,7 @@ def deleteredufromarchive(filename,archive='photlco',column='filename'):
          pass
       conn.commit()
       cursor.close ()
-   except (msql.Error, e):
+   except msql.Error as e:
       print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return resultSet
@@ -463,7 +463,7 @@ def getfromcoordinate(conn, table, ra0, dec0,distance):
       if cursor.rowcount == 0:
          pass
       cursor.close ()
-   except (msql.Error, e):
+   except msql.Error as e:
       print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return resultSet
@@ -645,7 +645,7 @@ def getlike(conn, table, column, value,column2='*'):
       if cursor.rowcount == 0:
          pass
       cursor.close ()
-   except (msql.Error, e):
+   except msql.Error as e:
       print("Error %d: %s" % (e.args[0], e.args[1]))
       sys.exit (1)
    return resultSet
@@ -671,7 +671,7 @@ def query(command,conn):
                 pass
         conn.commit()
         cursor.close ()
-   except (msql.Error, e): 
+   except msql.Error as e: 
         print("Error %d: %s" % (e.args[0], e.args[1]))
    return lista
 

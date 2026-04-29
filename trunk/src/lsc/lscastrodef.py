@@ -812,7 +812,6 @@ def crossmatch(_ra0,_dec0,_ra1,_dec1,tollerance):  #   degree,degree,degree,degr
 ###################################################################
 
 def linreg(X, Y):
-    from math import sqrt
     """
     Summary
         Linear regression of y = ax + b
@@ -823,7 +822,7 @@ def linreg(X, Y):
     if len(X) != len(Y):  raise ValueError('unequal length')
     N = len(X)
     Sx = Sy = Sxx = Syy = Sxy = 0.0
-    for x, y in map(None, X, Y):
+    for x, y in zip(X, Y):
         Sx = Sx + x
         Sy = Sy + y
         Sxx = Sxx + x*x
@@ -832,7 +831,7 @@ def linreg(X, Y):
     det = Sxx * N - Sx * Sx
     a, b = (Sxy * N - Sy * Sx)/det, (Sxx * Sy - Sx * Sxy)/det
     meanerror = residual = 0.0
-    for x, y in map(None, X, Y):
+    for x, y in zip(X, Y):
         meanerror = meanerror + (y - Sy/N)**2
         residual = residual + (y - a * x - b)**2
     RR = 1 - residual/meanerror

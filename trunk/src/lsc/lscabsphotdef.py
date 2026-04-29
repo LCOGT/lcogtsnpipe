@@ -4,9 +4,14 @@ from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 import numpy as np
-from scipy import stats, odr
-import matplotlib.pyplot as plt
 import warnings
+from scipy import stats
+try:
+    import odrpack as odr
+except ImportError:
+    from scipy import odr
+        
+import matplotlib.pyplot as plt
 import lsc
 import os
 from pyraf import iraf

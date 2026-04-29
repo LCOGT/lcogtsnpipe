@@ -5,23 +5,19 @@ from astropy.nddata import Cutout2D
 from astropy.wcs import WCS
 import lsc
 from glob import glob
-import pkg_resources
+from importlib.resources import files as _pkg_files
 import re
 
 workdirectory = os.getenv('LCOSNDIR', '/supernova/')
 
 configfile = os.path.join(workdirectory, 'configure')
 if not os.path.exists(configfile):
-    configfile = pkg_resources.resource_filename('lsc', 'configure')
+    configfile = str(_pkg_files('lsc').joinpath('configure'))
 
 pyversion = sys.version_info[0]
 
 def userinput(text):
-    if pyversion <3:
-        inputstring = raw_input(text)
-    else:
-        inputstring = input(text)
-    return inputstring
+    return input(text)
 
 def readpasswd(configfile):
    """ read all information to connect to database from configuration file  
@@ -560,7 +556,7 @@ def airmass(img,overwrite=True,_observatory='lasilla'):
       _date=_date[0:4]+'-'+_date[4:6]+'-'+_date[6:8]
       _RA=readkey3(hdr,'RA')/15
       _DEC=readkey3(hdr,'DEC')
-      f = file('airmass.txt','w')
+      f = open('airmass.txt','w')
       f.write('mst = mst ("'+str(_date)+'",'+str(_UT)+', obsdb ("'+str(_observatory)+'", "longitude"))\n')
       f.write('air = airmass ('+str(_RA)+','+str(_DEC)+',mst, obsdb ("'+str(_observatory)+'", "latitude"))\n')
       f.write('print(air)\n')

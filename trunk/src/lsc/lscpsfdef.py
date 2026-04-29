@@ -183,7 +183,7 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
     # removes saturated stars from the list (IRAF just issues a warning)
     with open('_psf.mag') as f:
         text = f.read()
-    text = re.sub('(.*\n){6}.*BadPixels\* \n', '', text)
+    text = re.sub(r'(.*\n){6}.*BadPixels\* \n', '', text)
     with open('_psf.mag', 'w') as f:
         f.write(text)
 

@@ -471,29 +471,29 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                 if smagf[indx] not in ['INDEF', 9999]:
                     smagf[indx] = '{:0<2.3f}'.format(float(smagf[indx])+aperture_correction)
                     smagerrf[indx] = '{:0<2.3f}'.format(np.sqrt(float(smagerrf[indx])**2+aperture_correction_err**2))
+
+            def _to_float_array(values, fill=9999.0):
+                out = []
+                for value in values:
+                    if value in ['INDEF', '', None, 9999]:
+                        out.append(fill)
+                    else:
+                        try:
+                            out.append(float(value))
+                        except (TypeError, ValueError):
+                            out.append(fill)
+                return np.array(out, dtype=float)
+
             tbhdu = fits.BinTableHDU.from_columns(fits.ColDefs([fits.Column(name='ra', format='20A', array=np.array(rap)),
                                                    fits.Column(name='dec', format='20A', array=np.array(decp)),
                                                    fits.Column(name='ra0', format='E', array=np.array(rap0)),
                                                    fits.Column(name='dec0', format='E', array=np.array(decp0)),
-                                                   fits.Column(name='magp2', format='E',
-                                                               array=np.array(np.where((np.array(magp2) != 'INDEF'),
-                                                                                       np.array(magp2), 9999), float)),
-                                                   fits.Column(name='magp3', format='E',
-                                                                   array=np.array(np.where((np.array(magp3) != 'INDEF'),
-                                                                                           np.array(magp3), 9999), float)),
-                                                   fits.Column(name='merrp3', format='E',
-                                                                   array=np.array(np.where((np.array(merrp3) != 'INDEF'),
-                                                                                           np.array(merrp3), 9999), float)),
-                                                   fits.Column(name='magp4', format='E',
-                                                                   array=np.array(np.where((np.array(magp4) != 'INDEF'),
-                                                                                           np.array(magp4), 9999), float)),
-                                                   fits.Column(name='smagf', format='E',
-                                                                   array=np.array(np.where((np.array(smagf) != 'INDEF'),
-                                                                                           np.array(smagf), 9999), float)),
-                                                   fits.Column(name='smagerrf', format='E',
-                                                                   array=np.array(np.where((np.array(smagerrf) != 'INDEF'),
-                                                                                           np.array(smagerrf), 9999),
-                                                                                  float)),
+                                                   fits.Column(name='magp2', format='E', array=_to_float_array(magp2)),
+                                                   fits.Column(name='magp3', format='E', array=_to_float_array(magp3)),
+                                                   fits.Column(name='merrp3', format='E', array=_to_float_array(merrp3)),
+                                                   fits.Column(name='magp4', format='E', array=_to_float_array(magp4)),
+                                                   fits.Column(name='smagf', format='E', array=_to_float_array(smagf)),
+                                                   fits.Column(name='smagerrf', format='E', array=_to_float_array(smagerrf)),
             ]))
 
             hdu = fits.PrimaryHDU(header=hdr)

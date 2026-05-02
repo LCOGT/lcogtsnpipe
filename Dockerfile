@@ -60,9 +60,14 @@ RUN git clone https://github.com/dguevel/PyZOGY.git /tmp/PyZOGY \
         && python -m pip install /tmp/PyZOGY \
         && rm -rf /tmp/PyZOGY
 
-RUN wget http://ds9.si.edu/download/debian12x86/ds9.debian12x86.8.6.tar.gz \
-        && tar -xzvf ds9.debian12x86.8.6.tar.gz -C /usr/local/bin \
-        && rm -rf ds9.debian12x86.8.6.tar.gz
+RUN case "$(uname -m)" in \
+        aarch64) DS9_PKG="debian12arm64" ;; \
+        x86_64)  DS9_PKG="debian12x86" ;; \
+        *) echo "Unsupported architecture: $(uname -m)" && exit 1 ;; \
+    esac \
+        && wget "http://ds9.si.edu/download/${DS9_PKG}/ds9.${DS9_PKG}.8.6.tar.gz" \
+        && tar -xzvf "ds9.${DS9_PKG}.8.6.tar.gz" -C /usr/local/bin \
+        && rm -f "ds9.${DS9_PKG}.8.6.tar.gz"
 
 RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
         && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \

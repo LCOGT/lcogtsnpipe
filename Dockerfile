@@ -1,5 +1,6 @@
-FROM continuumio/miniconda3:25.3.1-1
+FROM continuumio/miniconda3:26.3.2-2
 RUN conda create -y -n lcogtsnpipe python=3.11 pip
+RUN conda install -y -n lcogtsnpipe pyqt=6.11.0
 SHELL ["conda", "run", "-n", "lcogtsnpipe", "--live-stream", "/bin/bash", "-c"]
 
 ENV iraf=/iraf/iraf/
@@ -43,16 +44,16 @@ RUN apt-get --allow-releaseinfo-change update \
 
 RUN ln -s /usr/bin/source-extractor /usr/bin/sex
 
-RUN python -m pip install --upgrade pip setuptools wheel
+RUN python -m pip install --upgrade pip==25.3 setuptools==80.9.0 wheel==0.45.1
 
-RUN python -m pip install "numpy>=1.12,<2"
+RUN python -m pip install numpy==2.4.4
 
 # Running this line to assign the instance reconnect
 RUN sed  '/st_mysql_options options;/a unsigned int reconnect;' /usr/include/mysql/mysql.h -i.bkp 
 
-RUN python -m pip install cryptography astropy matplotlib pyraf mysqlclient scipy astroquery statsmodels cython reproject
+RUN python -m pip install cryptography==47.0.0 astropy==7.2.0 matplotlib==3.10.8 pyraf==2.2.4 mysqlclient==2.2.8 scipy==1.17.1 astroquery==0.4.11 statsmodels==0.14.6 cython==3.2.4 reproject==0.19.0
 
-RUN python -m pip install sep
+RUN python -m pip install sep==1.4.1
 
 RUN git clone https://github.com/dguevel/PyZOGY.git /tmp/PyZOGY \
         && sed -i 's/PyZOGY.__main__ : main/PyZOGY.__main__:main/' /tmp/PyZOGY/setup.py \

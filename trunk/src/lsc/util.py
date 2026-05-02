@@ -17,7 +17,12 @@ if not os.path.exists(configfile):
 pyversion = sys.version_info[0]
 
 def userinput(text):
-    return input(text)
+    if not sys.stdin.isatty():
+        return ''
+    try:
+        return input(text)
+    except EOFError:
+        return ''
 
 def readpasswd(configfile):
    """ read all information to connect to database from configuration file  

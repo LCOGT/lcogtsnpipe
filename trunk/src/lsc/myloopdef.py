@@ -1578,6 +1578,7 @@ class PickablePlot():
         self.xdel = np.array([])
         self.ydel = np.array([])
 
+        import threading
         axlims = None
         while True:
             fig.clf()
@@ -1587,7 +1588,14 @@ class PickablePlot():
             plt.plot(self.xdel, self.ydel, 'kx', ms=10)
             if axlims is not None:
                 plt.axis(axlims)
-            key = lsc.util.userinput(mainmenu)
+            plt.draw()
+            result = ['']
+            def _get_key(r=result): r[0] = lsc.util.userinput(mainmenu)
+            t = threading.Thread(target=_get_key, daemon=True)
+            t.start()
+            while t.is_alive():
+                plt.pause(0.1)
+            key = result[0]
             if key in hooks and self.i_active is not None:
                 hooks[key](self.i_active)
             if key == '':
@@ -1595,7 +1603,6 @@ class PickablePlot():
             else:
                 self.delete_current()
                 self.i_active = None
-            plt.draw()
             axlims = fig.gca().axis()
         
     def onclick(self, event):

@@ -879,15 +879,22 @@ def Docosmic(img,_sigclip=5.5,_sigfrac=0.2,_objlim=4.5):
        out3=c.getsatstars()
        cosmic_mask = (out2!=0)
    else:
-       import astroscrappy
-       from astroscrappy import detect_cosmics
-       c = detect_cosmics(ar, gain=gain, readnoise=rdnoise, sigclip=_sigclip, sigfrac=_sigfrac , objlim=_objlim, satlevel=sat,verbose=True)
-
-       cosmic_mask = c[0]
-       out1 = c[1]
-       # this way of selecting saturated star is not ideal
-       # we should do something better
-       out3 =    ar > sat  
+       try:
+           from astroscrappy import detect_cosmics
+           c = detect_cosmics(ar, gain=gain, readnoise=rdnoise, sigclip=_sigclip, sigfrac=_sigfrac , objlim=_objlim, satlevel=sat,verbose=True)
+           cosmic_mask = c[0]
+           out1 = c[1]
+           # this way of selecting saturated star is not ideal
+           # we should do something better
+           out3 =    ar > sat
+       except ImportError:
+           print('warning: astroscrappy not installed, falling back to lsc.cosmics')
+           c = lsc.cosmics.cosmicsimage(ar, pssl=_pssl, gain=gain, readnoise=rdnoise, sigclip=5, sigfrac=0.3 , objlim=5, satlevel=sat)
+           c.run(maxiter = niter)
+           out1=c.cleanarray
+           out2=c.cleanarray-c.rawarray
+           out3=c.getsatstars()
+           cosmic_mask = (out2!=0)
 
    out_fits = fits.PrimaryHDU(header=hd,data=out1)
    out_fits.writeto(out, overwrite=True, output_verify='fix')

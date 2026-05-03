@@ -396,10 +396,13 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                                    format='%13.3H %12.2h', min_sig=9, mode='h')[3:]
 
             if interactive or show:
-                iraf.set(stdimage='imt1024')
-                iraf.display(img + '[0]', 1, fill=True, Stdout=1)
-                iraf.tvmark(1, coords='STDIN', mark='circle', radii=15, label=True, Stdin=photmag, nxoffset=5, nyoffset=5, txsize=2)
-                iraf.tvmark(1, coords='STDIN', mark='circle', radii=35, label=False, Stdin=pst, color=208)
+                try:
+                    iraf.set(stdimage='imt1024')
+                    iraf.display(img + '[0]', 1, fill=True, Stdout=1)
+                    iraf.tvmark(1, coords='STDIN', mark='circle', radii=15, label=True, Stdin=photmag, nxoffset=5, nyoffset=5, txsize=2)
+                    iraf.tvmark(1, coords='STDIN', mark='circle', radii=35, label=False, Stdin=pst, color=208)
+                except Exception as e:
+                    print('Warning: IRAF display unavailable (no DS9/imtool running): {}'.format(e))
     #            iraf.tvmark(1, coords='STDIN', mark='cross', length=35, label=False, Stdin=fitmag2, color=204)
 
             idpsf = []

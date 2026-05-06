@@ -972,6 +972,8 @@ def checkpsf(imglist, no_iraf=False, database='photlco'):
     else:
         iraf.digiphot(_doprint=0)
         iraf.daophot(_doprint=0)
+        img_fig = None
+        psf_fig = None
     for img in imglist:
         status = checkstage(img, 'checkpsf')
         print(img, status)
@@ -984,10 +986,24 @@ def checkpsf(imglist, no_iraf=False, database='photlco'):
                     psf_filename = _dir + img.replace('.fits', '.psf.fits')
                     make_psf_plot(psf_filename, fig=psf_fig)
                 else:
-                    lsc.util.marksn2(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
-                    iraf.delete('_psf.psf.fits', verify=False)
-                    iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
-                    iraf.surface('_psf.psf')
+                    try:
+                        lsc.util.marksn2(_dir + img, _dir + img.replace('.fits', '.sn2.fits'))
+                        iraf.delete('_psf.psf.fits', verify=False)
+                        iraf.seepsf(_dir + img.replace('.fits', '.psf.fits'), '_psf.psf')
+                        iraf.surface('_psf.psf')
+                    except Exception as e:
+                        print(e)
+                        print('### warning: IRAF display unavailable, using matplotlib for checkpsf')
+                        plt.ion()
+                        if img_fig is None:
+                            img_fig = plt.figure(figsize=(6, 6))
+                            psf_fig = plt.figure(figsize=(8, 4))
+                        else:
+                            img_fig.clf()
+                            psf_fig.clf()
+                        mark_stars_on_image(_dir + img, _dir + img.replace('.fits', '.sn2.fits'), fig=img_fig)
+                        psf_filename = _dir + img.replace('.fits', '.psf.fits')
+                        make_psf_plot(psf_filename, fig=psf_fig)
                 aa = lsc.util.userinput('>>>good psf [[y]/n] or [b] bad quality ? ')
                 if not aa: aa = 'y'
                 if aa in ['n', 'N', 'No', 'NO', 'bad', 'b', 'B']:

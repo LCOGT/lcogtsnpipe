@@ -51,7 +51,7 @@ RUN python -m pip install numpy==2.4.4
 # Running this line to assign the instance reconnect
 RUN sed  '/st_mysql_options options;/a unsigned int reconnect;' /usr/include/mysql/mysql.h -i.bkp 
 
-RUN python -m pip install cryptography==47.0.0 astropy==7.2.0 matplotlib==3.10.8 pyraf==2.2.4 mysqlclient==2.2.8 scipy==1.17.1 astroquery==0.4.11 statsmodels==0.14.6 cython==3.2.4 reproject==0.19.0
+RUN python -m pip install cryptography==47.0.0 astropy==7.2.0 matplotlib==3.10.8 pyraf==2.2.4 mysqlclient==2.2.8 scipy==1.17.1 astroquery==0.4.11 statsmodels==0.14.6 cython==3.2.4 reproject==0.19.0 astroscrappy
 
 RUN python -m pip install sep==1.4.1
 
@@ -65,9 +65,9 @@ RUN case "$(uname -m)" in \
         x86_64)  DS9_PKG="debian12x86" ;; \
         *) echo "Unsupported architecture: $(uname -m)" && exit 1 ;; \
     esac \
-        && wget "http://ds9.si.edu/download/${DS9_PKG}/ds9.${DS9_PKG}.8.6.tar.gz" \
-        && tar -xzvf "ds9.${DS9_PKG}.8.6.tar.gz" -C /usr/local/bin \
-        && rm -f "ds9.${DS9_PKG}.8.6.tar.gz"
+        && wget "http://ds9.si.edu/download/${DS9_PKG}/ds9.${DS9_PKG}.8.7.tar.gz" \
+        && tar -xzvf "ds9.${DS9_PKG}.8.7.tar.gz" -C /usr/local/bin \
+        && rm -f "ds9.${DS9_PKG}.8.7.tar.gz"
 
 RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
         && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \

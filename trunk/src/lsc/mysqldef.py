@@ -506,31 +506,32 @@ def targimg(img='', hdrt=None):
     if not _targetid:
         print('# no target with this name '+_object)
 
-        try:
-           _ra = float(_ra)
-           _dec = float(_dec)
-        except (TypeError, ValueError):
-           error = '\n\033[1m\033[91mERROR: \033[0m' \
-                 'No CAT-RA or CAT-DEC could be found for {img}\n' \
-                 'CAT-RA and CAT-DEC read from header as: {ra} {dec}\n' \
-                 'No object of name {obj} found in database\n' \
-                 'Since headers are corrupted, we recommend manually adding target to db:\n' \
-                 "1. Go to the object's SNEx page to look up its RA and dec\n" \
-                 '2. Access your database (possibly mysql -h supernovadb -D ' \
-                 'supernova -u supernova -psupernova)\n' \
-                 '3. Add to targets table, ' \
-                 'making sure that both RA and dec are in decimal format:\n' \
-                 '   insert into `targets` (`ra0`, `dec0`) values (SNEx_ra, SNEx_dec);\n' \
-                 '4. See what the id of the newly created target is:\n' \
-                 '   select * from targets;\n' \
-                 '   and note the id of the target you just added.\n' \
-                 '5. Add target name to targetnames table, associated with the right id:\n' \
-                 '   insert into `targetnames` (`name`, `targetid`) ' \
-                 "values ('{obj}', new_target_id);\n" \
-                 'Re-run your command to see if images get ingested correctly. ' \
-                 'If not, reach out to the #pipeline channel of the GSP slack.'.format(
-                    img=img, ra=_ra, dec=_dec, obj=_object)
-           raise Exception (error)
+        import numbers
+        import numpy as np
+
+      #   if not (isinstance(_ra, numbers.Real) or (isinstance(_ra, np.floating))) or (isinstance(_dec, numbers.Real) or (isinstance(_dec, np.floating))):
+        if not isinstance(_ra, (numbers.Real, np.floating)) or not isinstance(_dec, (numbers.Real, np.floating)):
+            error = '\n\033[1m\033[91mERROR: \033[0m' \
+               'No CAT-RA or CAT-DEC could be found for {img}\n' \
+               'CAT-RA and CAT-DEC read from header as: {ra} {dec}\n' \
+               'No object of name {obj} found in database\n' \
+               'Since headers are corrupted, we recommend manually adding target to db:\n' \
+               "1. Go to the object's SNEx page to look up its RA and dec\n" \
+               '2. Access your database (possibly mysql -h supernovadb -D ' \
+               'supernova -u supernova -psupernova)\n' \
+               '3. Add to targets table, ' \
+               'making sure that both RA and dec are in decimal format:\n' \
+               '   insert into `targets` (`ra0`, `dec0`) values (SNEx_ra, SNEx_dec);\n' \
+               '4. See what the id of the newly created target is:\n' \
+               '   select * from targets;\n' \
+               '   and note the id of the target you just added.\n' \
+               '5. Add target name to targetnames table, associated with the right id:\n' \
+               '   insert into `targetnames` (`name`, `targetid`) ' \
+               "values ('{obj}', new_target_id);\n" \
+               'Re-run your command to see if images get ingested correctly. ' \
+               'If not, reach out to the #pipeline channel of the GSP slack.'.format(
+                  img=img, ra=_ra, dec=_dec, obj=_object)
+            raise Exception (error)
 
         _targetid=lsc.mysqldef.gettargetid('',_ra,_dec,lsc.myloopdef.conn,.01,False)
         if _targetid:

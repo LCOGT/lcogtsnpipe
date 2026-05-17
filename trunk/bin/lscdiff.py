@@ -463,7 +463,7 @@ if __name__ == "__main__":
                                 if args.difftype == 1:
                                     hdulist = fits.open(imgout.replace('.fits', '.psf.fits'))
                                     imgdata = hdulist[0].data
-                                    yctr, xctr = np.array(imgdata.shape) / 2
+                                    yctr, xctr = np.array(imgdata.shape, dtype=int) // 2
                                     cutsize = 100
                                     hdulist[0].data = imgdata[yctr - cutsize : yctr + cutsize, xctr - cutsize : xctr + cutsize]
                                     psffile_fields = {'PIXSCALE': head_targ['PIXSCALE'],

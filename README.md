@@ -12,7 +12,7 @@ This is the pipeline that ingests and reduces new data from the lcogt key projec
 ---------------------------------
 # Pipeline Documentation:
 1. ### [Manual](manual.md) 
-2. ### [Tutorial](https://docs.google.com/document/d/14ADvdbS-19flwtU7TRJ1lyx8IjgBK6D1KubZnQkQciA/edit?usp=sharing)
+2. ### [Tutorial](https://docs.google.com/document/d/107P1gtdLOGy3kUamogA62xRQk5rrDx9R0wU8vTxtPzI/edit?usp=sharing)
 
 # Docker-compose Installation (recommended):
 This is likely the quickest way to get the pipeline up and running and requires the least amount of installation.
@@ -24,10 +24,17 @@ These instructions only need to be run once, when you set up the pipeline.
 
    1. Install [Docker](https://docs.docker.com/get-docker/).
         * Make sure to increase the amount of memory Docker can access (recommended 8 GB). This is needed for certain stages (like `-s cosmic`) to run. On Mac, press the Docker icon in the toolbar, then click Preferences, then Resources, and increase Memory to 8 GB.
-   2. Install [docker-compose](https://docs.docker.com/compose/install/)
-   3. (macOS only) Install [XQuartz](https://www.xquartz.org).
-   4. (macOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
-   5. Allow X11 connections (may be only necessary on Linux):
+   2. (macOS only): We have had some cases where the Docker Desktop Daemon fails to build, but OrbStack Daemon works. To use OrbStack:
+       a. Download OrbStack: https://orbstack.dev
+       b. Open the OrbStack application and give it access to your Desktop and let it install command-line tools
+       c. Select Docker as the platform you want to use
+       d. Set your computer to use OrbStack by default for docker builds: 
+             ```orb docker migrate
+                docker context use orbstack```
+   3. Install [docker-compose](https://docs.docker.com/compose/install/)
+   4. (macOS only) Install [XQuartz](https://www.xquartz.org).
+   5. (macOS only) Install [socat](http://www.dest-unreach.org/socat/). If you have [Homebrew](https://brew.sh) installed, you can just run `brew install socat`.
+   6. Allow X11 connections (may be only necessary on Linux):
       ```
       xhost +local:docker
       ```
@@ -75,9 +82,13 @@ These instructions only need to be run once, when you set up the pipeline.
        ```
        docker build -t lcogtsnpipe lcogtsnpipe
        ```
-       Mac:
+       Mac (Docker Desktop Daemon):
        ```
        docker build -t lcogtsnpipe lcogtsnpipe --platform=linux/x86_64
+       ```
+       Mac (OrbStack Daemon)
+       ```
+       docker buildx build -t lcogtsnpipe lcogtsnpipe --platform=linux/x86_64
        ```
    12. Set your environment variables to point to where you want to store data and catalogs.
       You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file

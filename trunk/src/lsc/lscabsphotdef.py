@@ -1117,7 +1117,7 @@ def sloan2file(ra, dec, radius=10., mag1=13., mag2=20., output='sloan.cat'):
     '''download an SDSS catalog'''
     sql_command = "select P.ra, P.dec, P.objID, P.u, P.err_u, P.g, P.err_g, P.r, P.err_r, P.i, P.err_i, P.z, P.err_z " + \
                   "from PhotoPrimary as P, dbo.fGetNearbyObjEq({}, {}, {}) as N " + \
-                  "where P.objID=N.objID and P.type=6 and P.r >= {} and P.r <= {};"
+                  "where P.objID=N.objID and P.type=6 and P.r >= {} and P.r <= {}"
     t = SDSS.query_sql(sql_command.format(ra, dec, radius, mag1, mag2))
     if t is not None:
         t['ra'].format ='%16.12f'
@@ -1250,10 +1250,10 @@ def gaia2file(ra, dec, size=26., mag_limit=18., output='gaia.cat'):
     response['ra'].format ='%16.12f'
     response['dec'].format = '%16.12f'
     response['phot_g_mean_mag'].format = '%.2f'
-
+   
     if 'SOURCE_ID' in response.colnames:
         print('renaming SOURCE_ID')
-        response.rename_column('SOURCE_ID', 'source_id')
+        response.rename_column('SOURCE_ID', 'source_id') 
     gaia_cat = response['ra', 'dec', 'source_id', 'phot_g_mean_mag']
     gaia_cat.write(output, format='ascii.commented_header',
-            delimiter=' ', overwrite=True)
+                    delimiter=' ', overwrite=True)

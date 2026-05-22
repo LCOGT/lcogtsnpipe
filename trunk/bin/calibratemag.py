@@ -73,12 +73,15 @@ def get_image_data(lista, magcol=None, errcol=None, refcat=None):
     return t
 
 def average_in_flux(mag, dmag, axis=None):
-    flux = 10**(mag / -2.5)
-    dflux = np.log(10) / 2.5 * flux * dmag
-    avg_dflux = np.power(np.sum(np.power(dflux, -2), axis), -0.5)
-    avg_flux = np.sum(flux * np.power(dflux, -2), axis) * avg_dflux**2
-    avg_mag = -2.5 * np.log10(avg_flux)
-    avg_dmag = 2.5 / np.log(10) * np.divide(avg_dflux, avg_flux)
+    import numpy as _np
+    with _np.errstate(over='ignore', divide='ignore', invalid='ignore'):
+        flux = 10**(mag / -2.5)
+        dflux = np.log(10) / 2.5 * flux * dmag
+        weight = 1.0 / (dflux**2)
+        avg_dflux = 1.0 / np.sqrt(np.sum(weight, axis))
+        avg_flux = np.sum(flux * weight, axis) * avg_dflux**2
+        avg_mag = -2.5 * np.log10(avg_flux)
+        avg_dmag = 2.5 / np.log(10) * np.divide(avg_dflux, avg_flux)
     return avg_mag, avg_dmag
 
 def combine_nights(combined_catalog, filterlist, refcat):
@@ -167,7 +170,14 @@ if __name__ == "__main__":
         with open(args.exzp) as f:
             lista2 = f.read().splitlines()
         standards = get_image_data(lista2)
-        standards = standards.group_by(['dayobs', tel_kwd, inst_kwd, 'filter', 'zcol1', 'zcol2'])
+        
+        #changes
+        group_keys = ['dayobs', tel_kwd, inst_kwd, 'filter', 'zcol1', 'zcol2']
+        for key in group_keys:
+            if standards[key].dtype == object:
+                standards[key] = ['' if val is None else val for val in standards[key]]
+        standards = standards.group_by(group_keys)
+
         for icol in ['zcol1', 'z1', 'dz1', 'c1', 'dc1', 'zcol2', 'z2', 'dz2', 'c2', 'dc2']:
             targets[icol].mask = True
         for group in standards.groups:

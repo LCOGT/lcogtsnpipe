@@ -1235,7 +1235,7 @@ def panstarrs2file(ra, dec, radius=20., mag1=13., mag2=20., output='panstarrs.ca
 def gaia2file(ra, dec, size=26., mag_limit=18., output='gaia.cat'):
 
     from astroquery.gaia import Gaia
-
+    Gaia.ROW_LIMIT = -1
     warnings.simplefilter('ignore')  # suppress a lot of astroquery warnings
 
     coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree))

@@ -170,7 +170,8 @@ if __name__ == "__main__":
         with open(args.exzp) as f:
             lista2 = f.read().splitlines()
         standards = get_image_data(lista2)
-
+        
+        #changes
         group_keys = ['dayobs', tel_kwd, inst_kwd, 'filter', 'zcol1', 'zcol2']
         for key in group_keys:
             if standards[key].dtype == object:
@@ -184,8 +185,6 @@ if __name__ == "__main__":
                                    & (targets[inst_kwd] == group[inst_kwd][0]) & (targets['filter'] == group['filter'][0]))
             if not np.any(matches_in_targets):
                 continue
-            for icol in ['zcol1', 'zcol2', 'z1', 'dz1', 'z2', 'dz2', 'c1', 'dc1', 'c2', 'dc2']:
-                targets[icol].mask[matches_in_targets] = False
             targets['zcol1'][matches_in_targets] = group['zcol1'][0]
             targets['zcol2'][matches_in_targets] = group['zcol2'][0]
             targets['z1'][matches_in_targets], targets['dz1'][matches_in_targets] = average_in_flux(group['z1'], group['dz1'])
@@ -243,15 +242,11 @@ if __name__ == "__main__":
         targets['d'+filters] = np.array(dcolors)
 
     # calibrate all the instrumental magnitudes
-    zcol = np.array([color_to_use[row['filter']][0] if color_to_use[row['filter']] else row['filter']*2 for row in targets])
-    zcol1_safe = np.array([val.decode('utf-8') if isinstance(val, bytes) else str(val) if val is not None else '' for val in targets['zcol1']])
-    match_z1 = (zcol == zcol1_safe)
-    zeropoint = np.where(match_z1, targets['z1'], targets['z2'])
-    dzeropoint = np.where(match_z1, targets['dz1'], targets['dz2'])
-    colorterm = np.where(match_z1, targets['c1'], targets['c2'])
-    dcolorterm = np.where(match_z1, targets['dc1'], targets['dc2'])
-
-
+    zcol = [color_to_use[row['filter']][0] if color_to_use[row['filter']] else row['filter']*2 for row in targets]
+    zeropoint = np.choose(zcol == targets['zcol1'], [targets['z2'], targets['z1']])
+    dzeropoint = np.choose(zcol == targets['zcol1'], [targets['dz2'], targets['dz1']])
+    colorterm = np.choose(zcol == targets['zcol1'], [targets['c2'], targets['c1']])
+    dcolorterm = np.choose(zcol == targets['zcol1'], [targets['dc2'], targets['dc1']])
     uzcol, izcol = np.unique(zcol, return_inverse=True)
     color_used = np.choose(izcol, [targets[col].T if col in targets.colnames else 0. for col in uzcol]).filled(0.) # if no other filter, skip color correction
     dcolor_used = np.choose(izcol, [targets['d'+col].T if col in targets.colnames else 0. for col in uzcol]).filled(0.)

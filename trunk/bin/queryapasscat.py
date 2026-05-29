@@ -17,8 +17,8 @@ import numpy as np
 def deg2HMS(ra='', dec='', round=False):
       RA, DEC= '', ''
       if dec:
-          if string.count(str(dec),':')==2:
-              dec00=string.split(dec,':')
+          if str.count(str(dec),':')==2:
+              dec00=str.split(dec,':')
               dec0,dec1,dec2=float(dec00[0]),float(dec00[1]),float(dec00[2])
               if '-' in str(dec0):       DEC=(-1)*((dec2/60.+dec1)/60.+((-1)*dec0))
               else:                      DEC=(dec2/60.+dec1)/60.+dec0
@@ -29,8 +29,8 @@ def deg2HMS(ra='', dec='', round=False):
               dec2=((((abs(dec))-abs(dec0))*60)-abs(dec1))*60
               DEC='00'[len(str(dec0)):]+str(dec0)+':'+'00'[len(str(dec1)):]+str(dec1)+':'+'00'[len(str(int(dec2))):]+str(dec2)
       if ra:
-          if string.count(str(ra),':')==2:
-              ra00=string.split(ra,':')
+          if str.count(str(ra),':')==2:
+              ra00=str.split(ra,':')
               ra0,ra1,ra2=float(ra00[0]),float(ra00[1]),float(ra00[2])
               RA=((ra2/60.+ra1)/60.+ra0)*15.
           else:
@@ -57,10 +57,10 @@ def vizq(_ra,_dec,catalogue,radius):
                    ' -c.ra='+str(_ra)+' -c.dec='+str(_dec)+' -c.eq=J2000 -c.rm='+str(radius)+\
                    ' -c.geom=b -oc.form=h -sort=_RA*-c.eq -out.add=_RAJ2000,_DEJ2000 -out.max=10000 -out='+\
                    cat[catalogue][1]+' -out="'+cat[catalogue][2]+'"').read()
-    print 'vizquery -mime=tsv  -site='+_site+' -source='+cat[catalogue][0]+\
+    print('vizquery -mime=tsv  -site='+_site+' -source='+cat[catalogue][0]+\
                    ' -c.ra='+str(_ra)+' -c.dec='+str(_dec)+' -c.eq=J2000 -c.rm='+str(radius)+\
                    ' -c.geom=b -oc.form=h -sort=_RA*-c.eq -out.add=_RAJ2000,_DEJ2000 -out.max=10000 -out='+\
-                   cat[catalogue][1]+' -out="'+cat[catalogue][2]+'"'
+                   cat[catalogue][1]+' -out="'+cat[catalogue][2]+'"')
     aa=a.split('\n')
     bb=[]
     for i in aa:
@@ -74,7 +74,7 @@ def vizq(_ra,_dec,catalogue,radius):
         _dec.append(dd)
         _name.append(aa[2])
     dictionary={'ra':_ra,'dec':_dec,'id':_name}
-    sss=string.split(cat[catalogue][2],',')
+    sss=str.split(cat[catalogue][2],',')
     for ii in sss: dictionary[ii]=[]
     for ii in bb[3:]:
         aa=ii.split('\t')
@@ -197,5 +197,5 @@ if __name__ == "__main__":
     _radius=option.radius
     _catalogue=option.cat
     _outputfile=option.output
-    print _ra,_dec,_radius
+    print(_ra,_dec,_radius)
     readapass2(_ra,_dec,_radius,_outputfile)

@@ -302,7 +302,7 @@ if __name__ == "__main__":
                           start=args.start, end=args.end, OBSTYPE=args.obstype, RLEVEL=rlevel, public=args.public,
                           basename_exact=args.basename, covers='POINT({} {})'.format(*args.coords) if args.coords else None)
 
-    print 'Total number of frames:', len(frames)
+    print('Total number of frames:', len(frames))
 
     fullpaths = []
     for frame in frames:

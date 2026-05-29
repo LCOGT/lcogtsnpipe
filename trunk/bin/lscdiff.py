@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 description = ">> make different image using hotpants"
-usage = "%prog imagein  imagetem [options] "
+usage = "%(prog)s imagein imagetem [options]"
 import os
 import warnings
 import lsc
@@ -29,9 +29,9 @@ def crossmatchtwofiles(img1, img2, radius=3):
     xpix2, ypix2, fw2, cl2, cm2, ell2, bkg2, fl2 = lsc.lscastrodef.sextractor(img2)
     xpix1, ypix1, xpix2, ypix2 = np.array(xpix1, float), np.array(ypix1, float), np.array(xpix2, float), np.array(ypix2, float)
 
-    bb = wcs1.wcs_pix2world(zip(xpix1, ypix1), 1)  #   transform pixel in coordinate
+    bb = wcs1.wcs_pix2world(list(zip(xpix1, ypix1)), 1)  #   transform pixel in coordinate
     xra1, xdec1 = zip(*bb)
-    bb = wcs2.wcs_pix2world(zip(xpix2, ypix2), 1)  #   transform pixel in coordinate
+    bb = wcs2.wcs_pix2world(list(zip(xpix2, ypix2)), 1)  #   transform pixel in coordinate
     xra2, xdec2 = zip(*bb)
 
     xra1, xdec1, xra2, xdec2 = np.array(xra1, float), np.array(xdec1, float), np.array(xra2, float), np.array(xdec2, float)
@@ -39,7 +39,7 @@ def crossmatchtwofiles(img1, img2, radius=3):
     #dict={}
     dict = {'ra1': xra1[pos1], 'dec1': xdec1[pos1], 'ra2': xra2[pos2], 'dec2': xdec2[pos2], \
             'xpix1': xpix1[pos1], 'ypix1': ypix1[pos1], 'xpix2': xpix2[pos2], 'ypix2': ypix2[pos2]}
-    np.savetxt('substamplist', zip(xpix1[pos1], ypix1[pos1]), fmt='%10.10s\t%10.10s')
+    np.savetxt('substamplist', list(zip(xpix1[pos1], ypix1[pos1])), fmt='%10.10s\t%10.10s')
     return 'substamplist', dict
 
 ###################################################
@@ -48,31 +48,31 @@ if __name__ == "__main__":
     parser.add_argument("targlist", help='list of images with the target in them')
     parser.add_argument("templist", help='list of template images')
     parser.add_argument("-f", "--force", dest="force", action="store_true",
-                      default=False, help=' force archiving \t\t\t [%default]')
+                      default=False, help=' force archiving \t\t\t [%(default)s]')
     parser.add_argument("--show", dest="show", action="store_true",
-                      default=False, help=' show result  \t\t\t [%default]')
+                      default=False, help=' show result  \t\t\t [%(default)s]')
     parser.add_argument("--fixpix", dest="fixpix", action="store_true", default=False,
                       help='Run fixpix on the images before doing the subtraction')
     parser.add_argument('--suffix', default='.diff.fits', help='suffix for difference images')
 
     hotpants = parser.add_argument_group("hotpants parameters")
     hotpants.add_argument("--nrxy", dest="nrxy", default='1,1',
-                        help='Number of image region in x y directions \t [%default]')
+                                                help='Number of image region in x y directions \t [%(default)s]')
     hotpants.add_argument("--nsxy", dest="nsxy", default='8,8',
-                        help="Number of region's stamps in x y directions\t [%default]")
+                                                help="Number of region's stamps in x y directions\t [%(default)s]")
     hotpants.add_argument("--ko", dest="ko", default='2',
-                        help='spatial order of kernel variation within region\t [%default]')
+                                                help='spatial order of kernel variation within region\t [%(default)s]')
     hotpants.add_argument("--bgo", dest="bgo", default='2',
-                        help='spatial order of background variation within region \t [%default]')
+                                                help='spatial order of background variation within region \t [%(default)s]')
     hotpants.add_argument("--afssc", dest="afssc", default=False,
-                        action="store_true", help='use selected stamps \t\t\t [%default]')
+                                                action="store_true", help='use selected stamps \t\t\t [%(default)s]')
     hotpants.add_argument("--normalize", dest="normalize", default='i', choices=['i', 't'],
-                        help='normalize zero point to image [i] or template [t] \t [%default]')
+                                                help='normalize zero point to image [i] or template [t] \t [%(default)s]')
     hotpants.add_argument("--convolve", dest="convolve", default='', choices=['i', 't', ''],
-                        help='convolve direction to image [i] or template [t] \t [%default]')
+                                                help='convolve direction to image [i] or template [t] \t [%(default)s]')
     hotpants.add_argument("--interpolation", dest="interpolation", default='drizzle',
                           choices=['drizzle', 'nearest', 'linear', 'poly3', 'poly5', 'spline3'],
-                        help='interpolation algorithm  [drizzle,nearest,linear,poly3,poly5,spline3]\t [%default]')
+                                                help='interpolation algorithm  [drizzle,nearest,linear,poly3,poly5,spline3]\t [%(default)s]')
     parser.add_argument("--difftype", type=int, choices=[0, 1], default=0, help='Choose hotpants (0) or optimal (1) subtraction \t [%(default)s]')
     parser.add_argument("--unmask", action='store_false', dest='use_mask', help='do not use mask for PyZOGY gain calculation')
     parser.add_argument("--no-iraf", action='store_true', help='transform images in Python instead of IRAF'
@@ -88,7 +88,7 @@ if __name__ == "__main__":
         hostname, username, passwd, database = lsc.mysqldef.getconnection('lcogt2')
         conn = lsc.mysqldef.dbConnect(hostname, username, passwd, database)
     except:
-        print not 'connected to the database'
+        print(' not connected to the database')
         conn=0
     # divide targets by filter and targetid
     for img in imglisttar:
@@ -142,15 +142,15 @@ if __name__ == "__main__":
                         imgout0 = imgtarg0.replace('.fits', args.suffix)
 
                         if os.path.isfile(_dir + imgout0) and not args.force:
-                            print 'file', imgout0, 'already there'
+                            print('file', imgout0, 'already there')
                             continue
                         targmask0 = imgtarg0.replace('.fits', '.mask.fits')
                         if not os.path.isfile(_dir + targmask0):
-                            print "no cosmic ray mask for target image, run 'lscloop.py -s cosmic' first"
+                            print("no cosmic ray mask for target image, run 'lscloop.py -s cosmic' first")
                             continue
                         tempmask0 = imgtemp0.replace('.fits', '.mask.fits')
                         if not os.path.isfile(_dirtemp + tempmask0):
-                            print "no cosmic ray mask for template image, run 'lscloop.py -s cosmic' first"
+                            print("no cosmic ray mask for template image, run 'lscloop.py -s cosmic' first")
                             continue
                         tempnoise0 = imgtemp0.replace('.fits', '.var.fits')
                         outmask0 = imgout0.replace('.fits', '.mask.fits')
@@ -164,7 +164,7 @@ if __name__ == "__main__":
                         exp_targ = lsc.util.readkey3(head_targ, 'exptime')
                         sat_targ = lsc.util.readkey3(head_targ, 'datamax')
                         gain_targ = lsc.util.readkey3(head_targ, 'gain')
-                        rn_targ = lsc.readkey3(head_targ, 'ron')
+                        rn_targ = lsc.util.readkey3(head_targ, 'ron')
                         max_fwhm = head_targ.get('L1FWHM', 3.0)
 
                         data_temp, head_temp = fits.getdata(_dirtemp + imgtemp0, header=True)
@@ -212,7 +212,7 @@ if __name__ == "__main__":
                             fits.writeto(_dirtemp + tempnoise0, noiseimg, output_verify='fix', overwrite=True)
                         else:
                             pssl_temp = 0
-                            print 'variance image already there, do not create noise image'
+                            print('variance image already there, do not create noise image')
 
                         if args.no_iraf:
                             fits.writeto(imgtarg, data_targ, head_targ, overwrite=True)
@@ -259,17 +259,17 @@ if __name__ == "__main__":
     #                        try:
                             iraf.immatch.gregister(_dirtemp + imgtemp0, imgtemp, "tmp$db", "tmpcoo", geometr="geometric",
                                                    interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
-                            print 'here'
+                            print('here')
                             try:
                                 iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
                                                    interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
                             except:
-                                print 'try again'
+                                print('try again')
                                 # this is strange, sometime the registration of the msk fail the first time, but not the second time
                                 iraf.immatch.gregister(_dirtemp + tempmask0, tempmask, "tmp$db", "tmpcoo", geometr="geometric",
                                                    interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
-                            print 'variance image already there, do not create noise image'
+                            print('variance image already there, do not create noise image')
                             iraf.immatch.gregister(_dirtemp + tempnoise0, tempnoise, "tmp$db", "tmpcoo", geometr="geometric",
                                                interpo=args.interpolation, boundar='constant', constan=0, flux='yes', verbose='yes')
 
@@ -308,7 +308,7 @@ if __name__ == "__main__":
                                 iraf.flpr(); iraf.flpr()
                                 iraf.unlearn(iraf.fixpix)
                             except:
-                                print 'FIXPIX ERROR, continuing without fixpix'
+                                print('FIXPIX ERROR, continuing without fixpix')
                         # hotpants parameters
                         iuthresh = str(sat_targ)                        # upper valid data count, image
                         iucthresh = str(0.95*sat_targ)                   # upper valid data count for kernel, image
@@ -343,7 +343,7 @@ if __name__ == "__main__":
                                 iraf.seepsf(imgtarg_path.replace('.fits','.psf.fits'), psftarg)
                                 iraf.seepsf(imgtemp_path.replace('.fits','.psf.fits'), psftemp)
                             try:
-                                print 'Passing images to PyZOGY'
+                                print('Passing images to PyZOGY')
                                 run_subtraction(imgtarg, imgtemp, psftarg, psftemp,
                                                            science_mask=targmask,
                                                            reference_mask=tempmask,
@@ -356,8 +356,8 @@ if __name__ == "__main__":
                                                            use_mask_for_gain=args.use_mask,
                                                            pixstack_limit=args.pixstack_limit)
                             except Exception as e:
-                                print e
-                                print 'PyZOGY failed on', imgtarg0
+                                print(e)
+                                print('PyZOGY failed on', imgtarg0)
                                 continue
 
                             # create fields in header that hotpants does
@@ -387,7 +387,7 @@ if __name__ == "__main__":
                                     ' -ko ' + args.ko + ' -bgo ' + args.bgo+' -tmi tempmask.fits  -okn -ng 4 9 0.70 6 1.50 4 3.00 2 5 ')
 
 
-                            print line
+                            print(line)
                             os.system(line)
 
 
@@ -410,12 +410,12 @@ if __name__ == "__main__":
                                                               'SATURATE': (sat_temp, '[ADU] Saturation level used')})
 
                         if 'CONVOL00' not in hd:
-                            print '\n ### PSF computed by PyZOGY'
+                            print('\n ### PSF computed by PyZOGY')
                         elif hd['CONVOL00'] == 'TEMPLATE':
-                            print '\n ### image to compute  psf: '+imgtarg0
+                            print('\n ### image to compute  psf: '+imgtarg0)
                             lsc.util.updateheader(imgout, 0, {'PSF': (imgtarg0, 'image to compute  psf')})
                         else:
-                            print '\n ### image to compute  psf: '+imgtemp0
+                            print('\n ### image to compute  psf: '+imgtemp0)
                             lsc.util.updateheader(imgout, 0, {'PSF': (imgtemp0, 'image to compute  psf')})
 
                             #                    copy all information from target
@@ -455,7 +455,7 @@ if __name__ == "__main__":
                         dictionary['difftype'] = args.difftype
                         if dictionary['filepath']:
                             if not os.path.isdir(dictionary['filepath']):
-                                print dictionary['filepath']
+                                print(dictionary['filepath'])
                                 os.mkdir(dictionary['filepath'])
                             if not os.path.isfile(dictionary['filepath'] + imgout0) or args.force in ['yes', True]:
                                 os.system('mv -v ' + imgout + ' ' + dictionary['filepath'] + imgout0)
@@ -463,7 +463,7 @@ if __name__ == "__main__":
                                 if args.difftype == 1:
                                     hdulist = fits.open(imgout.replace('.fits', '.psf.fits'))
                                     imgdata = hdulist[0].data
-                                    yctr, xctr = np.array(imgdata.shape) / 2
+                                    yctr, xctr = np.array(imgdata.shape, dtype=int) // 2
                                     cutsize = 100
                                     hdulist[0].data = imgdata[yctr - cutsize : yctr + cutsize, xctr - cutsize : xctr + cutsize]
                                     psffile_fields = {'PIXSCALE': head_targ['PIXSCALE'],
@@ -486,11 +486,11 @@ if __name__ == "__main__":
                         #
                         ##########################################################################################################
                         if args.normalize == 'i':
-                            print '\n ### scale to target'
+                            print('\n ### scale to target')
                             imgscale = imgtarg0
                             pathscale = _dir
                         elif args.normalize == 't':
-                            print '\n ### scale to reference'
+                            print('\n ### scale to reference')
                             imgscale = imgtemp0
                             pathscale = _dirtemp
 
@@ -498,7 +498,7 @@ if __name__ == "__main__":
                             line = ('cp ' + pathscale + imgscale.replace('.fits', '.sn2.fits') + ' ' +
                                     dictionary['filepath'] + imgout0.replace('.fits', '.sn2.fits'))
                             os.system(line)
-                            print line
+                            print(line)
                             lsc.util.updateheader(dictionary['filepath'] + imgout0.replace('.fits', '.sn2.fits'), 0,
                                                   {'mag': (9999., 'apparent'), 'psfmag': (9999., 'inst mag'), 'apmag': (9999., 'aperture mag')})
                             #
@@ -517,24 +517,24 @@ if __name__ == "__main__":
                                 lsc.util.updateheader(dictionary['filepath'] + imgout0.replace('.fits', '.sn2.fits'), 0,
                                                       {'ZNref': (hdtempsn['ZN'], 'ZN reference image')})
                             else:
-                                print 'not ZN'
+                                print('not ZN')
                             if 'apflux' in hdtempsn:
                                 lsc.util.updateheader(dictionary['filepath'] + imgout0.replace('.fits', '.sn2.fits'), 0,
                                                       {'apfl1re': (hdtempsn['apflux'], 'flux reference image'),
                                                        'dapfl1re': (hdtempsn['dapflux'], 'error flux reference image')})
                             else:
-                                print 'not apflux'
+                                print('not apflux')
 
                         else:
-                            print 'fits table not found ' + dictionary['filepath'] + imgscale.replace('.fits', '.sn2.fits')
+                            print('fits table not found ' + dictionary['filepath'] + imgscale.replace('.fits', '.sn2.fits'))
                         if conn:
                             ###################    insert in photlco
                             ggg = lsc.mysqldef.getfromdataraw(conn, 'photlco', 'filename', imgout0, '*')
                             if ggg and args.force:
                                 lsc.mysqldef.deleteredufromarchive(imgout0, 'photlco', 'filename')
                             if not ggg or args.force:
-                                print 'insert'
-                                print dictionary
+                                print('insert')
+                                print(dictionary)
                                 lsc.mysqldef.insert_values(conn, 'photlco', dictionary)
                             else:
                                 for voce in ggg[0].keys():
@@ -546,8 +546,8 @@ if __name__ == "__main__":
                             dictionary = {'namein': imgtarg0, 'nameout': imgout0,
                                           'nametemplate': imgtemp0, 'tablein': 'photlco',
                                           'tableout': 'photlco', 'tabletemplate': 'photlco'}
-                            print 'insert in out'
-                            print dictionary
+                            print('insert in out')
+                            print(dictionary)
                             lsc.mysqldef.insert_values(conn, 'photpairing', dictionary)
                         else:
-                            print 'warning: mysql database not updated, you are not connected to the database'
+                            print('warning: mysql database not updated, you are not connected to the database')

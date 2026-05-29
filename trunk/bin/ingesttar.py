@@ -11,9 +11,9 @@ _dir = os.environ['LCOSNDIR']
 
 def ingesttar(_tarfile,force=False):
     if '.gz' in _tarfile:
-        _targetid = re.sub('.tar.gz','',string.split(_tarfile,'_')[-1])
+        _targetid = re.sub('.tar.gz','',str.split(_tarfile,'_')[-1])
     else:
-        _targetid = re.sub('.tar','',string.split(_tarfile,'_')[-1])
+        _targetid = re.sub('.tar','',str.split(_tarfile,'_')[-1])
     my_tar = tarfile.open(_tarfile)
     imglist = [os.path.join(_dir, i) for i in my_tar.getnames()]
     print(imglist)

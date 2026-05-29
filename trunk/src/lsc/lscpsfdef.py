@@ -81,10 +81,10 @@ def psffit2(img, fwhm, psfstars, hdr, _datamin, _datamax, psffun='gauss',  fixap
     _gain = lsc.util.readkey3(hdr, 'gain')
     if not _ron:
         _ron = 1
-        print 'warning ron not defined'
+        print('warning ron not defined')
     if not _gain:
         _gain = 1
-        print 'warning gain not defined'
+        print('warning gain not defined')
 
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
@@ -92,7 +92,7 @@ def psffit2(img, fwhm, psfstars, hdr, _datamin, _datamax, psffun='gauss',  fixap
     varord = 0  # -1 analitic 0 - numeric
 
     if fixaperture:
-        print 'use fix aperture 5 8 10'
+        print('use fix aperture 5 8 10')
         hdr = lsc.util.readhdr(img+'.fits')
         _pixelscale = lsc.util.readkey3(hdr, 'PIXSCALE')
         a1, a2, a3, a4, = float(5. / _pixelscale), float(5. / _pixelscale), float(8. / _pixelscale), float(
@@ -142,10 +142,10 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
     _gain = lsc.util.readkey3(hdr, 'gain')
     if not _ron:
         _ron = 1
-        print 'warning ron not defined'
+        print('warning ron not defined')
     if not _gain:
         _gain = 1
-        print 'warning gain not defined'
+        print('warning gain not defined')
 
     iraf.digiphot(_doprint=0)
     iraf.daophot(_doprint=0)
@@ -153,7 +153,7 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
     varord = 0  # -1 analitic 0 - numeric
 
     if fixaperture:
-        print 'use fix aperture 5 8 10'
+        print('use fix aperture 5 8 10')
         hdr = lsc.util.readhdr(img+'.fits')
         _pixelscale = lsc.util.readkey3(hdr, 'PIXSCALE')
         a1, a2, a3, a4, = float(5. / _pixelscale), float(5. / _pixelscale), float(8. / _pixelscale), float(
@@ -183,7 +183,7 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
     # removes saturated stars from the list (IRAF just issues a warning)
     with open('_psf.mag') as f:
         text = f.read()
-    text = re.sub('(.*\n){6}.*BadPixels\* \n', '', text)
+    text = re.sub(r'(.*\n){6}.*BadPixels\* \n', '', text)
     with open('_psf.mag', 'w') as f:
         f.write(text)
 
@@ -197,10 +197,10 @@ def psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun='ga
 
     if interactive: # not possible to run pstselect or psf interactively on 64-bit linux (Error 851)
         os.system('cp _psf.mag _psf.pst')
-        print '_' * 80
-        print '>>> Mark good stars with "a" or "d"-elete. Then "f"-it,' + \
-              ' "w"-write and "q"-uit (cursor on ds9)'
-        print '-' * 80
+        print('_' * 80)
+        print('>>> Mark good stars with "a" or "d"-elete. Then "f"-it,' + \
+              ' "w"-write and "q"-uit (cursor on ds9)')
+        print('-' * 80)
     else:
         iraf.pstselect(img+'[0]', '_psf.mag', '_psf.pst', psfstars, interac=False, verify=False)
 
@@ -244,11 +244,11 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                     raise Exception('astrometry not good')
 
             fwhm = seeing / scale
-            print 'FWHM[header]', fwhm, 'pixels'
-        print 'FWHM[input] ', fwhm, 'pixels'
+            print('FWHM[header]', fwhm, 'pixels')
+        print('FWHM[input] ', fwhm, 'pixels')
 
         xdim, ydim = iraf.hselect(img+'[0]', 'i_naxis1,i_naxis2', 'yes', Stdout=1)[0].split()
-        print img, fwhm, threshold, scale, xdim
+        print(img, fwhm, threshold, scale, xdim)
 
         if _datamax is None:
             # When a star near saturation is selected as the first PSF star it leads to an incorrect
@@ -259,7 +259,7 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
         ###################        write file to compute psf     _psf.coo    ############
         #################################################################################
         if _catalog:
-            print '\n#### use catalog to measure the psf'
+            print('\n#### use catalog to measure the psf')
             ddd=iraf.wcsctran(input=_catalog,output='STDOUT',Stdout=1,image=img + '[0]',inwcs='world',outwcs='logical',
                               units='degrees degrees',columns='1 2',formats='%10.1f %10.1f',verbose='no')
             ddd=[i for i in ddd if i[0]!='#']
@@ -278,9 +278,9 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
         elif interactive:
             iraf.display(img + '[0]', 1, fill=True)
             iraf.delete('tmp.lo?', verify=False)
-            print '_' * 80
-            print '>>> Mark reference stars with "a". Then "q"'
-            print '-' * 80
+            print('_' * 80)
+            print('>>> Mark reference stars with "a". Then "q"')
+            print('-' * 80)
             iraf.imexamine(img, 1, wcs='logical', logfile='tmp.log', keeplog=True)
             xyrefer = iraf.fields('tmp.log', '1,2,6,15', Stdout=1)
             xns, yns, _fws = [], [], []
@@ -298,8 +298,8 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
             xs, ys, ran, decn, magbest, classstar, fluxrad, bkg = runsex(img, fwhm, threshold, scale)
             tot = np.compress(abs(np.array(fluxrad) * 1.6 - fwhm) / fwhm < .5, fluxrad)
             if len(tot) < 5:
-                print 'warning: fwhm from sexractor different from fwhm computed during pre-reduction'
-                print 'try using option --fwhm xxx'
+                print('warning: fwhm from sexractor different from fwhm computed during pre-reduction')
+                print('try using option --fwhm xxx')
 
             ff = open('tmp.cursor', 'w')
             image_hdu = fits.open(img + '.fits')
@@ -338,8 +338,8 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                     xn.append(float(r.split()[0]))
                     yn.append(float(r.split()[1]))
                     _fw.append(float(r.split()[3]))
-            print 'FWHM: ', righe[-1].split()[-1]
-            print 80 * "#"
+            print('FWHM: ', righe[-1].split()[-1])
+            print(80 * "#")
             ######
             ##############            eliminate double object identification         ###########################
             xns, yns, _fws = [xn[0]], [yn[0]], [_fw[0]]
@@ -381,7 +381,7 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
 #            fstar = np.compress(dflux < np.std(fluxrad), fluxrad)
 #################################################################################################################
 
-        print 80 * "#"
+        print(80 * "#")
         photmag, pst, fitmag = psffit(img, fwhm, psfstars, hdr, interactive, _datamin, _datamax, psffun, fixaperture)
 
         if make_sn2:
@@ -396,10 +396,13 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                                    format='%13.3H %12.2h', min_sig=9, mode='h')[3:]
 
             if interactive or show:
-                iraf.set(stdimage='imt1024')
-                iraf.display(img + '[0]', 1, fill=True, Stdout=1)
-                iraf.tvmark(1, coords='STDIN', mark='circle', radii=15, label=True, Stdin=photmag, nxoffset=5, nyoffset=5, txsize=2)
-                iraf.tvmark(1, coords='STDIN', mark='circle', radii=35, label=False, Stdin=pst, color=208)
+                try:
+                    iraf.set(stdimage='imt1024')
+                    iraf.display(img + '[0]', 1, fill=True, Stdout=1)
+                    iraf.tvmark(1, coords='STDIN', mark='circle', radii=15, label=True, Stdin=photmag, nxoffset=5, nyoffset=5, txsize=2)
+                    iraf.tvmark(1, coords='STDIN', mark='circle', radii=35, label=False, Stdin=pst, color=208)
+                except Exception as e:
+                    print('Warning: IRAF display unavailable (no DS9/imtool running): {}'.format(e))
     #            iraf.tvmark(1, coords='STDIN', mark='cross', length=35, label=False, Stdin=fitmag2, color=204)
 
             idpsf = []
@@ -419,16 +422,16 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
             _dmag = np.compress(np.array(dmag) < 9.99, np.array(dmag))
             aperture_correction = np.mean(_dmag)
             aperture_correction_err = np.std(_dmag)
-            print '>>> Aperture correction (phot)   %6.3f +/- %5.3f %3d ' % \
-                  (aperture_correction, aperture_correction_err, len(_dmag))
+            print('>>> Aperture correction (phot)   %6.3f +/- %5.3f %3d ' % \
+                  (aperture_correction, aperture_correction_err, len(_dmag)))
             #Sigma clip if there are enough points
             if len(_dmag) > 3:
                 _dmag = np.compress(np.abs(_dmag - np.median(_dmag)) < 2 * np.std(_dmag), _dmag)
                 aperture_correction = np.mean(_dmag)
                 aperture_correction_err = np.std(_dmag)
-                print '>>>         2 sigma rejection)   %6.3f +/- %5.3f %3d  [default]' \
-                      % (aperture_correction, aperture_correction_err, len(_dmag))
-                print '>>>     fwhm   %s  ' % (str(fwhm))
+                print('>>>         2 sigma rejection)   %6.3f +/- %5.3f %3d  [default]' \
+                      % (aperture_correction, aperture_correction_err, len(_dmag)))
+                print('>>>     fwhm   %s  ' % (str(fwhm)))
                 
             for i in range(len(dmag)):
                 if dmag[i] == 9.99:
@@ -471,29 +474,29 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                 if smagf[indx] not in ['INDEF', 9999]:
                     smagf[indx] = '{:0<2.3f}'.format(float(smagf[indx])+aperture_correction)
                     smagerrf[indx] = '{:0<2.3f}'.format(np.sqrt(float(smagerrf[indx])**2+aperture_correction_err**2))
+
+            def _to_float_array(values, fill=9999.0):
+                out = []
+                for value in values:
+                    if value in ['INDEF', '', None, 9999]:
+                        out.append(fill)
+                    else:
+                        try:
+                            out.append(float(value))
+                        except (TypeError, ValueError):
+                            out.append(fill)
+                return np.array(out, dtype=float)
+
             tbhdu = fits.BinTableHDU.from_columns(fits.ColDefs([fits.Column(name='ra', format='20A', array=np.array(rap)),
                                                    fits.Column(name='dec', format='20A', array=np.array(decp)),
                                                    fits.Column(name='ra0', format='E', array=np.array(rap0)),
                                                    fits.Column(name='dec0', format='E', array=np.array(decp0)),
-                                                   fits.Column(name='magp2', format='E',
-                                                               array=np.array(np.where((np.array(magp2) != 'INDEF'),
-                                                                                       np.array(magp2), 9999), float)),
-                                                   fits.Column(name='magp3', format='E',
-                                                                   array=np.array(np.where((np.array(magp3) != 'INDEF'),
-                                                                                           np.array(magp3), 9999), float)),
-                                                   fits.Column(name='merrp3', format='E',
-                                                                   array=np.array(np.where((np.array(merrp3) != 'INDEF'),
-                                                                                           np.array(merrp3), 9999), float)),
-                                                   fits.Column(name='magp4', format='E',
-                                                                   array=np.array(np.where((np.array(magp4) != 'INDEF'),
-                                                                                           np.array(magp4), 9999), float)),
-                                                   fits.Column(name='smagf', format='E',
-                                                                   array=np.array(np.where((np.array(smagf) != 'INDEF'),
-                                                                                           np.array(smagf), 9999), float)),
-                                                   fits.Column(name='smagerrf', format='E',
-                                                                   array=np.array(np.where((np.array(smagerrf) != 'INDEF'),
-                                                                                           np.array(smagerrf), 9999),
-                                                                                  float)),
+                                                   fits.Column(name='magp2', format='E', array=_to_float_array(magp2)),
+                                                   fits.Column(name='magp3', format='E', array=_to_float_array(magp3)),
+                                                   fits.Column(name='merrp3', format='E', array=_to_float_array(merrp3)),
+                                                   fits.Column(name='magp4', format='E', array=_to_float_array(magp4)),
+                                                   fits.Column(name='smagf', format='E', array=_to_float_array(smagf)),
+                                                   fits.Column(name='smagerrf', format='E', array=_to_float_array(smagerrf)),
             ]))
 
             hdu = fits.PrimaryHDU(header=hdr)

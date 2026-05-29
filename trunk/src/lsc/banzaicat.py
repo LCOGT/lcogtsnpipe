@@ -10,7 +10,7 @@ def make_cat(filename,datamax=75000,b_sigma=3.0,b_crlim=3.0):
 	hdul = fits.open(filename)
 	banzai_cat = hdul['CAT'].data
 
-	print "Total number of sources in BANZAI catalog: {0}".format(len(banzai_cat))
+	print("Total number of sources in BANZAI catalog: {0}".format(len(banzai_cat)))
 
 	ellipticities = [x['ELLIPTICITY'] for x in banzai_cat]
 	backgrounds = [x['BACKGROUND'] for x in banzai_cat]
@@ -36,9 +36,9 @@ def make_cat(filename,datamax=75000,b_sigma=3.0,b_crlim=3.0):
 
 			sources.append([source['RA'],source['DEC'],StN,id_num])
 
-	print ("Number of sources in BANZAI catalog after filtering: "
+	print("Number of sources in BANZAI catalog after filtering: "
 		"{0}".format(len(sources)))
-	print ("({0}-sigma clipping on source ellipticity, "
+	print("({0}-sigma clipping on source ellipticity, "
 		"background level, and FWHM.)".format(b_sigma))
 
 	#Sort by S/N	
@@ -59,7 +59,7 @@ def make_cat(filename,datamax=75000,b_sigma=3.0,b_crlim=3.0):
 			line = "{0:10.5f}\t{1:10.5f}\t{2}\n".format(source[0],source[1],source[3])
 			banzai_cat_file.write(line)
 
-	print "Saving the {0} best sources to banzai.cat".format(len(sources))
+	print("Saving the {0} best sources to banzai.cat".format(len(sources)))
 
 	hdul.close()
 	return 'banzai.cat'

@@ -28,7 +28,7 @@ else:
     end = datetime.strftime(now, '%Y-%m-%d %H:%M:%S')
     daterange = datetime.strftime(now - timedelta(days=7), '%Y%m%d') + '-' + datetime.strftime(now, '%Y%m%d')
 
-login = lsc.mysqldef.query(["select username, userpw from programs where idcode='KEY2014A-003'"], conn)
+login = lsc.mysqldef.query(["select username, userpw from programs where idcode='KEY2014A-003'"], lsc.myloopdef.conn)
 username = login[0]['username']
 password = base64.decodestring(login[0]['userpw'])
 try:

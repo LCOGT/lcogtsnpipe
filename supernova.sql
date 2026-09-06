@@ -494,6 +494,35 @@ CREATE TABLE `notes` (
 
 
 
+# Dump of table o4_galaxies
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `o4_galaxies`;
+
+CREATE TABLE `o4_galaxies` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `targetid` int(11) NOT NULL,
+  `event_id` varchar(255) NOT NULL,
+  `ra0` double NOT NULL,
+  `dec0` double NOT NULL,
+  `SDSS_g` varchar(255) DEFAULT NULL, 
+  `SDSS_r` varchar(255) DEFAULT NULL,
+  `SDSS_i` varchar(255) DEFAULT NULL,
+  `PS1_g` varchar(255) DEFAULT NULL, 
+  `PS1_r` varchar(255) DEFAULT NULL,
+  `PS1_i` varchar(255) DEFAULT NULL,
+  `DECam_g` varchar(255) DEFAULT NULL, 
+  `DECam_r` varchar(255) DEFAULT NULL,
+  `DECam_i` varchar(255) DEFAULT NULL,
+  `LCO_g` varchar(255) DEFAULT NULL, 
+  `LCO_r` varchar(255) DEFAULT NULL,
+  `LCO_i` varchar(255) DEFAULT NULL,
+  `ingested` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+
 # Dump of table obslog
 # ------------------------------------------------------------
 

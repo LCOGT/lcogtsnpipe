@@ -36,5 +36,5 @@ _temp.list
 *.cat
 mysql/
 data/
-sources
-trunk/src/lsc/standard
+sources/
+artifacts/

@@ -245,7 +245,6 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
             sys.exit('ERROR: catalog empty '+catalogue)
         rmsx1,rmsy1,num1,fwhm1,ell1,ccc,bkg1,rasys1,decsys1=lscastrometry2([img],catalogue,_interactive,number1,sexvec,catvec,guess=False,fitgeo=_fitgeo,\
                                                                                  tollerance1=_tollerance1, tollerance2=_tollerance2,_update='yes',imex=_imex,nummin=_numin)
-        print('here3')
         if rmsx1>1 or rmsy1>1:
             catvec = lsc.lscastrodef.querycatalogue(catalogue,img,method)
             rmsx2,rmsy2,num2,fwhm2,ell2,ccc,bkg2,rasys2,decsys2=lscastrometry2([img],catalogue,_interactive,number2,sexvec,catvec,guess=False,fitgeo=_fitgeo,\

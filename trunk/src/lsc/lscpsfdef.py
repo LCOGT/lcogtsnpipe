@@ -396,13 +396,10 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                                    format='%13.3H %12.2h', min_sig=9, mode='h')[3:]
 
             if interactive or show:
-                try:
-                    iraf.set(stdimage='imt1024')
-                    iraf.display(img + '[0]', 1, fill=True, Stdout=1)
-                    iraf.tvmark(1, coords='STDIN', mark='circle', radii=15, label=True, Stdin=photmag, nxoffset=5, nyoffset=5, txsize=2)
-                    iraf.tvmark(1, coords='STDIN', mark='circle', radii=35, label=False, Stdin=pst, color=208)
-                except Exception as e:
-                    print('Warning: IRAF display unavailable (no DS9/imtool running): {}'.format(e))
+                iraf.set(stdimage='imt1024')
+                iraf.display(img + '[0]', 1, fill=True, Stdout=1)
+                iraf.tvmark(1, coords='STDIN', mark='circle', radii=15, label=True, Stdin=photmag, nxoffset=5, nyoffset=5, txsize=2)
+                iraf.tvmark(1, coords='STDIN', mark='circle', radii=35, label=False, Stdin=pst, color=208)
     #            iraf.tvmark(1, coords='STDIN', mark='cross', length=35, label=False, Stdin=fitmag2, color=204)
 
             idpsf = []
@@ -475,17 +472,9 @@ def ecpsf(img, fwhm, threshold, psfstars, distance, interactive, psffun='gauss',
                     smagf[indx] = '{:0<2.3f}'.format(float(smagf[indx])+aperture_correction)
                     smagerrf[indx] = '{:0<2.3f}'.format(np.sqrt(float(smagerrf[indx])**2+aperture_correction_err**2))
 
-            def _to_float_array(values, fill=9999.0):
-                out = []
-                for value in values:
-                    if value in ['INDEF', '', None, 9999]:
-                        out.append(fill)
-                    else:
-                        try:
-                            out.append(float(value))
-                        except (TypeError, ValueError):
-                            out.append(fill)
-                return np.array(out, dtype=float)
+            def _to_float_array(values):
+                values = np.asarray(values, dtype=str)
+                return np.float64(np.where(values != 'INDEF', values, '9999'))
 
             tbhdu = fits.BinTableHDU.from_columns(fits.ColDefs([fits.Column(name='ra', format='20A', array=np.array(rap)),
                                                    fits.Column(name='dec', format='20A', array=np.array(decp)),

@@ -13,3 +13,7 @@ unset __conda_setup
 # <<< conda initialize <<<
 
 conda activate lcogtsnpipe
+
+export MPLBACKEND=QtAgg
+export QT_X11_NO_MITSHM=1
+export LIBGL_ALWAYS_SOFTWARE=1

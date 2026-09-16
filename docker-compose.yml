@@ -1,7 +1,7 @@
 version: '2.2'
 services:
   sn-db:
-    image: mariadb:10.5.4
+    image: mariadb:12.3
     container_name: sn-db
     network_mode: "bridge"
     environment:
@@ -22,6 +22,9 @@ services:
       LCOSNDBPASS: "${LCOSNDBPASS:-supernova}"
       LCOSNDIR: "/supernova"
       DISPLAY: "${LCOSNDISPLAY:-host.docker.internal:0}"
+      MPLBACKEND: "QtAgg"
+      QT_X11_NO_MITSHM: "1"
+      LIBGL_ALWAYS_SOFTWARE: "1"
     ports:
       - "4306:3306"
     links:

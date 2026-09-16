@@ -72,7 +72,7 @@ def run_cmd(cmd, logfile=None, timeout=3600):
         proc.kill()
         logfile.close()
         with open(logfile.name, 'r') as f:
-            print f.read()
+            print(f.read())
         raise e
 
 ###########################################################

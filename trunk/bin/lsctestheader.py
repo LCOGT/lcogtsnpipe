@@ -7,8 +7,8 @@ import sys
 if len(sys.argv) <= 1:
     listfits = glob.glob('*fits')
     for img in listfits:
-        print img
-    img = raw_input('Which image do you want to test [' + str(listfits[0]) + '] ? ')
+        print(img)
+    img = lsc.util.userinput('Which image do you want to test [' + str(listfits[0]) + '] ? ')
     if not img: img = listfits[0]
 else:
     img = sys.argv[1]
@@ -74,21 +74,21 @@ if not _object:
     _object = '#######'
 _system = '#######'
 
-print '####################################################################'
-print 'IMG                OBJECT  IMAGETYPE    EXPTIME    FILTER        GRISM      '
-print str(img) + '\t' + str(_object) + '\t' + str(_imagetype) + '\t' + str(_exptime) + '\t' + str(_filter) + '\t' + str(
-    _grism)
-print '####################################################################'
-print 'AIRMASS             MJD             DATE          XDIM   YDIM    GAIN   RON '
-print str(_airmass) + '\t' + str(_mjd) + '\t' + str(_date) + '\t' + str(_xdimen) + '\t' + str(_ydimen) + '\t' + str(
-    _gain) + '\t' + str(_ron)
-print '####################################################################'
-print 'LAMP_ID     slitw         RA          DEC     CCDMIN    CCDMAX   CENWAV '
-print str(_lampid) + '\t' + str(_slitw) + '\t' + str(_RA) + '\t' + str(_DEC) + '\t' + str(_ccdmin) + '\t' + str(
-    _ccdmax) + '\t' + str(_cenwav)
-print '####################################################################'
-print ' UT     xdimension    ydimension        instrument      SYSTEM   OBSMODE '
-print str(_UT) + '\t' + str(_xdimen) + '\t' + str(_ydimen) + '\t' + str(_instrument) + '\t' + str(_system) + '\t' + str(
-    _obsmode)
-print '####################################################################'
+print('####################################################################')
+print('IMG                OBJECT  IMAGETYPE    EXPTIME    FILTER        GRISM      ')
+print(str(img) + '\t' + str(_object) + '\t' + str(_imagetype) + '\t' + str(_exptime) + '\t' + str(_filter) + '\t' + str(
+    _grism))
+print('####################################################################')
+print('AIRMASS             MJD             DATE          XDIM   YDIM    GAIN   RON ')
+print(str(_airmass) + '\t' + str(_mjd) + '\t' + str(_date) + '\t' + str(_xdimen) + '\t' + str(_ydimen) + '\t' + str(
+    _gain) + '\t' + str(_ron))
+print('####################################################################')
+print('LAMP_ID     slitw         RA          DEC     CCDMIN    CCDMAX   CENWAV ')
+print(str(_lampid) + '\t' + str(_slitw) + '\t' + str(_RA) + '\t' + str(_DEC) + '\t' + str(_ccdmin) + '\t' + str(
+    _ccdmax) + '\t' + str(_cenwav))
+print('####################################################################')
+print(' UT     xdimension    ydimension        instrument      SYSTEM   OBSMODE ')
+print(str(_UT) + '\t' + str(_xdimen) + '\t' + str(_ydimen) + '\t' + str(_instrument) + '\t' + str(_system) + '\t' + str(
+    _obsmode))
+print('####################################################################')
 

@@ -37,13 +37,13 @@ def get_image_data(lista, magcol=None, errcol=None, refcat=None):
                                      zcol1, z1, c1, dz1, dc1, zcol2, z2, c2, dz2, dc2, psfmag, psfdmag, apmag, dapmag
                                      from photlco left join telescopes on photlco.telescopeid=telescopes.id
                                      left join instruments on photlco.instrumentid=instruments.id where ''' +
-                                     ' or '.join(filename_equals)], lsc.conn), masked=True)
+                                     ' or '.join(filename_equals)], lsc.myloopdef.conn), masked=True)
     t['filter'] = [lsc.sites.filterst1[filt] for filt in t['filter']]
     if magcol in t.colnames and errcol in t.colnames:
         t.rename_column(magcol, 'instmag')
         t.rename_column(errcol, 'dinstmag')
     elif magcol is not None and errcol is not None:
-        print 'Cross-matching {} catalogs. This may take a while...'.format(len(lista))
+        print('Cross-matching {} catalogs. This may take a while...'.format(len(lista)))
         catalogs = []
         badrows = []
         for i, image in enumerate(t):
@@ -167,12 +167,17 @@ if __name__ == "__main__":
         with open(args.exzp) as f:
             lista2 = f.read().splitlines()
         standards = get_image_data(lista2)
+        for _col in ('zcol1', 'zcol2'):
+            if standards[_col].dtype.kind == 'O':
+                standards[_col] = ['' if v is None else v for v in standards[_col]]
         standards = standards.group_by(['dayobs', tel_kwd, inst_kwd, 'filter', 'zcol1', 'zcol2'])
         for icol in ['zcol1', 'z1', 'dz1', 'c1', 'dc1', 'zcol2', 'z2', 'dz2', 'c2', 'dc2']:
             targets[icol].mask = True
         for group in standards.groups:
             matches_in_targets = ((targets['dayobs'] == group['dayobs'][0]) & (targets[tel_kwd] == group[tel_kwd][0])
                                    & (targets[inst_kwd] == group[inst_kwd][0]) & (targets['filter'] == group['filter'][0]))
+            if hasattr(matches_in_targets, 'data'):
+                matches_in_targets = matches_in_targets.data
             if not np.any(matches_in_targets):
                 continue
             targets['zcol1'][matches_in_targets] = group['zcol1'][0]
@@ -249,14 +254,14 @@ if __name__ == "__main__":
         query = 'INSERT INTO photlco (filename, targetid, mag, dmag) VALUES\n'
         query += ',\n'.join(['("{}", {}, {}, {})'.format(row['filename'], row['targetid'], row['mag'], row['dmag']) for row in targets.filled(9999.)])
         query += '\nON DUPLICATE KEY UPDATE mag=VALUES(mag), dmag=VALUES(dmag)'
-        print query
-        lsc.mysqldef.query([query], lsc.conn)
+        print(query)
+        lsc.mysqldef.query([query], lsc.myloopdef.conn)
     elif args.stage == 'abscat': 
        # write all the catalogs to files & put filename in database
         for row in targets:
             good = ~row['mag'].mask
             if not np.any(good):
-                print 'no good magnitudes for', row['filename']
+                print('no good magnitudes for', row['filename'])
                 lsc.mysqldef.updatevalue('photlco', 'abscat', 'X', row['filename'])
                 continue
             outtab = Table([row['ra'][good].T, row['dec'][good].T, row['mag'][good].T, row['dmag'][good].T],
@@ -269,7 +274,7 @@ if __name__ == "__main__":
                              overwrite=args.force, fill_values=[(ascii.masked, '9999.0')])
                 lsc.mysqldef.updatevalue('photlco', 'abscat', outfile, row['filename'])
             except IOError as e:
-                print e, '-- use -F to overwrite'
+                print( e, '-- use -F to overwrite')
     elif args.stage == 'local':
         if args.field == 'landolt':
             filterlist = ['U', 'B', 'V', 'R', 'I']
@@ -288,7 +293,7 @@ if __name__ == "__main__":
             for filt in filterlist:
                 nightly_by_filter = targets[(targets['filter'] == filt) & (np.sum(~targets['mag'].mask, axis=1) > args.minstars)]
                 if not nightly_by_filter:
-                    print 'no calibrated stars in', filt
+                    print('no calibrated stars in', filt)
                     continue
                 fig.clear()
                 ax1 = fig.add_subplot(211)
@@ -338,7 +343,7 @@ if __name__ == "__main__":
                     ax3.legend(loc='best')
                     plt.draw()
                 
-                raw_input('Press enter to continue.')
+                lsc.util.userinput('Press enter to continue.')
 
         snname = os.path.basename(catfile).split('_')[0] if args.catalog else 'catalog'
         filename = args.output.format(SN=snname, field=args.field,
@@ -349,4 +354,4 @@ if __name__ == "__main__":
             catalog[col].format = '%6.3f'
         catalog.write(filename, format='ascii.fixed_width_no_header', delimiter='',
                       fill_values=[(ascii.masked, '9999.0')])
-        print 'catalog written to', filename
+        print('catalog written to', filename)

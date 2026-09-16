@@ -1,5 +1,6 @@
-FROM continuumio/miniconda3:25.3.1-1
-RUN conda create -y -n lcogtsnpipe python=2
+FROM continuumio/miniconda3:26.3.2-2
+RUN conda create -y -n lcogtsnpipe python=3.11 pip
+RUN conda install -y -n lcogtsnpipe pyqt=6.11.0
 SHELL ["conda", "run", "-n", "lcogtsnpipe", "--live-stream", "/bin/bash", "-c"]
 
 ENV iraf=/iraf/iraf/
@@ -43,18 +44,30 @@ RUN apt-get --allow-releaseinfo-change update \
 
 RUN ln -s /usr/bin/source-extractor /usr/bin/sex
 
-RUN pip install numpy>=1.12
+RUN python -m pip install --upgrade pip==25.3 setuptools==80.9.0 wheel==0.45.1
+
+RUN python -m pip install numpy==2.4.4
 
 # Running this line to assign the instance reconnect
 RUN sed  '/st_mysql_options options;/a unsigned int reconnect;' /usr/include/mysql/mysql.h -i.bkp 
 
-RUN pip install cryptography==2.4.1 astropy matplotlib==2.2.5 pyraf mysql-python scipy astroquery==v0.4 statsmodels==0.10 cython reproject
+RUN python -m pip install cryptography==47.0.0 astropy==7.2.0 matplotlib==3.10.8 pyraf==2.2.4 mysqlclient==2.2.8 scipy==1.17.1 astroquery==0.4.11 statsmodels==0.14.6 cython==3.2.4 reproject==0.19.0 astroscrappy
 
-RUN pip install sep==1.0.3 git+https://github.com/dguevel/PyZOGY.git
+RUN python -m pip install sep==1.4.1
 
-RUN wget http://ds9.si.edu/download/debian12x86/ds9.debian12x86.8.6.tar.gz \
-        && tar -xzvf ds9.debian12x86.8.6.tar.gz -C /usr/local/bin \
-        && rm -rf ds9.debian12x86.8.6.tar.gz
+RUN git clone https://github.com/dguevel/PyZOGY.git /tmp/PyZOGY \
+        && sed -i 's/PyZOGY.__main__ : main/PyZOGY.__main__:main/' /tmp/PyZOGY/setup.py \
+        && python -m pip install /tmp/PyZOGY \
+        && rm -rf /tmp/PyZOGY
+
+RUN case "$(uname -m)" in \
+        aarch64) DS9_PKG="debian12arm64" ;; \
+        x86_64)  DS9_PKG="debian12x86" ;; \
+        *) echo "Unsupported architecture: $(uname -m)" && exit 1 ;; \
+    esac \
+        && wget "http://ds9.si.edu/download/${DS9_PKG}/ds9.${DS9_PKG}.8.7.tar.gz" \
+        && tar -xzvf "ds9.${DS9_PKG}.8.7.tar.gz" -C /usr/local/bin \
+        && rm -f "ds9.${DS9_PKG}.8.7.tar.gz"
 
 RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
         && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \

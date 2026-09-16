@@ -78,17 +78,12 @@ These instructions only need to be run once, when you set up the pipeline.
        git clone https://github.com/LCOGT/lcogtsnpipe
        ```
    10. Build the Docker image:
-       Linux:
        ```
        docker build -t lcogtsnpipe lcogtsnpipe
        ```
-       Mac (Docker Desktop Daemon):
-       ```
-       docker build -t lcogtsnpipe lcogtsnpipe --platform=linux/x86_64
-       ```
        Mac (OrbStack Daemon)
        ```
-       docker buildx build -t lcogtsnpipe lcogtsnpipe --platform=linux/x86_64
+       docker buildx build -t lcogtsnpipe lcogtsnpipe 
        ```
    12. Set your environment variables to point to where you want to store data and catalogs.
       You may want to add these lines to your `.bashrc` (usually Linux) or `.bash_profile` (usually macOS) file

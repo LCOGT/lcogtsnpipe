@@ -17,6 +17,19 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
+DEFAULT_GROUPS = ['LCOGT']
+PROPOSAL_GROUPS = {
+}
+
+
+def proposal_groupidcode(propid):
+    names = set(DEFAULT_GROUPS + PROPOSAL_GROUPS.get(propid, []))
+    idcodes = {group['name']: group['idcode'] for group in lsc.mysqldef.query(['select name, idcode from `groups`'], lsc.myloopdef.conn)}
+    for name in names:
+        if name not in idcodes:
+            logger.error('!!! GROUP {} (proposal {}) IS NOT IN THE groups TABLE'.format(name, propid))
+    return sum(int(idcodes[name]) for name in names if name in idcodes)
+
 if len(sys.argv) > 1:
     daterange = sys.argv[1]
     start, end = daterange.split('-')
@@ -67,6 +80,10 @@ for frame in frames:
         logger.error('!!! FAILED TO INGEST {}'.format(filename))
         traceback.print_exc()
         continue
+    if dbdict:
+        table = 'speclcoraw' if '-en' in filename else 'photlcoraw'
+        groupidcode = proposal_groupidcode(dbdict.get('propid'))
+        lsc.mysqldef.query(['update {} set groupidcode={:d} where filename="{}"'.format(table, groupidcode, filename)], lsc.myloopdef.conn)
     if '-en' in filename and '-e00.fits' in filename:
         try:
             fits2png(filepath + filename)

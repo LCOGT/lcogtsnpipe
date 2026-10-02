@@ -1,3 +1,4 @@
+import getpass
 import json
 import os
 
@@ -8,6 +9,7 @@ import lsc
 
 DEFAULT_GROUPIDCODE = 1703768065789
 _conn = None
+_auth = None
 
 
 def _db():
@@ -25,9 +27,17 @@ def configured():
     return all(os.environ.get(key, '') for key in ('SNEX_URL', 'SNEX_USER', 'SNEX_PASSWORD'))
 
 
+def _credentials():
+    global _auth
+    if _auth is None:
+        _auth = (os.environ.get('SNEX_USER', '') or lsc.util.userinput('SNEx username: '),
+                 os.environ.get('SNEX_PASSWORD', '') or getpass.getpass('SNEx password: '))
+    return _auth
+
+
 def _api(method, path, **kwargs):
     url = os.environ['SNEX_URL'].rstrip('/')
-    response = requests.request(method, url + path, auth=(os.environ['SNEX_USER'], os.environ['SNEX_PASSWORD']),
+    response = requests.request(method, url + path, auth=_credentials(),
                                 headers={'Accept': 'application/json'}, **kwargs)
     if not response.ok:
         raise RuntimeError('{} {} returned {}: {}'.format(method, path, response.status_code, response.text[:300]))
@@ -121,8 +131,8 @@ def _existing_datums(target_id, value):
 
 
 def upload_photometry(filenames):
-    if not configured():
-        raise RuntimeError('SNEX_URL, SNEX_USER and SNEX_PASSWORD must be set to upload to SNEx')
+    if not os.environ.get('SNEX_URL', ''):
+        raise RuntimeError('SNEX_URL must be set to upload to SNEx')
     targets, created, updated, failed = {}, 0, 0, []
     for filename in filenames:
         try:

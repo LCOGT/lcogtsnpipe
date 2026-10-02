@@ -93,7 +93,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--b_crlim", type=float, default=3.0, help="lower limit used to reject CRs identified as BANZAI sources")
     parser.add_argument("--no_iraf", action="store_true", help="Don't use iraf (currently only option in checkpsf stage)")
     parser.add_argument("--max_apercorr", type=float, default=0.1, help="absolute value of the maximum aperture correction (mag) above which a PSF is marked as bad")
-    parser.add_argument("--uploadtosnex2", action="store_true", help="Upload the selected data points to SNEx2")
+    parser.add_argument("--uploadtosnex", action="store_true", help="Upload the photometry of the selected images to SNEx after the stage runs")
     parser.add_argument('--pixstack-limit', dest='pixstack_limit', type=int, help='Modify set_extract_pixstack in sep via PyZOGY', default=None)
     args = parser.parse_args()
     if args.multicore >= cpu_count():
@@ -182,7 +182,7 @@ if __name__ == "__main__":   # main program
                 query = 'update photlco set lastunpacked=NULL where filename="' + '" or filename="'.join(packed) + '"'
                 lsc.mysqldef.query([query], lsc.myloopdef.conn)
             elif args.stage == 'getmag':  # get final magnitude from mysql
-                lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type, args.uploadtosnex2)
+                lsc.myloopdef.run_getmag(ll['filename'], args.output, args.interactive, args.show, args.combine, args.type)
             elif args.stage == 'psf':
                 lsc.myloopdef.run_psf(ll['filename'], args.threshold, args.interactive, args.fwhm, args.show, args.force, args.fix, args.catalogue,
                                       'photlco', args.use_sextractor, args.datamin, args.datamax, args.nstars, args.banzai, args.b_sigma, args.b_crlim, 
@@ -332,5 +332,7 @@ if __name__ == "__main__":   # main program
                            str(ll0['psfmag'][i]), str(ll0['zcat'][i]), str(ll0['mag'][i]), str(ll0['abscat'][i])))
                 print('\n###  total number = ' + str(len(ll0['filename'])))
                 lsc.myloopdef.run_merge(listfile[ll['dayobs'] == epo], args.force) # merge images using lacos and swarp
+        if args.uploadtosnex:
+            lsc.format_for_snex.upload_photometry(ll['filename'])
     else:
         print('\n### no data selected')

@@ -73,6 +73,9 @@ for frame in frames:
         except:
             logger.error('!!! FAILED TO MAKE PNG FOR {}'.format(filename))
             traceback.print_exc()
+            continue
+        if dbdict:
+            lsc.format_for_snex.upload_raw_spectrum(filepath, filename)
 
 lsc.mysqldef.ingestredu(fullpaths) # ingest new data into photlco
 

@@ -34,14 +34,21 @@ def _credentials():
     return _auth
 
 
+class SNExAuthError(RuntimeError):
+    pass
+
+
 def _api(method, path, **kwargs):
     url = os.environ['SNEX_URL'].rstrip('/')
     headers = {'Accept': 'application/json'}
     if os.environ.get('SNEX_API_TOKEN', ''):
         headers['Authorization'] = 'Token ' + os.environ['SNEX_API_TOKEN']
-        response = requests.request(method, url + path, headers=headers, **kwargs)
+        response = requests.request(method, url + path, headers=headers, allow_redirects=False, **kwargs)
     else:
-        response = requests.request(method, url + path, auth=_credentials(), headers=headers, **kwargs)
+        response = requests.request(method, url + path, auth=_credentials(), headers=headers, allow_redirects=False, **kwargs)
+    if response.status_code in (301, 302, 401) or (response.status_code == 403 and (
+            'Invalid token' in response.text or 'credentials were not provided' in response.text)):
+        raise SNExAuthError('SNEx at {} rejected the credentials; check SNEX_API_TOKEN'.format(url))
     if not response.ok:
         raise RuntimeError('{} {} returned {}: {}'.format(method, path, response.status_code, response.text[:300]))
     return response.json() if response.content else None
@@ -178,6 +185,8 @@ def upload_photometry(filenames, final=True):
                 created += 1
         except requests.ConnectionError as e:
             raise RuntimeError('Could not connect to SNEx at {}: {}'.format(os.environ['SNEX_URL'], e))
+        except SNExAuthError:
+            raise
         except Exception as e:
             failed.append(filename)
             print('SNEx upload failed for {}: {}'.format(filename, e))

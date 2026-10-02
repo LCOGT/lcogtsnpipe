@@ -219,7 +219,7 @@ Where:
 * **Other Options**:
     * ```-f FILTER``` where FILTER is U,B,g,V,r,R,i,I, landolt, apass, or sloan. This displays light curve for only this filter or set of filters
     * ```-o, --output <filename>``` write the output to a csv file
-    * ```--uploadtosnex``` upload the photometry of the selected images to SNEx
+    * ```--uploadtosnex``` upload the photometry of the selected images to SNEx (requires credentials to be set as environment variables)
     * If a point looks funny, then you can click on it. This brings up an image with a cutout of the image, and a cut out of the residual after the psf has been subtracted. It will ask you if you want to make this image with yes, delete (d), upper limit (u), or bad. In theory, yes should keep the observation and all derived quantities, delete (d) removes everything back to the psf stage, upper limit (u) set the magtype to -1, and bad (b) sets the quality to 1. It is recommended that you use delete to remove an observation rather than b. Currently, there is a bug which sets images marked as bad to upper limits (i.e. b is aliased to u; see issue #56).
     
 # Creating a Landolt Catalog:

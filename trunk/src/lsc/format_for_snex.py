@@ -76,7 +76,10 @@ def get_target(targetid, cache=None):
         return cache[targetid]
     row = _query('select * from targets where id={:d}'.format(int(targetid)))[0]
     standard = row['classificationid'] in [c['id'] for c in _query('select id from classifications where name="Standard"')]
-    names = [n['name'] for n in _query('select name from targetnames where targetid={:d} order by id'.format(int(targetid)))]
+    names = {}
+    for n in _query('select name from targetnames where targetid={:d} order by id'.format(int(targetid))):
+        names.setdefault(n['name'].replace(' ', '').lower(), n['name'])
+    names = list(names.values())
     params = {'name': names[0], 'type': 'SIDEREAL', 'permissions': 'PRIVATE',
               'ra': float(row['ra0']), 'dec': float(row['dec0']),
               'standard': standard, 'aliases': [{'name': n} for n in names[1:]]}

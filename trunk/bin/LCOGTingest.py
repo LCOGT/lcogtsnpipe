@@ -313,8 +313,6 @@ if __name__ == "__main__":
                 fullpaths.append(filepath + filename)
             elif '-e00.fits' in filename:
                 fits2png(filepath + filename, args.force_tn)
-                if dbdict:
-                    lsc.format_for_snex.upload_raw_spectrum(filepath, filename)
         else:
             record_floyds_tar_link(authtoken, frame, args.force_gl)
     lsc.mysqldef.ingestredu(fullpaths, force='yes' if args.force_db else 'no')  # ingest new data into photlco

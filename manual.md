@@ -77,7 +77,7 @@ This is a description of the stream-lined steps that are recommended for process
     lscloop.py -n 2016cok -e 20160528-20180104 -s mag --type fit
     ```
 
-8. Visually inspect your light curve using `getmag` stage with the `--show` option. This will bring up a plot with your light curve (I like to do this one filter at a time). You can click on individual points to bring up a second window which shows a cut out of the supernova on the left and the residual after the PSF subtraction on the right. You are given the option to remove bad points from the light curve. It is recommended that you use the `d` option at this stage, allowing you to easily redo these observations from any stage using the `-b mag` option. In general, however, this is used to eliminate points with a lot of scatter due to poor observing conditions. By supplying `--output output_filename.csv` at this stage, the output can be written to a file. When photometry is final, use the `--uploadtosnex2` flag to send your light curve to SNEx 2.
+8. Visually inspect your light curve using `getmag` stage with the `--show` option. This will bring up a plot with your light curve (I like to do this one filter at a time). You can click on individual points to bring up a second window which shows a cut out of the supernova on the left and the residual after the PSF subtraction on the right. You are given the option to remove bad points from the light curve. It is recommended that you use the `d` option at this stage, allowing you to easily redo these observations from any stage using the `-b mag` option. In general, however, this is used to eliminate points with a lot of scatter due to poor observing conditions. By supplying `--output output_filename.csv` at this stage, the output can be written to a file. When photometry is final, use the `--uploadtosnex` flag to send your light curve to SNEx.
 **Example**
     ```
     lscloop.py -n 2016cok -e 20160528-20180104 -s getmag --type mag --show
@@ -219,7 +219,7 @@ Where:
 * **Other Options**:
     * ```-f FILTER``` where FILTER is U,B,g,V,r,R,i,I, landolt, apass, or sloan. This displays light curve for only this filter or set of filters
     * ```-o, --output <filename>``` write the output to a csv file
-    * ```--updatetosnex2``` upload output to SNEx 2
+    * ```--uploadtosnex``` upload the photometry of the selected images to SNEx
     * If a point looks funny, then you can click on it. This brings up an image with a cutout of the image, and a cut out of the residual after the psf has been subtracted. It will ask you if you want to make this image with yes, delete (d), upper limit (u), or bad. In theory, yes should keep the observation and all derived quantities, delete (d) removes everything back to the psf stage, upper limit (u) set the magtype to -1, and bad (b) sets the quality to 1. It is recommended that you use delete to remove an observation rather than b. Currently, there is a bug which sets images marked as bad to upper limits (i.e. b is aliased to u; see issue #56).
     
 # Creating a Landolt Catalog:

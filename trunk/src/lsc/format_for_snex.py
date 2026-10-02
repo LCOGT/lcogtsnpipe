@@ -76,20 +76,17 @@ def get_target(targetid, cache=None):
         return cache[targetid]
     row = _query('select * from targets where id={:d}'.format(int(targetid)))[0]
     standard = row['classificationid'] in [c['id'] for c in _query('select id from classifications where name="Standard"')]
-    results = _api('GET', '/api/targets/', params={'pipeline_id': targetid})['results']
-    if results:
-        target_id = results[0]['id']
-        standard = results[0].get('standard', standard)
+    names = [n['name'] for n in _query('select name from targetnames where targetid={:d} order by id'.format(int(targetid)))]
+    params = {'name': names[0], 'type': 'SIDEREAL', 'permissions': 'PRIVATE',
+              'ra': float(row['ra0']), 'dec': float(row['dec0']),
+              'standard': standard, 'aliases': [{'name': n} for n in names[1:]]}
+    if standard:
+        target = _api('POST', '/api/targets/', json=params)
     else:
-        names = [n['name'] for n in _query('select name from targetnames where targetid={:d} order by id'.format(int(targetid)))]
-        params = {'name': names[0], 'type': 'SIDEREAL', 'permissions': 'PRIVATE',
-                  'ra': float(row['ra0']), 'dec': float(row['dec0']), 'pipeline_id': int(targetid),
-                  'standard': standard, 'aliases': [{'name': n} for n in names[1:]]}
-        if standard:
-            target_id = _api('POST', '/api/targets/', json=params)['id']
-        else:
-            target_id = _post_with_groups(groups_for(row['groupidcode']), lambda groups: _api(
-                'POST', '/api/targets/', json=dict(params, groups=groups)))['id']
+        target = _post_with_groups(groups_for(row['groupidcode']), lambda groups: _api(
+            'POST', '/api/targets/', json=dict(params, groups=groups)))
+    target_id = target['id']
+    standard = target.get('standard', standard)
     if cache is not None:
         cache[targetid] = (target_id, standard)
     return target_id, standard
@@ -168,6 +165,8 @@ def upload_photometry(filenames):
                     _post_with_groups(photometry_groups(row), lambda groups: _api(
                         'POST', '/api/reduceddatums/', json=dict(datum, groups=groups)))
                 created += 1
+        except requests.ConnectionError as e:
+            raise RuntimeError('Could not connect to SNEx at {}: {}'.format(os.environ['SNEX_URL'], e))
         except Exception as e:
             failed.append(filename)
             print('SNEx upload failed for {}: {}'.format(filename, e))

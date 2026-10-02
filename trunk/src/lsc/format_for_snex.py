@@ -229,7 +229,7 @@ def upload_raw_spectrum(filepath, filename):
         def post(groups):
             with open(os.path.join(filepath, filename.replace('.fits', '.png')), 'rb') as f:
                 return _api('POST', '/api/dataproducts/', data=dict(params, groups=json.dumps(groups)), files={'thumbnail': f})
-        _post_with_groups(groups_for(row['groupidcode']), post)
-        print('posted {} to the SNEx FLOYDS inbox'.format(filename))
+        if not _post_with_groups(groups_for(row['groupidcode']), post).get('already_posted'):
+            print('posted {} to the SNEx FLOYDS inbox'.format(filename))
     except Exception as e:
         print('SNEx FLOYDS inbox post failed for {}: {}'.format(filename, e))

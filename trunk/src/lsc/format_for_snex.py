@@ -120,6 +120,11 @@ def photometry_value(row):
         algorithm = {0: 'Hotpants', 1: 'PyZOGY'}.get(row['difftype'])
         if algorithm:
             value['subtraction_algorithm'] = algorithm
+        value['difference_image'] = row['filepath'] + row['filename']
+        template = _query('select photlco.filepath, photlco.filename from photpairing join photlco '
+                          'on photlco.filename=photpairing.nametemplate where photpairing.nameout="{}"'.format(row['filename']))
+        if template:
+            value['template_image'] = template[0]['filepath'] + template[0]['filename']
     return value
 
 

@@ -85,7 +85,8 @@ def get_target(targetid, cache=None):
     names = list(names.values())
     params = {'name': names[0], 'type': 'SIDEREAL', 'permissions': 'PRIVATE',
               'ra': float(row['ra0']), 'dec': float(row['dec0']),
-              'standard': standard, 'aliases': [{'name': n} for n in names[1:]]}
+              'standard': standard, 'aliases': [{'name': n} for n in names[1:]],
+              'comment': 'Target created by the pipeline'}
     if standard:
         target = _api('POST', '/api/targets/', json=params)
     else:

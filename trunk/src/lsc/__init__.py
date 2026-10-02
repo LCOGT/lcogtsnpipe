@@ -22,6 +22,7 @@ import lsc.lscpsfdef
 #from lscpsfdef import *
 import lsc.banzaicat
 #from banzaicat import *
+import lcogtsnpipe.trunk.src.lsc.format_for_snex
 
 __version__ = "unknown"
 try:

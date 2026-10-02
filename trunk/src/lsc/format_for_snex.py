@@ -24,21 +24,24 @@ def _query(sql):
 
 
 def configured():
-    return all(os.environ.get(key, '') for key in ('SNEX_URL', 'SNEX_USER', 'SNEX_PASSWORD'))
+    return bool(os.environ.get('SNEX_URL', '') and os.environ.get('SNEX_API_TOKEN', ''))
 
 
 def _credentials():
     global _auth
     if _auth is None:
-        _auth = (os.environ.get('SNEX_USER', '') or lsc.util.userinput('SNEx username: '),
-                 os.environ.get('SNEX_PASSWORD', '') or getpass.getpass('SNEx password: '))
+        _auth = (lsc.util.userinput('SNEx username: '), getpass.getpass('SNEx password: '))
     return _auth
 
 
 def _api(method, path, **kwargs):
     url = os.environ['SNEX_URL'].rstrip('/')
-    response = requests.request(method, url + path, auth=_credentials(),
-                                headers={'Accept': 'application/json'}, **kwargs)
+    headers = {'Accept': 'application/json'}
+    if os.environ.get('SNEX_API_TOKEN', ''):
+        headers['Authorization'] = 'Token ' + os.environ['SNEX_API_TOKEN']
+        response = requests.request(method, url + path, headers=headers, **kwargs)
+    else:
+        response = requests.request(method, url + path, auth=_credentials(), headers=headers, **kwargs)
     if not response.ok:
         raise RuntimeError('{} {} returned {}: {}'.format(method, path, response.status_code, response.text[:300]))
     return response.json() if response.content else None
@@ -179,7 +182,7 @@ def upload_photometry(filenames):
 
 def upload_raw_spectrum(filepath, filename):
     if not configured():
-        print('ERROR: SNEX_URL, SNEX_USER and SNEX_PASSWORD must be set to post {} to the SNEx FLOYDS inbox'.format(filename))
+        print('ERROR: SNEX_URL and SNEX_API_TOKEN must be set to post {} to the SNEx FLOYDS inbox'.format(filename))
         return
     try:
         rows = _query('select * from speclcoraw where filename="{}"'.format(filename))

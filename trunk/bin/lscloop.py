@@ -93,7 +93,8 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--b_crlim", type=float, default=3.0, help="lower limit used to reject CRs identified as BANZAI sources")
     parser.add_argument("--no_iraf", action="store_true", help="Don't use iraf (currently only option in checkpsf stage)")
     parser.add_argument("--max_apercorr", type=float, default=0.1, help="absolute value of the maximum aperture correction (mag) above which a PSF is marked as bad")
-    parser.add_argument("--uploadtosnex", action="store_true", help="Upload the photometry of the selected images to SNEx after the stage runs")
+    parser.add_argument("--uploadtosnex", nargs="?", const="final", choices=["final", "auto"],
+                        help="Upload the photometry of the selected images to SNEx after the stage runs, as the final reduction; \"auto\" uploads it as automatic and never changes a final point")
     parser.add_argument('--pixstack-limit', dest='pixstack_limit', type=int, help='Modify set_extract_pixstack in sep via PyZOGY', default=None)
     args = parser.parse_args()
     if args.multicore >= cpu_count():
@@ -333,6 +334,6 @@ if __name__ == "__main__":   # main program
                 print('\n###  total number = ' + str(len(ll0['filename'])))
                 lsc.myloopdef.run_merge(listfile[ll['dayobs'] == epo], args.force) # merge images using lacos and swarp
         if args.uploadtosnex:
-            lsc.format_for_snex.upload_photometry(ll['filename'])
+            lsc.format_for_snex.upload_photometry(ll['filename'], final=args.uploadtosnex == 'final')
     else:
         print('\n### no data selected')

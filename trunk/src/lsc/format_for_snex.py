@@ -139,10 +139,10 @@ def _existing_datums(target_id, value):
             if all(datum['value'].get(key) == value.get(key) for key in ('subtraction_algorithm', 'template_source'))]
 
 
-def upload_photometry(filenames):
+def upload_photometry(filenames, final=True):
     if not os.environ.get('SNEX_URL', ''):
         raise RuntimeError('SNEX_URL must be set to upload to SNEx')
-    targets, created, updated, unchanged, failed = {}, 0, 0, 0, []
+    targets, created, updated, unchanged, kept, failed = {}, 0, 0, 0, 0, []
     for filename in filenames:
         try:
             rows = _query('select * from photlco where filename="{}"'.format(filename))
@@ -151,8 +151,12 @@ def upload_photometry(filenames):
             row = rows[0]
             target_id, standard = get_target(row['targetid'], targets)
             value = photometry_value(row)
+            if final:
+                value['final_reduction'] = True
             existing = _existing_datums(target_id, value)
-            if existing and all(existing[0]['value'].get(key) == value[key] for key in value):
+            if existing and not final and existing[0]['value'].get('final_reduction'):
+                kept += 1
+            elif existing and all(existing[0]['value'].get(key) == value[key] for key in value):
                 unchanged += 1
             elif existing:
                 _api('PATCH', '/api/reduceddatums/{}/'.format(existing[0]['id']), json={'value': value})
@@ -177,7 +181,8 @@ def upload_photometry(filenames):
         except Exception as e:
             failed.append(filename)
             print('SNEx upload failed for {}: {}'.format(filename, e))
-    print('SNEx photometry: {} created, {} updated, {} unchanged, {} failed'.format(created, updated, unchanged, len(failed)))
+    print('SNEx photometry: {} created, {} updated, {} unchanged, {} kept as final, {} failed'.format(
+        created, updated, unchanged, kept, len(failed)))
     return failed
 
 

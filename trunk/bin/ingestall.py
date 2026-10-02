@@ -43,7 +43,7 @@ else:
 
 login = lsc.mysqldef.query(["select username, userpw from programs where idcode='KEY2014A-003'"], lsc.myloopdef.conn)
 username = login[0]['username']
-password = base64.decodestring(login[0]['userpw'])
+password = base64.b64decode(login[0]['userpw']).decode()
 try:
     authtoken = authenticate(username, password)
 except ValueError as e:
@@ -91,8 +91,7 @@ for frame in frames:
             logger.error('!!! FAILED TO MAKE PNG FOR {}'.format(filename))
             traceback.print_exc()
             continue
-        if dbdict:
-            lsc.format_for_snex.upload_raw_spectrum(filepath, filename)
+        lsc.format_for_snex.upload_raw_spectrum(filepath, filename)
 
 lsc.mysqldef.ingestredu(fullpaths) # ingest new data into photlco
 

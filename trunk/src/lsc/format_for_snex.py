@@ -81,11 +81,16 @@ def photometry_groups(row):
     return groups_for(groupidcode)
 
 
+def is_standard(targetid):
+    return bool(_query('select targets.id from targets join classifications on classifications.id=targets.classificationid '
+                       'where targets.id={:d} and classifications.name="Standard"'.format(int(targetid))))
+
+
 def get_target(targetid, cache=None):
     if cache is not None and targetid in cache:
         return cache[targetid]
     row = _query('select * from targets where id={:d}'.format(int(targetid)))[0]
-    standard = row['classificationid'] in [c['id'] for c in _query('select id from classifications where name="Standard"')]
+    standard = is_standard(targetid)
     names = {}
     for n in _query('select name from targetnames where targetid={:d} order by id'.format(int(targetid))):
         names.setdefault(n['name'].replace(' ', '').lower(), n['name'])
@@ -208,6 +213,8 @@ def upload_raw_spectrum(filepath, filename):
             return
         names = [n['name'] for n in _query('select name from targetnames where targetid={:d}'.format(int(row['targetid'])))]
         if any('test_' in n for n in names):
+            return
+        if row['propid'] == 'FLOYDS standards' or is_standard(row['targetid']):
             return
         target_id, standard = get_target(row['targetid'])
         if standard:

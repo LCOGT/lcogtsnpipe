@@ -1,6 +1,7 @@
 import getpass
 import json
 import os
+import sys
 
 import requests
 from astropy.time import Time
@@ -10,6 +11,7 @@ import lsc
 DEFAULT_GROUPIDCODE = 1703768065789
 _conn = None
 _auth = None
+_warned = False
 
 
 def _db():
@@ -48,7 +50,8 @@ def _api(method, path, **kwargs):
         response = requests.request(method, url + path, auth=_credentials(), headers=headers, allow_redirects=False, **kwargs)
     if response.status_code in (301, 302, 401) or (response.status_code == 403 and (
             'Invalid token' in response.text or 'credentials were not provided' in response.text)):
-        raise SNExAuthError('SNEx at {} rejected the credentials; check SNEX_API_TOKEN'.format(url))
+        raise SNExAuthError('SNEx at {} answered {} {}; check SNEX_URL and SNEX_API_TOKEN'.format(
+            url, response.status_code, response.headers.get('Location', '')))
     if not response.ok:
         raise RuntimeError('{} {} returned {}: {}'.format(method, path, response.status_code, response.text[:300]))
     return response.json() if response.content else None
@@ -154,6 +157,8 @@ def _existing_datums(target_id, value):
 def upload_photometry(filenames, final=True):
     if not os.environ.get('SNEX_URL', ''):
         raise RuntimeError('SNEX_URL must be set to upload to SNEx')
+    if not configured() and not sys.stdin.isatty():
+        raise RuntimeError('SNEX_API_TOKEN must be set to upload to SNEx without a terminal')
     targets, created, updated, unchanged, kept, failed = {}, 0, 0, 0, 0, []
     for filename in filenames:
         try:
@@ -201,8 +206,14 @@ def upload_photometry(filenames, final=True):
 
 
 def upload_raw_spectrum(filepath, filename):
+    global _warned
+    posted_marker = os.path.join(filepath, filename.replace('.fits', '.posted'))
+    if os.path.exists(posted_marker):
+        return
     if not configured():
-        print('ERROR: SNEX_URL and SNEX_API_TOKEN must be set to post {} to the SNEx FLOYDS inbox'.format(filename))
+        if not _warned:
+            print('ERROR: SNEX_URL and SNEX_API_TOKEN must be set to post raw spectra to the SNEx FLOYDS inbox')
+            _warned = True
         return
     try:
         rows = _query('select * from speclcoraw where filename="{}"'.format(filename))
@@ -231,5 +242,6 @@ def upload_raw_spectrum(filepath, filename):
                 return _api('POST', '/api/dataproducts/', data=dict(params, groups=json.dumps(groups)), files={'thumbnail': f})
         if not _post_with_groups(groups_for(row['groupidcode']), post).get('already_posted'):
             print('posted {} to the SNEx FLOYDS inbox'.format(filename))
+        open(posted_marker, 'w').close()
     except Exception as e:
         print('SNEx FLOYDS inbox post failed for {}: {}'.format(filename, e))

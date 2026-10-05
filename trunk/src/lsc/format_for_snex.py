@@ -205,6 +205,43 @@ def upload_photometry(filenames, final=True):
     return failed
 
 
+def _post_image(target_id, path, data_product_type, groups):
+    if not os.path.isfile(path):
+        path += '.fz'
+    product_id = os.path.basename(path).split('.fits')[0]
+
+    def post(groups):
+        with open(path, 'rb') as f:
+            return _api('POST', '/api/dataproducts/', files={'file': (os.path.basename(path), f, 'image/fits')},
+                        data={'target': target_id, 'data_product_type': data_product_type, 'product_id': product_id,
+                              'groups': json.dumps(groups)})
+    return _post_with_groups(groups, post)
+
+
+def upload_difference_images(filenames):
+    if not configured():
+        raise RuntimeError('SNEX_URL and SNEX_API_TOKEN must be set to upload images to SNEx')
+    targets, posted, failed = {}, 0, []
+    for filename in filenames:
+        try:
+            rows = _query('select * from photlco where filename="{}"'.format(filename))
+            if not rows or rows[0]['filetype'] != 3:
+                continue
+            row = rows[0]
+            target_id, standard = get_target(row['targetid'], targets)
+            value = photometry_value(row)
+            for key, data_product_type in (('difference_image', 'difference_image'), ('template_image', 'template_image')):
+                if value.get(key) and not _post_image(target_id, value[key], data_product_type, photometry_groups(row)).get('already_posted'):
+                    posted += 1
+        except (requests.ConnectionError, SNExAuthError):
+            raise
+        except Exception as e:
+            failed.append(filename)
+            print('SNEx image upload failed for {}: {}'.format(filename, e))
+    print('SNEx difference images: {} files posted, {} frames failed'.format(posted, len(failed)))
+    return failed
+
+
 def upload_raw_spectrum(filepath, filename):
     global _warned
     posted_marker = os.path.join(filepath, filename.replace('.fits', '.posted'))

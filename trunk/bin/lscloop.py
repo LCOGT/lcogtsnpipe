@@ -95,6 +95,7 @@ if __name__ == "__main__":   # main program
     parser.add_argument("--max_apercorr", type=float, default=0.1, help="absolute value of the maximum aperture correction (mag) above which a PSF is marked as bad")
     parser.add_argument("--uploadtosnex", nargs="?", const="final", choices=["final", "auto"],
                         help="Upload the photometry of the selected images to SNEx after the stage runs, as the final reduction; \"auto\" uploads it as automatic and never changes a final point")
+    parser.add_argument("--uploaddiffimages", action="store_true", help="Upload the difference and template images of the selected difference images (--filetype 3) to SNEx")
     parser.add_argument('--pixstack-limit', dest='pixstack_limit', type=int, help='Modify set_extract_pixstack in sep via PyZOGY', default=None)
     args = parser.parse_args()
     if args.multicore >= cpu_count():
@@ -335,5 +336,7 @@ if __name__ == "__main__":   # main program
                 lsc.myloopdef.run_merge(listfile[ll['dayobs'] == epo], args.force) # merge images using lacos and swarp
         if args.uploadtosnex:
             lsc.format_for_snex.upload_photometry(ll['filename'], final=args.uploadtosnex == 'final')
+        if args.uploaddiffimages:
+            lsc.format_for_snex.upload_difference_images(ll['filename'])
     else:
         print('\n### no data selected')

@@ -179,7 +179,7 @@ def upload_photometry(filenames, final=True):
                 posted = _api('POST', '/api/photometry/', json=dict(datum, groups=[]))
             else:
                 posted = _post_with_groups(photometry_groups(row), lambda groups: _api(
-                    'POST', '/api/photometry/', json=dict(datum, groups=groups)))
+                    'POST', '/api/photometry/', json=_with_groups(datum, groups)))
             results[posted['result']] += 1
         except requests.ConnectionError as e:
             raise RuntimeError('Could not connect to SNEx at {}: {}'.format(os.environ['SNEX_URL'], e))

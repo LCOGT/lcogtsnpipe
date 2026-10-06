@@ -63,10 +63,14 @@ def groups_for(groupidcode):
             if g['idcode'] and int(g['idcode']) & groupidcode]
 
 
+def _with_groups(payload, groups, encode=False):
+    if groups is None:
+        return payload
+    return dict(payload, groups=json.dumps(groups) if encode else groups)
+
+
 def _post_with_groups(groups, post):
-    default_groups = groups_for(None)
-    if not default_groups:
-        raise RuntimeError('none of the default groups are in the groups table, not posting without groups')
+    default_groups = groups_for(None) or None
     try:
         return post(groups or default_groups)
     except RuntimeError as e:
@@ -106,7 +110,7 @@ def get_target(targetid, cache=None):
         target = _api('POST', '/api/targets/', json=params)
     else:
         target = _post_with_groups(groups_for(row['groupidcode']), lambda groups: _api(
-            'POST', '/api/targets/', json=dict(params, groups=groups)))
+            'POST', '/api/targets/', json=_with_groups(params, groups)))
     target_id = target['id']
     standard = target.get('standard', standard)
     if cache is not None:
@@ -197,8 +201,8 @@ def _post_image(target_id, path, data_product_type, groups):
     def post(groups):
         with open(path, 'rb') as f:
             return _api('POST', '/api/dataproducts/', files={'file': (os.path.basename(path), f, 'image/fits')},
-                        data={'target': target_id, 'data_product_type': data_product_type, 'product_id': product_id,
-                              'groups': json.dumps(groups)})
+                        data=_with_groups({'target': target_id, 'data_product_type': data_product_type,
+                                           'product_id': product_id}, groups, encode=True))
     return _post_with_groups(groups, post)
 
 
@@ -260,7 +264,7 @@ def upload_raw_spectrum(filepath, filename):
         }
         def post(groups):
             with open(os.path.join(filepath, filename.replace('.fits', '.png')), 'rb') as f:
-                return _api('POST', '/api/dataproducts/', data=dict(params, groups=json.dumps(groups)), files={'thumbnail': f})
+                return _api('POST', '/api/dataproducts/', data=_with_groups(params, groups, encode=True), files={'thumbnail': f})
         if not _post_with_groups(groups_for(row['groupidcode']), post).get('already_posted'):
             print('posted {} to the SNEx FLOYDS inbox'.format(filename))
         open(posted_marker, 'w').close()

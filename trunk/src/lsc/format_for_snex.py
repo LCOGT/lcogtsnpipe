@@ -147,19 +147,13 @@ def photometry_value(row):
     return value
 
 
-def _existing_datums(target_id, value):
-    params = {'target__id': target_id, 'basename': value['basename'],
-              'background_subtracted': 'true' if value['background_subtracted'] else 'false'}
-    return [datum for datum in _api('GET', '/api/reduceddatums/', params=params)['results']
-            if all(datum['value'].get(key) == value.get(key) for key in ('subtraction_algorithm', 'template_source'))]
-
-
 def upload_photometry(filenames, final=True):
     if not os.environ.get('SNEX_URL', ''):
         raise RuntimeError('SNEX_URL must be set to upload to SNEx')
     if not configured() and not sys.stdin.isatty():
         raise RuntimeError('SNEX_API_TOKEN must be set to upload to SNEx without a terminal')
-    targets, created, updated, unchanged, kept, failed = {}, 0, 0, 0, 0, []
+    targets, failed = {}, []
+    results = {'created': 0, 'updated': 0, 'unchanged': 0, 'kept_final': 0}
     for filename in filenames:
         try:
             rows = _query('select * from photlco where filename="{}"'.format(filename))
@@ -170,29 +164,19 @@ def upload_photometry(filenames, final=True):
             value = photometry_value(row)
             if final:
                 value['final_reduction'] = True
-            existing = _existing_datums(target_id, value)
-            if existing and not final and existing[0]['value'].get('final_reduction'):
-                kept += 1
-            elif existing and all(existing[0]['value'].get(key) == value[key] for key in value):
-                unchanged += 1
-            elif existing:
-                _api('PATCH', '/api/reduceddatums/{}/'.format(existing[0]['id']), json={'value': value})
-                updated += 1
+            datum = {
+                'target': target_id,
+                'timestamp': Time(row['mjd'], format='mjd').isot + 'Z',
+                'source_name': 'LCO',
+                'source_location': value['basename'],
+                'value': value,
+            }
+            if standard:
+                posted = _api('POST', '/api/photometry/', json=dict(datum, groups=[]))
             else:
-                datum = {
-                    'target': target_id,
-                    'data_type': 'photometric_standard' if standard else 'photometry',
-                    'timestamp': Time(row['mjd'], format='mjd').isot + 'Z',
-                    'source_name': 'LCO',
-                    'source_location': value['basename'],
-                    'value': value,
-                }
-                if standard:
-                    _api('POST', '/api/reduceddatums/', json=dict(datum, groups=[]))
-                else:
-                    _post_with_groups(photometry_groups(row), lambda groups: _api(
-                        'POST', '/api/reduceddatums/', json=dict(datum, groups=groups)))
-                created += 1
+                posted = _post_with_groups(photometry_groups(row), lambda groups: _api(
+                    'POST', '/api/photometry/', json=dict(datum, groups=groups)))
+            results[posted['result']] += 1
         except requests.ConnectionError as e:
             raise RuntimeError('Could not connect to SNEx at {}: {}'.format(os.environ['SNEX_URL'], e))
         except SNExAuthError:
@@ -200,8 +184,8 @@ def upload_photometry(filenames, final=True):
         except Exception as e:
             failed.append(filename)
             print('SNEx upload failed for {}: {}'.format(filename, e))
-    print('SNEx photometry: {} created, {} updated, {} unchanged, {} kept as final, {} failed'.format(
-        created, updated, unchanged, kept, len(failed)))
+    print('SNEx photometry: {created} created, {updated} updated, {unchanged} unchanged, {kept_final} kept as final, '
+          '{failed} failed'.format(failed=len(failed), **results))
     return failed
 
 

@@ -1,0 +1,21 @@
+version: '2.2'
+services:
+  lcosnpipe:
+    image: lcogtsnpipe:latest
+    network_mode: "host"
+    container_name: lcosnpipe
+    restart: unless-stopped
+    entrypoint: ['/bin/bash', '-c', 'while [ true ]; do sleep 180; done;']
+    environment:
+      LCOSNDBHOST: "${LCOSNDBHOST:-supernovadb}"
+      LCOSNDBNAME: "${LCOSNDBNAME:-supernova}"
+      LCOSNDBUSER: "${LCOSNDBUSER:-supernova}"
+      LCOSNDBPASS: "${LCOSNDBPASS:-supernova}"
+      LCOSNDIR: "/supernova"
+      PYRAF_NO_DISPLAY: "1"
+      MPLBACKEND: "Agg"
+      TERM: "xterm"
+      SNEX_URL: "${SNEX_URL}"
+      SNEX_API_TOKEN: "${SNEX_API_TOKEN}"
+    volumes:
+      - /supernova:/supernova

@@ -17,5 +17,6 @@ services:
       TERM: "xterm"
       SNEX_URL: "${SNEX_URL}"
       SNEX_API_TOKEN: "${SNEX_API_TOKEN}"
+      LCO_API_KEY: "${LCO_API_KEY}"
     volumes:
       - /supernova:/supernova

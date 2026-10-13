@@ -17,18 +17,10 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
-DEFAULT_GROUPS = ['LCOGT']
-PROPOSAL_GROUPS = {
-}
-
-
-def proposal_groupidcode(propid):
-    names = set(DEFAULT_GROUPS + PROPOSAL_GROUPS.get(propid, []))
-    idcodes = {group['name']: group['idcode'] for group in lsc.mysqldef.query(['select name, idcode from `groups`'], lsc.myloopdef.conn)}
-    for name in names:
-        if name not in idcodes:
-            logger.error('!!! GROUP {} (proposal {}) IS NOT IN THE groups TABLE'.format(name, propid))
-    return sum(int(idcodes[name]) for name in names if name in idcodes)
+def program_groupidcode(propid):
+    rows = lsc.mysqldef.query(['select groupidcode from programs where idcode="{}"'.format(propid)], lsc.myloopdef.conn)
+    if rows and rows[0]['groupidcode'] not in (None, 0, 1):
+        return int(rows[0]['groupidcode'])
 
 if len(sys.argv) > 1:
     daterange = sys.argv[1]
@@ -80,9 +72,9 @@ for frame in frames:
         logger.error('!!! FAILED TO INGEST {}'.format(filename))
         traceback.print_exc()
         continue
-    if dbdict:
+    groupidcode = program_groupidcode(dbdict.get('propid')) if dbdict else None
+    if groupidcode:
         table = 'speclcoraw' if '-en' in filename else 'photlcoraw'
-        groupidcode = proposal_groupidcode(dbdict.get('propid'))
         lsc.mysqldef.query(['update {} set groupidcode={:d} where filename="{}"'.format(table, groupidcode, filename)], lsc.myloopdef.conn)
     if '-en' in filename and '-e00.fits' in filename:
         try:

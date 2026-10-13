@@ -60,7 +60,7 @@ def _api(method, path, **kwargs):
 def groups_for(groupidcode):
     groupidcode = int(groupidcode or DEFAULT_GROUPIDCODE)
     return [{'name': g['name']} for g in _query('select name, idcode from `groups`')
-            if g['idcode'] and int(g['idcode']) & groupidcode]
+            if g['idcode'] and int(g['idcode']) & groupidcode == int(g['idcode'])]
 
 
 def _post_with_groups(groups, post):

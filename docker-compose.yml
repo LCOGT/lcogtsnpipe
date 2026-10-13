@@ -23,6 +23,7 @@ services:
       LCOSNDIR: "/supernova"
       SNEX_URL: "${SNEX_URL:-}"
       SNEX_API_TOKEN: "${SNEX_API_TOKEN:-}"
+      LCO_API_KEY: "${LCO_API_KEY:-}"
       DISPLAY: "${LCOSNDISPLAY:-host.docker.internal:0}"
       MPLBACKEND: "QtAgg"
       QT_X11_NO_MITSHM: "1"

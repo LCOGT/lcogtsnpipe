@@ -1121,7 +1121,7 @@ def readapass(_ra,_dec,radius=30,field=''):
             zzz.append(str.split(j))
     column2={}
     for i in column:
-        column2[column[i]]=zip(*zzz)[i]
+        column2[column[i]]=list(zip(*zzz))[i]
     filters=['B', 'V', 'Pg', 'Pr', 'Pi']
 
     filename='cataogue_APASS.cat'
@@ -1140,7 +1140,7 @@ def readapass(_ra,_dec,radius=30,field=''):
     ff.write(header)
     m=1
     print(column2.keys())
-    for i in range(0,len(column2[column2.keys()[0]])):
+    for i in range(0,len(column2[list(column2.keys())[0]])):
         ff.write('%14s %14s  %3s  ' % (str(column2['#RAdeg'][i]),str(column2['DECdeg'][i]),str(m)))
         m=m+1
         for f in filters:

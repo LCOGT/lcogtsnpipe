@@ -143,11 +143,11 @@ if __name__ == "__main__":
     for img in imglist:
         print(img)
         table = lsc.lscabsphotdef.makecatalogue([img])
-        _filter = table.keys()[0]
-        _rasex = table[table.keys()[0]][table[table.keys()[0]].keys()[0]]['ra0']
-        _decsex = table[table.keys()[0]][table[table.keys()[0]].keys()[0]]['dec0']
-        _magp3 = table[table.keys()[0]][table[table.keys()[0]].keys()[0]]['magp3']
-        _merrp3 = table[table.keys()[0]][table[table.keys()[0]].keys()[0]]['merrp3']
+        _filter = list(table.keys())[0]
+        _rasex = table[list(table.keys())[0]][list(table[list(table.keys())[0]].keys())[0]]['ra0']
+        _decsex = table[list(table.keys())[0]][list(table[list(table.keys())[0]].keys())[0]]['dec0']
+        _magp3 = table[list(table.keys())[0]][list(table[list(table.keys())[0]].keys())[0]]['magp3']
+        _merrp3 = table[list(table.keys())[0]][list(table[list(table.keys())[0]].keys())[0]]['merrp3']
         #    _magp2=table[table.keys()[0]][table[table.keys()[0]].keys()[0]]['magp2']
         #    _magp3=table[table.keys()[0]][table[table.keys()[0]].keys()[0]]['magp3']
         #    _merrp2=table[table.keys()[0]][table[table.keys()[0]].keys()[0]]['merrp2']

@@ -4,6 +4,7 @@ if __name__ == '__main__':
     import lsc
     import argparse
     import os
+    import numpy as np
     from astropy.io import fits
     from LCOGTingest import db_ingest
 

@@ -15,8 +15,8 @@ lines = ['MJD,filter,mag,error\n']
 for row in phot:
     mjd = row[1] - 2400000.5
     filt = row[-2] if isinstance(row[-1], int) else row[-1]
-    mag  = filter(lambda val: val != 9999., list(row)[2:-2:2])[0]
-    dmag = filter(lambda val: val != 0.,    list(row)[3:-2:2])[0]
+    mag  = [val for val in list(row)[2:-2:2] if val != 9999.][0]
+    dmag = [val for val in list(row)[3:-2:2] if val != 0.][0]
 
     lines.append('{mjd},{filt},{mag},{dmag}\n'.format(mjd=mjd, filt=filt, 
                                                       mag=mag, dmag=dmag))

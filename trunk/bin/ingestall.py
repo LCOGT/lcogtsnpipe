@@ -30,7 +30,7 @@ else:
 
 login = lsc.mysqldef.query(["select username, userpw from programs where idcode='KEY2014A-003'"], lsc.myloopdef.conn)
 username = login[0]['username']
-password = base64.decodestring(login[0]['userpw'])
+password = base64.b64decode(login[0]['userpw'])
 try:
     authtoken = authenticate(username, password)
 except ValueError as e:

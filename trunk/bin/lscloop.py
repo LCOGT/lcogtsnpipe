@@ -281,7 +281,7 @@ if __name__ == "__main__":   # main program
                     for i in range(0, len(lista)):
                         for jj in lista[0].keys():
                             ll00[jj].append(lista[i][jj])
-                    inds = np.argsort(ll00['mjd'])  #  sort by mjd
+                    inds = np.argsort([-np.inf if mjd is None else mjd for mjd in ll00['mjd']])  #  sort by mjd
                     for i in ll00.keys():
                         ll00[i] = np.take(ll00[i], inds)
                     lltemp = lsc.myloopdef.filtralist(ll00, filters, '', args.name, args.RA, args.DEC, '', 4, args.groupidcode, '', '', '', None, args.targetid)

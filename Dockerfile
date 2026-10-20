@@ -61,13 +61,13 @@ RUN git clone https://github.com/dguevel/PyZOGY.git /tmp/PyZOGY \
         && rm -rf /tmp/PyZOGY
 
 RUN case "$(uname -m)" in \
-        aarch64) DS9_PKG="debian12arm64" ;; \
-        x86_64)  DS9_PKG="debian12x86" ;; \
+        aarch64) DS9_PKG="debian-12_aarch64" ;; \
+        x86_64)  DS9_PKG="debian-12_x86_64" ;; \
         *) echo "Unsupported architecture: $(uname -m)" && exit 1 ;; \
     esac \
-        && wget "http://ds9.si.edu/download/${DS9_PKG}/ds9.${DS9_PKG}.8.7.tar.gz" \
-        && tar -xzvf "ds9.${DS9_PKG}.8.7.tar.gz" -C /usr/local/bin \
-        && rm -f "ds9.${DS9_PKG}.8.7.tar.gz"
+        && wget "https://ds9.si.edu/download/${DS9_PKG}/ds9.${DS9_PKG}.8.8.tar.gz" \
+        && tar -xzvf "ds9.${DS9_PKG}.8.8.tar.gz" -C /usr/local/bin \
+        && rm -f "ds9.${DS9_PKG}.8.8.tar.gz"
 
 RUN wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz \
         && tar -xzvf cdsclient.tar.gz -C /usr/src && rm cdsclient.tar.gz \
@@ -82,18 +82,18 @@ RUN cd / \
 
 ENV LCOSNPIPE=/lcogtsnpipe
 
-RUN mkdir -p /home/supernova/iraf && /usr/sbin/groupadd -g 20000 "domainusers" \
-        && /usr/sbin/useradd -g 20000 -d /home/supernova -M -N -u 10197 supernova \
-        && chown -R supernova:domainusers /home/supernova \
+RUN mkdir -p /home/supernova/iraf && /usr/sbin/groupadd -g 10008 "supernova" \
+        && /usr/sbin/useradd -g 10008 -d /home/supernova -M -N -u 10197 supernova \
+        && chown -R supernova:supernova /home/supernova \
         && mkdir -p $LCOSNPIPE
 
-RUN chown -R supernova:domainusers $LCOSNPIPE /opt/conda/envs/lcogtsnpipe/
+RUN chown -R supernova:supernova $LCOSNPIPE /opt/conda/envs/lcogtsnpipe/
 
 USER supernova
 
 ENV USER=supernova
 
-COPY --chown=supernova:domainusers . $LCOSNPIPE
+COPY --chown=supernova:supernova . $LCOSNPIPE
 
 WORKDIR $LCOSNPIPE/trunk
 

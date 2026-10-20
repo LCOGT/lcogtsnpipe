@@ -38,4 +38,4 @@ for file_dict in [standard_file_dict, merged_file_dict, diff_file_dict, template
                 print('APCO not in header of {}'.format(sn2_filename))
         #Notify user if PSF stage was run but no sn2 file is found
         elif os.path.exists(os.path.join(filepath, filename.replace('.fits', '.psf.fits'))):
-            print('sn2 file does not exist but PSF file does for {}'.format(sn2_file))
+            print('sn2 file does not exist but PSF file does for {}'.format(sn2_filename))

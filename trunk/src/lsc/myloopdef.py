@@ -214,7 +214,7 @@ def run_wcs(imglist, interactive=False, redo=False, _xshift=0, _yshift=0, catalo
             elif mode == 'astrometry':
                 lsc.lscastrodef.run_astrometry(_dir + img, True, redo)
             else:
-                print(str(_mode)+' not defined')
+                print(str(mode)+' not defined')
         elif status == 0:
             print('status ' + str(status) + ': WCS stage not done')
         elif status == -1:
@@ -1763,7 +1763,7 @@ def get_list(epoch=None, _telescope='all', _filter='', _bad='', _name='', _id=''
         for i in range(0, len(lista)):
             for jj in lista[0].keys(): ll0[jj].append(lista[i][jj])
 
-        inds = np.argsort(ll0['mjd'])  #  sort by mjd
+        inds = np.argsort([-np.inf if mjd is None else mjd for mjd in ll0['mjd']])  #  sort by mjd
         for i in ll0.keys():
             ll0[i] = np.take(ll0[i], inds)
 

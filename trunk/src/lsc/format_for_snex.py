@@ -60,7 +60,7 @@ def _api(method, path, **kwargs):
 def groups_for(groupidcode):
     groupidcode = int(groupidcode or DEFAULT_GROUPIDCODE)
     return [{'name': g['name']} for g in _query('select name, idcode from `groups`')
-            if g['idcode'] and int(g['idcode']) & groupidcode]
+            if g['idcode'] and int(g['idcode']) & groupidcode == int(g['idcode'])]
 
 
 def _with_groups(payload, groups, encode=False):
@@ -118,23 +118,31 @@ def get_target(targetid, cache=None):
     return target_id, standard
 
 
+def measured(value):
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return None
+    return None if value >= 9000 else value
+
+
 def photometry_value(row):
     value = {
-        'magnitude': row['mag'],
-        'error': row['dmag'],
+        'magnitude': measured(row['mag']),
+        'error': measured(row['dmag']),
         'filter': row['filter'],
         'telescope': row['telescope'],
         'instrument': row['instrument'],
         'basename': row['filename'].split('.')[0],
         'exptime': row['exptime'],
-        'fwhm': row['fwhm'],
+        'fwhm': measured(row['fwhm']),
         'wcs': None if row['wcs'] is None else int(row['wcs']),
-        'psfx': row['psfx'],
-        'psfy': row['psfy'],
-        'psfmag': row['psfmag'],
-        'psfdmag': row['psfdmag'],
-        'apmag': row['apmag'],
-        'dapmag': row['dapmag'],
+        'psfx': measured(row['psfx']),
+        'psfy': measured(row['psfy']),
+        'psfmag': measured(row['psfmag']),
+        'psfdmag': measured(row['psfdmag']),
+        'apmag': measured(row['apmag']),
+        'dapmag': measured(row['dapmag']),
         'background_subtracted': row['filetype'] == 3,
     }
     if value['background_subtracted']:

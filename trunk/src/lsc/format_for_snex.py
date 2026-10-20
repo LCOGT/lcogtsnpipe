@@ -2,6 +2,7 @@ import getpass
 import json
 import os
 import sys
+from datetime import datetime
 
 import requests
 from astropy.time import Time
@@ -9,6 +10,7 @@ from astropy.time import Time
 import lsc
 
 DEFAULT_GROUPIDCODE = 1703768065789
+AUTO_UPLOAD_MARKER = os.path.join(lsc.util.workdirectory, 'snex_auto_upload_since')
 _conn = None
 _auth = None
 _warned = False
@@ -45,9 +47,10 @@ def _api(method, path, **kwargs):
     headers = {'Accept': 'application/json'}
     if os.environ.get('SNEX_API_TOKEN', ''):
         headers['Authorization'] = 'Token ' + os.environ['SNEX_API_TOKEN']
-        response = requests.request(method, url + path, headers=headers, allow_redirects=False, **kwargs)
+        response = requests.request(method, url + path, headers=headers, allow_redirects=False, timeout=(10, 120), **kwargs)
     else:
-        response = requests.request(method, url + path, auth=_credentials(), headers=headers, allow_redirects=False, **kwargs)
+        response = requests.request(method, url + path, auth=_credentials(), headers=headers, allow_redirects=False,
+                                    timeout=(10, 120), **kwargs)
     if response.status_code in (301, 302, 401) or (response.status_code == 403 and (
             'Invalid token' in response.text or 'credentials were not provided' in response.text)):
         raise SNExAuthError('SNEx at {} answered {} {}; check SNEX_URL and SNEX_API_TOKEN'.format(
@@ -159,12 +162,30 @@ def photometry_value(row):
     return value
 
 
+def _timestamp(row):
+    if row['mjd'] is not None:
+        return Time(row['mjd'], format='mjd').isot + 'Z'
+    if row['dateobs'] is not None:
+        return '{}T{}Z'.format(row['dateobs'], str(row['ut'] or '00:00:00').zfill(8))
+    return None
+
+
+def _auto_upload_since():
+    try:
+        with open(AUTO_UPLOAD_MARKER) as f:
+            return datetime.strptime(f.read().strip(), '%Y-%m-%d %H:%M:%S')
+    except (IOError, OSError, ValueError):
+        return None
+
+
 def upload_photometry(filenames, final=True):
     if not os.environ.get('SNEX_URL', ''):
         raise RuntimeError('SNEX_URL must be set to upload to SNEx')
     if not configured() and not sys.stdin.isatty():
         raise RuntimeError('SNEX_API_TOKEN must be set to upload to SNEx without a terminal')
-    targets, failed = {}, []
+    since = None if final else _auto_upload_since()
+    started = _query('select now() as now')[0]['now']
+    targets, failed, skipped = {}, [], 0
     results = {'created': 0, 'updated': 0, 'unchanged': 0, 'kept_final': 0}
     for filename in filenames:
         try:
@@ -172,13 +193,21 @@ def upload_photometry(filenames, final=True):
             if not rows or rows[0]['filetype'] not in (1, 3):
                 continue
             row = rows[0]
+            if since and row['lastmodified'] < since:
+                skipped += 1
+                continue
+            timestamp = _timestamp(row)
+            if timestamp is None:
+                failed.append(filename)
+                print('SNEx upload skipped for {}: no mjd or dateobs'.format(filename))
+                continue
             target_id, standard = get_target(row['targetid'], targets)
             value = photometry_value(row)
             if final:
                 value['final_reduction'] = True
             datum = {
                 'target': target_id,
-                'timestamp': Time(row['mjd'], format='mjd').isot + 'Z',
+                'timestamp': timestamp,
                 'source_name': 'LCO',
                 'source_location': value['basename'],
                 'value': value,
@@ -189,15 +218,19 @@ def upload_photometry(filenames, final=True):
                 posted = _post_with_groups(photometry_groups(row), lambda groups: _api(
                     'POST', '/api/photometry/', json=_with_groups(datum, groups)))
             results[posted['result']] += 1
-        except requests.ConnectionError as e:
+        except (requests.ConnectionError, requests.Timeout) as e:
             raise RuntimeError('Could not connect to SNEx at {}: {}'.format(os.environ['SNEX_URL'], e))
         except SNExAuthError:
             raise
         except Exception as e:
             failed.append(filename)
             print('SNEx upload failed for {}: {}'.format(filename, e))
+    if not final:
+        with open(AUTO_UPLOAD_MARKER, 'w') as f:
+            f.write(started.strftime('%Y-%m-%d %H:%M:%S'))
     print('SNEx photometry: {created} created, {updated} updated, {unchanged} unchanged, {kept_final} kept as final, '
-          '{failed} failed'.format(failed=len(failed), **results))
+          '{skipped} not modified since the last automatic upload, {failed} failed'.format(
+              failed=len(failed), skipped=skipped, **results))
     return failed
 
 
@@ -229,7 +262,7 @@ def upload_difference_images(filenames):
             for key, data_product_type in (('difference_image', 'difference_image'), ('template_image', 'template_image')):
                 if value.get(key) and not _post_image(target_id, value[key], data_product_type, photometry_groups(row)).get('already_posted'):
                     posted += 1
-        except (requests.ConnectionError, SNExAuthError):
+        except (requests.ConnectionError, requests.Timeout, SNExAuthError):
             raise
         except Exception as e:
             failed.append(filename)

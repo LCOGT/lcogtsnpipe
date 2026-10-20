@@ -86,6 +86,7 @@ if __name__ == "__main__":
     parser.add_argument("--field", nargs='+', default=['landolt', 'sloan'], choices=['landolt', 'sloan'])
     parser.add_argument("-t", "--timeout", type=float, default=86400.,
                         help="maximum time for each lscloop.py command in seconds")
+    parser.add_argument("--uploadtosnex", action="store_true", help="upload the photometry of the reduced images to SNEx when the reduction finishes")
     args = parser.parse_args()
     
     basecmd = 'lscloop.py'
@@ -144,6 +145,9 @@ if __name__ == "__main__":
                 run_cmd(basecmd_tel + ' -b psfmag -s psfmag -n ' + obj + commandsn.get(obj, ''), logfile, args.timeout)
                 run_cmd(basecmd + ' -b mag -s mag -n ' + obj + ' -T ' + tel, logfile, args.timeout)
     
+    if args.uploadtosnex:
+        run_cmd(basecmd_tel + ' --uploadtosnex auto', logfile, args.timeout)
+
     epoch_to_fpack = datetime.strftime(datetime.utcnow() - timedelta(31), '%Y%m%d')
     run_cmd('lscloop.py -e {} -s fpack'.format(epoch_to_fpack), logfile, args.timeout)
     run_cmd('lscloop.py -e {} -s fpack -b quality'.format(epoch_to_fpack), logfile, args.timeout)

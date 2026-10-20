@@ -741,27 +741,3 @@ def gettargetid(_name,_ra,_dec,conn,_radius=.01,verbose=False):
         if verbose:   
             print('no objects')
    return _targetid
-
-###############################################################
-def get_snex_uid(interactive=True, return_fullname=False):
-    from getpass import getuser
-    import lsc
-    usersdict = query(['select id, firstname, lastname from users where name="{}"'.format(getuser())], lsc.myloopdef.conn)
-    if usersdict: # if your UNIX username matches your SNEx username
-        snex_uid = usersdict[0]['id']
-        fullname = usersdict[0]['firstname'] + ' ' + usersdict[0]['lastname']
-    else:
-        print('Your username is not associated with a SNEx account.')
-        snex_uid = None
-        fullname = None
-        if interactive:
-            snex_user = lsc.util.userinput('If you have a SNEx username, input it here. Otherwise, press enter. ')
-            if snex_user:
-                usersdict = query(['select id, firstname, lastname from users where name="' + snex_user + '"'], lsc.myloopdef.conn)
-                if usersdict:
-                  snex_uid = usersdict[0]['id']
-                  fullname = usersdict[0]['firstname'] + ' ' + usersdict[0]['lastname']
-                else:
-                  print('SNEx username not found.')
-    if return_fullname: return snex_uid, fullname
-    else: return snex_uid

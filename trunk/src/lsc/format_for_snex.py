@@ -2,6 +2,7 @@ import getpass
 import json
 import os
 import sys
+from datetime import datetime
 
 import requests
 from astropy.time import Time
@@ -9,6 +10,7 @@ from astropy.time import Time
 import lsc
 
 DEFAULT_GROUPIDCODE = 1703768065789
+AUTO_UPLOAD_MARKER = os.path.join(lsc.util.workdirectory, 'snex_auto_upload_since')
 _conn = None
 _auth = None
 _warned = False
@@ -45,9 +47,10 @@ def _api(method, path, **kwargs):
     headers = {'Accept': 'application/json'}
     if os.environ.get('SNEX_API_TOKEN', ''):
         headers['Authorization'] = 'Token ' + os.environ['SNEX_API_TOKEN']
-        response = requests.request(method, url + path, headers=headers, allow_redirects=False, **kwargs)
+        response = requests.request(method, url + path, headers=headers, allow_redirects=False, timeout=(10, 120), **kwargs)
     else:
-        response = requests.request(method, url + path, auth=_credentials(), headers=headers, allow_redirects=False, **kwargs)
+        response = requests.request(method, url + path, auth=_credentials(), headers=headers, allow_redirects=False,
+                                    timeout=(10, 120), **kwargs)
     if response.status_code in (301, 302, 401) or (response.status_code == 403 and (
             'Invalid token' in response.text or 'credentials were not provided' in response.text)):
         raise SNExAuthError('SNEx at {} answered {} {}; check SNEX_URL and SNEX_API_TOKEN'.format(
@@ -63,10 +66,14 @@ def groups_for(groupidcode):
             if g['idcode'] and int(g['idcode']) & groupidcode == int(g['idcode'])]
 
 
+def _with_groups(payload, groups, encode=False):
+    if groups is None:
+        return payload
+    return dict(payload, groups=json.dumps(groups) if encode else groups)
+
+
 def _post_with_groups(groups, post):
-    default_groups = groups_for(None)
-    if not default_groups:
-        raise RuntimeError('none of the default groups are in the groups table, not posting without groups')
+    default_groups = groups_for(None) or None
     try:
         return post(groups or default_groups)
     except RuntimeError as e:
@@ -101,12 +108,12 @@ def get_target(targetid, cache=None):
     params = {'name': names[0], 'type': 'SIDEREAL', 'permissions': 'PRIVATE',
               'ra': float(row['ra0']), 'dec': float(row['dec0']),
               'standard': standard, 'aliases': [{'name': n} for n in names[1:]],
-              'comment': 'Target created by the pipeline'}
+              'comment': 'Target created by pipeline'}
     if standard:
         target = _api('POST', '/api/targets/', json=params)
     else:
         target = _post_with_groups(groups_for(row['groupidcode']), lambda groups: _api(
-            'POST', '/api/targets/', json=dict(params, groups=groups)))
+            'POST', '/api/targets/', json=_with_groups(params, groups)))
     target_id = target['id']
     standard = target.get('standard', standard)
     if cache is not None:
@@ -127,8 +134,8 @@ def photometry_value(row):
         'magnitude': measured(row['mag']),
         'error': measured(row['dmag']),
         'filter': row['filter'],
-        'telescope': row['telescope'],
-        'instrument': row['instrument'],
+        'telescope': row['telescope'] or '',
+        'instrument': row['instrument'] or '',
         'basename': row['filename'].split('.')[0],
         'exptime': row['exptime'],
         'fwhm': measured(row['fwhm']),
@@ -155,11 +162,20 @@ def photometry_value(row):
     return value
 
 
-def _existing_datums(target_id, value):
-    params = {'target__id': target_id, 'basename': value['basename'],
-              'background_subtracted': 'true' if value['background_subtracted'] else 'false'}
-    return [datum for datum in _api('GET', '/api/reduceddatums/', params=params)['results']
-            if all(datum['value'].get(key) == value.get(key) for key in ('subtraction_algorithm', 'template_source'))]
+def _timestamp(row):
+    if row['mjd'] is not None:
+        return Time(row['mjd'], format='mjd').isot + 'Z'
+    if row['dateobs'] is not None:
+        return '{}T{}Z'.format(row['dateobs'], str(row['ut'] or '00:00:00').zfill(8))
+    return None
+
+
+def _auto_upload_since():
+    try:
+        with open(AUTO_UPLOAD_MARKER) as f:
+            return datetime.strptime(f.read().strip(), '%Y-%m-%d %H:%M:%S')
+    except (IOError, OSError, ValueError):
+        return None
 
 
 def upload_photometry(filenames, final=True):
@@ -167,49 +183,54 @@ def upload_photometry(filenames, final=True):
         raise RuntimeError('SNEX_URL must be set to upload to SNEx')
     if not configured() and not sys.stdin.isatty():
         raise RuntimeError('SNEX_API_TOKEN must be set to upload to SNEx without a terminal')
-    targets, created, updated, unchanged, kept, failed = {}, 0, 0, 0, 0, []
+    since = None if final else _auto_upload_since()
+    started = _query('select now() as now')[0]['now']
+    targets, failed, skipped = {}, [], 0
+    results = {'created': 0, 'updated': 0, 'unchanged': 0, 'kept_final': 0}
     for filename in filenames:
         try:
             rows = _query('select * from photlco where filename="{}"'.format(filename))
             if not rows or rows[0]['filetype'] not in (1, 3):
                 continue
             row = rows[0]
+            if since and row['lastmodified'] < since:
+                skipped += 1
+                continue
+            timestamp = _timestamp(row)
+            if timestamp is None:
+                failed.append(filename)
+                print('SNEx upload skipped for {}: no mjd or dateobs'.format(filename))
+                continue
             target_id, standard = get_target(row['targetid'], targets)
             value = photometry_value(row)
             if final:
                 value['final_reduction'] = True
-            existing = _existing_datums(target_id, value)
-            if existing and not final and existing[0]['value'].get('final_reduction'):
-                kept += 1
-            elif existing and all(existing[0]['value'].get(key) == value[key] for key in value):
-                unchanged += 1
-            elif existing:
-                _api('PATCH', '/api/reduceddatums/{}/'.format(existing[0]['id']), json={'value': value})
-                updated += 1
+            datum = {
+                'target': target_id,
+                'timestamp': timestamp,
+                'source_name': 'LCO',
+                'source_location': value['basename'],
+                'value': value,
+            }
+            if standard:
+                posted = _api('POST', '/api/photometry/', json=dict(datum, groups=[]))
             else:
-                datum = {
-                    'target': target_id,
-                    'data_type': 'photometric_standard' if standard else 'photometry',
-                    'timestamp': Time(row['mjd'], format='mjd').isot + 'Z',
-                    'source_name': 'LCO',
-                    'source_location': value['basename'],
-                    'value': value,
-                }
-                if standard:
-                    _api('POST', '/api/reduceddatums/', json=dict(datum, groups=[]))
-                else:
-                    _post_with_groups(photometry_groups(row), lambda groups: _api(
-                        'POST', '/api/reduceddatums/', json=dict(datum, groups=groups)))
-                created += 1
-        except requests.ConnectionError as e:
+                posted = _post_with_groups(photometry_groups(row), lambda groups: _api(
+                    'POST', '/api/photometry/', json=_with_groups(datum, groups)))
+            results[posted['result']] += 1
+        except (requests.ConnectionError, requests.Timeout) as e:
             raise RuntimeError('Could not connect to SNEx at {}: {}'.format(os.environ['SNEX_URL'], e))
         except SNExAuthError:
             raise
         except Exception as e:
             failed.append(filename)
             print('SNEx upload failed for {}: {}'.format(filename, e))
-    print('SNEx photometry: {} created, {} updated, {} unchanged, {} kept as final, {} failed'.format(
-        created, updated, unchanged, kept, len(failed)))
+    if not final:
+        with open(AUTO_UPLOAD_MARKER, 'w') as f:
+            f.write(started.strftime('%Y-%m-%d %H:%M:%S'))
+    print('SNEx photometry: {created} created, {updated} updated, {unchanged} unchanged, {kept_final} kept as final, '
+          '{skipped} not modified since the last automatic upload, {failed} failed'.format(
+              failed=len(failed), skipped=skipped, **results))
     return failed
 
 
@@ -221,8 +242,8 @@ def _post_image(target_id, path, data_product_type, groups):
     def post(groups):
         with open(path, 'rb') as f:
             return _api('POST', '/api/dataproducts/', files={'file': (os.path.basename(path), f, 'image/fits')},
-                        data={'target': target_id, 'data_product_type': data_product_type, 'product_id': product_id,
-                              'groups': json.dumps(groups)})
+                        data=_with_groups({'target': target_id, 'data_product_type': data_product_type,
+                                           'product_id': product_id}, groups, encode=True))
     return _post_with_groups(groups, post)
 
 
@@ -241,7 +262,7 @@ def upload_difference_images(filenames):
             for key, data_product_type in (('difference_image', 'difference_image'), ('template_image', 'template_image')):
                 if value.get(key) and not _post_image(target_id, value[key], data_product_type, photometry_groups(row)).get('already_posted'):
                     posted += 1
-        except (requests.ConnectionError, SNExAuthError):
+        except (requests.ConnectionError, requests.Timeout, SNExAuthError):
             raise
         except Exception as e:
             failed.append(filename)
@@ -284,7 +305,7 @@ def upload_raw_spectrum(filepath, filename):
         }
         def post(groups):
             with open(os.path.join(filepath, filename.replace('.fits', '.png')), 'rb') as f:
-                return _api('POST', '/api/dataproducts/', data=dict(params, groups=json.dumps(groups)), files={'thumbnail': f})
+                return _api('POST', '/api/dataproducts/', data=_with_groups(params, groups, encode=True), files={'thumbnail': f})
         if not _post_with_groups(groups_for(row['groupidcode']), post).get('already_posted'):
             print('posted {} to the SNEx FLOYDS inbox'.format(filename))
         open(posted_marker, 'w').close()

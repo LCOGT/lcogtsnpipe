@@ -148,6 +148,17 @@ def photometry_value(row):
         'dapmag': measured(row['dapmag']),
         'background_subtracted': row['filetype'] == 3,
     }
+    try:
+        response = requests.get('https://archive-api.lco.global/frames/',
+                                params={'basename_exact': value['basename'], 'include_related_frames': False},
+                                headers={'Authorization': 'Token ' + os.environ['LCO_API_KEY']},
+                                timeout=(10, 60))
+        response.raise_for_status()
+        results = response.json()['results']
+        if results:
+            value['frame_id'] = results[0]['id']
+    except (requests.RequestException, KeyError) as e:
+        print('Could not look up the archive frame id for {}: {}'.format(value['basename'], e))
     if value['background_subtracted']:
         value['reduction_type'] = 'manual'
         value['template_source'] = next((source for source in ('SDSS', 'PS1') if source in row['filename']), 'LCO')

@@ -17,11 +17,6 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
-def program_groupidcode(propid):
-    rows = lsc.mysqldef.query(['select groupidcode from programs where idcode="{}"'.format(propid)], lsc.myloopdef.conn)
-    if rows and rows[0]['groupidcode'] not in (None, 0, 1):
-        return int(rows[0]['groupidcode'])
-
 if len(sys.argv) > 1:
     daterange = sys.argv[1]
     start, end = daterange.split('-')
@@ -75,10 +70,12 @@ for frame in frames:
         logger.error('!!! FAILED TO INGEST {}'.format(filename))
         traceback.print_exc()
         continue
-    groupidcode = program_groupidcode(dbdict.get('propid')) if dbdict else None
-    if groupidcode:
+    programs = lsc.mysqldef.query(['select groupidcode from programs where idcode="{}"'.format(dbdict.get('propid'))],
+                                  lsc.myloopdef.conn) if dbdict else []
+    if programs and programs[0]['groupidcode'] not in (None, 0, 1):
         table = 'speclcoraw' if '-en' in filename else 'photlcoraw'
-        lsc.mysqldef.query(['update {} set groupidcode={:d} where filename="{}"'.format(table, groupidcode, filename)], lsc.myloopdef.conn)
+        lsc.mysqldef.query(['update {} set groupidcode={:d} where filename="{}"'.format(table, int(programs[0]['groupidcode']), filename)],
+                           lsc.myloopdef.conn)
     if '-en' in filename and '-e00.fits' in filename:
         try:
             fits2png(filepath + filename)

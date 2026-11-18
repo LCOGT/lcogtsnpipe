@@ -1036,7 +1036,7 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
                 iraf.tvmark(1, 'STDIN', Stdin=list(ccc), mark="circle", number='yes', label='no', radii=15, nxoffse=5,
                             nyoffse=5, color=206, txsize=3)
 
-            for field in ['gaia', 'sloan', 'apass', 'landolt']:
+            for field in ['sloan', 'apass', 'landolt']:
                 _catalogue = lsc.util.getcatalog(img, field)
                 if _catalogue:
                     catvec = lsc.lscastrodef.readtxt(_catalogue)

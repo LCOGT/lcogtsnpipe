@@ -3,6 +3,7 @@
 import lsc
 import os
 import argparse
+import subprocess
 
 default_catdir = os.path.join(os.getenv('LCOSNDIR', lsc.util.workdirectory), 'standard', 'cat')
 
@@ -30,6 +31,7 @@ for system in args.field:
     for target in targets:
         tid = str(target['id'])
         print('Target ID', tid)
+        fetch_failed = False
         names = lsc.mysqldef.query(['select name from targetnames where targetid=' + tid], lsc.myloopdef.conn)
         print(' aka '.join([n['name'] for n in names]))
         filepath = os.path.join(default_catdir, system)
@@ -45,7 +47,7 @@ for system in args.field:
             print('Querying for catalog...')
             try:
                 if system == 'apass':
-                    os.system('queryapasscat.py -r {ra0} -d {dec0} -R {radius} -o '.format(radius=args.radius, **target) + fullpath)
+                    fetch_failed = subprocess.run('queryapasscat.py -r {ra0} -d {dec0} -R {radius} -o '.format(radius=args.radius, **target) + fullpath, shell=True).returncode == 1
                 elif system == 'sloan' and args.panstarrs:
                     lsc.lscabsphotdef.panstarrs2file(target['ra0'], target['dec0'], args.radius, output=fullpath)
                 elif system == 'sloan':
@@ -61,4 +63,7 @@ for system in args.field:
         if not fileexists:
             print('No catalog exists')
         print()
-        lsc.mysqldef.query(['update targets set ' + system + '_cat="" where ' + system + '_cat is NULL'], lsc.myloopdef.conn) # change NULL to '' if not in field
+        if fetch_failed:
+            print('Catalog query failed, will retry next run')
+        else:
+            lsc.mysqldef.query(['update targets set ' + system + '_cat="" where id=' + tid + ' and ' + system + '_cat is NULL'], lsc.myloopdef.conn)

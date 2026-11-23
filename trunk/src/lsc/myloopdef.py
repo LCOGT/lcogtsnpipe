@@ -1037,16 +1037,16 @@ def checkwcs(imglist, force=True, database='photlco', _z1='', _z2=''):
                             nyoffse=5, color=206, txsize=3)
 
             for field in ['sloan', 'apass', 'landolt']:
-                _catalogue = lsc.util.getcatalog(_dir + img, field)
+                _catalogue = lsc.util.getcatalog(img, field)
                 if _catalogue:
                     catvec = lsc.lscastrodef.readtxt(_catalogue)
-                    bbb = [ra + ' ' + dec for ra, dec in zip(catvec['ra'], catvec['dec'])]
+                    bbb = [f'{ra} {dec}' for ra, dec in zip(catvec['ra'], catvec['dec'])]
                     aaa = iraf.wcsctran('STDIN', 'STDOUT', _dir + img + '[0]', Stdin=bbb, inwcs='world', units='degrees degrees',
                                         outwcs='logical', columns='1 2', formats='%10.5f %10.5f', Stdout=1)
-                    iraf.tvmark(1, 'STDIN', Stdin=list(aaa), mark="cross", number='yes', label='no', radii=1, nxoffse=5,
-                                nyoffse=5, color=204, txsize=1)
+                    iraf.tvmark(1, 'STDIN', Stdin=list(aaa), mark="circle", number='yes', label='no', radii=20, nxoffse=5,
+                                nyoffse=5, color=204, txsize=2)
                     break
-            else:
+            if not _catalogue:
                 catvec = lsc.lscastrodef.querycatalogue('usnoa2', _dir + img, 'vizir')
                 apix1 = catvec['pix']
                 iraf.tvmark(1, 'STDIN', Stdin=list(apix1), mark="circle", number='yes', label='no', radii=20, nxoffse=5,

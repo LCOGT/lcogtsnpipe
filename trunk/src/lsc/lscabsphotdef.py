@@ -286,36 +286,8 @@ def absphot(img,_field='',_catalogue='',_fix=True,rejection=2.,_interactive=Fals
             print(catalog, 'columns do not match any known field:', set(stdcoo.colnames))
             return
 
-    if _calib == 'sloanprime' and ('fs' in _instrume or 'em' in _instrume):
-        colorefisso = {'UUB':0.0,'uug':0.0,'BUB':0.0,'BBV':0.0,'VBV':0.0,'VVR':0.0,\
-                      'gug':0.0,'ggr':0.0,'RVR':0.0,'RRI':0.0,'rrz':0.0,'zrz':0.0,\
-                      'rgr':0.0,'rri':0.0,'iri':0.027,'iiz':0.0,'IRI':0.0,'ziz':0.0}
-    elif _calib == 'sloanprime':
-        colorefisso = {'UUB':0.059,'uug':0.0,'BUB':-0.095,'BBV':0.06,'VBV':0.03,'VVR':-0.059,\
-                      'gug':0.13,'ggr':0.054,'RVR':-0.028,'RRI':-0.033,'rrz':0.0,'zrz':0.0,'ggi':0.0,'igi':0.0,\
-                      'rgr':0.003,'rri':-0.007,'iri':0.028,'iiz':0.110,'IRI':0.013,'ziz':-0.16}
-    elif _calib == 'natural':
-        colorefisso = {'UUB':0.0,'uug':0.0,'BUB':0.0,'BBV':0.0,'VBV':0.0,'VVR':0.0,\
-                      'gug':0.0,'ggr':0.0,'RVR':0.0,'RRI':0.0,'rrz':0.0,'zrz':0.0,\
-                      'rgr':0.0,'rri':0.0,'iri':0.0,'iiz':0.0,'IRI':0.0,'ziz':0.0}
-    elif 'fs' in _instrume or 'em' in _instrume:
-        colorefisso = {'UUB':0.0,'uug':0.0,'BUB':0.0,'BBV':0.0,'VBV':0.0,'VVR':0.0,\
-                      'gug':0.0,'ggr':0.105,'RVR':0.0,'RRI':0.0,'rrz':0.0,'zrz':0.0,\
-                      'rgr':0.013,'rri':0.029,'iri':0.0874,'iiz':0.0,'IRI':0.0,'ziz':-0.15}
-    # BVgri color terms from Valenti et al. 2016, MNRAS, 459, 3939
-    elif 'fl' in _instrume:
-        colorefisso = {'uug': 0.0, 'ggr': 0.109, 'rri': 0.027, 'iri': 0.036, 'BBV': -0.024, 'VBV': -0.014,
-                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
-    elif 'fa' in _instrume:
-        colorefisso = {'uug': 0.0, 'ggr': 0.109, 'rri': 0.027, 'iri': 0.036, 'BBV': -0.024, 'VBV': -0.014,
-                       'UUB': 0.059, 'BUB': -0.095, 'VVR': -0.059, 'RVR': -0.028, 'RRI': -0.033, 'IRI': 0.013, 'ziz': -0.04}
-    elif 'ep' in _instrume:
-        colorefisso = {'uug': 0.0, 'ggr': 0.0087, 'rri': 0.0166, 'iri': 0.0217, 'BBV': 0.0, 'VBV': 0.0,
-                   'UUB': 0.0, 'BUB': 0.0, 'VVR': 0.0, 'RVR': 0.0, 'RRI': 0.0, 'IRI': 0.0, 'ziz': 0.0152}
-    else: # don't attempt a color term if you don't know what the instrument is
-        print('No color terms exist for telescope/instrument set up. No color term applied, use --unfix to calculate a color term from the field stars in the image')
-        colorefisso = {'uug': 0.0, 'gug': 0.0, 'ggr': 0.0, 'rgr': 0.0, 'rri': 0.0, 'iri': 0.0, 'iiz': 0.0, 'ziz': 0.0,
-                       'UUB': 0.0, 'BUB': 0.0, 'BBV': 0.0, 'VBV': 0.0, 'VVR': 0.0, 'RVR': 0.0, 'RRI': 0.0, 'IRI': 0.0}
+    inst = lsc.instruments.get_instrument(hdr)
+    colorefisso = inst.get_color_terms(_calib)
 
     if _cat and not redo:
         print('already calibrated')

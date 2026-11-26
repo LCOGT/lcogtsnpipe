@@ -19,7 +19,7 @@ if __name__ == "__main__":   # main program
     parser = ArgumentParser(description=description)
     parser.add_argument("-e", "--epoch", help='args.epoch to reduce')
     parser.add_argument("-T", "--telescope", default='all')
-    parser.add_argument("-I", "--instrument", default='', help='kb, fl, fs, sinistro, sbig, ep, muscat, sq, qhy')
+    parser.add_argument("-I", "--instrument", default='', help='kb, fl, fs, sinistro, sbig, ep, muscat, sq, qhy, sophia')
     parser.add_argument("-n", "--name", default='', help='object name')
     parser.add_argument("-d", "--id", default='')
     parser.add_argument("-f", "--filter", default='', nargs='+',
@@ -258,18 +258,10 @@ if __name__ == "__main__":   # main program
                     suffix = '.{}.diff.fits'.format(args.temptel).replace('..', '.')
 
                 if args.temptel.upper() in ['SDSS', 'PS1']:
-                    if args.telescope == 'kb':
-                        fake_temptel = 'sbig'
-                    elif args.telescope == 'fs':
-                        fake_temptel = 'spectral'
-                    elif args.telescope == 'fl':
-                        fake_temptel = 'sinistro'
-                    elif args.telescope == 'fa':
-                        fake_temptel = 'sinistro'
-                    elif args.telescope == 'ep':
-                        fake_temptel = 'muscat'
-                    elif args.telescope == 'sq':
-                        fake_temptel = 'qhy'
+                    template_names = {lsc.instruments.get_instrument(camera).template_name for camera in ll['instrument']}
+                    if len(template_names) > 1:
+                        raise Exception('selected images need different templates: narrow -T to one camera, e.g. ep60')
+                    fake_temptel = next(iter(template_names), None) or args.telescope
                 elif args.temptel:
                     fake_temptel = args.temptel
                 else:

@@ -1,5 +1,6 @@
 import lsc.util
 #from util import *
+import lsc.instruments
 import lsc.mysqldef
 #from mysqldef import *
 import lsc.lscastrodef

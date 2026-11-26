@@ -3,11 +3,10 @@ from astropy.io import fits
 from scipy.stats import sigmaclip
 from operator import itemgetter
 
-def make_cat(filename,datamax=75000,b_sigma=3.0,b_crlim=3.0):
-
-	if datamax == None: datamax = 75000
+def make_cat(filename,datamax=None,b_sigma=3.0,b_crlim=3.0):
 
 	hdul = fits.open(filename)
+	if datamax is None: datamax = lsc.instruments.get_instrument(hdul[0].header).banzai_datamax
 	banzai_cat = hdul['CAT'].data
 
 	print("Total number of sources in BANZAI catalog: {0}".format(len(banzai_cat)))

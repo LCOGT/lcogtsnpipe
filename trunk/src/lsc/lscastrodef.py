@@ -88,13 +88,10 @@ def querycatalogue(catalogue,img,method='iraf'):
         hdr=readhdr(img)
         _ra=readkey3(hdr,'RA')
         _dec=readkey3(hdr,'DEC')
-        _instrume=hdr.get('instrume')
         iraf.imcoords(_doprint=0)
         iraf.astcat(_doprint=0)
-        if 'fl' in _instrume or 'fa' in _instrume: # sinistro
-            _size=40
-        else:
-            _size=20
+        inst = lsc.instruments.get_instrument(hdr)
+        _size = inst.astrometry_search_size
         toforget = ['imcoords','astcat','tv']
         iraf.noao.astcat.aregpars.rcrauni=''
         iraf.noao.astcat.aregpars.rcdecuni=''
@@ -228,7 +225,6 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
     _imex=False
     for img in imglist:
         hdr=readhdr(img)
-        _instrume=readkey3(hdr,'instrume')
         if not sexvec:
             sexvec=lsc.lscastrodef.sextractor(img)
 ###################
@@ -256,49 +252,29 @@ def lscastroloop(imglist,catalogue,_interactive,number1,number2,number3,_fitgeo,
             else:  rmsx3,rmsy3,num3,fwhm3,ell3,ccc,bkg3,rasys3,decsys3=rmsx2,rmsy2,num2,fwhm2,ell2,ccc,bkg2,rasys2,decsys2
         else:  rmsx3,rmsy3,num3,fwhm3,ell3,ccc,bkg3,rasys3,decsys3=rmsx1,rmsy1,num1,fwhm1,ell1,ccc,bkg1,rasys1,decsys1
 ######################################## 
-        if rmsx3 < 10 and rmsy3 < 10: 
-            if 'kb' in _instrume:
-                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3)))*0.464
-                if _imex:  fwhmgessime = median(array(ccc))*0.464
-                else:     fwhmgessime = 9999
-            elif 'fl' in _instrume or 'fa' in _instrume:
-                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.389
-                if _imex:  fwhmgessime = median(array(ccc)) * 0.389
-                else:     fwhmgessime = 9999
-            elif 'fs' in _instrume:
-                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.30
-                if _imex:  fwhmgessime = median(array(ccc)) * 0.30
-                else:     fwhmgessime = 9999
-            elif 'em' in _instrume:
-                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.278
-                if _imex:  fwhmgessime = median(array(ccc)) * 0.278
-                else:     fwhmgessime = 9999
-            elif 'ep' in _instrume:
-                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.27
-                if _imex:  fwhmgessime = median(array(ccc)) * 0.27
-                else:     fwhmgessime = 9999
-            elif 'sq' in _instrume:
-                fwhmgess3=half_total_flux_radius_to_fwhm(median(array(fwhm3))) * 0.734
-                if _imex:  fwhmgessime = median(array(ccc)) * 0.734
-                else:     fwhmgessime = 9999
-            ellgess3=median(array(ell3))
-
+        inst = lsc.instruments.get_instrument(hdr)
+        if rmsx3 < 10 and rmsy3 < 10 and inst.pixel_scale:
+            scale = inst.pixel_scale
+            fwhmgess3 = half_total_flux_radius_to_fwhm(median(array(fwhm3))) * scale
+            if _imex:
+                fwhmgessime = median(array(ccc)) * scale
+            else:
+                fwhmgessime = 9999
+            ellgess3 = median(array(ell3))
         else:
-            fwhmgess3=9999
-            fwhmgessime=9999
-            ellgess3=9999
-        if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa', 'ep','sq']:
-            mbkg3=median(bkg3)
-            lsc.util.updateheader(img,0,{'MBKG':(mbkg3,'background level')})
+            fwhmgess3 = 9999
+            fwhmgessime = 9999
+            ellgess3 = 9999
+        if inst.name != 'generic':
+            mbkg3 = median(bkg3)
+            lsc.util.updateheader(img, 0, {'MBKG': (mbkg3, 'background level')})
         else:
-            mbkg3=readkey3(hdr,'MBKG')
+            mbkg3 = readkey3(hdr, 'MBKG')
         if fwhmgess3:
-            if _instrume[:2] in ['kb', 'fl', 'fs', 'em', 'fa', 'ep','sq']:
-                V=(math.pi/(4*math.log(2)))*(45000-float(mbkg3))*(float(fwhmgess3)**2)
-            else:                     
-                V=(math.pi/(4*math.log(2)))*(32000-float(mbkg3))*(float(fwhmgess3)**2)
-            magsat=-2.5*math.log10(V)
-        else:        magsat=9999
+            V = (math.pi / (4 * math.log(2))) * (inst.saturation_level - float(mbkg3)) * (float(fwhmgess3) ** 2)
+            magsat = -2.5 * math.log10(V)
+        else:
+            magsat = 9999
     print(rmsx3,rmsy3,num3,fwhmgess3,ellgess3,fwhmgessime,rasys3,decsys3,magsat)
     return  rmsx3,rmsy3,num3,fwhmgess3,ellgess3,fwhmgessime,rasys3,decsys3,magsat
 
@@ -1041,7 +1017,7 @@ def sextractor(img):
         hd = fits.getheader(img)
         if hd.get('SATURATE'):    _saturation=hd.get('SATURATE')
         else:                     _saturation=45000
-        if _saturation>55000: _saturation=55000
+        _saturation = min(_saturation, lsc.instruments.get_instrument(hd).sextractor_saturation_cap)
 
         if hd.get('NAXIS1'):  _xdim=int(hd.get('NAXIS1'))
         else: _xdim=4010
@@ -1279,26 +1255,11 @@ def run_astrometry(im, clobber=True,redo=False):
             os.remove(basename + '-indx.xyls')
         if os.path.exists('tmpwcs.fits'):
             hdrt = lsc.util.readhdr('tmpwcs.fits')
-            _instrume = lsc.util.readkey3(hdrt,'instrume')
             sexvec = lsc.lscastrodef.sextractor('tmpwcs.fits')
             xpix,ypix,fw,cl,cm,ell,bkg,fl = sexvec
-            if len(fw)>1:
-                if 'kb' in _instrume:
-                    fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.464
-                elif 'fa' in _instrume:
-                    fwhm =half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.389
-                elif 'fl' in _instrume:
-                    fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.389
-                elif 'fs' in _instrume:
-                    fwhm =half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.30
-                elif 'em' in _instrume:
-                    fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.278
-                elif 'ep' in _instrume:
-                    fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.27
-                elif 'sq' in _instrume:
-                    fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * 0.734
-                else:
-                    fwhm = 5
+            inst = lsc.instruments.get_instrument(hdrt)
+            if len(fw) > 1 and inst.pixel_scale:
+                fwhm = half_total_flux_radius_to_fwhm(np.median(np.array(fw))) * inst.pixel_scale
             else:
                 fwhm = 5
             astrostring = '1  1  1'

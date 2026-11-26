@@ -667,7 +667,8 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     #    add filter using instrument
     if _instrument:
         print(_instrument)
-        ww = np.array([i for i in range(len(ll1['instrument'])) if (_instrument in ll1['instrument'][i])])
+        ww = np.array([i for i, camera in enumerate(ll1['instrument'])
+                       if _instrument in camera or _instrument == lsc.instruments.get_instrument(camera).name])
         if len(ww) > 0:
             for jj in ll1.keys():
                 ll1[jj] = np.array(ll1[jj])[ww]
@@ -1808,7 +1809,7 @@ def get_standards(epoch, name, filters, standard_name='all', match_by_site=False
         is_match = 'obj.telescopeid = std.telescopeid AND obj.instrumentid = std.instrumentid'
 
     query = '''SELECT DISTINCT std.filepath, std.filename, std.objname, std.filter,
-               std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat, std.lastunpacked
+               std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat, std.lastunpacked, std.instrument
                FROM {tel_join}
                WHERE {is_match} AND {is_standard}
                AND obj.filter = std.filter
@@ -1827,7 +1828,7 @@ def get_standards(epoch, name, filters, standard_name='all', match_by_site=False
     if matching_stds:
         final_list = {col: [ll[col] for ll in matching_stds] for col in matching_stds[0]}
     else:
-        final_list = {'filepath': [], 'filename': []}
+        final_list = {'filepath': [], 'filename': [], 'instrument': []}
     return final_list
         
 ######

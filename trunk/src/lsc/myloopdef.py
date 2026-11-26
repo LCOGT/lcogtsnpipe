@@ -1890,7 +1890,7 @@ def get_standards(epoch, name, filters, standard_name='all', match_by_site=False
         is_match = 'obj.telescopeid = std.telescopeid AND obj.instrumentid = std.instrumentid'
 
     query = '''SELECT DISTINCT std.filepath, std.filename, std.objname, std.filter,
-               std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat, std.lastunpacked
+               std.wcs, std.psf, std.psfmag, std.zcat, std.mag, std.abscat, std.lastunpacked, std.instrument
                FROM {tel_join}
                WHERE {is_match} AND {is_standard}
                AND obj.filter = std.filter
@@ -1909,7 +1909,7 @@ def get_standards(epoch, name, filters, standard_name='all', match_by_site=False
     if matching_stds:
         final_list = {col: [ll[col] for ll in matching_stds] for col in matching_stds[0]}
     else:
-        final_list = {'filepath': [], 'filename': []}
+        final_list = {'filepath': [], 'filename': [], 'instrument': []}
     return final_list
         
 ######

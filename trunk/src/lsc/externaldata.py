@@ -267,7 +267,7 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     pixelscale = inst.template_pixel_scale
     _imagesize = inst.template_imagesize
     if pixelscale is None:
-        print(_telescope)
+        raise ValueError('no template pixel scale for instrument: ' + str(_telescope))
 
     if survey =='sloan':
        out1 = 'SDSS'

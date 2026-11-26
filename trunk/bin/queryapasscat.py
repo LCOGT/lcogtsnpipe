@@ -53,7 +53,7 @@ def vizq(_ra,_dec,catalogue,radius):
          'sdss7':['II/294/sdss7','','objID,umag,gmag,rmag,imag,zmag,e_umag,e_gmag,e_rmag,e_imag,e_zmag,gc'],
          'sdss8':['II/306/sdss8','','objID,umag,gmag,rmag,imag,zmag,e_umag,e_gmag,e_rmag,e_imag,e_zmag,gc']}
 
-    a=os.popen('vizquery -mime=tsv  -site='+_site+' -source='+cat[catalogue][0]+\
+    a=os.popen('timeout 120 vizquery -mime=tsv  -site='+_site+' -source='+cat[catalogue][0]+\
                    ' -c.ra='+str(_ra)+' -c.dec='+str(_dec)+' -c.eq=J2000 -c.rm='+str(radius)+\
                    ' -c.geom=b -oc.form=h -sort=_RA*-c.eq -out.add=_RAJ2000,_DEJ2000 -out.max=10000 -out='+\
                    cat[catalogue][1]+' -out="'+cat[catalogue][2]+'"').read()
@@ -65,6 +65,8 @@ def vizq(_ra,_dec,catalogue,radius):
     bb=[]
     for i in aa:
         if i and i[0]!='#':   bb.append(i)
+    if len(bb) < 3:
+        raise IOError('no response from VizieR')
     _ra,_dec,_name,_mag=[],[],[],[]
     for ii in bb[3:]:
         aa=ii.split('\t')
@@ -145,8 +147,40 @@ def vizq(_ra,_dec,catalogue,radius):
     return dictionary
 ################################################################################
 
+def gavoq(_ra, _dec, radius):
+    import requests
+    from astropy.io import ascii
+    query = ("SELECT ra, dec, mag_b, err_mag_b, mag_v, err_mag_v, mag_g, err_mag_g, mag_r, err_mag_r, mag_i, err_mag_i "
+             "FROM apass.dr10 WHERE 1=CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', {}, {}, {}))").format(_ra, _dec, float(radius) / 60.)
+    params = {'REQUEST': 'doQuery', 'LANG': 'ADQL', 'FORMAT': 'csv', 'MAXREC': 100000, 'QUERY': query}
+    try:
+        response = requests.get('https://dc.g-vo.org/tap/sync', params=params, timeout=300)
+        response.raise_for_status()
+        t = ascii.read(response.text, format='csv')
+    except Exception as e:
+        print('GAVO query failed:', e)
+        return None
+    r = np.ma.filled(np.ma.array(t['mag_r'], dtype=float), 9999.)
+    keep = (r > 10.5) & (r < 22)
+    dictionary = {'ra': np.array(t['ra'], float)[keep], 'dec': np.array(t['dec'], float)[keep]}
+    for f in ['b', 'v', 'g', 'r', 'i']:
+        key = f.upper() if f in 'bv' else f
+        dictionary[key] = np.ma.filled(np.ma.array(t['mag_' + f], dtype=float), 9999.)[keep]
+        dictionary[key + 'err'] = np.ma.filled(np.ma.array(t['err_mag_' + f], dtype=float), 9999.)[keep]
+    return dictionary
+
 def readapass2(_ra,_dec,_radius,_outputfile):
-    dictionary=vizq(_ra,_dec,'apass',_radius)
+    try:
+        dictionary=vizq(_ra,_dec,'apass',_radius)
+    except Exception as e:
+        print('VizieR query failed, trying GAVO:', e)
+        dictionary = gavoq(_ra, _dec, _radius)
+    if dictionary is None:
+        print('APASS query failed, not writing', _outputfile)
+        return 1
+    if len(dictionary['ra']) == 0:
+        print('no APASS stars in field, not writing', _outputfile)
+        return 2
     filters=['B', 'V', 'Pg', 'Pr', 'Pi']    
     if _outputfile: filename=_outputfile
     else:  filename='test_apass.txt'
@@ -176,6 +210,7 @@ def readapass2(_ra,_dec,_radius,_outputfile):
                 ff.write(' %6.3f %6.3f  ' % (float(9999),float(0.0)))
         ff.write('\n')
     ff.close()
+    return 0
 
 #################################3
 if __name__ == "__main__":
@@ -198,4 +233,4 @@ if __name__ == "__main__":
     _catalogue=option.cat
     _outputfile=option.output
     print(_ra,_dec,_radius)
-    readapass2(_ra,_dec,_radius,_outputfile)
+    sys.exit(readapass2(_ra,_dec,_radius,_outputfile))

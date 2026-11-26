@@ -28,14 +28,17 @@ else:
     end = datetime.strftime(now, '%Y-%m-%d %H:%M:%S')
     daterange = datetime.strftime(now - timedelta(days=7), '%Y%m%d') + '-' + datetime.strftime(now, '%Y%m%d')
 
-login = lsc.mysqldef.query(["select username, userpw from programs where idcode='KEY2014A-003'"], lsc.myloopdef.conn)
-username = login[0]['username']
-password = base64.b64decode(login[0]['userpw'])
-try:
-    authtoken = authenticate(username, password)
-except ValueError as e:
-    logger.info('Getting throttled: {error}'.format(error = str(e)))
-    sys.exit()
+if os.getenv('LCO_API_KEY'):
+    authtoken = {'Authorization': 'Token ' + os.environ['LCO_API_KEY']}
+else:
+    login = lsc.mysqldef.query(["select username, userpw from programs where idcode='KEY2014A-003'"], lsc.myloopdef.conn)
+    username = login[0]['username']
+    password = base64.b64decode(login[0]['userpw'])
+    try:
+        authtoken = authenticate(username, password)
+    except ValueError as e:
+        logger.info('Getting throttled: {error}'.format(error = str(e)))
+        sys.exit()
 
 frames = get_metadata(authtoken, start=start, end=end, OBSTYPE='EXPOSE', RLEVEL=91, public=False)       # all images where SNEx is a co-I
 for telid in ['2m0a', '1m0a', '0m4a', '0m4b', '0m4c']:
@@ -67,12 +70,20 @@ for frame in frames:
         logger.error('!!! FAILED TO INGEST {}'.format(filename))
         traceback.print_exc()
         continue
+    programs = lsc.mysqldef.query(['select groupidcode from programs where idcode="{}"'.format(dbdict.get('propid'))],
+                                  lsc.myloopdef.conn) if dbdict else []
+    if programs and programs[0]['groupidcode'] not in (None, 0, 1):
+        table = 'speclcoraw' if '-en' in filename else 'photlcoraw'
+        lsc.mysqldef.query(['update {} set groupidcode={:d} where filename="{}"'.format(table, int(programs[0]['groupidcode']), filename)],
+                           lsc.myloopdef.conn)
     if '-en' in filename and '-e00.fits' in filename:
         try:
             fits2png(filepath + filename)
         except:
             logger.error('!!! FAILED TO MAKE PNG FOR {}'.format(filename))
             traceback.print_exc()
+            continue
+        lsc.format_for_snex.upload_raw_spectrum(filepath, filename)
 
 lsc.mysqldef.ingestredu(fullpaths) # ingest new data into photlco
 

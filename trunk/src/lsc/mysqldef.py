@@ -208,20 +208,8 @@ def insert_values(conn,table,values):
 ########################################################################
 
 def guess_instrument_type(name):
-    prefix = name[:2]
-    if prefix == 'fl' or prefix == 'fa':
-        insttype = 'Sinistro'
-    elif prefix == 'kb':
-        insttype = 'SBIG'
-    elif prefix == 'fs':
-        insttype = 'Spectral'
-    elif prefix == 'ep':
-        insttype = 'MUSCAT'
-    elif prefix == 'sq':
-        insttype = 'QHY'
-    else:
-        insttype = None
-    return insttype
+    from lsc.instruments import get_instrument
+    return get_instrument(name).db_type
 
 def ingestredu(imglist,force='no',dataredutable='photlco',filetype=1):
    import string,re,os,sys

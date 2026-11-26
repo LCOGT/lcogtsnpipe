@@ -748,7 +748,8 @@ def filtralist(ll2, _filter, _id, _name, _ra, _dec, _bad, _filetype=1, _groupid=
     #    add filter using instrument
     if _instrument:
         print(_instrument)
-        ww = np.array([i for i in range(len(ll1['instrument'])) if (_instrument in ll1['instrument'][i])])
+        ww = np.array([i for i, camera in enumerate(ll1['instrument'])
+                       if _instrument in camera or _instrument == lsc.instruments.get_instrument(camera).name])
         if len(ww) > 0:
             for jj in ll1.keys():
                 ll1[jj] = np.array(ll1[jj])[ww]

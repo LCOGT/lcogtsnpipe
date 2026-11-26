@@ -263,22 +263,10 @@ def sdss_swarp(imglist,_telescope='spectral',_ra='',_dec='',output='', objname='
     import time
     import string
 
-    if _telescope == 'spectral':
-        pixelscale = 0.30104  # 2 meter
-        _imagesize =  2020
-    elif _telescope == 'sbig':
-        pixelscale = 0.467  # 1 meter
-        _imagesize =  2030
-    elif _telescope == 'sinistro':
-        pixelscale = 0.387  # 1 meter
-        _imagesize =  4020
-    elif _telescope == 'muscat':
-        pixelscale = 0.27
-        _imagesize = 2020
-    elif _telescope == 'QHY':
-        pixelscale = 0.74
-        _imagesize = 162
-    else:
+    inst = lsc.instruments.get_instrument(_telescope)
+    pixelscale = inst.template_pixel_scale
+    _imagesize = inst.template_imagesize
+    if pixelscale is None:
         print(_telescope)
 
     if survey =='sloan':
@@ -556,7 +544,6 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
    _ra = readkey3(hdr,'RA')
    _dec = readkey3(hdr,'DEC')
    _object = readkey3(hdr,'object')
-   _instrume = readkey3(hdr,'instrume')
    _filter = readkey3(hdr,'filter')
    _radius = 1100
    filt={'up':'u','gp':'g','rp':'r','ip':'i','zs':'z'}
@@ -566,18 +553,8 @@ def sloanimage(img,survey='sloan',frames=[], show=False, force=False):
    else:
       _band = _filter
 
-   if 'fs' in _instrume:
-      _telescope = 'spectral'
-   elif 'fl' in _instrume:
-      _telescope = 'sinistro'
-   elif 'fa' in _instrume:
-      _telescope = 'sinistro'
-   elif 'kb' in _instrume:
-      _telescope = 'sbig'
-   elif 'ep' in _instrume:
-       _telescope = 'muscat'
-   elif 'sq' in _instrume:
-       _telescope = 'qhy'
+   inst = lsc.instruments.get_instrument(hdr)
+   _telescope = inst.template_name
 
    print(_ra, _dec, _band, _radius)
    if survey == 'sloan':
